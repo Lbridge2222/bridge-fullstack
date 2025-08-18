@@ -1,0 +1,492 @@
+
+/* src/index.css */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Professional Color System Architecture */
+
+@layer base {
+  :root {
+    /* ===== BRAND COLORS ===== */
+    --brand-primary: 220 25% 15%;      /* Slate foundation */
+    --brand-accent: 0 85% 55%;         /* Candy apple red */
+    --brand-secondary: 120 45% 25%;    /* Forest green */
+    
+    /* ===== SEMANTIC COLORS ===== */
+    --semantic-success: 160 70% 35%;   /* Confident, vibrant emerald */
+    --semantic-warning: 220 15% 35%;   /* Sophisticated charcoal */
+    --semantic-error: 0 75% 45%;       /* Bold, serious crimson */
+    --semantic-info: 200 30% 50%;      /* Cool slate with blue undertone */
+    
+    /* ===== INTERACTIVE STATES ===== */
+    --interactive-primary: 220 25% 15%;
+    --interactive-secondary: 120 45% 25%;
+    --interactive-accent: 0 85% 55%;
+    --interactive-muted: 215 25% 90%;
+    
+    /* ===== SURFACE COLORS ===== */
+    --surface-primary: 0 0% 100%;      /* Pure white */
+    --surface-secondary: 210 25% 98%;  /* Very light slate */
+    --surface-tertiary: 210 25% 96%;   /* Light slate */
+    --surface-overlay: 220 25% 8%;     /* Dark overlay */
+    
+    /* ===== TEXT HIERARCHY ===== */
+    --text-primary: 220 25% 12%;      /* Main text */
+    --text-secondary: 215 20% 45%;     /* Secondary text */
+    --text-tertiary: 215 20% 65%;      /* Tertiary text */
+    --text-inverse: 210 40% 98%;       /* Text on dark backgrounds */
+    
+    /* ===== COLOR SCALES ===== */
+    /* Slate Scale */
+    --slate-50: 210 25% 98%;
+    --slate-100: 210 25% 96%;
+    --slate-200: 215 25% 90%;
+    --slate-300: 215 25% 80%;
+    --slate-400: 215 25% 70%;
+    --slate-500: 220 25% 50%;
+    --slate-600: 220 25% 40%;
+    --slate-700: 220 25% 30%;
+    --slate-800: 220 25% 20%;
+    --slate-900: 220 25% 15%;
+    
+    /* Red Scale (Candy Apple) */
+    --red-50: 0 85% 95%;
+    --red-100: 0 85% 90%;
+    --red-200: 0 85% 80%;
+    --red-300: 0 85% 70%;
+    --red-400: 0 85% 60%;
+    --red-500: 0 85% 55%;              /* Our candy apple */
+    --red-600: 0 85% 45%;
+    --red-700: 0 85% 35%;
+    --red-800: 0 85% 25%;
+    --red-900: 0 85% 15%;
+    
+    /* Green Scale (Forest) */
+    --green-50: 120 45% 95%;
+    --green-100: 120 45% 90%;
+    --green-200: 120 45% 80%;
+    --green-300: 120 45% 70%;
+    --green-400: 120 45% 60%;
+    --green-500: 120 45% 50%;
+    --green-600: 120 45% 40%;
+    --green-700: 120 45% 30%;
+    --green-800: 120 45% 25%;          /* Our forest green */
+    --green-900: 120 45% 20%;
+    
+    /* ===== COMPONENT TOKENS ===== */
+    /* Button Colors */
+    --button-primary-bg: 220 25% 15%;
+    --button-primary-text: 210 40% 98%;
+    --button-primary-hover: 220 25% 15% / 0.9;
+    --button-primary-active: 220 25% 15% / 0.8;
+    
+    --button-accent-bg: 0 85% 55%;
+    --button-accent-text: 210 40% 98%;
+    --button-accent-hover: 0 85% 55% / 0.9;
+    
+    --button-forest-bg: 120 45% 25%;
+    --button-forest-text: 210 40% 98%;
+    --button-forest-hover: 120 45% 25% / 0.9;
+    
+    /* Card Colors */
+    --card-bg: 0 0% 100%;
+    --card-border: 215 25% 90%;
+    --card-shadow: 0 1px 3px 0 220 25% 8% / 0.1;
+    
+    /* Status Colors */
+    --status-success-bg: 160 70% 35% / 0.1;
+    --status-success-text: 160 70% 35%;
+    --status-success-border: 160 70% 35% / 0.2;
+    
+    --status-warning-bg: 220 15% 35% / 0.1;
+    --status-warning-text: 220 15% 35%;
+    --status-warning-border: 220 15% 35% / 0.2;
+    
+    --status-error-bg: 0 75% 45% / 0.1;
+    --status-error-text: 0 75% 45%;
+    --status-error-border: 0 75% 45% / 0.2;
+    
+    --status-info-bg: 200 30% 50% / 0.1;
+    --status-info-text: 200 30% 50%;
+    --status-info-border: 200 30% 50% / 0.2;
+    
+    /* ===== LEGACY SUPPORT (for existing components) ===== */
+    --background: 210 25% 98%;
+    --foreground: 220 25% 12%;
+    --card: 0 0% 100%;
+    --card-foreground: 220 25% 12%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 25% 12%;
+    --primary: 220 25% 15%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 215 25% 92%;
+    --secondary-foreground: 220 25% 12%;
+    --muted: 210 25% 96%;
+    --muted-foreground: 215 20% 45%;
+    --accent: 0 85% 55%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 75% 45%;
+    --destructive-foreground: 210 40% 98%;
+    --success: 160 70% 35%;
+    --success-foreground: 210 40% 98%;
+    --warning: 220 15% 35%;
+    --warning-foreground: 210 40% 98%;
+    --info: 200 30% 50%;
+    --info-foreground: 210 40% 98%;
+    --border: 215 25% 90%;
+    --input: 215 25% 90%;
+    --ring: 220 25% 15%;
+    --forest-green: 120 45% 25%;
+    --forest-green-foreground: 210 40% 98%;
+    
+    /* Chart Colors */
+    --chart-1: 220 25% 15%;            /* Slate */
+    --chart-2: 0 85% 55%;              /* Candy Apple Red */
+    --chart-3: 120 45% 25%;            /* Forest Green */
+    --chart-4: 220 15% 35%;            /* Sophisticated Charcoal */
+    --chart-5: 200 30% 50%;            /* Cool Slate Info */
+    
+    /* Radius */
+    --radius: 0.75rem;
+  }
+  
+  .dark {
+    /* ===== BRAND COLORS ===== */
+    --brand-primary: 210 25% 95%;
+    --brand-accent: 0 85% 65%;
+    --brand-secondary: 120 45% 65%;
+    
+    /* ===== SEMANTIC COLORS ===== */
+    --semantic-success: 160 70% 65%;
+    --semantic-warning: 220 15% 65%;
+    --semantic-error: 0 75% 65%;
+    --semantic-info: 200 30% 65%;
+    
+    /* ===== INTERACTIVE STATES ===== */
+    --interactive-primary: 210 25% 95%;
+    --interactive-secondary: 120 45% 65%;
+    --interactive-accent: 0 85% 65%;
+    --interactive-muted: 220 25% 20%;
+    
+    /* ===== SURFACE COLORS ===== */
+    --surface-primary: 220 25% 12%;
+    --surface-secondary: 220 25% 15%;
+    --surface-tertiary: 220 25% 18%;
+    --surface-overlay: 210 25% 95%;
+    
+    /* ===== TEXT HIERARCHY ===== */
+    --text-primary: 210 25% 95%;
+    --text-secondary: 215 20% 65%;
+    --text-tertiary: 215 20% 45%;
+    --text-inverse: 220 25% 15%;
+    
+    /* ===== COLOR SCALES ===== */
+    /* Slate Scale (Dark) */
+    --slate-50: 220 25% 8%;
+    --slate-100: 220 25% 12%;
+    --slate-200: 220 25% 18%;
+    --slate-300: 220 25% 25%;
+    --slate-400: 220 25% 35%;
+    --slate-500: 220 25% 50%;
+    --slate-600: 220 25% 65%;
+    --slate-700: 220 25% 75%;
+    --slate-800: 220 25% 85%;
+    --slate-900: 210 25% 95%;
+    
+    /* Red Scale (Dark) */
+    --red-50: 0 85% 15%;
+    --red-100: 0 85% 25%;
+    --red-200: 0 85% 35%;
+    --red-300: 0 85% 45%;
+    --red-400: 0 85% 55%;
+    --red-500: 0 85% 65%;
+    --red-600: 0 85% 75%;
+    --red-700: 0 85% 85%;
+    --red-800: 0 85% 90%;
+    --red-900: 0 85% 95%;
+    
+    /* Green Scale (Dark) */
+    --green-50: 120 45% 20%;
+    --green-100: 120 45% 30%;
+    --green-200: 120 45% 40%;
+    --green-300: 120 45% 50%;
+    --green-400: 120 45% 60%;
+    --green-500: 120 45% 70%;
+    --green-600: 120 45% 80%;
+    --green-700: 120 45% 85%;
+    --green-800: 120 45% 90%;
+    --green-900: 120 45% 95%;
+    
+    /* ===== COMPONENT TOKENS ===== */
+    /* Button Colors */
+    --button-primary-bg: 210 25% 95%;
+    --button-primary-text: 220 25% 15%;
+    --button-primary-hover: 210 25% 95% / 0.9;
+    --button-primary-active: 210 25% 95% / 0.8;
+    
+    --button-accent-bg: 0 85% 65%;
+    --button-accent-text: 220 25% 15%;
+    --button-accent-hover: 0 85% 65% / 0.9;
+    
+    --button-forest-bg: 120 45% 65%;
+    --button-forest-text: 220 25% 15%;
+    --button-forest-hover: 120 45% 65% / 0.9;
+    
+    /* Card Colors */
+    --card-bg: 220 25% 12%;
+    --card-border: 220 25% 20%;
+    --card-shadow: 0 1px 3px 0 210 25% 95% / 0.1;
+    
+    /* Status Colors */
+    --status-success-bg: 160 70% 65% / 0.1;
+    --status-success-text: 160 70% 65%;
+    --status-success-border: 160 70% 65% / 0.2;
+    
+    --status-warning-bg: 220 15% 65% / 0.1;
+    --status-warning-text: 220 15% 65%;
+    --status-warning-border: 220 15% 65% / 0.2;
+    
+    --status-error-bg: 0 75% 65% / 0.1;
+    --status-error-text: 0 75% 65%;
+    --status-error-border: 0 75% 65% / 0.2;
+    
+    --status-info-bg: 200 30% 65% / 0.1;
+    --status-info-text: 200 30% 65%;
+    --status-info-border: 200 30% 65% / 0.2;
+    
+    /* ===== LEGACY SUPPORT ===== */
+    --background: 220 25% 8%;
+    --foreground: 210 25% 95%;
+    --card: 220 25% 12%;
+    --card-foreground: 210 25% 95%;
+    --popover: 220 25% 12%;
+    --popover-foreground: 210 25% 95%;
+    --primary: 210 25% 95%;
+    --primary-foreground: 220 25% 15%;
+    --secondary: 220 25% 15%;
+    --secondary-foreground: 210 25% 95%;
+    --muted: 220 25% 15%;
+    --muted-foreground: 215 20% 65%;
+    --accent: 0 85% 65%;
+    --accent-foreground: 220 25% 15%;
+    --destructive: 0 75% 65%;
+    --destructive-foreground: 220 25% 15%;
+    --success: 160 70% 65%;
+    --success-foreground: 220 25% 15%;
+    --warning: 220 15% 65%;
+    --warning-foreground: 220 25% 15%;
+    --info: 200 30% 65%;
+    --info-foreground: 220 25% 15%;
+    --border: 220 25% 20%;
+    --input: 220 25% 20%;
+    --ring: 210 25% 85%;
+    --forest-green: 120 45% 65%;
+    --forest-green-foreground: 220 25% 15%;
+    
+    /* Chart Colors */
+    --chart-1: 210 25% 95%;            /* Light Slate */
+    --chart-2: 0 85% 65%;              /* Candy Apple Red */
+    --chart-3: 120 45% 65%;            /* Forest Green */
+    --chart-4: 220 15% 65%;            /* Sophisticated Charcoal */
+    --chart-5: 200 30% 65%;            /* Cool Slate Info */
+  }
+
+  /* ===== ACCESSIBILITY & TRANSITIONS ===== */
+  :root {
+    --color-transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+  }
+
+  * {
+    transition: var(--color-transition);
+  }
+
+  /* High contrast mode support */
+  @media (prefers-contrast: high) {
+    :root {
+      --brand-accent: 0 85% 40%;
+      --brand-secondary: 120 45% 20%;
+      --semantic-error: 0 55% 30%;
+    }
+  }
+
+  /* Reduced motion support */
+  @media (prefers-reduced-motion: reduce) {
+    :root {
+      --color-transition: none;
+    }
+  }
+
+  /* Set as base font */
+  body {
+    font-family: 'Satoshi', sans-serif;
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+  }
+}
+
+/* ===== UTILITY CLASSES ===== */
+@layer components {
+  /* Card Styles */
+  .card-base {
+    @apply bg-card border border-border rounded-lg shadow-sm;
+  }
+  
+  .card-elevated {
+    @apply bg-card border border-border rounded-lg shadow-md;
+  }
+  
+  .card-premium {
+    @apply bg-card border border-border/60 rounded-lg shadow-lg backdrop-blur-sm;
+  }
+  
+  /* Button Variants */
+  .btn-premium {
+    @apply bg-accent text-accent-foreground hover:bg-accent/90 border-0 shadow-md hover:shadow-lg transition-all duration-200;
+  }
+  
+  .btn-success {
+    @apply bg-success text-success-foreground hover:bg-success/90 border-0 shadow-md hover:shadow-lg transition-all duration-200;
+  }
+  
+  .btn-forest {
+    @apply bg-forest-green text-forest-green-foreground hover:bg-forest-green/90 border-0 shadow-md hover:shadow-lg transition-all duration-200;
+  }
+  
+  .btn-outline-premium {
+    @apply border-accent text-accent hover:bg-accent hover:text-accent-foreground transition-all duration-200;
+  }
+  
+  .btn-outline-forest {
+    @apply border-forest-green text-forest-green hover:bg-forest-green hover:text-forest-green-foreground transition-all duration-200;
+  }
+  
+  /* Status Backgrounds */
+  .status-success-bg {
+    @apply bg-status-success-bg border-status-success-border;
+  }
+  
+  .status-warning-bg {
+    @apply bg-status-warning-bg border-status-warning-border;
+  }
+  
+  .status-error-bg {
+    @apply bg-status-error-bg border-status-error-border;
+  }
+  
+  .status-info-bg {
+    @apply bg-status-info-bg border-status-info-border;
+  }
+  
+  /* Interactive Elements */
+  .interactive-hover {
+    @apply transition-all duration-200 hover:shadow-md hover:border-primary/20;
+  }
+  
+  .interactive-premium {
+    @apply transition-all duration-300 hover:shadow-lg hover:border-accent/30 hover:scale-[1.02];
+  }
+  
+  .focus-ring {
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2;
+  }
+  
+  /* Status Colors */
+  .status-success {
+    @apply text-success;
+  }
+  
+  .status-warning {
+    @apply text-warning;
+  }
+  
+  .status-error {
+    @apply text-destructive;
+  }
+  
+  .status-info {
+    @apply text-info;
+  }
+  
+  /* Accent Elements */
+  .accent-border {
+    @apply border-accent/20;
+  }
+  
+  .accent-bg {
+    @apply bg-accent/5;
+  }
+  
+  .forest-bg {
+    @apply bg-forest-green/5;
+  }
+  
+  .success-bg {
+    @apply bg-success/5;
+  }
+  
+  .warning-bg {
+    @apply bg-warning/5;
+  }
+  
+  .destructive-bg {
+    @apply bg-destructive/5;
+  }
+}
+
+/* ===== FONT FACES ===== */
+@font-face {
+  font-family: 'Satoshi';
+  src: url('/src/assets/fonts/satoshi/Satoshi-Variable.woff2') format('woff2');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Satoshi';
+  src: url('/src/assets/fonts/satoshi/Satoshi-VariableItalic.woff2') format('woff2');
+  font-weight: 100 900;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Satoshi';
+  src: url('/src/assets/fonts/satoshi/Satoshi-Light.woff2') format('woff2');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Satoshi';
+  src: url('/src/assets/fonts/satoshi/Satoshi-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Satoshi';
+  src: url('/src/assets/fonts/satoshi/Satoshi-Medium.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Satoshi';
+  src: url('/src/assets/fonts/satoshi/Satoshi-Bold.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Satoshi';
+  src: url('/src/assets/fonts/satoshi/Satoshi-Black.woff2') format('woff2');
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
