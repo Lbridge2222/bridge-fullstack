@@ -1,9 +1,9 @@
 {\rtf1\ansi\ansicpg1252\cocoartf2821
-\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fnil\fcharset0 .SFNS-Regular;\f1\fnil\fcharset0 .AppleSystemUIFontMonospaced-Regular;\f2\fnil\fcharset0 HelveticaNeue-Bold;
-\f3\fnil\fcharset0 .SFNS-Semibold;\f4\fswiss\fcharset0 Helvetica;\f5\fmodern\fcharset0 Courier;
-\f6\froman\fcharset0 TimesNewRomanPSMT;\f7\fnil\fcharset0 AppleColorEmoji;\f8\froman\fcharset0 Times-Bold;
-\f9\froman\fcharset0 Times-Roman;\f10\froman\fcharset0 Times-Italic;\f11\fnil\fcharset0 Menlo-Regular;
-}
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fnil\fcharset0 .SFNS-Semibold;\f1\fnil\fcharset0 .SFNS-Regular;\f2\fnil\fcharset0 HelveticaNeue-Bold;
+\f3\froman\fcharset0 TimesNewRomanPSMT;\f4\fnil\fcharset0 .AppleSystemUIFontMonospaced-Regular;\f5\fswiss\fcharset0 Helvetica;
+\f6\fmodern\fcharset0 Courier;\f7\fnil\fcharset0 .SFNS-RegularItalic;\f8\fnil\fcharset0 AppleColorEmoji;
+\f9\froman\fcharset0 Times-Bold;\f10\froman\fcharset0 Times-Roman;\f11\froman\fcharset0 Times-Italic;
+\f12\fnil\fcharset0 Menlo-Regular;}
 {\colortbl;\red255\green255\blue255;\red14\green14\blue14;\red0\green0\blue0;\red13\green100\blue1;
 \red181\green0\blue19;\red151\green0\blue126;\red111\green90\blue30;\red0\green0\blue0;\red109\green109\blue109;
 }
@@ -35,87 +35,397 @@
 \paperw11900\paperh16840\margl1440\margr1440\vieww11520\viewh8400\viewkind0
 \pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
 
-\f0\fs28 \cf2 Short answer: I mixed patterns because your steps referenced 
-\f1 src/app
-\f0 , 
-\f1 next/link
-\f0 , and 
-\f1 usePathname()
-\f0  (all 
+\f0\b\fs44 \cf2 Bridge CRM \'97 MVP++ (AI\uc0\u8209 Native HE CRM)
+\f1\b0\fs28 \
+\
+
+\f0\b\fs34 Positioning (One\uc0\u8209 liner)
+\f1\b0\fs28 \
+\
+An HE\uc0\u8209 native CRM that 
+\f2\b replaces HubSpot
+\f1\b0  for admissions and comms 
+\f2\b and
+\f1\b0  ships with 
+\f2\b built\uc0\u8209 in AI copilots
+\f1\b0  (LangChain + pgvector) on Day 1. Wedge now, 
+\f2\b Student Record (SIS\uc0\u8209 lite)
+\f1\b0  next, then full 
+\f2\b HE OS + LLM moat
+\f1\b0 .\
+\
+
+\f0\b\fs34 Goals (4\'966 weeks solo build)
+\f1\b0\fs28 \
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	Replace ~80% of HubSpot workflows for WaterBear\
+	\'95	Ship 
+\f2\b 3 AI capabilities
+\f1\b0 : Comms Copilot, Conversation Summaries, Semantic Search\
+	\'95	Deliver 
+\f2\b Lead Triage (light)
+\f1\b0  for daily prioritisation\
+	\'95	Sub\uc0\u8209 3s responses for AI endpoints; audit logs for prompts/outputs\
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f0\b\fs34 \cf2 MVP Core (kept from MVP)
+\f1\b0\fs28 \
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	Contacts w/ HE fields (course, campus, cycle)\
+	\'95	Pipeline: Lead \uc0\u8594  Interview \u8594  Offer \u8594  Enrolled\
+	\'95	Interview Scheduler (booking, reminders)\
+	\'95	Offer Management (conditional/unconditional basics)\
+	\'95	Basic reporting (cycle\uc0\u8209 aware shell, mock/real data)\
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f0\b\fs34 \cf2 New in MVP++ (AI features)
+\f1\b0\fs28 \
+\pard\tqr\tx260\tx420\li420\fi-420\sl324\slmult1\sb240\partightenfactor0
+
+\f3 \cf2 	1.	
+\f2\b \cf2 AI Email & Comms Copilot
+\f1\b0 \cf2 \
+\pard\tqr\tx500\tx660\li660\fi-660\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	Draft interview invites, reminders, offer letters from course/policy templates\
+	\'95	Human\uc0\u8209 in\u8209 the\u8209 loop edit \u8594  send (or copy to clipboard)\
+\pard\tqr\tx260\tx420\li420\fi-420\sl324\slmult1\sb240\partightenfactor0
+
+\f3 \cf2 	2.	
+\f2\b \cf2 Conversation/Note Summaries
+\f1\b0 \cf2 \
+\pard\tqr\tx500\tx660\li660\fi-660\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	TL;DR + next actions for long email threads or call notes; save to timeline\
+\pard\tqr\tx260\tx420\li420\fi-420\sl324\slmult1\sb240\partightenfactor0
+
+\f3 \cf2 	3.	
+\f2\b \cf2 Semantic Search over HE docs
+\f1\b0 \cf2 \
+\pard\tqr\tx500\tx660\li660\fi-660\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	Upload policies/course docs \uc0\u8594  RAG answers with citations (pgvector)\
+\pard\tqr\tx260\tx420\li420\fi-420\sl324\slmult1\sb240\partightenfactor0
+
+\f3 \cf2 	4.	
+\f2\b \cf2 Smart Lead Triage (light)
+\f1\b0 \cf2 \
+\pard\tqr\tx500\tx660\li660\fi-660\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	Rules + LLM signal pass \uc0\u8594  ranked list with reasons (intent, urgency, source)\
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f0\b\fs34 \cf2 Tech Stack (explicit)
+\f1\b0\fs28 \
+\
+
+\f2\b Frontend:
+\f1\b0  Vite + React + TypeScript\
+
+\f2\b Router:
+\f1\b0  React Router v6 (no Next.js)\
+
+\f2\b Styling:
+\f1\b0  Tailwind + shadcn/ui\
+
+\f2\b Entry:
+\f1\b0  
+\f4 src/main.tsx
+\f1  mounts 
+\f4 <BrowserRouter><App />
+\f1 \
+
+\f2\b Backend:
+\f1\b0  FastAPI (Python)\
+
+\f2\b AI Layer:
+\f1\b0  LangChain (RAG, summarise, compose)\
+
+\f2\b Vector Store:
+\f1\b0  Supabase Postgres + 
+\f4 pgvector
+\f1 \
+
+\f2\b Automations (optional):
+\f1\b0  n8n for scheduled sends/reminders\
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f0\b\fs30 \cf2 Routing conventions (guardrails)
+\f1\b0\fs28 \cf2 \
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	Use React Router only; no 
+\f4 src/app
+\f1  or 
+\f4 next/*
+\f1  imports\
+	\'95	
+\f4 App.tsx
+\f1  defines 
+\f4 <Route element=\{<DashboardLayout />\}>
+\f1  with children and 
+\f4 <Outlet />
+\f1 \
+	\'95	Navigation config: 
+\f4 src/config/navigation.ts
+\f1  (plain data; hrefs match 
+\f4 App.tsx
+\f1 )\
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f0\b\fs34 \cf2 API Surface (first cut)
+\f5\b0\fs24 \cf0 \
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f6\fs28 \cf3 POST /ai/compose/interview-invite\
+POST /ai/compose/interview-reminder\
+POST /ai/compose/offer-letter\
+POST /ai/summarize/thread\
+POST /ai/search/knowledge           # RAG answers + citations\
+POST /ai/triage/leads               # [\{leadId, score, reasons[]\}]
+\f5\fs24 \cf0 \
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f0\b\fs34 \cf2 Minimal Data Model Additions
+\f1\b0\fs28 \
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	
+\f4 documents(id, title, body_text, source, created_at)
+\f1 \
+	\'95	
+\f4 document_embeddings(document_id, embedding vector(1536))
+\f1 \
+	\'95	
+\f4 ai_events(id, user_id, action, payload_json, latency_ms, created_at)
+\f1 \
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f0\b\fs34 \cf2 Privacy & Guardrails
+\f1\b0\fs28 \
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	Redact PII in prompts (name/email \uc0\u8594  placeholders)\
+	\'95	Store embeddings of 
+\f2\b internal docs
+\f1\b0 , not sensitive student data\
+	\'95	Configurable provider + region; per\uc0\u8209 request audit logs\
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f0\b\fs34 \cf2 UI Wiring
+\f1\b0\fs28 \
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	
+\f2\b /crm/enquiries
+\f1\b0 : \'93AI Triage\'94 \uc0\u8594  ranked list panel w/ reasons; bulk action buttons\
+	\'95	
+\f2\b /crm/interviews
+\f1\b0 : \'93Generate Invite/Reminder\'94 dialog \uc0\u8594  editable draft \u8594  Send/Copy\
+	\'95	
+\f2\b /crm/offers
+\f1\b0 : \'93Compose Offer Letter\'94 dialog \uc0\u8594  checklist block (visa/ID/finance)\
+	\'95	
+\f2\b Global
+\f1\b0 : Command palette \'93Ask Bridge\'94 \uc0\u8594  semantic search modal (answers + citations)\
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f0\b\fs34 \cf2 Build Plan (2 sprints)
+\f1\b0\fs28 \
+\
+
+\f2\b Sprint 1 (Weeks 1\'962)
+\f1\b0 \
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	FastAPI skeleton, Supabase client, 
+\f4 pgvector
+\f1  schema + loader\
+	\'95	Chains: RAG search + summarisation\
+	\'95	React modals + shadcn/ui primitives wired; demo docs uploaded\
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f2\b \cf2 Sprint 2 (Weeks 3\'964)
+\f1\b0 \
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	Comms composer chains (invite, reminder, offer) with prompt templates\
+	\'95	Lead triage (rules + lightweight LLM pass)\
+	\'95	Telemetry (ai_events), redaction, error toasts; polish and demo data\
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f2\b \cf2 Stretch (Weeks 5\'966)
+\f1\b0 \
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	Outlook/Google calendar write\uc0\u8209 through OR n8n\u8209 driven emails\
+	\'95	No\uc0\u8209 show heuristic flag; simple risk badges in Interview list\
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f0\b\fs34 \cf2 Success Criteria (demo)
+\f1\b0\fs28 \
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	Generate invite from a card in <3s; editable; copy to clipboard\
+	\'95	Summarise a 10\uc0\u8209 message thread to TL;DR + next actions (<3s)\
+	\'95	\'93What\'92s our deferral policy for Sheffield BA Prod?\'94 \uc0\u8594  cites correct doc\
+	\'95	Triage \uc0\u8594  top\u8209 20 leads with short reasons; actions visible\
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f0\b\fs34 \cf2 Pricing & ACV (why MVP++ is investable)
+\f1\b0\fs28 \
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	
+\f2\b Starter:
+\f1\b0  \'a38\'9612k (specialist colleges) \uc0\u8594  CRM + AI copilot + summaries + RAG\
+	\'95	
+\f2\b Pro:
+\f1\b0  \'a320\'9630k (adds SIS\uc0\u8209 lite, offer composer, stronger automations)\
+	\'95	
+\f2\b Enterprise:
+\f1\b0  \'a350\'96100k (full OS, compliance, advanced AI packs, SLA)\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f2\b \cf2 Investor line:
+\f1\b0  
+\f7\i \cf2 \'93Customers pay \'a350\'9660k for generic suites. We deliver HE\uc0\u8209 specific workflows + AI at 1/3 the cost, with clear upsell path.\'94
+\f1\i0 \cf2 \
+\
+
+\f0\b\fs34 Demo Script (5 minutes)
+\f1\b0\fs28 \
+\pard\tqr\tx260\tx420\li420\fi-420\sl324\slmult1\sb240\partightenfactor0
+
+\f3 \cf2 	1.	Enquiries \uc0\u8594  
+\f2\b \cf2 AI Triage
+\f1\b0 \cf2  \uc0\u8594  pick top lead; one\u8209 click invite generated\
+
+\f3 	2.	Interview thread \uc0\u8594  
+\f2\b \cf2 Summarise
+\f1\b0 \cf2  \uc0\u8594  confirm next actions; schedule\
+
+\f3 	3.	Offers \uc0\u8594  
+\f2\b \cf2 Compose conditional offer
+\f1\b0 \cf2  \uc0\u8594  checklist output\
+
+\f3 	4.	
+\f2\b \cf2 Ask Bridge
+\f1\b0 \cf2 : deferral policy question \uc0\u8594  answer + citations\
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f0\b\fs34 \cf2 Risks & Mitigations
+\f1\b0\fs28 \
+\pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
+\cf2 	\'95	
+\f2\b Latency
+\f1\b0 : cache RAG chunks; small context windows; streaming UI\
+	\'95	
+\f2\b Hallucinations
+\f1\b0 : strict retrieval; structured prompts; citations mandatory\
+	\'95	
+\f2\b Scope creep
+\f1\b0 : lock features above; defer WhatsApp/Discord and heavy ML\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+
+\f5\fs24 \cf0 \
+
+\f1 \uc0\u11835 
+\f5 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+
+\f1\fs28 \cf2 \
+
+\f2\b Outcome
+\f1\b0 : A credible, investor\uc0\u8209 ready demo that proves the wedge (HubSpot replacement) 
+\f2\b and
+\f1\b0  showcases the AI DNA you\'92ll scale into the Student Record and HE\uc0\u8209 LLM roadmap.\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
+\cf2 \
+\
+Short answer: I mixed patterns because your steps referenced 
+\f4 src/app
+\f1 , 
+\f4 next/link
+\f1 , and 
+\f4 usePathname()
+\f1  (all 
 \f2\b Next.js App Router
-\f0\b0 ), while your actual app is 
+\f1\b0 ), while your actual app is 
 \f2\b Vite + React Router
-\f0\b0  (
-\f1 BrowserRouter
-\f0  in 
-\f1 main.tsx
-\f0 ). That mismatch is what sent me down the Next.js path.\
+\f1\b0  (
+\f4 BrowserRouter
+\f1  in 
+\f4 main.tsx
+\f1 ). That mismatch is what sent me down the Next.js path.\
 \
 You don\'92t need to switch. To prevent this happening again, add a few guardrails to your project docs (and linting).\
 \
 
-\f3\b\fs44 What to update in your project documentation
-\f0\b0\fs28 \
+\f0\b\fs44 What to update in your project documentation
+\f1\b0\fs28 \
 \
 
-\f3\b\fs34 1) Tech stack (explicit)
-\f0\b0\fs28 \
+\f0\b\fs34 1) Tech stack (explicit)
+\f1\b0\fs28 \
 \pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
 \cf2 	\'95	
 \f2\b Frontend:
-\f0\b0  Vite + React + TypeScript\
+\f1\b0  Vite + React + TypeScript\
 	\'95	
 \f2\b Router:
-\f0\b0  React Router v6 (no Next.js)\
+\f1\b0  React Router v6 (no Next.js)\
 	\'95	
 \f2\b Styling:
-\f0\b0  Tailwind + shadcn/ui (where used)\
+\f1\b0  Tailwind + shadcn/ui (where used)\
 	\'95	
 \f2\b Entry:
-\f0\b0  
-\f1 src/main.tsx
-\f0  mounts 
-\f1 <BrowserRouter><App /></BrowserRouter>
-\f0 \
+\f1\b0  
+\f4 src/main.tsx
+\f1  mounts 
+\f4 <BrowserRouter><App /></BrowserRouter>
+\f1 \
 \
 \pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
 
-\f3\b\fs34 \cf2 2) Routing conventions
-\f0\b0\fs28 \
+\f0\b\fs34 \cf2 2) Routing conventions
+\f1\b0\fs28 \
 \pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
 \cf2 	\'95	Use 
 \f2\b React Router
-\f0\b0  only.\
+\f1\b0  only.\
 	\'95	
 \f2\b Do not create
-\f0\b0  
-\f1 src/app/**
-\f0  or 
-\f1 src/pages/**
-\f0  (Next.js folders).\
+\f1\b0  
+\f4 src/app/**
+\f1  or 
+\f4 src/pages/**
+\f1  (Next.js folders).\
 	\'95	Layout is provided by 
-\f1 DashboardLayout
-\f0  via 
+\f4 DashboardLayout
+\f1  via 
 \f2\b nested routes
-\f0\b0 :\
+\f1\b0 :\
 \pard\tqr\tx500\tx660\li660\fi-660\sl324\slmult1\sb240\partightenfactor0
 \cf2 	\'95	
-\f1 App.tsx
-\f0  defines 
-\f1 <Route element=\{<DashboardLayout />\}>
-\f0  and children.\
+\f4 App.tsx
+\f1  defines 
+\f4 <Route element=\{<DashboardLayout />\}>
+\f1  and children.\
 	\'95	Pages render via 
-\f1 <Outlet />
-\f0 .\
+\f4 <Outlet />
+\f1 .\
 \
 \pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
 
-\f3\b\fs34 \cf2 3) Folder structure (single source of truth)
-\f4\b0\fs24 \cf0 \
+\f0\b\fs34 \cf2 3) Folder structure (single source of truth)
+\f5\b0\fs24 \cf0 \
 \
 \pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
 
-\f5\fs28 \cf3 src/\
+\f6\fs28 \cf3 src/\
   components/\
     layout/DashboardLayout.tsx\
   config/\
@@ -125,124 +435,124 @@ You don\'92t need to switch. To prevent this happening again, add a few guardrai
   App.tsx               \cf4 // all routes + layout wrapper\cf3 \
   main.tsx              \cf4 // BrowserRouter mount\cf3 \
   styles/index.css
-\f4\fs24 \cf0 \
+\f5\fs24 \cf0 \
 \
 \pard\tx860\tx1420\tx1980\tx2540\tx3100\tx3660\tx4220\tx4780\tx5340\tx5900\tx6460\tx7020\li300\sl324\slmult1\partightenfactor0
 
-\f0\fs28 \cf2 If you want 
-\f1 pages/
-\f0  renamed to 
-\f1 screens/
-\f0  or 
-\f1 routes/
-\f0 , note that here and keep it consistent.\
+\f1\fs28 \cf2 If you want 
+\f4 pages/
+\f1  renamed to 
+\f4 screens/
+\f1  or 
+\f4 routes/
+\f1 , note that here and keep it consistent.\
 \
 \pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
 
-\f3\b\fs34 \cf2 4) Navigation config rules
-\f0\b0\fs28 \
+\f0\b\fs34 \cf2 4) Navigation config rules
+\f1\b0\fs28 \
 \pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
 \cf2 	\'95	
-\f1 src/config/navigation.ts
-\f0  exports plain data.\
+\f4 src/config/navigation.ts
+\f1  exports plain data.\
 	\'95	
 \f2\b No imports from next/*
-\f0\b0  here; components handle routing (
-\f1 Link/NavLink
-\f0 ) themselves.\
+\f1\b0  here; components handle routing (
+\f4 Link/NavLink
+\f1 ) themselves.\
 	\'95	
-\f1 href
-\f0  values must match React Router paths declared in 
-\f1 App.tsx
-\f0 .\
+\f4 href
+\f1  values must match React Router paths declared in 
+\f4 App.tsx
+\f1 .\
 \
 \pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
 
-\f3\b\fs34 \cf2 5) How to add a new page (copy/paste section)
-\f0\b0\fs28 \
+\f0\b\fs34 \cf2 5) How to add a new page (copy/paste section)
+\f1\b0\fs28 \
 \pard\tqr\tx260\tx420\li420\fi-420\sl324\slmult1\sb240\partightenfactor0
 
-\f6 \cf2 	1.	Create 
-\f1 src/pages/FeatureX.tsx
-\f0  exporting a default component.\
+\f3 \cf2 	1.	Create 
+\f4 src/pages/FeatureX.tsx
+\f1  exporting a default component.\
 
-\f6 	2.	Add a route in 
-\f1 src/App.tsx
-\f0  under the 
-\f1 DashboardLayout
-\f0  branch:
-\f4\fs24 \cf0 \
+\f3 	2.	Add a route in 
+\f4 src/App.tsx
+\f1  under the 
+\f4 DashboardLayout
+\f1  branch:
+\f5\fs24 \cf0 \
 \
 \pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
 
-\f5\fs28 \cf3 <Route path=\cf5 "/feature-x"\cf3  element=\{\cf6 <FeatureX />\cf3 \} />
-\f4\fs24 \cf0 \
+\f6\fs28 \cf3 <Route path=\cf5 "/feature-x"\cf3  element=\{\cf6 <FeatureX />\cf3 \} />
+\f5\fs24 \cf0 \
 \
 \pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
 
-\f0\fs28 \cf2 \
+\f1\fs28 \cf2 \
 \pard\tqr\tx260\tx420\li420\fi-420\sl324\slmult1\sb240\partightenfactor0
 
-\f6 \cf2 	3.	Add an item in 
-\f1 src/config/navigation.ts
-\f0 :
-\f4\fs24 \cf0 \
+\f3 \cf2 	3.	Add an item in 
+\f4 src/config/navigation.ts
+\f1 :
+\f5\fs24 \cf0 \
 \
 \pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
 
-\f5\fs28 \cf3 \{ \cf7 title\cf3 : \cf5 "Feature X"\cf3 , \cf7 icon\cf3 : Zap, \cf7 href\cf3 : \cf5 "/feature-x"\cf3  \}
-\f4\fs24 \cf0 \
+\f6\fs28 \cf3 \{ \cf7 title\cf3 : \cf5 "Feature X"\cf3 , \cf7 icon\cf3 : Zap, \cf7 href\cf3 : \cf5 "/feature-x"\cf3  \}
+\f5\fs24 \cf0 \
 \
 \pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
 
-\f0\fs28 \cf2 \
+\f1\fs28 \cf2 \
 \pard\tqr\tx260\tx420\li420\fi-420\sl324\slmult1\sb240\partightenfactor0
 
-\f6 \cf2 	4.	Visit 
-\f1 /feature-x
-\f0 .\
+\f3 \cf2 	4.	Visit 
+\f4 /feature-x
+\f1 .\
 \
 \pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
 
-\f3\b\fs34 \cf2 6) \'93Do / Don\'92t\'94 guardrails
-\f0\b0\fs28 \
+\f0\b\fs34 \cf2 6) \'93Do / Don\'92t\'94 guardrails
+\f1\b0\fs28 \
 \pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
 \cf2 	\'95	
-\f7 \uc0\u9989 
-\f0  Do: 
-\f1 import \{ Link, NavLink \} from "react-router-dom"
-\f0 \
+\f8 \uc0\u9989 
+\f1  Do: 
+\f4 import \{ Link, NavLink \} from "react-router-dom"
+\f1 \
 	\'95	
-\f7 \uc0\u10060 
-\f0  Don\'92t: 
-\f1 import Link from "next/link"
-\f0  or use 
-\f1 usePathname()
-\f0 \
+\f8 \uc0\u10060 
+\f1  Don\'92t: 
+\f4 import Link from "next/link"
+\f1  or use 
+\f4 usePathname()
+\f1 \
 	\'95	
-\f7 \uc0\u9989 
-\f0  Do: keep all routes inside 
-\f1 App.tsx
-\f0 \
+\f8 \uc0\u9989 
+\f1  Do: keep all routes inside 
+\f4 App.tsx
+\f1 \
 	\'95	
-\f7 \uc0\u10060 
-\f0  Don\'92t: add 
-\f1 src/app/**
-\f0  or 
-\f1 src/pages/**
-\f0 \
+\f8 \uc0\u10060 
+\f1  Don\'92t: add 
+\f4 src/app/**
+\f1  or 
+\f4 src/pages/**
+\f1 \
 \
 \pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
 
-\f3\b\fs34 \cf2 7) ESLint safety rails (prevents Next imports)
-\f0\b0\fs28 \
+\f0\b\fs34 \cf2 7) ESLint safety rails (prevents Next imports)
+\f1\b0\fs28 \
 \
 In your ESLint config:
-\f4\fs24 \cf0 \
+\f5\fs24 \cf0 \
 \
 \pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
 
-\f5\fs28 \cf4 // .eslintrc.cjs or .eslintrc.js\cf3 \
+\f6\fs28 \cf4 // .eslintrc.cjs or .eslintrc.js\cf3 \
 module.exports = \{\
   \cf4 // ...existing config\cf3 \
   \cf7 rules\cf3 : \{\
@@ -259,100 +569,101 @@ module.exports = \{\
     ],\
   \},\
 \}
-\f4\fs24 \cf0 \
+\f5\fs24 \cf0 \
 \
 \pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
 
-\f3\b\fs34 \cf2 8) TypeScript paths (document it)
-\f0\b0\fs28 \
+\f0\b\fs34 \cf2 8) TypeScript paths (document it)
+\f1\b0\fs28 \
 \
 Your 
-\f1 tsconfig.json
-\f0  should include:
-\f4\fs24 \cf0 \
+\f4 tsconfig.json
+\f1  should include:
+\f5\fs24 \cf0 \
 \
 \pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
 
-\f5\fs28 \cf3 \{\
+\f6\fs28 \cf3 \{\
   \cf7 "compilerOptions"\cf3 : \{\
     \cf7 "baseUrl"\cf3 : \cf5 "."\cf3 ,\
     \cf7 "paths"\cf3 : \{ \cf7 "@/*"\cf3 : [\cf5 "src/*"\cf3 ] \}\
   \}\
 \}
-\f4\fs24 \cf0 \
+\f5\fs24 \cf0 \
 \
 \pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
 
-\f0\fs28 \cf2 And your imports should follow 
-\f1 @/components/...
-\f0 , not relative spaghetti.\
+\f1\fs28 \cf2 And your imports should follow 
+\f4 @/components/...
+\f1 , not relative spaghetti.\
 \
 
-\f3\b\fs34 9) README quick-start
-\f0\b0\fs28 \
+\f0\b\fs34 9) README quick-start
+\f1\b0\fs28 \
 \pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
 \cf2 	\'95	
-\f1 pnpm i
-\f0 \
+\f4 pnpm i
+\f1 \
 	\'95	
-\f1 pnpm dev
-\f0 \
+\f4 pnpm dev
+\f1 \
 	\'95	Open 
-\f1 http://localhost:5173/
-\f0 \
+\f4 http://localhost:5173/
+\f1 \
 	\'95	Primary route: 
-\f1 /dashboard
-\f0  \uc0\u8594  renders 
-\f1 HECRMDashboard
-\f0  wrapped in 
-\f1 DashboardLayout
-\f0 .\
+\f4 /dashboard
+\f1  \uc0\u8594  renders 
+\f4 HECRMDashboard
+\f1  wrapped in 
+\f4 DashboardLayout
+\f1 .\
 \
 \pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
 
-\f3\b\fs34 \cf2 10) Optional: CI check
-\f0\b0\fs28 \
+\f0\b\fs34 \cf2 10) Optional: CI check
+\f1\b0\fs28 \
 \
 Add a quick script to fail if a Next.js folder shows up:
-\f4\fs24 \cf0 \
+\f5\fs24 \cf0 \
 \
 \pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
 
-\f5\fs28 \cf4 # package.json\cf3 \
+\f6\fs28 \cf4 # package.json\cf3 \
 \{\
   \cf5 "scripts"\cf3 : \{\
     \cf5 "guard:next"\cf3 : \cf5 "bash -c 'test ! -d src/app && test ! -d src/pages'"\cf3 \
   \}\
 \}
-\f4\fs24 \cf0 \
+\f5\fs24 \cf0 \
 \
 \pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
 
-\f0\fs28 \cf2 Run it in CI before build: 
-\f1 pnpm run guard:next
-\f0 .\
+\f1\fs28 \cf2 Run it in CI before build: 
+\f4 pnpm run guard:next
+\f1 .\
 \pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
 
-\f4\fs24 \cf0 \
+\f5\fs24 \cf0 \
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
 
-\f0 \uc0\u11835 
-\f4 \
+\f1 \cf0 \uc0\u11835 
+\f5 \
 \pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\sl324\slmult1\pardirnatural\partightenfactor0
 
-\f0\fs28 \cf2 \
+\f1\fs28 \cf2 \
 If you want, I can drop a tiny PR patch for:\
 \pard\tqr\tx100\tx260\li260\fi-260\sl324\slmult1\sb240\partightenfactor0
 \cf2 	\'95	the ESLint rule,\
 	\'95	a README section \'93Routing & Layout,\'94\
 	\'95	and the route wiring in 
-\f1 App.tsx
-\f0  to mount 
-\f1 HECRMDashboard
-\f0  at 
-\f1 /dashboard
-\f0 .
-\f8\b\fs48 \cf0 \expnd0\expndtw0\kerning0
-\outl0\strokewidth0 \strokec8 \
+\f4 App.tsx
+\f1  to mount 
+\f4 HECRMDashboard
+\f1  at 
+\f4 /dashboard
+\f1 .
+\f9\b\fs48 \cf0 \expnd0\expndtw0\kerning0
+\
 \pard\pardeftab720\sa321\partightenfactor0
 \cf0 \
 # Bridge CRM \'96 Architecture (Frontend MVP)\
@@ -384,59 +695,59 @@ pnpm storybook # start Storybook\
 WaterBear CRM - Clear USP & Focused MVP\
 \pard\pardeftab720\sa298\partightenfactor0
 
-\f7\b0\fs36 \cf0 \uc0\u55356 \u57263 
-\f8\b  The ACTUAL Problem We're Solving\
+\f8\b0\fs36 \cf0 \uc0\u55356 \u57263 
+\f9\b  The ACTUAL Problem We're Solving\
 \pard\pardeftab720\sa240\partightenfactor0
 
 \fs24 \cf0 Current State
-\f9\b0 : HubSpot costs \'a32,000/month and doesn't understand Higher Education recruitment cycles\
+\f10\b0 : HubSpot costs \'a32,000/month and doesn't understand Higher Education recruitment cycles\
 
-\f8\b Our Solution
-\f9\b0 : Purpose-built HE CRM that replaces HubSpot at 1/3 the cost with 3x the HE-specific functionality\
+\f9\b Our Solution
+\f10\b0 : Purpose-built HE CRM that replaces HubSpot at 1/3 the cost with 3x the HE-specific functionality\
 \pard\pardeftab720\partightenfactor0
-\cf9 \strokec9 \
+\cf9 \
 \pard\pardeftab720\sa298\partightenfactor0
 
-\f7\fs36 \cf0 \strokec8 \uc0\u55357 \u56613 
-\f8\b  Our Unique Selling Proposition (USP)\
+\f8\fs36 \cf0 \uc0\u55357 \u56613 
+\f9\b  Our Unique Selling Proposition (USP)\
 \pard\pardeftab720\sa280\partightenfactor0
 
 \fs28 \cf0 "The Only CRM Built for UK Higher Education Recruitment"\
 \pard\pardeftab720\sa240\partightenfactor0
 
 \fs24 \cf0 Three Core Differentiators:
-\f9\b0 \
+\f10\b0 \
 \pard\tx220\tx720\pardeftab720\li720\fi-720\partightenfactor0
 \ls1\ilvl0
-\f8\b \cf0 \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	1	}
-\f7\b0 \expnd0\expndtw0\kerning0
-\outl0\strokewidth0 \strokec8 \uc0\u55356 \u57235 
-\f8\b  HE-Native Design
-\f9\b0 : Understands application cycles, deferrals, conditional offers, and UCAS processes\
+\f9\b \cf0 \kerning1\expnd0\expndtw0 {\listtext	1	}
+\f8\b0 \expnd0\expndtw0\kerning0
+\uc0\u55356 \u57235 
+\f9\b  HE-Native Design
+\f10\b0 : Understands application cycles, deferrals, conditional offers, and UCAS processes\
 \ls1\ilvl0
-\f8\b \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	2	}
-\f7\b0 \expnd0\expndtw0\kerning0
-\outl0\strokewidth0 \strokec8 \uc0\u55357 \u56522 
-\f8\b  Built-in Enrollment Forecasting
-\f9\b0 : ML-powered predictions (already proven with 15% accuracy improvement)\
+\f9\b \kerning1\expnd0\expndtw0 {\listtext	2	}
+\f8\b0 \expnd0\expndtw0\kerning0
+\uc0\u55357 \u56522 
+\f9\b  Built-in Enrollment Forecasting
+\f10\b0 : ML-powered predictions (already proven with 15% accuracy improvement)\
 \ls1\ilvl0
-\f8\b \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	3	}
-\f7\b0 \expnd0\expndtw0\kerning0
-\outl0\strokewidth0 \strokec8 \uc0\u55356 \u57269 
-\f8\b  Music Industry Optimized
-\f9\b0 : Portfolio management, performance assessments, creative discipline workflows\
+\f9\b \kerning1\expnd0\expndtw0 {\listtext	3	}
+\f8\b0 \expnd0\expndtw0\kerning0
+\uc0\u55356 \u57269 
+\f9\b  Music Industry Optimized
+\f10\b0 : Portfolio management, performance assessments, creative discipline workflows\
 \pard\pardeftab720\sa240\partightenfactor0
 
-\f8\b \cf0 Commercial Positioning
-\f9\b0 : 
-\f10\i "From HubSpot's \'a324k/year to our \'a38k/year - with better HE functionality"
-\f9\i0 \
+\f9\b \cf0 Commercial Positioning
+\f10\b0 : 
+\f11\i "From HubSpot's \'a324k/year to our \'a38k/year - with better HE functionality"
+\f10\i0 \
 \pard\pardeftab720\partightenfactor0
-\cf9 \strokec9 \
+\cf9 \
 \pard\pardeftab720\sa298\partightenfactor0
 
-\f7\fs36 \cf0 \strokec8 \uc0\u9889 
-\f8\b  MVP: The Minimum VIABLE Product\
+\f8\fs36 \cf0 \uc0\u9889 
+\f9\b  MVP: The Minimum VIABLE Product\
 \pard\pardeftab720\sa280\partightenfactor0
 
 \fs28 \cf0 Phase 1: HubSpot Replacement Core (12 weeks)\
@@ -444,222 +755,222 @@ WaterBear CRM - Clear USP & Focused MVP\
 
 \fs24 \cf0 Must-Have Features (Non-Negotiable)\
 \pard\tx220\tx720\pardeftab720\li720\fi-720\partightenfactor0
-\ls2\ilvl0\cf0 \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	1	}\expnd0\expndtw0\kerning0
-\outl0\strokewidth0 \strokec8 Contact Management
-\f9\b0  with HE-specific fields\
+\ls2\ilvl0\cf0 \kerning1\expnd0\expndtw0 {\listtext	1	}\expnd0\expndtw0\kerning0
+Contact Management
+\f10\b0  with HE-specific fields\
 \ls2\ilvl0
-\f8\b \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	2	}\expnd0\expndtw0\kerning0
-\outl0\strokewidth0 \strokec8 Pipeline Management
-\f9\b0  with HE stages (Lead 
-\f6 \uc0\u8594 
-\f9  Interview 
-\f6 \uc0\u8594 
-\f9  Offer 
-\f6 \uc0\u8594 
-\f9  Enrolled)\
+\f9\b \kerning1\expnd0\expndtw0 {\listtext	2	}\expnd0\expndtw0\kerning0
+Pipeline Management
+\f10\b0  with HE stages (Lead 
+\f3 \uc0\u8594 
+\f10  Interview 
+\f3 \uc0\u8594 
+\f10  Offer 
+\f3 \uc0\u8594 
+\f10  Enrolled)\
 \ls2\ilvl0
-\f8\b \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	3	}\expnd0\expndtw0\kerning0
-\outl0\strokewidth0 \strokec8 Email Automation
-\f9\b0  with HE templates\
+\f9\b \kerning1\expnd0\expndtw0 {\listtext	3	}\expnd0\expndtw0\kerning0
+Email Automation
+\f10\b0  with HE templates\
 \ls2\ilvl0
-\f8\b \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	4	}\expnd0\expndtw0\kerning0
-\outl0\strokewidth0 \strokec8 Basic Reporting
-\f9\b0  with cycle-aware analytics\
+\f9\b \kerning1\expnd0\expndtw0 {\listtext	4	}\expnd0\expndtw0\kerning0
+Basic Reporting
+\f10\b0  with cycle-aware analytics\
 \ls2\ilvl0
-\f8\b \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	5	}\expnd0\expndtw0\kerning0
-\outl0\strokewidth0 \strokec8 Calendar Integration
-\f9\b0  (replacing manual Zoom/Outlook)\
+\f9\b \kerning1\expnd0\expndtw0 {\listtext	5	}\expnd0\expndtw0\kerning0
+Calendar Integration
+\f10\b0  (replacing manual Zoom/Outlook)\
 \pard\pardeftab720\sa319\partightenfactor0
 
-\f8\b \cf0 Success Criteria\
+\f9\b \cf0 Success Criteria\
 \pard\tx220\tx720\pardeftab720\li720\fi-720\partightenfactor0
 \ls3\ilvl0
-\f9\b0 \cf0 \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}
-\f7 \expnd0\expndtw0\kerning0
-\outl0\strokewidth0 \strokec8 \uc0\u9989 
-\f9  Replace 80% of current HubSpot workflows\
-\ls3\ilvl0\kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}
-\f7 \expnd0\expndtw0\kerning0
-\outl0\strokewidth0 \strokec8 \uc0\u9989 
-\f9  Save \'a316k/year in HubSpot costs\
-\ls3\ilvl0\kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}
-\f7 \expnd0\expndtw0\kerning0
-\outl0\strokewidth0 \strokec8 \uc0\u9989 
-\f9  Maintain current conversion rates\
-\ls3\ilvl0\kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}
-\f7 \expnd0\expndtw0\kerning0
-\outl0\strokewidth0 \strokec8 \uc0\u9989 
-\f9  Zero data loss during migration\
+\f10\b0 \cf0 \kerning1\expnd0\expndtw0 {\listtext	\uc0\u8226 	}
+\f8 \expnd0\expndtw0\kerning0
+\uc0\u9989 
+\f10  Replace 80% of current HubSpot workflows\
+\ls3\ilvl0\kerning1\expnd0\expndtw0 {\listtext	\uc0\u8226 	}
+\f8 \expnd0\expndtw0\kerning0
+\uc0\u9989 
+\f10  Save \'a316k/year in HubSpot costs\
+\ls3\ilvl0\kerning1\expnd0\expndtw0 {\listtext	\uc0\u8226 	}
+\f8 \expnd0\expndtw0\kerning0
+\uc0\u9989 
+\f10  Maintain current conversion rates\
+\ls3\ilvl0\kerning1\expnd0\expndtw0 {\listtext	\uc0\u8226 	}
+\f8 \expnd0\expndtw0\kerning0
+\uc0\u9989 
+\f10  Zero data loss during migration\
 \pard\pardeftab720\partightenfactor0
-\cf9 \strokec9 \
+\cf9 \
 \pard\pardeftab720\sa298\partightenfactor0
 
-\f7\fs36 \cf0 \strokec8 \uc0\u55357 \u57003 
-\f8\b  What's NOT in MVP (Avoiding Feature Creep)\
+\f8\fs36 \cf0 \uc0\u55357 \u57003 
+\f9\b  What's NOT in MVP (Avoiding Feature Creep)\
 \pard\pardeftab720\sa280\partightenfactor0
 
 \fs28 \cf0 Phase 2+ Features (Post-MVP)\
 \pard\tx220\tx720\pardeftab720\li720\fi-720\partightenfactor0
 \ls4\ilvl0
-\f9\b0\fs24 \cf0 \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}
-\f7 \expnd0\expndtw0\kerning0
-\outl0\strokewidth0 \strokec8 \uc0\u10060 
-\f9  AI-powered anything (except existing forecasting models)\
-\ls4\ilvl0\kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}
-\f7 \expnd0\expndtw0\kerning0
-\outl0\strokewidth0 \strokec8 \uc0\u10060 
-\f9  WhatsApp/Discord integration\
-\ls4\ilvl0\kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}
-\f7 \expnd0\expndtw0\kerning0
-\outl0\strokewidth0 \strokec8 \uc0\u10060 
-\f9  Advanced ML features\
-\ls4\ilvl0\kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}
-\f7 \expnd0\expndtw0\kerning0
-\outl0\strokewidth0 \strokec8 \uc0\u10060 
-\f9  LangChain/NLP capabilities\
-\ls4\ilvl0\kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}
-\f7 \expnd0\expndtw0\kerning0
-\outl0\strokewidth0 \strokec8 \uc0\u10060 
-\f9  Complex workflow automation\
-\ls4\ilvl0\kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}
-\f7 \expnd0\expndtw0\kerning0
-\outl0\strokewidth0 \strokec8 \uc0\u10060 
-\f9  Multi-channel communication hub\
+\f10\b0\fs24 \cf0 \kerning1\expnd0\expndtw0 {\listtext	\uc0\u8226 	}
+\f8 \expnd0\expndtw0\kerning0
+\uc0\u10060 
+\f10  AI-powered anything (except existing forecasting models)\
+\ls4\ilvl0\kerning1\expnd0\expndtw0 {\listtext	\uc0\u8226 	}
+\f8 \expnd0\expndtw0\kerning0
+\uc0\u10060 
+\f10  WhatsApp/Discord integration\
+\ls4\ilvl0\kerning1\expnd0\expndtw0 {\listtext	\uc0\u8226 	}
+\f8 \expnd0\expndtw0\kerning0
+\uc0\u10060 
+\f10  Advanced ML features\
+\ls4\ilvl0\kerning1\expnd0\expndtw0 {\listtext	\uc0\u8226 	}
+\f8 \expnd0\expndtw0\kerning0
+\uc0\u10060 
+\f10  LangChain/NLP capabilities\
+\ls4\ilvl0\kerning1\expnd0\expndtw0 {\listtext	\uc0\u8226 	}
+\f8 \expnd0\expndtw0\kerning0
+\uc0\u10060 
+\f10  Complex workflow automation\
+\ls4\ilvl0\kerning1\expnd0\expndtw0 {\listtext	\uc0\u8226 	}
+\f8 \expnd0\expndtw0\kerning0
+\uc0\u10060 
+\f10  Multi-channel communication hub\
 \pard\pardeftab720\sa240\partightenfactor0
 
-\f8\b \cf0 Rationale
-\f9\b0 : These are nice-to-haves that will delay core HubSpot replacement\
+\f9\b \cf0 Rationale
+\f10\b0 : These are nice-to-haves that will delay core HubSpot replacement\
 \pard\pardeftab720\partightenfactor0
-\cf9 \strokec9 \
+\cf9 \
 \pard\pardeftab720\sa298\partightenfactor0
 
-\f7\fs36 \cf0 \strokec8 \uc0\u55356 \u57263 
-\f8\b  MVP Feature Breakdown\
+\f8\fs36 \cf0 \uc0\u55356 \u57263 
+\f9\b  MVP Feature Breakdown\
 \pard\pardeftab720\sa280\partightenfactor0
 
 \fs28 \cf0 1. Core Contact Management 
-\f7\b0 \uc0\u11088 
-\f8\b  ESSENTIAL\
+\f8\b0 \uc0\u11088 
+\f9\b  ESSENTIAL\
 \pard\pardeftab720\sa240\partightenfactor0
 
 \fs24 \cf0 Replaces
-\f9\b0 : HubSpot contact properties\
+\f10\b0 : HubSpot contact properties\
 \pard\pardeftab720\partightenfactor0
 
-\f7\fs26 \cf0 \uc0\u9989 
-\f5  Student records with HE fields (course, campus, cycle)\
+\f8\fs26 \cf0 \uc0\u9989 
+\f6  Student records with HE fields (course, campus, cycle)\
 
-\f7 \uc0\u9989 
-\f5  Application stage tracking\
+\f8 \uc0\u9989 
+\f6  Application stage tracking\
 
-\f7 \uc0\u9989 
-\f5  Contact history and notes\
+\f8 \uc0\u9989 
+\f6  Contact history and notes\
 
-\f7 \uc0\u9989 
-\f5  Basic segmentation/filtering\
+\f8 \uc0\u9989 
+\f6  Basic segmentation/filtering\
 \pard\pardeftab720\sa280\partightenfactor0
 
-\f8\b\fs28 \cf0 2. HE-Optimized Pipeline 
-\f7\b0 \uc0\u11088 
-\f8\b  ESSENTIAL\
+\f9\b\fs28 \cf0 2. HE-Optimized Pipeline 
+\f8\b0 \uc0\u11088 
+\f9\b  ESSENTIAL\
 \pard\pardeftab720\sa240\partightenfactor0
 
 \fs24 \cf0 Replaces
-\f9\b0 : HubSpot deals pipeline\
+\f10\b0 : HubSpot deals pipeline\
 \pard\pardeftab720\partightenfactor0
 
-\f7\fs26 \cf0 \uc0\u9989 
-\f5  Visual pipeline: Lead 
-\f11 \uc0\u8594 
-\f5  Qualified 
-\f11 \uc0\u8594 
-\f5  Interview 
-\f11 \uc0\u8594 
-\f5  Offer 
-\f11 \uc0\u8594 
-\f5  Enrolled\
+\f8\fs26 \cf0 \uc0\u9989 
+\f6  Visual pipeline: Lead 
+\f12 \uc0\u8594 
+\f6  Qualified 
+\f12 \uc0\u8594 
+\f6  Interview 
+\f12 \uc0\u8594 
+\f6  Offer 
+\f12 \uc0\u8594 
+\f6  Enrolled\
 
-\f7 \uc0\u9989 
-\f5  Stage progression automation\
+\f8 \uc0\u9989 
+\f6  Stage progression automation\
 
-\f7 \uc0\u9989 
-\f5  Offer management (conditional/unconditional)\
+\f8 \uc0\u9989 
+\f6  Offer management (conditional/unconditional)\
 
-\f7 \uc0\u9989 
-\f5  Cycle-aware reporting\
+\f8 \uc0\u9989 
+\f6  Cycle-aware reporting\
 \pard\pardeftab720\sa280\partightenfactor0
 
-\f8\b\fs28 \cf0 3. Essential Communications 
-\f7\b0 \uc0\u11088 
-\f8\b  ESSENTIAL\
+\f9\b\fs28 \cf0 3. Essential Communications 
+\f8\b0 \uc0\u11088 
+\f9\b  ESSENTIAL\
 \pard\pardeftab720\sa240\partightenfactor0
 
 \fs24 \cf0 Replaces
-\f9\b0 : HubSpot email sequences\
+\f10\b0 : HubSpot email sequences\
 \pard\pardeftab720\partightenfactor0
 
-\f7\fs26 \cf0 \uc0\u9989 
-\f5  Email templates for each stage\
+\f8\fs26 \cf0 \uc0\u9989 
+\f6  Email templates for each stage\
 
-\f7 \uc0\u9989 
-\f5  Basic automation (interview confirmations, offer letters)\
+\f8 \uc0\u9989 
+\f6  Basic automation (interview confirmations, offer letters)\
 
-\f7 \uc0\u9989 
-\f5  Email tracking (opens/clicks)\
+\f8 \uc0\u9989 
+\f6  Email tracking (opens/clicks)\
 
-\f7 \uc0\u9989 
-\f5  SMS integration (via existing Twilio)\
+\f8 \uc0\u9989 
+\f6  SMS integration (via existing Twilio)\
 \pard\pardeftab720\sa280\partightenfactor0
 
-\f8\b\fs28 \cf0 4. Interview Management 
-\f7\b0 \uc0\u11088 
-\f8\b  ESSENTIAL\
+\f9\b\fs28 \cf0 4. Interview Management 
+\f8\b0 \uc0\u11088 
+\f9\b  ESSENTIAL\
 \pard\pardeftab720\sa240\partightenfactor0
 
 \fs24 \cf0 Replaces
-\f9\b0 : Manual Zoom/Outlook process\
+\f10\b0 : Manual Zoom/Outlook process\
 \pard\pardeftab720\partightenfactor0
 
-\f7\fs26 \cf0 \uc0\u9989 
-\f5  Calendar booking integration (Calendly-style)\
+\f8\fs26 \cf0 \uc0\u9989 
+\f6  Calendar booking integration (Calendly-style)\
 
-\f7 \uc0\u9989 
-\f5  Interview scheduling and confirmations\
+\f8 \uc0\u9989 
+\f6  Interview scheduling and confirmations\
 
-\f7 \uc0\u9989 
-\f5  Basic assessment forms\
+\f8 \uc0\u9989 
+\f6  Basic assessment forms\
 
-\f7 \uc0\u9989 
-\f5  No-show tracking\
+\f8 \uc0\u9989 
+\f6  No-show tracking\
 \pard\pardeftab720\sa280\partightenfactor0
 
-\f8\b\fs28 \cf0 5. HE-Specific Reporting 
-\f7\b0 \uc0\u11088 
-\f8\b  ESSENTIAL\
+\f9\b\fs28 \cf0 5. HE-Specific Reporting 
+\f8\b0 \uc0\u11088 
+\f9\b  ESSENTIAL\
 \pard\pardeftab720\sa240\partightenfactor0
 
 \fs24 \cf0 Replaces
-\f9\b0 : HubSpot reporting\
+\f10\b0 : HubSpot reporting\
 \pard\pardeftab720\partightenfactor0
 
-\f7\fs26 \cf0 \uc0\u9989 
-\f5  Cycle-aware dashboards (2023/2024/2025)\
+\f8\fs26 \cf0 \uc0\u9989 
+\f6  Cycle-aware dashboards (2023/2024/2025)\
 
-\f7 \uc0\u9989 
-\f5  Conversion funnel by stage\
+\f8 \uc0\u9989 
+\f6  Conversion funnel by stage\
 
-\f7 \uc0\u9989 
-\f5  Campus/course performance\
+\f8 \uc0\u9989 
+\f6  Campus/course performance\
 
-\f7 \uc0\u9989 
-\f5  Integration with existing forecasting models\
+\f8 \uc0\u9989 
+\f6  Integration with existing forecasting models\
 \pard\pardeftab720\partightenfactor0
 
-\f9\fs24 \cf9 \strokec9 \
+\f10\fs24 \cf9 \
 \pard\pardeftab720\sa298\partightenfactor0
 
-\f7\fs36 \cf0 \strokec8 \uc0\u55357 \u56496 
-\f8\b  Commercial Viability\
+\f8\fs36 \cf0 \uc0\u55357 \u56496 
+\f9\b  Commercial Viability\
 \pard\pardeftab720\sa280\partightenfactor0
 
 \fs28 \cf0 Cost Comparison\
@@ -682,7 +993,7 @@ WaterBear CRM - Clear USP & Focused MVP\
 \clvertalc \clshdrawnil \clwWidth1762\clftsWidth3 \clmart10 \clmarl10 \clmarb10 \clmarr10 \clbrdrt\brdrnil \clbrdrl\brdrnil \clbrdrb\brdrnil \clbrdrr\brdrnil \clpadt20 \clpadl20 \clpadb20 \clpadr20 \gaph\cellx8640
 \pard\intbl\itap1\pardeftab720\partightenfactor0
 \cf0 Annual Cost
-\f9\b0 \cell 
+\f10\b0 \cell 
 \pard\intbl\itap1\pardeftab720\partightenfactor0
 \cf0 \'a324,000\cell 
 \pard\intbl\itap1\pardeftab720\partightenfactor0
@@ -694,16 +1005,16 @@ WaterBear CRM - Clear USP & Focused MVP\
 \clvertalc \clshdrawnil \clwWidth1762\clftsWidth3 \clmart10 \clmarl10 \clmarb10 \clmarr10 \clbrdrt\brdrnil \clbrdrl\brdrnil \clbrdrb\brdrnil \clbrdrr\brdrnil \clpadt20 \clpadl20 \clpadb20 \clpadr20 \gaph\cellx8640
 \pard\intbl\itap1\pardeftab720\partightenfactor0
 
-\f8\b \cf0 HE-Specific Features
-\f9\b0 \cell 
+\f9\b \cf0 HE-Specific Features
+\f10\b0 \cell 
 \pard\intbl\itap1\pardeftab720\partightenfactor0
 
-\f7 \cf0 \uc0\u10060 
-\f9  None\cell 
+\f8 \cf0 \uc0\u10060 
+\f10  None\cell 
 \pard\intbl\itap1\pardeftab720\partightenfactor0
 
-\f7 \cf0 \uc0\u9989 
-\f9  Purpose-built\cell \row
+\f8 \cf0 \uc0\u9989 
+\f10  Purpose-built\cell \row
 
 \itap1\trowd \taflags0 \trgaph108\trleft-108 \trbrdrl\brdrnil \trbrdrr\brdrnil 
 \clvertalc \clshdrawnil \clwWidth2425\clftsWidth3 \clmart10 \clmarl10 \clmarb10 \clmarr10 \clbrdrt\brdrnil \clbrdrl\brdrnil \clbrdrb\brdrnil \clbrdrr\brdrnil \clpadt20 \clpadl20 \clpadb20 \clpadr20 \gaph\cellx2880
@@ -711,16 +1022,16 @@ WaterBear CRM - Clear USP & Focused MVP\
 \clvertalc \clshdrawnil \clwWidth1762\clftsWidth3 \clmart10 \clmarl10 \clmarb10 \clmarr10 \clbrdrt\brdrnil \clbrdrl\brdrnil \clbrdrb\brdrnil \clbrdrr\brdrnil \clpadt20 \clpadl20 \clpadb20 \clpadr20 \gaph\cellx8640
 \pard\intbl\itap1\pardeftab720\partightenfactor0
 
-\f8\b \cf0 Cycle Management
-\f9\b0 \cell 
+\f9\b \cf0 Cycle Management
+\f10\b0 \cell 
 \pard\intbl\itap1\pardeftab720\partightenfactor0
 
-\f7 \cf0 \uc0\u10060 
-\f9  Manual\cell 
+\f8 \cf0 \uc0\u10060 
+\f10  Manual\cell 
 \pard\intbl\itap1\pardeftab720\partightenfactor0
 
-\f7 \cf0 \uc0\u9989 
-\f9  Native\cell \row
+\f8 \cf0 \uc0\u9989 
+\f10  Native\cell \row
 
 \itap1\trowd \taflags0 \trgaph108\trleft-108 \trbrdrl\brdrnil \trbrdrr\brdrnil 
 \clvertalc \clshdrawnil \clwWidth2425\clftsWidth3 \clmart10 \clmarl10 \clmarb10 \clmarr10 \clbrdrt\brdrnil \clbrdrl\brdrnil \clbrdrb\brdrnil \clbrdrr\brdrnil \clpadt20 \clpadl20 \clpadb20 \clpadr20 \gaph\cellx2880
@@ -728,16 +1039,16 @@ WaterBear CRM - Clear USP & Focused MVP\
 \clvertalc \clshdrawnil \clwWidth1762\clftsWidth3 \clmart10 \clmarl10 \clmarb10 \clmarr10 \clbrdrt\brdrnil \clbrdrl\brdrnil \clbrdrb\brdrnil \clbrdrr\brdrnil \clpadt20 \clpadl20 \clpadb20 \clpadr20 \gaph\cellx8640
 \pard\intbl\itap1\pardeftab720\partightenfactor0
 
-\f8\b \cf0 Enrollment Forecasting
-\f9\b0 \cell 
+\f9\b \cf0 Enrollment Forecasting
+\f10\b0 \cell 
 \pard\intbl\itap1\pardeftab720\partightenfactor0
 
-\f7 \cf0 \uc0\u10060 
-\f9  No\cell 
+\f8 \cf0 \uc0\u10060 
+\f10  No\cell 
 \pard\intbl\itap1\pardeftab720\partightenfactor0
 
-\f7 \cf0 \uc0\u9989 
-\f9  ML-powered\cell \row
+\f8 \cf0 \uc0\u9989 
+\f10  ML-powered\cell \row
 
 \itap1\trowd \taflags0 \trgaph108\trleft-108 \trbrdrl\brdrnil \trbrdrt\brdrnil \trbrdrr\brdrnil 
 \clvertalc \clshdrawnil \clwWidth2425\clftsWidth3 \clmart10 \clmarl10 \clmarb10 \clmarr10 \clbrdrt\brdrnil \clbrdrl\brdrnil \clbrdrb\brdrnil \clbrdrr\brdrnil \clpadt20 \clpadl20 \clpadb20 \clpadr20 \gaph\cellx2880
@@ -745,301 +1056,301 @@ WaterBear CRM - Clear USP & Focused MVP\
 \clvertalc \clshdrawnil \clwWidth1762\clftsWidth3 \clmart10 \clmarl10 \clmarb10 \clmarr10 \clbrdrt\brdrnil \clbrdrl\brdrnil \clbrdrb\brdrnil \clbrdrr\brdrnil \clpadt20 \clpadl20 \clpadb20 \clpadr20 \gaph\cellx8640
 \pard\intbl\itap1\pardeftab720\partightenfactor0
 
-\f8\b \cf0 Support
-\f9\b0 \cell 
+\f9\b \cf0 Support
+\f10\b0 \cell 
 \pard\intbl\itap1\pardeftab720\partightenfactor0
 
-\f7 \cf0 \uc0\u10060 
-\f9  Generic\cell 
+\f8 \cf0 \uc0\u10060 
+\f10  Generic\cell 
 \pard\intbl\itap1\pardeftab720\partightenfactor0
 
-\f7 \cf0 \uc0\u9989 
-\f9  HE specialist\cell \lastrow\row
+\f8 \cf0 \uc0\u9989 
+\f10  HE specialist\cell \lastrow\row
 \pard\pardeftab720\sa280\partightenfactor0
 
-\f8\b\fs28 \cf0 Revenue Model\
+\f9\b\fs28 \cf0 Revenue Model\
 \pard\tx220\tx720\pardeftab720\li720\fi-720\partightenfactor0
 \ls5\ilvl0
-\fs24 \cf0 \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
-\outl0\strokewidth0 \strokec8 Year 1
-\f9\b0 : \'a38k (WaterBear only) - Save \'a316k vs HubSpot\
+\fs24 \cf0 \kerning1\expnd0\expndtw0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
+Year 1
+\f10\b0 : \'a38k (WaterBear only) - Save \'a316k vs HubSpot\
 \ls5\ilvl0
-\f8\b \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
-\outl0\strokewidth0 \strokec8 Year 2
-\f9\b0 : \'a324k (3 institutions) - Profitable\
+\f9\b \kerning1\expnd0\expndtw0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
+Year 2
+\f10\b0 : \'a324k (3 institutions) - Profitable\
 \ls5\ilvl0
-\f8\b \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
-\outl0\strokewidth0 \strokec8 Year 3
-\f9\b0 : \'a380k (10 institutions) - Scale achieved\
+\f9\b \kerning1\expnd0\expndtw0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
+Year 3
+\f10\b0 : \'a380k (10 institutions) - Scale achieved\
 \pard\pardeftab720\partightenfactor0
-\cf9 \strokec9 \
+\cf9 \
 \pard\pardeftab720\sa298\partightenfactor0
 
-\f7\fs36 \cf0 \strokec8 \uc0\u55357 \u57056 \u65039 
-\f8\b  MVP Technical Architecture\
+\f8\fs36 \cf0 \uc0\u55357 \u57056 \u65039 
+\f9\b  MVP Technical Architecture\
 \pard\pardeftab720\sa280\partightenfactor0
 
 \fs28 \cf0 Simple & Proven Stack\
 \pard\pardeftab720\partightenfactor0
 
-\f5\b0\fs26 \cf0 Frontend: React + Tailwind (familiar to team)\
+\f6\b0\fs26 \cf0 Frontend: React + Tailwind (familiar to team)\
 Backend: FastAPI + PostgreSQL (existing infrastructure)\
 Authentication: JWT + role-based access\
 Integrations: Twilio (SMS), Calendly (booking), existing forecasting\
 \pard\pardeftab720\sa280\partightenfactor0
 
-\f8\b\fs28 \cf0 Data Strategy\
+\f9\b\fs28 \cf0 Data Strategy\
 \pard\tx220\tx720\pardeftab720\li720\fi-720\partightenfactor0
 \ls6\ilvl0
-\fs24 \cf0 \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
-\outl0\strokewidth0 \strokec8 Phase 1
-\f9\b0 : Import from HubSpot via API\
+\fs24 \cf0 \kerning1\expnd0\expndtw0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
+Phase 1
+\f10\b0 : Import from HubSpot via API\
 \ls6\ilvl0
-\f8\b \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
-\outl0\strokewidth0 \strokec8 Phase 2
-\f9\b0 : Parallel running for validation\
+\f9\b \kerning1\expnd0\expndtw0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
+Phase 2
+\f10\b0 : Parallel running for validation\
 \ls6\ilvl0
-\f8\b \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
-\outl0\strokewidth0 \strokec8 Phase 3
-\f9\b0 : Full cutover with backup\
+\f9\b \kerning1\expnd0\expndtw0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
+Phase 3
+\f10\b0 : Full cutover with backup\
 \pard\pardeftab720\partightenfactor0
-\cf9 \strokec9 \
+\cf9 \
 \pard\pardeftab720\sa298\partightenfactor0
 
-\f7\fs36 \cf0 \strokec8 \uc0\u55357 \u56520 
-\f8\b  MVP Success Metrics\
+\f8\fs36 \cf0 \uc0\u55357 \u56520 
+\f9\b  MVP Success Metrics\
 \pard\pardeftab720\sa280\partightenfactor0
 
 \fs28 \cf0 Technical Success\
 \pard\tx220\tx720\pardeftab720\li720\fi-720\partightenfactor0
 \ls7\ilvl0
-\f9\b0\fs24 \cf0 \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}
-\f7 \expnd0\expndtw0\kerning0
-\outl0\strokewidth0 \strokec8 \uc0\u9989 
-\f9  100% HubSpot feature parity for core workflows\
-\ls7\ilvl0\kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}
-\f7 \expnd0\expndtw0\kerning0
-\outl0\strokewidth0 \strokec8 \uc0\u9989 
-\f9  Sub-2 second response times\
-\ls7\ilvl0\kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}
-\f7 \expnd0\expndtw0\kerning0
-\outl0\strokewidth0 \strokec8 \uc0\u9989 
-\f9  99.5% uptime during admissions season\
-\ls7\ilvl0\kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}
-\f7 \expnd0\expndtw0\kerning0
-\outl0\strokewidth0 \strokec8 \uc0\u9989 
-\f9  Zero data loss\
+\f10\b0\fs24 \cf0 \kerning1\expnd0\expndtw0 {\listtext	\uc0\u8226 	}
+\f8 \expnd0\expndtw0\kerning0
+\uc0\u9989 
+\f10  100% HubSpot feature parity for core workflows\
+\ls7\ilvl0\kerning1\expnd0\expndtw0 {\listtext	\uc0\u8226 	}
+\f8 \expnd0\expndtw0\kerning0
+\uc0\u9989 
+\f10  Sub-2 second response times\
+\ls7\ilvl0\kerning1\expnd0\expndtw0 {\listtext	\uc0\u8226 	}
+\f8 \expnd0\expndtw0\kerning0
+\uc0\u9989 
+\f10  99.5% uptime during admissions season\
+\ls7\ilvl0\kerning1\expnd0\expndtw0 {\listtext	\uc0\u8226 	}
+\f8 \expnd0\expndtw0\kerning0
+\uc0\u9989 
+\f10  Zero data loss\
 \pard\pardeftab720\sa280\partightenfactor0
 
-\f8\b\fs28 \cf0 Business Success\
+\f9\b\fs28 \cf0 Business Success\
 \pard\tx220\tx720\pardeftab720\li720\fi-720\partightenfactor0
 \ls8\ilvl0
-\f9\b0\fs24 \cf0 \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}
-\f7 \expnd0\expndtw0\kerning0
-\outl0\strokewidth0 \strokec8 \uc0\u9989 
-\f9  \'a316k cost savings in Year 1\
-\ls8\ilvl0\kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}
-\f7 \expnd0\expndtw0\kerning0
-\outl0\strokewidth0 \strokec8 \uc0\u9989 
-\f9  Same conversion rates (no performance drop)\
-\ls8\ilvl0\kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}
-\f7 \expnd0\expndtw0\kerning0
-\outl0\strokewidth0 \strokec8 \uc0\u9989 
-\f9  User adoption: 90% daily active within 4 weeks\
-\ls8\ilvl0\kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}
-\f7 \expnd0\expndtw0\kerning0
-\outl0\strokewidth0 \strokec8 \uc0\u9989 
-\f9  Admin satisfaction: 4/5 stars\
+\f10\b0\fs24 \cf0 \kerning1\expnd0\expndtw0 {\listtext	\uc0\u8226 	}
+\f8 \expnd0\expndtw0\kerning0
+\uc0\u9989 
+\f10  \'a316k cost savings in Year 1\
+\ls8\ilvl0\kerning1\expnd0\expndtw0 {\listtext	\uc0\u8226 	}
+\f8 \expnd0\expndtw0\kerning0
+\uc0\u9989 
+\f10  Same conversion rates (no performance drop)\
+\ls8\ilvl0\kerning1\expnd0\expndtw0 {\listtext	\uc0\u8226 	}
+\f8 \expnd0\expndtw0\kerning0
+\uc0\u9989 
+\f10  User adoption: 90% daily active within 4 weeks\
+\ls8\ilvl0\kerning1\expnd0\expndtw0 {\listtext	\uc0\u8226 	}
+\f8 \expnd0\expndtw0\kerning0
+\uc0\u9989 
+\f10  Admin satisfaction: 4/5 stars\
 \pard\pardeftab720\sa280\partightenfactor0
 
-\f8\b\fs28 \cf0 Product-Market Fit Indicators\
+\f9\b\fs28 \cf0 Product-Market Fit Indicators\
 \pard\tx220\tx720\pardeftab720\li720\fi-720\partightenfactor0
 \ls9\ilvl0
-\f9\b0\fs24 \cf0 \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}
-\f7 \expnd0\expndtw0\kerning0
-\outl0\strokewidth0 \strokec8 \uc0\u9989 
-\f9  WaterBear team prefers new CRM over HubSpot\
-\ls9\ilvl0\kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}
-\f7 \expnd0\expndtw0\kerning0
-\outl0\strokewidth0 \strokec8 \uc0\u9989 
-\f9  Interest from 2+ other music colleges\
-\ls9\ilvl0\kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}
-\f7 \expnd0\expndtw0\kerning0
-\outl0\strokewidth0 \strokec8 \uc0\u9989 
-\f9  Proven ROI within 6 months\
+\f10\b0\fs24 \cf0 \kerning1\expnd0\expndtw0 {\listtext	\uc0\u8226 	}
+\f8 \expnd0\expndtw0\kerning0
+\uc0\u9989 
+\f10  WaterBear team prefers new CRM over HubSpot\
+\ls9\ilvl0\kerning1\expnd0\expndtw0 {\listtext	\uc0\u8226 	}
+\f8 \expnd0\expndtw0\kerning0
+\uc0\u9989 
+\f10  Interest from 2+ other music colleges\
+\ls9\ilvl0\kerning1\expnd0\expndtw0 {\listtext	\uc0\u8226 	}
+\f8 \expnd0\expndtw0\kerning0
+\uc0\u9989 
+\f10  Proven ROI within 6 months\
 \pard\pardeftab720\partightenfactor0
-\cf9 \strokec9 \
+\cf9 \
 \pard\pardeftab720\sa298\partightenfactor0
 
-\f7\fs36 \cf0 \strokec8 \uc0\u9889 
-\f8\b  MVP Development Timeline\
+\f8\fs36 \cf0 \uc0\u9889 
+\f9\b  MVP Development Timeline\
 \pard\pardeftab720\sa280\partightenfactor0
 
 \fs28 \cf0 Week 1-4: Foundation\
 \pard\tx220\tx720\pardeftab720\li720\fi-720\partightenfactor0
 \ls10\ilvl0
-\f9\b0\fs24 \cf0 \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
-\outl0\strokewidth0 \strokec8 PostgreSQL schema + API endpoints\
-\ls10\ilvl0\kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
-\outl0\strokewidth0 \strokec8 Basic authentication system\
-\ls10\ilvl0\kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
-\outl0\strokewidth0 \strokec8 Contact management CRUD\
+\f10\b0\fs24 \cf0 \kerning1\expnd0\expndtw0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
+PostgreSQL schema + API endpoints\
+\ls10\ilvl0\kerning1\expnd0\expndtw0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
+Basic authentication system\
+\ls10\ilvl0\kerning1\expnd0\expndtw0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
+Contact management CRUD\
 \pard\pardeftab720\sa280\partightenfactor0
 
-\f8\b\fs28 \cf0 Week 5-8: Core Pipeline\
+\f9\b\fs28 \cf0 Week 5-8: Core Pipeline\
 \pard\tx220\tx720\pardeftab720\li720\fi-720\partightenfactor0
 \ls11\ilvl0
-\f9\b0\fs24 \cf0 \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
-\outl0\strokewidth0 \strokec8 Visual pipeline interface\
-\ls11\ilvl0\kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
-\outl0\strokewidth0 \strokec8 Stage management system\
-\ls11\ilvl0\kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
-\outl0\strokewidth0 \strokec8 Email template system\
+\f10\b0\fs24 \cf0 \kerning1\expnd0\expndtw0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
+Visual pipeline interface\
+\ls11\ilvl0\kerning1\expnd0\expndtw0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
+Stage management system\
+\ls11\ilvl0\kerning1\expnd0\expndtw0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
+Email template system\
 \pard\pardeftab720\sa280\partightenfactor0
 
-\f8\b\fs28 \cf0 Week 9-12: Essential Features\
+\f9\b\fs28 \cf0 Week 9-12: Essential Features\
 \pard\tx220\tx720\pardeftab720\li720\fi-720\partightenfactor0
 \ls12\ilvl0
-\f9\b0\fs24 \cf0 \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
-\outl0\strokewidth0 \strokec8 Calendar integration\
-\ls12\ilvl0\kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
-\outl0\strokewidth0 \strokec8 Basic reporting\
-\ls12\ilvl0\kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
-\outl0\strokewidth0 \strokec8 HubSpot data import\
+\f10\b0\fs24 \cf0 \kerning1\expnd0\expndtw0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
+Calendar integration\
+\ls12\ilvl0\kerning1\expnd0\expndtw0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
+Basic reporting\
+\ls12\ilvl0\kerning1\expnd0\expndtw0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
+HubSpot data import\
 \pard\pardeftab720\sa280\partightenfactor0
 
-\f8\b\fs28 \cf0 Week 13-16: Polish & Launch\
+\f9\b\fs28 \cf0 Week 13-16: Polish & Launch\
 \pard\tx220\tx720\pardeftab720\li720\fi-720\partightenfactor0
 \ls13\ilvl0
-\f9\b0\fs24 \cf0 \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
-\outl0\strokewidth0 \strokec8 UI/UX refinement\
-\ls13\ilvl0\kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
-\outl0\strokewidth0 \strokec8 Testing & bug fixes\
-\ls13\ilvl0\kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
-\outl0\strokewidth0 \strokec8 Parallel HubSpot operation\
+\f10\b0\fs24 \cf0 \kerning1\expnd0\expndtw0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
+UI/UX refinement\
+\ls13\ilvl0\kerning1\expnd0\expndtw0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
+Testing & bug fixes\
+\ls13\ilvl0\kerning1\expnd0\expndtw0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
+Parallel HubSpot operation\
 \pard\pardeftab720\partightenfactor0
-\cf9 \strokec9 \
+\cf9 \
 \pard\pardeftab720\sa298\partightenfactor0
 
-\f7\fs36 \cf0 \strokec8 \uc0\u55356 \u57263 
-\f8\b  Post-MVP Roadmap\
+\f8\fs36 \cf0 \uc0\u55356 \u57263 
+\f9\b  Post-MVP Roadmap\
 \pard\pardeftab720\sa280\partightenfactor0
 
 \fs28 \cf0 Phase 2: Enhanced Features (Months 4-6)\
 \pard\tx220\tx720\pardeftab720\li720\fi-720\partightenfactor0
 \ls14\ilvl0
-\f9\b0\fs24 \cf0 \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
-\outl0\strokewidth0 \strokec8 Advanced automation workflows\
-\ls14\ilvl0\kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
-\outl0\strokewidth0 \strokec8 WhatsApp integration\
-\ls14\ilvl0\kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
-\outl0\strokewidth0 \strokec8 Mobile app\
+\f10\b0\fs24 \cf0 \kerning1\expnd0\expndtw0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
+Advanced automation workflows\
+\ls14\ilvl0\kerning1\expnd0\expndtw0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
+WhatsApp integration\
+\ls14\ilvl0\kerning1\expnd0\expndtw0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
+Mobile app\
 \pard\pardeftab720\sa280\partightenfactor0
 
-\f8\b\fs28 \cf0 Phase 3: AI Integration (Months 6-12)\
+\f9\b\fs28 \cf0 Phase 3: AI Integration (Months 6-12)\
 \pard\tx220\tx720\pardeftab720\li720\fi-720\partightenfactor0
 \ls15\ilvl0
-\f9\b0\fs24 \cf0 \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
-\outl0\strokewidth0 \strokec8 Enhanced forecasting UI\
-\ls15\ilvl0\kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
-\outl0\strokewidth0 \strokec8 Smart lead scoring\
-\ls15\ilvl0\kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
-\outl0\strokewidth0 \strokec8 Predictive insights\
+\f10\b0\fs24 \cf0 \kerning1\expnd0\expndtw0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
+Enhanced forecasting UI\
+\ls15\ilvl0\kerning1\expnd0\expndtw0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
+Smart lead scoring\
+\ls15\ilvl0\kerning1\expnd0\expndtw0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
+Predictive insights\
 \pard\pardeftab720\sa280\partightenfactor0
 
-\f8\b\fs28 \cf0 Phase 4: Market Expansion (Year 2)\
+\f9\b\fs28 \cf0 Phase 4: Market Expansion (Year 2)\
 \pard\tx220\tx720\pardeftab720\li720\fi-720\partightenfactor0
 \ls16\ilvl0
-\f9\b0\fs24 \cf0 \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
-\outl0\strokewidth0 \strokec8 Multi-tenant architecture\
-\ls16\ilvl0\kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
-\outl0\strokewidth0 \strokec8 Integration marketplace\
-\ls16\ilvl0\kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
-\outl0\strokewidth0 \strokec8 API for third-parties\
+\f10\b0\fs24 \cf0 \kerning1\expnd0\expndtw0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
+Multi-tenant architecture\
+\ls16\ilvl0\kerning1\expnd0\expndtw0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
+Integration marketplace\
+\ls16\ilvl0\kerning1\expnd0\expndtw0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
+API for third-parties\
 \pard\pardeftab720\partightenfactor0
-\cf9 \strokec9 \
+\cf9 \
 \pard\pardeftab720\sa298\partightenfactor0
 
-\f7\fs36 \cf0 \strokec8 \uc0\u55357 \u56481 
-\f8\b  Why This MVP Will Succeed\
+\f8\fs36 \cf0 \uc0\u55357 \u56481 
+\f9\b  Why This MVP Will Succeed\
 \pard\pardeftab720\sa280\partightenfactor0
 
 \fs28 \cf0 1. Clear Problem-Solution Fit\
 \pard\tx220\tx720\pardeftab720\li720\fi-720\partightenfactor0
 \ls17\ilvl0
-\fs24 \cf0 \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
-\outl0\strokewidth0 \strokec8 Problem
-\f9\b0 : \'a324k/year for generic CRM\
+\fs24 \cf0 \kerning1\expnd0\expndtw0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
+Problem
+\f10\b0 : \'a324k/year for generic CRM\
 \ls17\ilvl0
-\f8\b \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
-\outl0\strokewidth0 \strokec8 Solution
-\f9\b0 : \'a38k/year for HE-specific CRM\
+\f9\b \kerning1\expnd0\expndtw0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
+Solution
+\f10\b0 : \'a38k/year for HE-specific CRM\
 \pard\pardeftab720\sa280\partightenfactor0
 
-\f8\b\fs28 \cf0 2. Proven Technical Foundation\
+\f9\b\fs28 \cf0 2. Proven Technical Foundation\
 \pard\tx220\tx720\pardeftab720\li720\fi-720\partightenfactor0
 \ls18\ilvl0
-\f9\b0\fs24 \cf0 \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
-\outl0\strokewidth0 \strokec8 Existing PostgreSQL infrastructure\
-\ls18\ilvl0\kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
-\outl0\strokewidth0 \strokec8 Working forecasting models\
-\ls18\ilvl0\kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
-\outl0\strokewidth0 \strokec8 Experienced development team\
+\f10\b0\fs24 \cf0 \kerning1\expnd0\expndtw0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
+Existing PostgreSQL infrastructure\
+\ls18\ilvl0\kerning1\expnd0\expndtw0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
+Working forecasting models\
+\ls18\ilvl0\kerning1\expnd0\expndtw0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
+Experienced development team\
 \pard\pardeftab720\sa280\partightenfactor0
 
-\f8\b\fs28 \cf0 3. Focused Scope\
+\f9\b\fs28 \cf0 3. Focused Scope\
 \pard\tx220\tx720\pardeftab720\li720\fi-720\partightenfactor0
 \ls19\ilvl0
-\f9\b0\fs24 \cf0 \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
-\outl0\strokewidth0 \strokec8 Replace HubSpot core features ONLY\
-\ls19\ilvl0\kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
-\outl0\strokewidth0 \strokec8 No AI complexity in MVP\
-\ls19\ilvl0\kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
-\outl0\strokewidth0 \strokec8 Clear success criteria\
+\f10\b0\fs24 \cf0 \kerning1\expnd0\expndtw0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
+Replace HubSpot core features ONLY\
+\ls19\ilvl0\kerning1\expnd0\expndtw0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
+No AI complexity in MVP\
+\ls19\ilvl0\kerning1\expnd0\expndtw0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
+Clear success criteria\
 \pard\pardeftab720\sa280\partightenfactor0
 
-\f8\b\fs28 \cf0 4. Commercial Validation\
+\f9\b\fs28 \cf0 4. Commercial Validation\
 \pard\tx220\tx720\pardeftab720\li720\fi-720\partightenfactor0
 \ls20\ilvl0
-\f9\b0\fs24 \cf0 \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
-\outl0\strokewidth0 \strokec8 Immediate \'a316k cost saving\
-\ls20\ilvl0\kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
-\outl0\strokewidth0 \strokec8 Clear path to \'a380k revenue by Year 3\
-\ls20\ilvl0\kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
-\outl0\strokewidth0 \strokec8 Multiple HE institutions already interested\
+\f10\b0\fs24 \cf0 \kerning1\expnd0\expndtw0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
+Immediate \'a316k cost saving\
+\ls20\ilvl0\kerning1\expnd0\expndtw0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
+Clear path to \'a380k revenue by Year 3\
+\ls20\ilvl0\kerning1\expnd0\expndtw0 {\listtext	\uc0\u8226 	}\expnd0\expndtw0\kerning0
+Multiple HE institutions already interested\
 \pard\pardeftab720\partightenfactor0
-\cf9 \strokec9 \
+\cf9 \
 \pard\pardeftab720\sa298\partightenfactor0
 
-\f7\fs36 \cf0 \strokec8 \uc0\u55357 \u56960 
-\f8\b  The Bottom Line\
+\f8\fs36 \cf0 \uc0\u55357 \u56960 
+\f9\b  The Bottom Line\
 \pard\pardeftab720\sa240\partightenfactor0
 
 \fs24 \cf0 MVP Goal
-\f9\b0 : Replace HubSpot with HE-optimized CRM in 16 weeks for 1/3 the cost\
+\f10\b0 : Replace HubSpot with HE-optimized CRM in 16 weeks for 1/3 the cost\
 
-\f8\b Success Formula
-\f9\b0 :\
+\f9\b Success Formula
+\f10\b0 :\
 \pard\pardeftab720\partightenfactor0
 
-\f5\fs26 \cf0 HubSpot Core Features + HE Specialization + Cost Savings = Market Winner\
+\f6\fs26 \cf0 HubSpot Core Features + HE Specialization + Cost Savings = Market Winner\
 \pard\pardeftab720\sa240\partightenfactor0
 
-\f8\b\fs24 \cf0 Next Steps
-\f9\b0 :\
+\f9\b\fs24 \cf0 Next Steps
+\f10\b0 :\
 \pard\tx220\tx720\pardeftab720\li720\fi-720\partightenfactor0
-\ls21\ilvl0\cf0 \kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	1	}\expnd0\expndtw0\kerning0
-\outl0\strokewidth0 \strokec8 Approve focused MVP scope (no AI complexity)\
-\ls21\ilvl0\kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	2	}\expnd0\expndtw0\kerning0
-\outl0\strokewidth0 \strokec8 Begin development immediately\
-\ls21\ilvl0\kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	3	}\expnd0\expndtw0\kerning0
-\outl0\strokewidth0 \strokec8 Start HubSpot parallel operation planning\
-\ls21\ilvl0\kerning1\expnd0\expndtw0 \outl0\strokewidth0 {\listtext	4	}\expnd0\expndtw0\kerning0
-\outl0\strokewidth0 \strokec8 Identify next 2-3 HE prospects for validation\
+\ls21\ilvl0\cf0 \kerning1\expnd0\expndtw0 {\listtext	1	}\expnd0\expndtw0\kerning0
+Approve focused MVP scope (no AI complexity)\
+\ls21\ilvl0\kerning1\expnd0\expndtw0 {\listtext	2	}\expnd0\expndtw0\kerning0
+Begin development immediately\
+\ls21\ilvl0\kerning1\expnd0\expndtw0 {\listtext	3	}\expnd0\expndtw0\kerning0
+Start HubSpot parallel operation planning\
+\ls21\ilvl0\kerning1\expnd0\expndtw0 {\listtext	4	}\expnd0\expndtw0\kerning0
+Identify next 2-3 HE prospects for validation\
 \pard\pardeftab720\sa240\partightenfactor0
 
-\f8\b \cf0 This isn't about building the perfect CRM - it's about building the perfect HubSpot replacement for Higher Education.
-\f9\b0 \
+\f9\b \cf0 This isn't about building the perfect CRM - it's about building the perfect HubSpot replacement for Higher Education.
+\f10\b0 \
 \
 \
 \
@@ -1342,16 +1653,16 @@ Integrations: Twilio (SMS), Calendly (booking), existing forecasting\
                     <div class="ai-features">AI form optimization & lead scoring</div>\
                 </div>\
                 <div class="side-arrow">
-\f6 \uc0\u8594 
-\f9 </div>\
+\f3 \uc0\u8594 
+\f10 </div>\
                 <div class="process-box automation-box">\
                     <div class="process-title">Intelligent Auto-Response</div>\
                     <div class="process-details">Context-aware email templates<br>Dynamic content</div>\
                     <div class="ai-features">LangChain personalization</div>\
                 </div>\
                 <div class="side-arrow">
-\f6 \uc0\u8594 
-\f9 </div>\
+\f3 \uc0\u8594 
+\f10 </div>\
                 <div class="process-box ai-box">\
                     <div class="process-title">ML List Creation</div>\
                     <div class="process-details">Predictive segmentation<br>Propensity modeling</div>\
@@ -1360,8 +1671,8 @@ Integrations: Twilio (SMS), Calendly (booking), existing forecasting\
             </div>\
             \
             <div class="flow-arrow">
-\f6 \uc0\u8595 
-\f9 </div>\
+\f3 \uc0\u8595 
+\f10 </div>\
             \
             <!-- Stage 2: Outreach -->\
             <div class="stage-label">Stage 2: AI-Powered Outreach & Booking</div>\
@@ -1372,16 +1683,16 @@ Integrations: Twilio (SMS), Calendly (booking), existing forecasting\
                     <div class="ai-features">ML conversion probability</div>\
                 </div>\
                 <div class="side-arrow">
-\f6 \uc0\u8594 
-\f9 </div>\
+\f3 \uc0\u8594 
+\f10 </div>\
                 <div class="process-box automation-box">\
                     <div class="process-title">Smart SMS Triggers</div>\
                     <div class="process-details">Context-aware messaging<br>Behavioral triggers</div>\
                     <div class="ai-features">N8N workflow optimization</div>\
                 </div>\
                 <div class="side-arrow">
-\f6 \uc0\u8594 
-\f9 </div>\
+\f3 \uc0\u8594 
+\f10 </div>\
                 <div class="process-box">\
                     <div class="process-title">Modern Calendar</div>\
                     <div class="process-details">Calendly integration<br>AI scheduling</div>\
@@ -1390,8 +1701,8 @@ Integrations: Twilio (SMS), Calendly (booking), existing forecasting\
             </div>\
             \
             <div class="flow-arrow">
-\f6 \uc0\u8595 
-\f9 </div>\
+\f3 \uc0\u8595 
+\f10 </div>\
             \
             <!-- Decision Point -->\
             <div class="process-box decision-box">\
@@ -1412,8 +1723,8 @@ Integrations: Twilio (SMS), Calendly (booking), existing forecasting\
             </div>\
             \
             <div class="flow-arrow">
-\f6 \uc0\u8595 
-\f9 </div>\
+\f3 \uc0\u8595 
+\f10 </div>\
             \
             <!-- Stage 3: Interview -->\
             <div class="stage-label">Stage 3: AI-Enhanced Interview Process</div>\
@@ -1424,8 +1735,8 @@ Integrations: Twilio (SMS), Calendly (booking), existing forecasting\
                     <div class="ai-features">Behavioral pattern analysis</div>\
                 </div>\
                 <div class="side-arrow">
-\f6 \uc0\u8594 
-\f9 </div>\
+\f3 \uc0\u8594 
+\f10 </div>\
                 <div class="process-box">\
                     <div class="process-title">Smart Calendar Sync</div>\
                     <div class="process-details">Active notifications<br>Portfolio tracking</div>\
@@ -1434,8 +1745,8 @@ Integrations: Twilio (SMS), Calendly (booking), existing forecasting\
             </div>\
             \
             <div class="flow-arrow">
-\f6 \uc0\u8595 
-\f9 </div>\
+\f3 \uc0\u8595 
+\f10 </div>\
             \
             <div class="process-box decision-box">\
                 <div class="process-title">Interview AI Analysis</div>\
@@ -1459,8 +1770,8 @@ Integrations: Twilio (SMS), Calendly (booking), existing forecasting\
             </div>\
             \
             <div class="flow-arrow">
-\f6 \uc0\u8595 
-\f9 </div>\
+\f3 \uc0\u8595 
+\f10 </div>\
             \
             <!-- Stage 4: Admissions Journey -->\
             <div class="stage-label">Stage 4: AI-Driven 12-Month Admissions Journey</div>\
@@ -1471,16 +1782,16 @@ Integrations: Twilio (SMS), Calendly (booking), existing forecasting\
                     <div class="ai-features">12-month lifecycle modeling</div>\
                 </div>\
                 <div class="side-arrow">
-\f6 \uc0\u8594 
-\f9 </div>\
+\f3 \uc0\u8594 
+\f10 </div>\
                 <div class="process-box automation-box">\
                     <div class="process-title">Multi-Channel Hub</div>\
                     <div class="process-details">WhatsApp, Discord, SMS<br>Unified communication</div>\
                     <div class="ai-features">N8N orchestration</div>\
                 </div>\
                 <div class="side-arrow">
-\f6 \uc0\u8594 
-\f9 </div>\
+\f3 \uc0\u8594 
+\f10 </div>\
                 <div class="process-box ai-box">\
                     <div class="process-title">Enrollment Forecasting</div>\
                     <div class="process-details">ML enrollment prediction<br>Risk assessment</div>\
@@ -1489,8 +1800,8 @@ Integrations: Twilio (SMS), Calendly (booking), existing forecasting\
             </div>\
             \
             <div class="flow-arrow">
-\f6 \uc0\u8595 
-\f9 </div>\
+\f3 \uc0\u8595 
+\f10 </div>\
             \
             <!-- Final Stage -->\
             <div class="stage-label">Stage 5: AI-Optimized Enrollment</div>\
@@ -1501,8 +1812,8 @@ Integrations: Twilio (SMS), Calendly (booking), existing forecasting\
                     <div class="ai-features">Fraud detection & validation</div>\
                 </div>\
                 <div class="side-arrow">
-\f6 \uc0\u8594 
-\f9 </div>\
+\f3 \uc0\u8594 
+\f10 </div>\
                 <div class="process-box ai-box">\
                     <div class="process-title">Numbers Intelligence</div>\
                     <div class="process-details">Real-time accuracy<br>Predictive reporting</div>\
@@ -2010,17 +2321,17 @@ Integrations: Twilio (SMS), Calendly (booking), existing forecasting\
         <!-- Architecture Overview -->\
         <div class="architecture-overview">\
             <div class="arch-title">
-\f7 \uc0\u55356 \u57303 \u65039 
-\f9  Premium Tech Stack Architecture</div>\
+\f8 \uc0\u55356 \u57303 \u65039 
+\f10  Premium Tech Stack Architecture</div>\
             <div class="arch-flow">\
                 <div class="arch-box primary">Next.js 14</div>\
                 <div class="arrow">
-\f6 \uc0\u8596 
-\f9 </div>\
+\f3 \uc0\u8596 
+\f10 </div>\
                 <div class="arch-box primary">FastAPI Python</div>\
                 <div class="arrow">
-\f6 \uc0\u8596 
-\f9 </div>\
+\f3 \uc0\u8596 
+\f10 </div>\
                 <div class="arch-box primary">Supabase PostgreSQL</div>\
             </div>\
             <div style="text-align: center; margin-top: 15px; font-size: 0.9em;">\
@@ -2052,8 +2363,8 @@ Integrations: Twilio (SMS), Calendly (booking), existing forecasting\
             <div class="tasks-container">\
                 <div class="task-column">\
                     <div class="column-title">
-\f7 \uc0\u55357 \u57056 \u65039 
-\f9  Technical Setup</div>\
+\f8 \uc0\u55357 \u57056 \u65039 
+\f10  Technical Setup</div>\
                     \
                     <div class="task-item critical">\
                         <div class="task-title">Development Environment</div>\
@@ -2082,8 +2393,8 @@ Integrations: Twilio (SMS), Calendly (booking), existing forecasting\
                 \
                 <div class="task-column">\
                     <div class="column-title">
-\f7 \uc0\u55357 \u56538 
-\f9  Learning Track</div>\
+\f8 \uc0\u55357 \u56538 
+\f10  Learning Track</div>\
                     \
                     <div class="task-item learning">\
                         <div class="task-title">Next.js Fundamentals</div>\
@@ -2106,10 +2417,10 @@ Integrations: Twilio (SMS), Calendly (booking), existing forecasting\
                     <div class="task-item">\
                         <div class="task-title">Hello World Integration</div>\
                         <div class="task-description">Next.js 
-\f6 \uc0\u8594 
-\f9  FastAPI 
-\f6 \uc0\u8594 
-\f9  Supabase data flow working</div>\
+\f3 \uc0\u8594 
+\f10  FastAPI 
+\f3 \uc0\u8594 
+\f10  Supabase data flow working</div>\
                         <div class="task-estimate">2 hours</div>\
                     </div>\
                 </div>\
@@ -2126,8 +2437,8 @@ Integrations: Twilio (SMS), Calendly (booking), existing forecasting\
             <div class="tasks-container">\
                 <div class="task-column">\
                     <div class="column-title">
-\f7 \uc0\u55357 \u56772 \u65039 
-\f9  Backend Development</div>\
+\f8 \uc0\u55357 \u56772 \u65039 
+\f10  Backend Development</div>\
                     \
                     <div class="task-item critical">\
                         <div class="task-title">FastAPI Data Models</div>\
@@ -2156,8 +2467,8 @@ Integrations: Twilio (SMS), Calendly (booking), existing forecasting\
                 \
                 <div class="task-column">\
                     <div class="column-title">
-\f7 \uc0\u9883 \u65039 
-\f9  Frontend Development</div>\
+\f8 \uc0\u9883 \u65039 
+\f10  Frontend Development</div>\
                     \
                     <div class="task-item critical">\
                         <div class="task-title">Contact List Page</div>\
@@ -2196,8 +2507,8 @@ Integrations: Twilio (SMS), Calendly (booking), existing forecasting\
             <div class="tasks-container">\
                 <div class="task-column">\
                     <div class="column-title">
-\f7 \uc0\u55356 \u57256 
-\f9  UI/UX Development</div>\
+\f8 \uc0\u55356 \u57256 
+\f10  UI/UX Development</div>\
                     \
                     <div class="task-item critical">\
                         <div class="task-title">WaterBear Branding</div>\
@@ -2226,8 +2537,8 @@ Integrations: Twilio (SMS), Calendly (booking), existing forecasting\
                 \
                 <div class="task-column">\
                     <div class="column-title">
-\f7 \uc0\u9889 
-\f9  Real-time Features</div>\
+\f8 \uc0\u9889 
+\f10  Real-time Features</div>\
                     \
                     <div class="task-item critical">\
                         <div class="task-title">Supabase Real-time</div>\
@@ -2259,8 +2570,8 @@ Integrations: Twilio (SMS), Calendly (booking), existing forecasting\
         <!-- Learning Resources -->\
         <div class="learning-resources">\
             <h3 style="margin-top: 0; text-align: center; text-transform: uppercase; font-weight: 900; letter-spacing: 2px;">
-\f7 \uc0\u55357 \u56538 
-\f9  Essential Learning Resources</h3>\
+\f8 \uc0\u55357 \u56538 
+\f10  Essential Learning Resources</h3>\
             <div class="resources-grid">\
                 <div class="resource-card">\
                     <div class="resource-title">Next.js 14 Mastery</div>\
@@ -2304,55 +2615,55 @@ Integrations: Twilio (SMS), Calendly (booking), existing forecasting\
         <!-- Setup Checklist -->\
         <div class="setup-checklist">\
             <h3 style="margin-top: 0; text-align: center; text-transform: uppercase; font-weight: 900; letter-spacing: 2px;">
-\f7 \uc0\u9989 
-\f9  Phase 1 Setup Checklist</h3>\
+\f8 \uc0\u9989 
+\f10  Phase 1 Setup Checklist</h3>\
             <div class="checklist-grid">\
                 <div class="checklist-item">\
                     <div class="checkbox">
-\f6 \uc0\u9633 
-\f9 </div>\
+\f3 \uc0\u9633 
+\f10 </div>\
                     <div>Node.js 18+ installed</div>\
                 </div>\
                 <div class="checklist-item">\
                     <div class="checkbox">
-\f6 \uc0\u9633 
-\f9 </div>\
+\f3 \uc0\u9633 
+\f10 </div>\
                     <div>Python 3.9+ installed</div>\
                 </div>\
                 <div class="checklist-item">\
                     <div class="checkbox">
-\f6 \uc0\u9633 
-\f9 </div>\
+\f3 \uc0\u9633 
+\f10 </div>\
                     <div>VS Code with extensions</div>\
                 </div>\
                 <div class="checklist-item">\
                     <div class="checkbox">
-\f6 \uc0\u9633 
-\f9 </div>\
+\f3 \uc0\u9633 
+\f10 </div>\
                     <div>Git repositories created</div>\
                 </div>\
                 <div class="checklist-item">\
                     <div class="checkbox">
-\f6 \uc0\u9633 
-\f9 </div>\
+\f3 \uc0\u9633 
+\f10 </div>\
                     <div>Next.js project initialized</div>\
                 </div>\
                 <div class="checklist-item">\
                     <div class="checkbox">
-\f6 \uc0\u9633 
-\f9 </div>\
+\f3 \uc0\u9633 
+\f10 </div>\
                     <div>FastAPI project created</div>\
                 </div>\
                 <div class="checklist-item">\
                     <div class="checkbox">
-\f6 \uc0\u9633 
-\f9 </div>\
+\f3 \uc0\u9633 
+\f10 </div>\
                     <div>Supabase connection working</div>\
                 </div>\
                 <div class="checklist-item">\
                     <div class="checkbox">
-\f6 \uc0\u9633 
-\f9 </div>\
+\f3 \uc0\u9633 
+\f10 </div>\
                     <div>API calling frontend working</div>\
                 </div>\
             </div>\
@@ -2443,8 +2754,8 @@ async function fetchContacts(filters: ContactFilters): Promise<Contact[]> \{\
         <!-- Tips Section -->\
         <div class="tips-section">\
             <div class="tips-title">
-\f7 \uc0\u55357 \u56481 
-\f9  Solo Developer Success Tips</div>\
+\f8 \uc0\u55357 \u56481 
+\f10  Solo Developer Success Tips</div>\
             <div class="tip-item">\
                 <strong>Start Simple:</strong> Get basic CRUD working before adding complexity. Don't try to build everything at once.\
             </div>\
@@ -2468,8 +2779,8 @@ async function fetchContacts(filters: ContactFilters): Promise<Contact[]> \{\
         <!-- Phase 1 Deliverable -->\
         <div class="deliverable">\
             <div class="deliverable-title">
-\f7 \uc0\u55356 \u57263 
-\f9  Phase 1 Success Criteria</div>\
+\f8 \uc0\u55356 \u57263 
+\f10  Phase 1 Success Criteria</div>\
             <div style="text-align: left; margin-top: 15px;">\
                 <strong>Technical Deliverable:</strong><br>\
                 \'95 Next.js app deployed to Vercel<br>\

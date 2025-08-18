@@ -17,15 +17,11 @@ import {
   Target,
   BarChart3,
   Clock,
-  Play,
   Pause,
   Settings,
   Eye,
   TrendingUp,
   Zap,
-  Smartphone,
-  Monitor,
-  Globe,
   UserCheck,
   AlertCircle,
   CheckCircle,
@@ -635,19 +631,19 @@ const EmailCampaigns: React.FC = () => {
           <table className="w-full">
             <thead className="bg-muted/50">
               <tr>
-                <th className="text-left py-3 px-6">
-                  <input
-                    type="checkbox"
-                    className="rounded border-border"
-                    onChange={(e) => {
-                      if (e.target.checked) {
-                        setSelectedCampaigns(filteredCampaigns.map((c) => c.id));
-                      } else {
-                        setSelectedCampaigns([]);
-                      }
-                    }}
-                  />
-                </th>
+                                  <th className="text-left py-3 px-6">
+                    <input
+                      type="checkbox"
+                      className="rounded border-border"
+                      onChange={(e) => {
+                        if ((e.target as HTMLInputElement).checked) {
+                          setSelectedCampaigns(filteredCampaigns.map((c) => c.id));
+                        } else {
+                          setSelectedCampaigns([]);
+                        }
+                      }}
+                    />
+                  </th>
                 <th className="text-left py-3 px-6 font-semibold text-foreground">Campaign</th>
                 <th className="text-left py-3 px-6 font-semibold text-foreground">Status</th>
                 <th className="text-left py-3 px-6 font-semibold text-foreground">Audience</th>
@@ -948,7 +944,7 @@ const EmailCampaigns: React.FC = () => {
                       <input
                         type="text"
                         value={campaignData.name}
-                        onChange={(e) => setCampaignData({...campaignData, name: e.target.value})}
+                        onChange={(e) => setCampaignData({...campaignData, name: (e.target as HTMLInputElement).value})}
                         placeholder="Enter campaign name"
                         className="w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
                       />
@@ -958,7 +954,7 @@ const EmailCampaigns: React.FC = () => {
                       <input
                         type="text"
                         value={campaignData.subject}
-                        onChange={(e) => setCampaignData({...campaignData, subject: e.target.value})}
+                        onChange={(e) => setCampaignData({...campaignData, subject: (e.target as HTMLInputElement).value})}
                         placeholder="Enter email subject line"
                         className="w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
                       />
@@ -968,19 +964,19 @@ const EmailCampaigns: React.FC = () => {
                       <input
                         type="datetime-local"
                         value={campaignData.scheduledFor}
-                        onChange={(e) => setCampaignData({...campaignData, scheduledFor: e.target.value})}
+                        onChange={(e) => setCampaignData({...campaignData, scheduledFor: (e.target as HTMLInputElement).value})}
                         className="w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
                       />
                     </div>
                     <div className="flex items-center gap-2">
                       <input
                         type="checkbox"
-                        id="automation"
+                        id="automation"     
                         checked={campaignData.automation}
-                        onChange={(e) => setCampaignData({...campaignData, automation: e.target.checked})}
+                        onChange={(e) => setCampaignData({...campaignData, automation: (e.target as HTMLInputElement).checked})}
                         className="rounded border-border"
                       />
-                      <label htmlFor="automation" className="text-sm text-foreground">
+                      <label htmlFor="automation" className="text-sm text-foreground">    
                         Enable automation and follow-up sequences
                       </label>
                     </div>
@@ -995,7 +991,7 @@ const EmailCampaigns: React.FC = () => {
                     <button 
                       onClick={() => {
                         // Here you would save the campaign
-                        console.log('Campaign created:', { mode, ...campaignData });
+                        // Campaign created: { mode, ...campaignData }
                         setShowCreateModal(false);
                         setCreateStep(1);
                         setCampaignData({ name: "", subject: "", audience: "", template: "", scheduledFor: "", automation: false });
