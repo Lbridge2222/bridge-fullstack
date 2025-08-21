@@ -20,6 +20,7 @@ import {
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Progress } from "@/components/ui/progress";
+import { usePeople } from "@/hooks/usePeople";
 
 // Small utility
 const cn = (...c: (string | false | null | undefined)[]) => c.filter(Boolean).join(" ");
@@ -83,6 +84,7 @@ const useVirtualScrolling = <T,>(
 
 type Lead = {
   id: number;
+  uid: string; // stable backend id (uuid as string)
   name: string;
   email: string;
   phone: string;
@@ -100,6 +102,7 @@ type Lead = {
   slaStatus: "urgent" | "warning" | "within_sla" | "met";
   contactAttempts: number;
   tags: string[];
+  colorTag?: string; // New: color coding tag
   avatar?: string;
   aiInsights: {
     conversionProbability: number;
@@ -128,7 +131,7 @@ const LeadsManagementPage: React.FC = () => {
   const [itemsPerPage, setItemsPerPage] = useState(25);
   const [currentPage, setCurrentPage] = useState(1);
   const [showFilters, setShowFilters] = useState(true);
-  const [selectedLeads, setSelectedLeads] = useState<Set<number>>(new Set());
+  const [selectedLeads, setSelectedLeads] = useState<Set<string>>(new Set());
 
   // Saved Views & Folders
   const [showSavedViews, setShowSavedViews] = useState(true);
@@ -152,6 +155,8 @@ const LeadsManagementPage: React.FC = () => {
   const [showBulkActions, setShowBulkActions] = useState(false);
   const [bulkAction, setBulkAction] = useState<string>("");
   const [showKeyboardShortcuts, setShowKeyboardShortcuts] = useState(false);
+  const [showActionsMenu, setShowActionsMenu] = useState(false);
+  const [showStats, setShowStats] = useState(window.innerWidth >= 1024); // lg breakpoint
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   // Data Visualization & AI
@@ -167,6 +172,29 @@ const LeadsManagementPage: React.FC = () => {
     action: string;
     priority: number;
   }>>([]);
+
+  // AI Triage State
+  const [aiTriageExtras, setAiTriageExtras] = useState<Map<string, { i: number; score: number; reasons: string[]; next_action: string }>>(new Map());
+  const [isAiTriageLoading, setIsAiTriageLoading] = useState(false);
+  const [aiTriageSummary, setAiTriageSummary] = useState<{ cohort_size: number; top_reasons: string[] } | null>(null);
+
+  // Color Tag System
+  const [selectedColorTag, setSelectedColorTag] = useState<string>("all");
+  const [showColorTagModal, setShowColorTagModal] = useState(false);
+  const [leadToColor, setLeadToColor] = useState<Lead | null>(null);
+  
+  // Predefined color tags with professional, accessible colors aligned to slate theme
+  const colorTags = [
+    { id: "priority", name: "Priority", color: "bg-red-500/20 border-red-500/40 text-red-700", icon: "🔴" },
+    { id: "hot", name: "Hot Lead", color: "bg-accent/20 border-accent/40 text-accent-foreground", icon: "🟠" },
+    { id: "qualified", name: "Qualified", color: "bg-success/20 border-success/40 text-success", icon: "🟢" },
+    { id: "nurture", name: "Nurture", color: "bg-info/20 border-info/40 text-info", icon: "🔵" },
+    { id: "follow-up", name: "Follow Up", color: "bg-forest-green/20 border-forest-green/40 text-forest-green", icon: "🟣" },
+    { id: "research", name: "Research", color: "bg-warning/20 border-warning/40 text-warning", icon: "🟡" },
+    { id: "cold", name: "Cold", color: "bg-slate-200 border-slate-300 text-slate-700", icon: "⚫" },
+    { id: "custom-1", name: "Custom 1", color: "bg-slate-300/20 border-slate-400/40 text-slate-600", icon: "💎" },
+    { id: "custom-2", name: "Custom 2", color: "bg-slate-400/20 border-slate-500/40 text-slate-600", icon: "🌸" },
+  ];
 
   // Performance optimizations
   const [isLoading, setIsLoading] = useState(false);
@@ -267,76 +295,92 @@ const LeadsManagementPage: React.FC = () => {
 
 
 
-  // Mock data
-  const generateLargeDataset = (): Lead[] => {
-    const baseLeads = [
-      {
-        name: "Emma Thompson", email: "emma.thompson@gmail.com", phone: "+44 7812 345678",
-        courseInterest: "Music Production", academicYear: "2025/26", campusPreference: "Brighton",
-        enquiryType: "Web Form", leadSource: "Google Ads", status: "New Lead", statusType: "new" as const,
-        leadScore: 85, slaStatus: "urgent" as const, avatar: "ET",
-      },
-      {
-        name: "Marcus Johnson", email: "m.johnson@college.ac.uk", phone: "+44 7923 456789",
-        courseInterest: "Audio Engineering", academicYear: "2026/27", campusPreference: "Sheffield",
-        enquiryType: "School Visit", leadSource: "School Partnership", status: "Contacted", statusType: "contacted" as const,
-        leadScore: 72, slaStatus: "met" as const, avatar: "MJ",
-      },
-      {
-        name: "Sofia Rodriguez", email: "sofia.r@hotmail.com", phone: "+44 7634 567890",
-        courseInterest: "Songwriting", academicYear: "2025/26", campusPreference: "Online",
-        enquiryType: "Recruitment Event", leadSource: "UCAS Fair", status: "Qualified", statusType: "qualified" as const,
-        leadScore: 91, slaStatus: "met" as const, avatar: "SR",
-      },
-    ];
+  // Removed mock dataset in favor of live data
 
-    const courses = ["Music Production", "Audio Engineering", "Songwriting", "Electronic Music", "Music Business", "Live Sound"];
-    const sources = ["Google Ads", "School Partnership", "UCAS Fair", "Social Media", "Prospectus Download"];
-    const statuses = ["New Lead", "Contacted", "Qualified", "Nurturing", "Cold"] as const;
-    const statusTypeMap = {
-      "New Lead": "new",
-      "Contacted": "contacted",
-      "Qualified": "qualified",
-      "Nurturing": "nurturing",
-      "Cold": "cold",
-    } as const;
-    const years = ["2025/26", "2026/27"];
-    const campuses = ["Brighton", "Sheffield", "Online"];
+  // Real data via API - use dedicated leads endpoint which filters to enquiry stage
+  const filters = useMemo(() => ({ limit: 200 }), []);
+  const { people } = usePeople('leads', filters);
+  
+  // Temporary: use empty array to test if hook is causing re-renders
+  // const people: any[] = [];
 
-    const leads: Lead[] = [];
-    for (let i = 0; i < 1200; i++) {
-      const base = baseLeads[i % baseLeads.length];
-      const status = statuses[Math.floor(Math.random() * statuses.length)];
-      leads.push({
-        ...base,
-        id: i + 1,
-        name: `${base.name.split(" ")[0]} ${String.fromCharCode(65 + Math.floor(Math.random() * 26))}${Math.floor(Math.random() * 999)}`,
-        email: `lead${i + 1}@example.com`,
-        courseInterest: courses[Math.floor(Math.random() * courses.length)],
-        leadSource: sources[Math.floor(Math.random() * sources.length)],
-        status,
-        statusType: statusTypeMap[status],
-        academicYear: years[Math.floor(Math.random() * years.length)],
-        campusPreference: campuses[Math.floor(Math.random() * campuses.length)],
-        leadScore: Math.floor(Math.random() * 100),
-        createdDate: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString(),
-        lastContact: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000).toISOString(),
-        nextAction: ["Initial contact required", "Send prospectus", "Schedule call", "Follow up", "Book open day"][Math.floor(Math.random() * 5)],
-        slaStatus: (["urgent", "warning", "within_sla", "met"] as Lead["slaStatus"][])[Math.floor(Math.random() * 4)],
-        contactAttempts: Math.floor(Math.random() * 6),
-        tags: [["High Interest", "Direct Course Match"], ["School Partnership", "Future Entry"], ["Hot Lead", "Open Day Interest"]][Math.floor(Math.random() * 3)],
+  const datasetLeads = useMemo((): Lead[] => {
+    const now = Date.now();
+    const leads = (people || []).map((p: any, idx: number) => {
+      // Ensure unique IDs - use original ID if numeric, otherwise use index + 1000 to avoid conflicts
+      const idNum = typeof p.id === 'number' ? p.id : (parseInt(p.id, 10) || (idx + 1000));
+      const uidStr = String(p.id);
+      
+      const lastActivityIso: string = p.last_activity_at || p.created_at || new Date().toISOString();
+      const hoursSinceLast = Math.max(0, (now - new Date(lastActivityIso).getTime()) / 36e5);
+      const slaStatus: Lead["slaStatus"] = hoursSinceLast >= 24 ? 'urgent' : hoursSinceLast >= 12 ? 'warning' : 'within_sla';
+
+      return {
+        id: idNum,
+        uid: uidStr,
+        name: `${p.first_name || ''} ${p.last_name || ''}`.trim() || 'Unknown',
+        email: p.email || 'unknown@example.com',
+        phone: p.phone || '',
+        courseInterest: p.latest_programme_name || 'Unknown',
+        academicYear: p.latest_academic_year || 'N/A',
+        campusPreference: p.latest_campus_name || 'N/A',
+        enquiryType: p.last_activity_kind || 'Unknown',
+        leadSource: p.source || 'Unknown',
+        status: 'New Lead',
+        statusType: 'new' as Lead['statusType'],
+        leadScore: typeof p.lead_score === 'number' ? p.lead_score : 0,
+        createdDate: p.created_at || lastActivityIso,
+        lastContact: lastActivityIso,
+        nextAction: p.last_activity_title || 'Initial contact required',
+        slaStatus,
+        contactAttempts: p.contact_attempts || 0,
+        tags: [p.lifecycle_state ? `Lifecycle: ${p.lifecycle_state}` : null].filter(Boolean) as string[],
+        colorTag: (() => {
+          // Assign color tags based on lead characteristics
+          if (p.lead_score >= 80) return 'priority';
+          if (p.lead_score >= 60) return 'hot';
+          if (p.lead_score >= 40) return 'qualified';
+          if (p.lead_score >= 20) return 'nurture';
+          return 'cold';
+        })(),
+        avatar: (p.first_name && p.last_name) ? `${p.first_name[0]}${p.last_name[0]}`.toUpperCase() : undefined,
         aiInsights: {
-          conversionProbability: Math.floor(Math.random() * 100),
-          bestContactTime: ["Weekday evenings", "Business hours", "Weekends"][Math.floor(Math.random() * 3)],
-          recommendedAction: ["Send portfolio examples", "Schedule campus visit", "Convert to application"][Math.floor(Math.random() * 3)],
-          urgency: (["high", "medium", "low"] as const)[Math.floor(Math.random() * 3)],
+          conversionProbability: Math.round(((p.conversion_probability ?? 0) as number) * 100),
+          bestContactTime: 'Business hours',
+          recommendedAction: 'Schedule call',
+          urgency: ((): 'high' | 'medium' | 'low' => {
+            const score = p.lead_score ?? 0;
+            if (score >= 80) return 'high';
+            if (score >= 50) return 'medium';
+            return 'low';
+          })(),
         },
-      });
-    }
+      };
+    });
+    
     return leads;
-  };
+  }, [people]);
 
-  const mockLeads = useMemo(() => generateLargeDataset(), []);
+  // Map original UUID -> numeric id, and numeric id -> UUID, to align AI results with UI keys
+  const uuidToNumericId = useMemo(() => {
+    const m = new Map<string, number>();
+    (people || []).forEach((p: any, idx: number) => {
+      const idNum = typeof p.id === 'number' ? p.id : (parseInt(p.id, 10) || (idx + 1000));
+      m.set(String(p.id), idNum);
+    });
+    return m;
+  }, [people]);
+
+  const numericIdToUuid = useMemo(() => {
+    const m = new Map<number, string>();
+    (people || []).forEach((p: any, idx: number) => {
+      const idNum = typeof p.id === 'number' ? p.id : (parseInt(p.id, 10) || (idx + 1000));
+      m.set(idNum, String(p.id));
+    });
+    return m;
+  }, [people]);
+
+
 
   // Apply saved-view filters
   const applyViewFilters = (leads: Lead[], view: SavedView | null) => {
@@ -420,34 +464,34 @@ const LeadsManagementPage: React.FC = () => {
     const term = searchTerm.toLowerCase();
     
     // Course suggestions
-    const courses = [...new Set(mockLeads.map(l => l.courseInterest))];
+    const courses = [...new Set(datasetLeads.map(l => l.courseInterest))];
     courses.forEach(course => {
       if (course.toLowerCase().includes(term)) {
-        const count = mockLeads.filter(l => l.courseInterest === course).length;
+        const count = datasetLeads.filter(l => l.courseInterest === course).length;
         suggestions.push({ type: "course", value: course, count });
       }
     });
     
     // Campus suggestions
-    const campuses = [...new Set(mockLeads.map(l => l.campusPreference))];
+    const campuses = [...new Set(datasetLeads.map(l => l.campusPreference))];
     campuses.forEach(campus => {
       if (campus.toLowerCase().includes(term)) {
-        const count = mockLeads.filter(l => l.campusPreference === campus).length;
+        const count = datasetLeads.filter(l => l.campusPreference === campus).length;
         suggestions.push({ type: "campus", value: campus, count });
       }
     });
     
     // Source suggestions
-    const sources = [...new Set(mockLeads.map(l => l.leadSource))];
+    const sources = [...new Set(datasetLeads.map(l => l.leadSource))];
     sources.forEach(source => {
       if (source.toLowerCase().includes(term)) {
-        const count = mockLeads.filter(l => l.leadSource === source).length;
+        const count = datasetLeads.filter(l => l.leadSource === source).length;
         suggestions.push({ type: "source", value: source, count });
       }
     });
     
     return suggestions.slice(0, 5);
-  }, [searchTerm, mockLeads]);
+  }, [searchTerm, datasetLeads]);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -485,8 +529,8 @@ const LeadsManagementPage: React.FC = () => {
   const handleBulkAction = (action: string) => {
     if (selectedLeads.size === 0) return;
     
-    const leadIds = Array.from(selectedLeads);
-    
+    const leadIds = Array.from(selectedLeads); // these are uids already
+
     switch (action) {
       case "status":
         // Update status for all selected leads
@@ -504,8 +548,20 @@ const LeadsManagementPage: React.FC = () => {
         }
         break;
       case "email":
-        // Send email to selected leads
-        console.log(`Sending email to ${leadIds.length} leads`);
+        // AI-powered email composition
+        handleAiOutreach("nurture");
+        break;
+      case "interview":
+        // AI-powered interview booking email
+        handleAiOutreach("book_interview");
+        break;
+      case "reengage":
+        // AI-powered re-engagement email
+        handleAiOutreach("reengage");
+        break;
+      case "color":
+        // Assign color tag to selected leads
+        handleBulkColorTagAssignment();
         break;
     }
     
@@ -517,7 +573,7 @@ const LeadsManagementPage: React.FC = () => {
   const filteredLeads = useMemo(() => {
     if (isLoading) return [];
     
-    let filtered = currentView ? applyViewFilters(mockLeads, currentView) : mockLeads;
+    let filtered = currentView ? applyViewFilters(datasetLeads, currentView) : datasetLeads;
     
     // Apply search filter only if search term is significant
     if (debouncedSearchTerm.trim().length > 0) {
@@ -536,27 +592,37 @@ const LeadsManagementPage: React.FC = () => {
       const matchesCourse = selectedCourse === "all" || lead.courseInterest === selectedCourse;
       const matchesYear = selectedYear === "all" || lead.academicYear === selectedYear;
       const matchesUrgent = !urgentOnly || ["urgent", "warning"].includes(lead.slaStatus);
-      return matchesStatus && matchesSource && matchesCourse && matchesYear && matchesUrgent;
+      const matchesColorTag = selectedColorTag === "all" || lead.colorTag === selectedColorTag;
+      return matchesStatus && matchesSource && matchesCourse && matchesYear && matchesUrgent && matchesColorTag;
     });
 
-    // Optimized sorting
-    if (sortBy && sortOrder) {
+    // AI Triage Reordering - if AI has analyzed, use AI scores
+    if (aiTriageExtras.size > 0) {
       filtered.sort((a, b) => {
-        const aV = (a as any)[sortBy];
-        const bV = (b as any)[sortBy];
-        
-        if (typeof aV === "number" && typeof bV === "number") {
-          return sortOrder === "asc" ? aV - bV : bV - aV;
-        }
-        
-        const aStr = String(aV || "").toLowerCase();
-        const bStr = String(bV || "").toLowerCase();
-        return sortOrder === "asc" ? aStr.localeCompare(bStr) : bStr.localeCompare(aStr);
+        const aScore = aiTriageExtras.get(String(a.id))?.score ?? -1;
+        const bScore = aiTriageExtras.get(String(b.id))?.score ?? -1;
+        return bScore - aScore; // Higher scores first
       });
+    } else {
+      // Optimized sorting (original logic)
+      if (sortBy && sortOrder) {
+        filtered.sort((a, b) => {
+          const aV = (a as any)[sortBy];
+          const bV = (b as any)[sortBy];
+          
+          if (typeof aV === "number" && typeof bV === "number") {
+            return sortOrder === "asc" ? aV - bV : bV - aV;
+          }
+          
+          const aStr = String(aV || "").toLowerCase();
+          const bStr = String(bV || "").toLowerCase();
+          return sortOrder === "asc" ? aStr.localeCompare(bStr) : bStr.localeCompare(aStr);
+        });
+      }
     }
 
     return filtered;
-  }, [mockLeads, currentView, debouncedSearchTerm, selectedStatus, selectedSource, selectedCourse, selectedYear, urgentOnly, sortBy, sortOrder, isLoading]);
+  }, [datasetLeads, currentView, debouncedSearchTerm, selectedStatus, selectedSource, selectedCourse, selectedYear, urgentOnly, sortBy, sortOrder, isLoading, aiTriageExtras, selectedColorTag]);
 
   // Memoized pagination
   const paginationData = useMemo(() => {
@@ -606,17 +672,25 @@ const LeadsManagementPage: React.FC = () => {
     setCurrentPage(1);
   }, []);
 
-  const toggleLeadSelection = useCallback((id: number) => {
-    const s = new Set(selectedLeads);
-    s.has(id) ? s.delete(id) : s.add(id);
-    setSelectedLeads(s);
-  }, [selectedLeads]);
+  const toggleLeadSelection = useCallback((uid: string) => {
+    setSelectedLeads(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(uid)) {
+        newSet.delete(uid);
+      } else {
+        newSet.add(uid);
+      }
+      return newSet;
+    });
+  }, []);
 
   const selectAllVisible = useCallback(() => {
-    const s = new Set(selectedLeads);
-    paginationData.paginatedLeads.forEach((l) => s.add(l.id));
-    setSelectedLeads(s);
-  }, [selectedLeads, paginationData.paginatedLeads]);
+    setSelectedLeads(prev => {
+      const newSet = new Set(prev);
+      paginationData.paginatedLeads.forEach((l) => newSet.add(l.uid));
+      return newSet;
+    });
+  }, [paginationData.paginatedLeads]);
 
   const clearSelection = useCallback(() => setSelectedLeads(new Set()), []);
 
@@ -708,7 +782,7 @@ const LeadsManagementPage: React.FC = () => {
           <div className="text-left">
             <div className="text-sm font-semibold">All Leads</div>
             <div className={`text-xs ${currentView ? 'text-muted-foreground' : 'text-muted-foreground'}`}>
-              {mockLeads.length.toLocaleString()} total leads
+              {datasetLeads.length.toLocaleString()} total leads
             </div>
           </div>
         </Button>
@@ -799,75 +873,201 @@ const LeadsManagementPage: React.FC = () => {
   }
 
   // Optimized table row component
-  const TableRow = React.memo(({ lead, index }: { lead: Lead; index: number }) => (
-    <tr className={cn(
-      "hover:bg-muted/50 transition-colors duration-200", 
-      selectedLeads.has(lead.id) && "bg-muted ring-1 ring-border"
-    )}>
-      <td className="px-6 py-5">
-        <Checkbox
-          checked={selectedLeads.has(lead.id)}
-          onCheckedChange={() => toggleLeadSelection(lead.id)}
-          aria-label={`Select ${lead.name}`}
-        />
-      </td>
-      <td className="px-6 py-5">
-        <div className="flex items-center">
-          <div className="mr-4 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-muted to-muted/80 text-muted-foreground text-sm font-bold border border-border">
-            {lead.avatar || lead.name.charAt(0)}
-          </div>
-          <div>
-            <div className="text-sm font-semibold text-foreground">{lead.name}</div>
-            <div className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
-              <Mail className="h-3 w-3" />
-              {lead.email}
+  const TableRow = React.memo(({ lead, index }: { lead: Lead; index: number }) => {
+    const [showContextMenu, setShowContextMenu] = useState(false);
+    const [contextMenuPosition, setContextMenuPosition] = useState({ x: 0, y: 0 });
+    
+    const handleContextMenu = (e: React.MouseEvent) => {
+      e.preventDefault();
+      setContextMenuPosition({ x: e.clientX, y: e.clientY });
+      setShowContextMenu(true);
+    };
+    
+    const assignColorTag = (colorTagId: string) => {
+      // In a real app, you'd make an API call here
+      console.log(`Assigning color tag ${colorTagId} to lead ${lead.name}`);
+      setShowContextMenu(false);
+    };
+    
+    // Close context menu when clicking outside
+    useEffect(() => {
+      const handleClickOutside = () => setShowContextMenu(false);
+      if (showContextMenu) {
+        document.addEventListener('click', handleClickOutside);
+        return () => document.removeEventListener('click', handleClickOutside);
+      }
+    }, [showContextMenu]);
+    
+    return (
+      <>
+        <tr 
+          className={cn(
+            "hover:bg-muted/50 transition-colors duration-200", 
+            selectedLeads.has(lead.uid) && "bg-muted ring-1 ring-border",
+            // Add subtle background tint for color-coded leads
+            lead.colorTag && (() => {
+              const tag = colorTags.find(t => t.id === lead.colorTag);
+              if (!tag) return "";
+              if (tag.id === "priority") return "bg-red-500/6";
+              if (tag.id === "hot") return "bg-accent/6";
+              if (tag.id === "qualified") return "bg-success/6";
+              if (tag.id === "nurture") return "bg-info/6";
+              if (tag.id === "follow-up") return "bg-forest-green/6";
+              if (tag.id === "research") return "bg-warning/6";
+              if (tag.id === "cold") return "bg-slate-100/55";
+              if (tag.id === "custom-1") return "bg-slate-200/40";
+              if (tag.id === "custom-2") return "bg-slate-300/35";
+              return "";
+            })()
+          )}
+          onContextMenu={handleContextMenu}
+        >
+          <td className="px-3 sm:px-4 lg:px-6 py-3 sm:py-4 lg:py-5">
+            <Checkbox
+              checked={selectedLeads.has(lead.uid)}
+              onCheckedChange={(checked) => {
+                if (checked) {
+                  setSelectedLeads(prev => {
+                    const newSet = new Set(prev);
+                    newSet.add(lead.uid);
+                    return newSet;
+                  });
+                } else {
+                  setSelectedLeads(prev => {
+                    const newSet = new Set(prev);
+                    newSet.delete(lead.uid);
+                    return newSet;
+                  });
+                }
+              }}
+              aria-label={`Select ${lead.name}`}
+            />
+          </td>
+          <td className="px-3 sm:px-4 lg:px-6 py-3 sm:py-4 lg:py-5">
+            <div className="flex items-center">
+              <div className="mr-3 sm:mr-4 flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-xl bg-gradient-to-br from-muted to-muted/80 text-muted-foreground text-sm font-bold border border-border">
+                {lead.avatar || lead.name.charAt(0)}
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2">
+                  <div className="text-sm font-semibold text-foreground truncate">{lead.name}</div>
+                  {lead.colorTag && (
+                    <div className="flex-shrink-0">
+                      <ColorTagIndicator tagId={lead.colorTag} />
+                    </div>
+                  )}
+                </div>
+                <div className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
+                  <Mail className="h-3 w-3" />
+                  <span className="truncate">{lead.email}</span>
+                </div>
+                <div className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
+                  <Zap className="h-3 w-3" />
+                  <span className="truncate">{lead.leadSource}</span>
+                </div>
+              </div>
             </div>
-            <div className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
-              <Zap className="h-3 w-3" />
-              {lead.leadSource}
+          </td>
+          <td className="px-3 sm:px-4 lg:px-6 py-3 sm:py-4 lg:py-5">
+            <div className="space-y-1">
+              <div className="text-sm font-medium text-foreground truncate">{lead.courseInterest}</div>
+              <div className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded-md inline-block">
+                {lead.academicYear}
+              </div>
+              <div className="text-xs text-muted-foreground truncate">{lead.campusPreference}</div>
+            </div>
+          </td>
+          <td className="px-3 sm:px-4 lg:px-6 py-3 sm:py-4 lg:py-5">
+            <LeadScoreIndicator score={lead.leadScore} />
+            <div className="text-xs text-muted-foreground mt-2">
+              {lead.aiInsights.conversionProbability}% conversion probability
+            </div>
+            {/* Add prominent color indicator */}
+            {lead.colorTag && (
+              <div className="mt-2 flex items-center gap-2">
+                <ColorTagIndicator tagId={lead.colorTag} />
+                <span className="text-xs text-muted-foreground">
+                  {colorTags.find(t => t.id === lead.colorTag)?.name}
+                </span>
+              </div>
+            )}
+          </td>
+          <td className="px-3 sm:px-4 lg:px-6 py-3 sm:py-4 lg:py-5">
+            <div className="space-y-2">
+              <StatusBadge status={lead.status} statusType={lead.statusType} />
+              <SLABadge sla={lead.slaStatus} />
+              {aiTriageExtras.has(String(lead.uid)) && (
+                <div className="text-xs text-muted-foreground">
+                  NBA: {aiTriageExtras.get(String(lead.uid))!.next_action}
+                </div>
+              )}
+            </div>
+          </td>
+          <td className="px-3 sm:px-4 lg:px-6 py-3 sm:py-4 lg:py-5">
+            <div className="flex gap-1">
+              <Button size="icon" variant="ghost" aria-label="Call lead" className="hover:bg-success/10 hover:text-success h-8 w-8 sm:h-9 sm:w-9">
+                <Phone className="h-3 w-3 sm:h-4 sm:w-4" />
+              </Button>
+              <Button size="icon" variant="ghost" aria-label="Email lead" className="hover:bg-blue-500/10 hover:text-blue-600 h-8 w-8 sm:h-9 sm:w-9">
+                <Mail className="h-3 w-3 sm:h-4 sm:w-4" />
+              </Button>
+              <Button size="icon" variant="ghost" aria-label="Schedule" className="hover:bg-warning/10 hover:text-warning h-8 w-8 sm:h-9 sm:w-9">
+                <Calendar className="h-3 w-3 sm:h-4 sm:w-4" />
+              </Button>
+              <Button size="icon" variant="ghost" aria-label="More actions" className="hover:bg-foreground hover:text-background h-8 w-8 sm:h-9 sm:w-9">
+                <MoreHorizontal className="h-3 w-3 sm:h-4 sm:w-4" />
+              </Button>
+            </div>
+            
+            {/* AI Triage Insights */}
+            {aiTriageExtras.has(String(lead.uid)) && (
+              <div className="mt-2 p-2 bg-muted/30 rounded border border-border">
+                <div className="flex items-center gap-2 mb-1">
+                  <Brain className="h-3 w-3 text-accent" />
+                  <span className="text-xs font-medium text-foreground">AI Score: {aiTriageExtras.get(String(lead.uid))!.score}</span>
+                  <Badge variant="outline" className="text-[10px] px-1 py-0.5 ml-auto">
+                    Next: {aiTriageExtras.get(String(lead.uid))!.next_action}
+                  </Badge>
+                </div>
+                <div className="flex flex-wrap gap-1">
+                  {(aiTriageExtras.get(String(lead.uid))!.reasons || []).slice(0, 2).map((reason, i) => (
+                    <Badge key={i} variant="secondary" className="text-[10px] px-1 py-0.5">
+                      {reason}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            )}
+          </td>
+        </tr>
+        {showContextMenu && (
+          <div 
+            className="fixed z-50" 
+            style={{ left: contextMenuPosition.x, top: contextMenuPosition.y }}
+          >
+            <div className="bg-card border border-border rounded-lg shadow-lg p-1 min-w-40">
+              <div className="text-xs font-medium text-muted-foreground px-2 py-1.5 border-b border-border">
+                Color Tag
+              </div>
+              {colorTags.map((tag) => (
+                <button
+                  key={tag.id}
+                  onClick={() => assignColorTag(tag.id)}
+                  className={`w-full text-left py-1.5 px-2 rounded text-xs hover:bg-muted transition-colors duration-200 flex items-center gap-2 ${
+                    lead.colorTag === tag.id ? 'bg-muted/50' : ''
+                  }`}
+                >
+                  <div className={`w-2 h-2 rounded-full ${tag.color.split(' ')[0]} ${tag.color.split(' ')[1]} ${tag.color.split(' ')[2]}`} />
+                  <span>{tag.name}</span>
+                  {lead.colorTag === tag.id && <span className="ml-auto text-xs text-muted-foreground">•</span>}
+                </button>
+              ))}
             </div>
           </div>
-        </div>
-      </td>
-      <td className="px-6 py-5">
-        <div className="space-y-1">
-          <div className="text-sm font-medium text-foreground">{lead.courseInterest}</div>
-          <div className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded-md inline-block">
-            {lead.academicYear}
-          </div>
-          <div className="text-xs text-muted-foreground">{lead.campusPreference}</div>
-        </div>
-      </td>
-      <td className="px-6 py-5">
-        <LeadScoreIndicator score={lead.leadScore} />
-        <div className="text-xs text-muted-foreground mt-2">
-          {lead.aiInsights.conversionProbability}% conversion probability
-        </div>
-      </td>
-      <td className="px-6 py-5">
-        <div className="space-y-2">
-          <StatusBadge status={lead.status} statusType={lead.statusType} />
-          <SLABadge sla={lead.slaStatus} />
-        </div>
-      </td>
-      <td className="px-6 py-5">
-        <div className="flex gap-1">
-          <Button size="icon" variant="ghost" aria-label="Call lead" className="hover:bg-success/10 hover:text-success">
-            <Phone className="h-4 w-4" />
-          </Button>
-          <Button size="icon" variant="ghost" aria-label="Email lead" className="hover:bg-muted hover:text-muted-foreground">
-            <Mail className="h-4 w-4" />
-          </Button>
-          <Button size="icon" variant="ghost" aria-label="Schedule" className="hover:bg-warning/10 hover:text-warning">
-            <Calendar className="h-4 w-4" />
-          </Button>
-          <Button size="icon" variant="ghost" aria-label="More actions" className="hover:bg-muted">
-            <MoreHorizontal className="h-4 w-4" />
-          </Button>
-        </div>
-      </td>
-    </tr>
-  ));
+        )}
+      </>
+    );
+  });
 
   // Optimized table view with virtual scrolling
   const TableView = () => (
@@ -876,19 +1076,35 @@ const LeadsManagementPage: React.FC = () => {
         <table className="w-full">
           <thead className="bg-gradient-to-r from-slate-50 to-slate-100 border-b border-slate-200 sticky top-0 z-10">
             <tr>
-              <th className="px-6 py-4 text-left">
+              <th className="px-3 sm:px-4 lg:px-6 py-3 sm:py-4 text-left">
                 <Checkbox
-                  onCheckedChange={(v) => (v ? selectAllVisible() : clearSelection())}
-                  checked={paginationData.paginatedLeads.every((l) => selectedLeads.has(l.id)) && paginationData.paginatedLeads.length > 0}
+                  onCheckedChange={(checked) => {
+                    if (checked) {
+                      // Select all visible leads
+                      const visibleIds = new Set(paginationData.paginatedLeads.map(l => l.uid));
+                      setSelectedLeads(prev => new Set([...prev, ...visibleIds]));
+                    } else {
+                      // Deselect all visible leads
+                      const visibleIds = new Set(paginationData.paginatedLeads.map(l => l.uid));
+                      setSelectedLeads(prev => {
+                        const newSet = new Set(prev);
+                        visibleIds.forEach(id => newSet.delete(id));
+                        return newSet;
+                      });
+                    }
+                  }}
+                  checked={paginationData.paginatedLeads.length > 0 && 
+                          paginationData.paginatedLeads.every((l) => selectedLeads.has(l.uid))}
                   aria-label="Select all visible"
                 />
               </th>
               <th
-                className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider cursor-pointer hover:text-muted-foreground transition-colors duration-200"
+                className="px-3 sm:px-4 lg:px-6 py-3 sm:py-4 text-left text-xs font-semibold uppercase tracking-wider cursor-pointer hover:text-muted-foreground transition-colors duration-200"
                 onClick={() => setSortBy("name")}
               >
                 <div className="flex items-center gap-2">
-                  Lead Details
+                  <span className="hidden sm:inline">Lead Details</span>
+                  <span className="sm:hidden">Lead</span>
                   {sortBy === "name" && (
                     sortOrder === "asc" ? 
                       <SortAsc className="h-4 w-4 text-muted-foreground" /> : 
@@ -896,13 +1112,17 @@ const LeadsManagementPage: React.FC = () => {
                   )}
                 </div>
               </th>
-              <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">Course</th>
+              <th className="px-3 sm:px-4 lg:px-6 py-3 sm:py-4 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                <span className="hidden sm:inline">Course</span>
+                <span className="sm:hidden">Course</span>
+              </th>
               <th
-                className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider cursor-pointer hover:text-muted-foreground transition-colors duration-200"
+                className="px-3 sm:px-4 lg:px-6 py-3 sm:py-4 text-left text-xs font-semibold uppercase tracking-wider cursor-pointer hover:text-muted-foreground transition-colors duration-200"
                 onClick={() => setSortBy("leadScore")}
               >
                 <div className="flex items-center gap-2">
-                  Score
+                  <span className="hidden sm:inline">Score</span>
+                  <span className="sm:hidden">Score</span>
                   {sortBy === "leadScore" && (
                     sortOrder === "asc" ? 
                       <SortAsc className="h-4 w-4 text-muted-foreground" /> : 
@@ -910,8 +1130,14 @@ const LeadsManagementPage: React.FC = () => {
                   )}
                 </div>
               </th>
-              <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">Status</th>
-              <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">Actions</th>
+              <th className="px-3 sm:px-4 lg:px-6 py-3 sm:py-4 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                <span className="hidden sm:inline">Status</span>
+                <span className="sm:hidden">Status</span>
+              </th>
+              <th className="px-3 sm:px-4 lg:px-6 py-3 sm:py-4 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                <span className="hidden sm:inline">Actions</span>
+                <span className="sm:hidden">Actions</span>
+              </th>
             </tr>
           </thead>
           <tbody 
@@ -925,6 +1151,244 @@ const LeadsManagementPage: React.FC = () => {
           </tbody>
         </table>
       </div>
+    </div>
+  );
+
+  // Cards view implementation
+  const CardsView = () => (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
+      {paginationData.paginatedLeads.map((lead) => (
+        <Card 
+          key={lead.id} 
+          className={cn(
+            "hover:shadow-lg transition-all duration-200 cursor-pointer",
+            selectedLeads.has(lead.uid) && "ring-2 ring-primary bg-primary/5",
+            // Add subtle background tint for color-coded leads
+            lead.colorTag && (() => {
+              const tag = colorTags.find(t => t.id === lead.colorTag);
+              if (!tag) return "";
+              if (tag.id === "priority") return "bg-red-500/10";
+              if (tag.id === "hot") return "bg-accent/10";
+              if (tag.id === "qualified") return "bg-success/10";
+              if (tag.id === "nurture") return "bg-info/10";
+              if (tag.id === "follow-up") return "bg-forest-green/10";
+              if (tag.id === "research") return "bg-warning/10";
+              if (tag.id === "cold") return "bg-slate-100/50";
+              if (tag.id === "custom-1") return "bg-slate-200/35";
+              if (tag.id === "custom-2") return "bg-slate-300/30";
+              return "";
+            })()
+          )}
+          onClick={() => toggleLeadSelection(lead.uid)}
+        >
+          <CardContent className="p-4">
+            {/* Header with avatar and selection */}
+            <div className="flex items-start justify-between mb-3">
+              <div className="flex items-center gap-3">
+                <div className="h-12 w-12 rounded-full bg-gradient-to-br from-muted to-muted/80 flex items-center justify-center text-sm font-bold border border-border">
+                  {lead.avatar || lead.name.charAt(0)}
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-semibold text-foreground">{lead.name}</h3>
+                    {lead.colorTag && <ColorTagIndicator tagId={lead.colorTag} />}
+                  </div>
+                  <p className="text-xs text-muted-foreground">{lead.email}</p>
+                </div>
+              </div>
+              <Checkbox
+                checked={selectedLeads.has(lead.uid)}
+                onCheckedChange={(checked) => {
+                  if (checked) {
+                    setSelectedLeads(prev => {
+                      const newSet: Set<string> = new Set(prev);
+                      newSet.add(lead.uid);
+                      return newSet;
+                    });
+                  } else {
+                    setSelectedLeads(prev => {
+                      const newSet: Set<string> = new Set(prev);
+                      newSet.delete(lead.uid);
+                      return newSet;
+                    });
+                  }
+                }}
+                onClick={(e) => e.stopPropagation()}
+              />
+            </div>
+
+            {/* Course info */}
+            <div className="mb-3">
+              <p className="text-sm font-medium text-foreground">{lead.courseInterest}</p>
+              <div className="flex items-center gap-2 mt-1">
+                <Badge variant="outline" className="text-xs">{lead.academicYear}</Badge>
+                <Badge variant="secondary" className="text-xs">{lead.campusPreference}</Badge>
+              </div>
+            </div>
+
+            {/* Lead score and conversion */}
+            <div className="mb-3">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-medium">Lead Score</span>
+                <span className="text-sm font-bold text-foreground">{lead.leadScore}</span>
+              </div>
+              <Progress value={lead.leadScore} className="h-2 mb-2" />
+              <p className="text-xs text-muted-foreground">
+                {lead.aiInsights.conversionProbability}% conversion probability
+              </p>
+              {/* Add prominent color indicator */}
+              {lead.colorTag && (
+                <div className="mt-2 flex items-center gap-2">
+                  <ColorTagIndicator tagId={lead.colorTag} />
+                  <span className="text-xs text-muted-foreground">
+                    {colorTags.find(t => t.id === lead.colorTag)?.name}
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {/* Status and SLA */}
+            <div className="mb-3">
+              <div className="flex items-center gap-2 mb-2">
+                <StatusBadge status={lead.status} statusType={lead.statusType} />
+                <SLABadge sla={lead.slaStatus} />
+              </div>
+              {aiTriageExtras.has(String(lead.uid)) && (
+                <div className="text-xs text-muted-foreground">
+                  NBA: {aiTriageExtras.get(String(lead.uid))!.next_action}
+                </div>
+              )}
+            </div>
+
+            {/* AI Insights (compact) */}
+            {aiTriageExtras.has(String(lead.uid)) && (
+              <div className="mb-3 p-2 bg-muted/30 rounded border border-border">
+                <div className="flex items-center gap-2 mb-1">
+                  <Brain className="h-3 w-3 text-accent" />
+                  <span className="text-xs font-medium text-foreground">AI Score: {aiTriageExtras.get(String(lead.uid))!.score}</span>
+                </div>
+                <div className="flex flex-wrap gap-1">
+                  {(aiTriageExtras.get(String(lead.uid))!.reasons || []).slice(0, 2).map((reason, i) => (
+                    <Badge key={i} variant="secondary" className="text-[10px] px-1 py-0.5">
+                      {reason}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Actions */}
+            <div className="flex items-center gap-1">
+              <Button size="icon" variant="ghost" className="h-8 w-8 hover:bg-success/10 hover:text-success">
+                <Phone className="h-3 w-3" />
+              </Button>
+              <Button size="icon" variant="ghost" className="h-8 w-8 hover:bg-blue-500/10 hover:text-blue-600">
+                <Mail className="h-3 w-3" />
+              </Button>
+              <Button size="icon" variant="ghost" className="h-8 w-8 hover:bg-warning/10 hover:text-warning">
+                <Calendar className="h-3 w-3" />
+              </Button>
+              <Button size="icon" variant="ghost" className="h-8 w-8 hover:bg-foreground hover:text-background">
+                <MoreHorizontal className="h-3 w-3" />
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  );
+
+  // Compact view implementation
+  const CompactView = () => (
+    <div className="space-y-2">
+      {paginationData.paginatedLeads.map((lead) => (
+        <div
+          key={lead.id}
+          className={cn(
+            "flex items-center gap-4 p-3 rounded-lg border border-border hover:bg-muted/50 transition-all duration-200 cursor-pointer",
+            selectedLeads.has(lead.uid) && "ring-2 ring-primary bg-primary/5",
+            // Add subtle background tint for color-coded leads
+            lead.colorTag && (() => {
+              const tag = colorTags.find(t => t.id === lead.colorTag);
+              if (!tag) return "";
+              if (tag.id === "priority") return "bg-red-500/30";
+              if (tag.id === "hot") return "bg-orange-500/30";
+              if (tag.id === "qualified") return "bg-green-500/30";
+              if (tag.id === "nurture") return "bg-blue-500/30";
+              if (tag.id === "follow-up") return "bg-purple-500/30";
+              if (tag.id === "research") return "bg-yellow-500/30";
+              if (tag.id === "cold") return "bg-gray-500/30";
+              if (tag.id === "custom-1") return "bg-indigo-500/30";
+              if (tag.id === "custom-2") return "bg-pink-500/30";
+              return "";
+            })()
+          )}
+          onClick={() => toggleLeadSelection(lead.uid)}
+        >
+          <Checkbox
+            checked={selectedLeads.has(lead.uid)}
+            onCheckedChange={(checked) => {
+              if (checked) {
+                setSelectedLeads(prev => {
+                  const newSet: Set<string> = new Set(prev);
+                  newSet.add(lead.uid);
+                  return newSet;
+                });
+              } else {
+                setSelectedLeads(prev => {
+                  const newSet: Set<string> = new Set(prev);
+                  newSet.delete(lead.uid);
+                  return newSet;
+                });
+              }
+            }}
+            onClick={(e) => e.stopPropagation()}
+          />
+          
+          <div className="h-8 w-8 rounded-full bg-gradient-to-br from-muted to-muted/80 flex items-center justify-center text-xs font-bold border border-border flex-shrink-0">
+            {lead.avatar || lead.name.charAt(0)}
+          </div>
+          
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-3">
+              <span className="font-medium text-foreground truncate">{lead.name}</span>
+              {lead.colorTag && <ColorTagIndicator tagId={lead.colorTag} />}
+              <span className="text-sm text-muted-foreground">{lead.email}</span>
+              <Badge variant="outline" className="text-xs">{lead.courseInterest}</Badge>
+              <Badge variant="secondary" className="text-xs">{lead.campusPreference}</Badge>
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-3 flex-shrink-0">
+            <div className="text-right">
+              <div className="text-sm font-bold text-foreground">{lead.leadScore}</div>
+              <div className="text-xs text-muted-foreground">Score</div>
+            </div>
+            
+            <StatusBadge status={lead.status} statusType={lead.statusType} />
+            <SLABadge sla={lead.slaStatus} />
+            
+            {aiTriageExtras.has(String(lead.uid)) && (
+              <div className="flex items-center gap-1 px-2 py-1 bg-accent/10 rounded border border-accent/20">
+                <Brain className="h-3 w-3 text-accent" />
+                <span className="text-xs text-accent">{aiTriageExtras.get(String(lead.uid))!.score}</span>
+              </div>
+            )}
+          </div>
+          
+          <div className="flex items-center gap-1 flex-shrink-0">
+            <Button size="icon" variant="ghost" className="h-7 w-7 hover:bg-success/10 hover:text-success">
+              <Phone className="h-3 w-3" />
+            </Button>
+            <Button size="icon" variant="ghost" className="h-7 w-7 hover:bg-blue-500/10 hover:text-blue-600">
+              <Mail className="h-3 w-3" />
+            </Button>
+            <Button size="icon" variant="ghost" className="h-7 w-7 hover:bg-warning/10 hover:text-warning">
+              <Calendar className="h-3 w-3" />
+            </Button>
+          </div>
+        </div>
+      ))}
     </div>
   );
 
@@ -986,39 +1450,111 @@ const LeadsManagementPage: React.FC = () => {
 
   const BulkActionsMenu = () => (
     showBulkActions && (
-      <div className="absolute top-full right-0 mt-2 bg-card border border-border rounded-lg shadow-lg z-50 min-w-48">
-        <div className="p-3 border-b border-border">
+      <div className="absolute top-full right-0 mt-2 bg-card border border-border rounded-lg shadow-lg z-50 min-w-56">
+        <div className="p-4 border-b border-border">
           <h4 className="text-sm font-semibold text-foreground">Bulk Actions ({selectedLeads.size} selected)</h4>
         </div>
         <div className="p-2 space-y-1">
           <button
             onClick={() => handleBulkAction("status")}
-            className="w-full text-left px-3 py-2 text-sm text-muted-foreground hover:bg-muted/50 rounded-md transition-colors duration-200 flex items-center gap-2"
+            className="w-full text-left px-4 py-3 text-sm text-muted-foreground hover:bg-muted/50 rounded-md transition-colors duration-200 flex items-center gap-3"
           >
             <Edit3 className="h-4 w-4" />
             Update Status
           </button>
           <button
             onClick={() => handleBulkAction("email")}
-            className="w-full text-left px-3 py-2 text-sm text-muted-foreground hover:bg-muted/50 rounded-md transition-colors duration-200 flex items-center gap-2"
+            className="w-full text-left px-4 py-3 text-sm text-muted-foreground hover:bg-muted/50 rounded-md transition-colors duration-200 flex items-center gap-3"
           >
             <Send className="h-4 w-4" />
-            Send Email
+            Send Nurture Email (AI)
+          </button>
+          <button
+            onClick={() => handleBulkAction("interview")}
+            className="w-full text-left px-4 py-3 text-sm text-muted-foreground hover:bg-muted/50 rounded-md transition-colors duration-200 flex items-center gap-3"
+          >
+            <Calendar className="h-4 w-4" />
+            Book Interview Email (AI)
+          </button>
+          <button
+            onClick={() => handleBulkAction("reengage")}
+            className="w-full text-left px-4 py-3 text-sm text-muted-foreground hover:bg-muted/50 rounded-md transition-colors duration-200 flex items-center gap-3"
+          >
+            <Zap className="h-4 w-4" />
+            Re-engage Email (AI)
+          </button>
+          <button
+            onClick={() => handleBulkAction("color")}
+            className="w-full text-left px-4 py-3 text-sm text-muted-foreground hover:bg-muted/50 rounded-md transition-colors duration-200 flex items-center gap-3"
+          >
+            <div className="w-4 h-4 rounded-full bg-gradient-to-r from-red-400 to-blue-400" />
+            Color Tag
           </button>
           <button
             onClick={() => handleBulkAction("export")}
-            className="w-full text-left px-3 py-2 text-sm text-muted-foreground hover:bg-muted/50 rounded-md transition-colors duration-200 flex items-center gap-2"
+            className="w-full text-left px-4 py-3 text-sm text-muted-foreground hover:bg-muted/50 rounded-md transition-colors duration-200 flex items-center gap-3"
           >
             <Download className="h-4 w-4" />
             Export Selected
           </button>
-          <div className="border-t border-border my-1"></div>
+          <div className="border-t border-border my-2"></div>
           <button
             onClick={() => handleBulkAction("delete")}
-            className="w-full text-left px-3 py-2 text-sm text-destructive hover:bg-destructive/10 rounded-md transition-colors duration-200 flex items-center gap-2"
+            className="w-full text-left px-4 py-3 text-sm text-destructive hover:bg-destructive/10 rounded-md transition-colors duration-200 flex items-center gap-3"
           >
             <Trash2 className="h-4 w-4" />
             Delete Selected
+          </button>
+        </div>
+      </div>
+    )
+  );
+
+  // Consolidated Actions Menu (Apple-style)
+  const ActionsMenu = () => (
+    showActionsMenu && (
+      <div className="absolute top-full right-0 mt-2 bg-card border border-border rounded-lg shadow-lg z-50 min-w-48">
+        <div className="p-2 space-y-1">
+          <button
+            onClick={() => {
+              setShowActionsMenu(false);
+              // Handle add lead action
+            }}
+            className="w-full text-left px-3 py-2 text-sm text-foreground hover:bg-foreground hover:text-background rounded-md transition-colors duration-200 flex items-center gap-3"
+          >
+            <UserPlus className="h-4 w-4" />
+            Add Lead
+          </button>
+          <button
+            onClick={() => {
+              setShowActionsMenu(false);
+              setShowSaveViewModal(true);
+            }}
+            className="w-full text-left px-3 py-2 text-sm text-foreground hover:bg-foreground hover:text-background rounded-md transition-colors duration-200 flex items-center gap-3"
+          >
+            <BookmarkPlus className="h-4 w-4" />
+            Save View
+          </button>
+          <button
+            onClick={() => {
+              setShowActionsMenu(false);
+              // Handle export action
+            }}
+            className="w-full text-left px-3 py-2 text-sm text-foreground hover:bg-foreground hover:text-background rounded-md transition-colors duration-200 flex items-center gap-3"
+          >
+            <Download className="h-4 w-4" />
+            Export
+          </button>
+          <div className="border-t border-border my-1"></div>
+          <button
+            onClick={() => {
+              setShowActionsMenu(false);
+              setShowAnalytics(!showAnalytics);
+            }}
+            className="w-full text-left px-3 py-2 text-sm text-foreground hover:bg-foreground hover:text-background rounded-md transition-colors duration-200 flex items-center gap-3"
+          >
+            <BarChart3 className="h-4 w-4" />
+            Analytics
           </button>
         </div>
       </div>
@@ -1072,9 +1608,12 @@ const LeadsManagementPage: React.FC = () => {
 
     // Conversion trends over time
     const conversionTrends = last30Days.map(date => {
-      const dayLeads = mockLeads.filter(lead => 
-        lead.createdDate.startsWith(date)
-      );
+      const dayLeads = datasetLeads.filter(lead => {
+        const created = (lead.createdDate ?? '').toString();
+        if (!created) return false;
+        const createdDateOnly = created.slice(0, 10);
+        return createdDateOnly === date;
+      });
       const converted = dayLeads.filter(lead => 
         lead.statusType === "qualified" || lead.statusType === "nurturing"
       );
@@ -1088,7 +1627,7 @@ const LeadsManagementPage: React.FC = () => {
 
     // Lead source performance
     const sourcePerformance = Object.entries(
-      mockLeads.reduce((acc, lead) => {
+      datasetLeads.reduce((acc, lead) => {
         acc[lead.leadSource] = (acc[lead.leadSource] || 0) + 1;
         return acc;
       }, {} as Record<string, number>)
@@ -1097,7 +1636,7 @@ const LeadsManagementPage: React.FC = () => {
       source,
       count,
       conversionRate: (() => {
-        const sourceLeads = mockLeads.filter(l => l.leadSource === source);
+        const sourceLeads = datasetLeads.filter(l => l.leadSource === source);
         const converted = sourceLeads.filter(l => 
           l.statusType === "qualified" || l.statusType === "nurturing"
         );
@@ -1108,7 +1647,7 @@ const LeadsManagementPage: React.FC = () => {
 
     // Course performance
     const coursePerformance = Object.entries(
-      mockLeads.reduce((acc, lead) => {
+      datasetLeads.reduce((acc, lead) => {
         acc[lead.courseInterest] = (acc[lead.courseInterest] || 0) + 1;
         return acc;
       }, {} as Record<string, number>)
@@ -1116,7 +1655,7 @@ const LeadsManagementPage: React.FC = () => {
     .map(([course, count]) => ({
       course,
       count,
-      avgScore: mockLeads
+      avgScore: datasetLeads
         .filter(l => l.courseInterest === course)
         .reduce((sum, l) => sum + l.leadScore, 0) / count
     }))
@@ -1172,7 +1711,7 @@ const LeadsManagementPage: React.FC = () => {
       coursePerformance,
       insights
     };
-  }, [mockLeads]);
+  }, [datasetLeads]);
 
   // AI Insights Component
   const AIInsightsPanel = () => (
@@ -1235,10 +1774,10 @@ const LeadsManagementPage: React.FC = () => {
         <div className="space-y-3">
           {[
             { stage: "Total Leads", count: stats.total, color: "bg-muted-foreground" },
-            { stage: "Contacted", count: mockLeads.filter(l => l.statusType === "contacted").length, color: "bg-info" },
-            { stage: "Qualified", count: mockLeads.filter(l => l.statusType === "qualified").length, color: "bg-success" },
-            { stage: "Nurturing", count: mockLeads.filter(l => l.statusType === "nurturing").length, color: "bg-accent" },
-            { stage: "Converted", count: mockLeads.filter(l => l.statusType === "qualified" && l.leadScore >= 80).length, color: "bg-success" }
+            { stage: "Contacted", count: datasetLeads.filter(l => l.statusType === "contacted").length, color: "bg-info" },
+            { stage: "Qualified", count: datasetLeads.filter(l => l.statusType === "qualified").length, color: "bg-success" },
+            { stage: "Nurturing", count: datasetLeads.filter(l => l.statusType === "nurturing").length, color: "bg-accent" },
+            { stage: "Converted", count: datasetLeads.filter(l => l.statusType === "qualified" && l.leadScore >= 80).length, color: "bg-success" }
           ].map((item, index) => {
             const percentage = (item.count / stats.total) * 100;
             return (
@@ -1344,7 +1883,7 @@ const LeadsManagementPage: React.FC = () => {
           <div className="space-y-2">
             {analyticsData.conversionTrends.slice(-7).map((day) => (
               <div key={day.date} className="flex items-center gap-3">
-                <span className="text-xs text-muted-foreground w-16">{new Date(day.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+                <span className="text-xs text-muted-foreground w-16">{new Date(day.date ?? '').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
                 <div className="flex-1 bg-muted rounded-full h-2">
                   <div 
                     className="bg-info h-2 rounded-full transition-all duration-1000 ease-out"
@@ -1462,6 +2001,161 @@ const LeadsManagementPage: React.FC = () => {
     }, 100);
   }, []);
 
+  // AI Triage Function
+  const handleAiTriage = async () => {
+    if (filteredLeads.length === 0) return;
+    
+    console.log("🚀 Starting AI triage...");
+    setIsAiTriageLoading(true);
+    try {
+      const payload = {
+        filters: {
+          status: selectedStatus === "all" ? undefined : selectedStatus,
+          source: selectedSource === "all" ? undefined : selectedSource,
+          course: selectedCourse === "all" ? undefined : selectedCourse,
+          year: selectedYear === "all" ? undefined : selectedYear,
+          stalled_days_gte: urgentOnly ? 12 : undefined,
+        }
+      };
+
+      console.log("📤 Sending payload:", payload);
+      console.log("🌐 Calling:", "http://127.0.0.1:8000/ai/leads/triage");
+
+      const res = await fetch("http://127.0.0.1:8000/ai/leads/triage", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+
+      console.log("📥 Response status:", res.status, res.statusText);
+
+      if (!res.ok) {
+        throw new Error(`AI triage failed: ${res.statusText}`);
+      }
+
+      const json: { 
+        summary: { cohort_size: number; top_reasons: string[] }; 
+        items: { id: string; score: number; reasons: string[]; next_action: string }[] 
+      } = await res.json();
+
+      console.log("🎯 AI Response:", json);
+
+      // Create ranking map for reordering (use UUIDs directly)
+      const rank = new Map(
+        json.items.map((x, i) => {
+          // Use the UUID directly as the key since we're now using uid in the frontend
+          const key = String(x.id);
+          return [key, { i, score: x.score, reasons: x.reasons, next_action: x.next_action }];
+        })
+      );
+      
+      console.log("🗺️ Ranking map:", rank);
+      setAiTriageExtras(rank);
+      setAiTriageSummary(json.summary);
+
+      // Add AI insight card
+      setAiInsights(prev => [
+        ...prev.filter(x => x.type !== "recommendation"),
+        {
+          id: "triage-summary",
+          type: "recommendation",
+          title: "AI Triage Completed",
+          description: `Analysed ${json.summary.cohort_size} leads. Top drivers: ${json.summary.top_reasons?.join(", ") || "High lead scores"}`,
+          impact: "high",
+          confidence: 90,
+          action: "Work top 20 first",
+          priority: 1
+        }
+      ] as any);
+
+      console.log("✅ AI triage completed successfully!");
+
+    } catch (error) {
+      console.error("❌ AI triage error:", error);
+      // Add error insight
+      setAiInsights(prev => [
+        ...prev.filter(x => x.id !== "triage-error"),
+        {
+          id: "triage-error",
+          type: "risk",
+          title: "AI Triage Failed",
+          description: `Error: ${error instanceof Error ? error.message : "Unknown error"}`,
+          impact: "medium",
+          confidence: 100,
+          action: "Check backend logs",
+          priority: 1
+        }
+      ] as any);
+    } finally {
+      setIsAiTriageLoading(false);
+    }
+  };
+
+  // AI Outreach Composition
+  const handleAiOutreach = async (intent: "book_interview" | "nurture" | "reengage" = "nurture") => {
+    if (selectedLeads.size === 0) return;
+    
+    try {
+      const leadIds = Array.from(selectedLeads); // these are uuids
+      const uuids = leadIds;
+      const res = await fetch("http://127.0.0.1:8000/ai/leads/compose/outreach", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          lead_ids: uuids,
+          intent 
+        })
+      });
+
+      if (!res.ok) {
+        throw new Error(`AI composition failed: ${res.statusText}`);
+      }
+
+      const draft = await res.json();
+      
+      // For now, just show the draft in console and alert
+      // You can integrate this with your email composer later
+      console.log("AI Draft:", draft);
+      alert(`AI Draft Ready!\n\nSubject: ${draft.subject}\n\nBody: ${draft.body}\n\nMerge Fields: ${draft.merge_fields?.join(", ")}`);
+      
+    } catch (error) {
+      console.error("AI outreach error:", error);
+      alert(`AI composition failed: ${error instanceof Error ? error.message : "Unknown error"}`);
+    }
+  };
+
+  // Bulk Color Tag Assignment
+  const handleBulkColorTagAssignment = () => {
+    if (selectedLeads.size === 0) return;
+    setShowColorTagModal(true);
+  };
+
+  const assignColorTagToSelected = (colorTagId: string) => {
+    // In a real app, you'd make an API call here
+    console.log(`Assigning color tag ${colorTagId} to ${selectedLeads.size} leads`);
+    
+    // For demo purposes, update the local state
+    // In production, this would update the backend
+    // Note: In a real implementation, you'd update the backend and refresh the data
+    // For now, we'll just log the action
+    console.log(`Would assign color tag ${colorTagId} to leads:`, Array.from(selectedLeads));
+    
+    setShowColorTagModal(false);
+    setSelectedLeads(new Set()); // Clear selection after assignment
+  };
+
+  const ColorTagIndicator = ({ tagId }: { tagId: string }) => {
+    const tag = colorTags.find(t => t.id === tagId);
+    if (!tag) return null;
+    
+    return (
+      <div 
+        className={`w-3 h-3 rounded-full border-2 border-white shadow-sm opacity-70 ${tag.color.split(' ')[0]} ${tag.color.split(' ')[1]} ${tag.color.split(' ')[2]}`}
+        title={tag.name}
+      />
+    );
+  };
+
   return (
     <TooltipProvider>
       <div className="flex h-screen bg-gradient-to-br from-background via-background to-muted/30">
@@ -1489,102 +2183,193 @@ const LeadsManagementPage: React.FC = () => {
 
         {/* Main */}
         <div className="flex-1 flex flex-col overflow-hidden">
-          {/* Compact Header - Glass Effect */}
-          <div className="bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border p-3 sm:p-4 lg:p-6 shadow-sm sticky top-0 z-40">
+          {/* Liquid Glass Apple-style Header */}
+          <div className="bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60 border-b border-border/30 sticky top-0 z-40 shadow-sm">
             {/* Title Row */}
-            <div className="flex items-center justify-between mb-3 sm:mb-4">
-              <div className="flex items-center gap-3 min-w-0">
-                <h1 className="text-lg sm:text-xl lg:text-2xl font-bold text-foreground truncate">
-                  {currentView ? currentView.name : "All Leads"}
-                </h1>
-                {currentView && (
-                  <Button variant="secondary" size="sm" onClick={clearView} className="gap-1 h-7 px-2 text-xs hover:shadow-md transition-all duration-200">
-                    <X className="h-3 w-3" /> Clear
-                  </Button>
-                )}
-                <span className="text-xs sm:text-sm text-muted-foreground bg-muted px-2 py-1 rounded-full">
-                  {filteredLeads.length.toLocaleString()} leads
-                </span>
-                {selectedLeads.size > 0 && (
-                  <span className="text-xs bg-info/10 text-info px-2 py-1 rounded-full font-medium">
-                    {selectedLeads.size} selected
-                  </span>
-                )}
-              </div>
-
-              {/* Action Buttons - Compact */}
-              <div className="flex items-center gap-2">
-                {selectedLeads.size > 0 && (
-                  <>
-                    <div className="relative">
-                      <Button 
-                        size="sm"
-                        className="gap-1 h-7 px-2 text-xs shadow-sm hover:shadow-md transition-all duration-200"
-                        onClick={() => setShowBulkActions(!showBulkActions)}
-                      >
-                        Bulk ({selectedLeads.size})
-                        <ChevronDown className="h-3 w-3" />
-                      </Button>
-                      <BulkActionsMenu />
-                    </div>
-                    <Button variant="secondary" size="sm" onClick={clearSelection} className="h-7 px-2 text-xs hover:shadow-md transition-all duration-200">
-                      Clear
+            <div className="px-4 lg:px-6 py-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3 min-w-0">
+                  <h1 className="text-xl lg:text-2xl font-bold text-foreground truncate">
+                    {currentView ? currentView.name : "All Leads"}
+                  </h1>
+                  {currentView && (
+                    <Button variant="ghost" size="sm" onClick={clearView} className="gap-1 h-7 px-2 text-xs hover:bg-muted">
+                      <X className="h-3 w-3" />
                     </Button>
-                  </>
-                )}
-                <Button variant="outline" size="sm" className="gap-1 h-7 px-2 text-xs hover:shadow-md transition-all duration-200">
-                  <Download className="h-3 w-3" /> Export
-                </Button>
-                <Button size="sm" className="gap-1 h-7 px-2 text-xs shadow-sm hover:shadow-md transition-all duration-200" onClick={() => setShowSaveViewModal(true)}>
-                  <BookmarkPlus className="h-3 w-3" /> Save
-                </Button>
+                  )}
+                  <span className="text-sm text-muted-foreground">
+                    {filteredLeads.length.toLocaleString()} leads
+                  </span>
+                  {selectedLeads.size > 0 && (
+                    <span className="text-xs bg-accent/10 text-accent px-2 py-1 rounded-full font-medium">
+                      {selectedLeads.size} selected
+                    </span>
+                  )}
+                </div>
+
+                {/* Primary Actions - Clean Layout */}
+                <div className="flex items-center gap-2">
+                  {selectedLeads.size > 0 && (
+                    <>
+                      <div className="relative">
+                        <Button 
+                          variant="outline"
+                          size="default"
+                          className="gap-2 h-9 px-3 text-sm bg-background/60 backdrop-blur-sm border-border/50 hover:bg-background/80 transition-all duration-200 text-foreground hover:text-foreground"
+                          onClick={() => setShowBulkActions(!showBulkActions)}
+                        >
+                          Bulk ({selectedLeads.size})
+                          <ChevronDown className="h-4 w-4" />
+                        </Button>
+                        <BulkActionsMenu />
+                      </div>
+                      <Button variant="ghost" size="default" onClick={clearSelection} className="h-9 px-3 text-sm">
+                        Clear
+                      </Button>
+                    </>
+                  )}
+                  
+                  {/* AI Status Indicator */}
+                  {aiTriageSummary && (
+                    <div className="flex items-center gap-2 px-3 py-1.5 bg-accent/10 border border-accent/20 rounded-lg">
+                      <Brain className="h-3 w-3 text-accent" />
+                      <span className="text-xs font-medium text-accent">AI Active</span>
+                    </div>
+                  )}
+                  
+                  {/* Primary AI Button - Liquid Glass */}
+                  <Button 
+                    variant="default"
+                    size="default"
+                    className="gap-2 h-9 px-4 text-sm font-medium bg-gradient-to-r from-accent to-accent/80 hover:from-accent/90 hover:to-accent/70 shadow-lg hover:shadow-xl transition-all duration-200"
+                    onClick={handleAiTriage}
+                    disabled={isAiTriageLoading || filteredLeads.length === 0}
+                  >
+                    <Brain className="h-4 w-4" /> 
+                    <span className="hidden sm:inline">
+                      {isAiTriageLoading ? "AI Thinking..." : "Prioritise with AI"}
+                    </span>
+                    <span className="sm:hidden">
+                      {isAiTriageLoading ? "AI..." : "AI"}
+                    </span>
+                  </Button>
+
+                  {/* Consolidated Actions Menu - Liquid Glass */}
+                  <div className="relative">
+                    <Button 
+                      variant="outline"
+                      size="default"
+                      className="gap-2 h-9 px-3 text-sm bg-background/60 backdrop-blur-sm border-border/50 hover:bg-background/80 transition-all duration-200 text-foreground hover:text-foreground"
+                      onClick={() => setShowActionsMenu(!showActionsMenu)}
+                    >
+                      <MoreHorizontal className="h-4 w-4" />
+                      <span className="hidden lg:inline">Actions</span>
+                    </Button>
+                    <ActionsMenu />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Collapsible Stats Section - Liquid Glass Style */}
+            {showStats && (
+              <div className="px-4 lg:px-6 pb-4 border-b border-border/50">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-sm font-medium text-foreground/90">Quick Stats</h3>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => setShowStats(false)} 
+                    className="h-8 px-3 text-sm hover:bg-muted/50 transition-all duration-200 group"
+                  >
+                    <span className="mr-2 text-muted-foreground group-hover:text-foreground transition-colors">Collapse Stats</span>
+                    <ChevronDown className="h-3 w-3 text-muted-foreground group-hover:text-foreground transition-colors" />
+                  </Button>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+                  <div className="flex items-center gap-3 bg-background/60 backdrop-blur-sm border border-border/30 rounded-xl px-4 py-3 shadow-sm hover:shadow-md transition-all duration-200 hover:bg-background/80">
+                    <div className="p-2 rounded-lg bg-muted/40 backdrop-blur-sm">
+                      <Users className="h-4 w-4 text-muted-foreground" />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="text-sm font-semibold text-foreground">{stats.total.toLocaleString()}</div>
+                      <div className="text-xs text-muted-foreground">Total</div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 bg-destructive/10 backdrop-blur-sm border border-destructive/20 rounded-xl px-4 py-3 shadow-sm hover:shadow-md transition-all duration-200 hover:bg-destructive/15">
+                    <div className="p-2 rounded-lg bg-destructive/20 backdrop-blur-sm">
+                      <AlertTriangle className="h-4 w-4 text-destructive" />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="text-sm font-semibold text-destructive">{stats.urgent}</div>
+                      <div className="text-xs text-destructive/80">Urgent</div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 bg-success/10 backdrop-blur-sm border border-success/20 rounded-xl px-4 py-3 shadow-sm hover:shadow-md transition-all duration-200 hover:bg-success/15">
+                    <div className="p-2 rounded-lg bg-success/20 backdrop-blur-sm">
+                      <Zap className="h-4 w-4 text-success" />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="text-sm font-semibold text-success">{stats.newToday}</div>
+                      <div className="text-xs text-success/80">Today</div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 bg-background/60 backdrop-blur-sm border border-border/30 rounded-xl px-4 py-3 shadow-sm hover:shadow-md transition-all duration-200 hover:bg-background/80">
+                    <div className="p-2 rounded-lg bg-muted/40 backdrop-blur-sm">
+                      <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="text-sm font-semibold text-foreground">{stats.highScore}</div>
+                      <div className="text-xs text-muted-foreground">High Score</div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 bg-warning/10 backdrop-blur-sm border border-warning/20 rounded-xl px-4 py-3 shadow-sm hover:shadow-md transition-all duration-200 hover:bg-warning/15">
+                    <div className="p-2 rounded-lg bg-warning/20 backdrop-blur-sm">
+                      <Target className="h-4 w-4 text-warning" />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="text-sm font-semibold text-warning">{stats.selected}</div>
+                      <div className="text-xs text-warning/80">Selected</div>
+                    </div>
+                  </div>
+                  {aiTriageSummary && (
+                    <div className="flex items-center gap-3 bg-accent/10 backdrop-blur-sm border border-accent/20 rounded-xl px-4 py-3 shadow-sm hover:shadow-md transition-all duration-200 hover:bg-accent/15">
+                      <div className="p-2 rounded-lg bg-accent/20 backdrop-blur-sm">
+                        <Brain className="h-4 w-4 text-accent" />
+                      </div>
+                      <div className="min-w-0">
+                        <div className="text-sm font-semibold text-accent">{aiTriageSummary.cohort_size}</div>
+                        <div className="text-xs text-accent/80">AI Analyzed</div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Show Stats Toggle (when hidden) - Better UX */}
+            {!showStats && (
+              <div className="px-4 lg:px-6 py-4 border-b border-border/50">
                 <Button 
-                  variant={showAnalytics ? "default" : "outline"}
-                  size="sm"
-                  className="gap-1 h-7 px-2 text-xs shadow-sm hover:shadow-md transition-all duration-200"
-                  onClick={() => setShowAnalytics(!showAnalytics)}
+                  variant="ghost" 
+                  size="default" 
+                  onClick={() => setShowStats(true)} 
+                  className="gap-3 h-10 px-4 text-sm text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all duration-200 group"
                 >
-                  <BarChart3 className="h-3 w-3" /> Analytics
+                  <div className="p-1.5 rounded-lg bg-muted/40 backdrop-blur-sm">
+                    <BarChart3 className="h-4 w-4" />
+                  </div>
+                  <span className="font-medium">Show Quick Stats</span>
+                  <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
                 </Button>
-                <Button size="sm" className="gap-1 h-7 px-2 text-xs shadow-sm hover:shadow-md transition-all duration-200">
-                  <UserPlus className="h-3 w-3" /> Add
-                </Button>
               </div>
-            </div>
+            )}
 
-            {/* Compact Quick Stats - Inline Row */}
-            <div className="flex items-center gap-4 mb-4 overflow-x-auto pb-2">
-              <div className="flex items-center gap-2 bg-muted px-3 py-2 rounded-lg border border-border flex-shrink-0">
-                <Users className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm font-semibold text-foreground">{stats.total.toLocaleString()}</span>
-                <span className="text-xs text-muted-foreground">Total</span>
-              </div>
-              <div className="flex items-center gap-2 bg-destructive/10 px-3 py-2 rounded-lg border border-destructive/20 flex-shrink-0">
-                <AlertTriangle className="h-4 w-4 text-destructive" />
-                <span className="text-sm font-semibold text-destructive">{stats.urgent}</span>
-                <span className="text-xs text-destructive">Urgent</span>
-              </div>
-              <div className="flex items-center gap-2 bg-success/10 px-3 py-2 rounded-lg border border-success/20 flex-shrink-0">
-                <Zap className="h-4 w-4 text-success" />
-                <span className="text-sm font-semibold text-success">{stats.newToday}</span>
-                <span className="text-xs text-success">Today</span>
-              </div>
-              <div className="flex items-center gap-2 bg-muted px-3 py-2 rounded-lg border border-border flex-shrink-0">
-                <TrendingUp className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm font-semibold text-foreground">{stats.highScore}</span>
-                <span className="text-xs text-muted-foreground">High Score</span>
-              </div>
-              <div className="flex items-center gap-2 bg-warning/10 px-3 py-2 rounded-lg border border-warning/20 flex-shrink-0">
-                <Target className="h-4 w-4 text-warning" />
-                <span className="text-sm font-semibold text-warning">{stats.selected}</span>
-                <span className="text-xs text-warning">Selected</span>
-              </div>
-            </div>
-
-            {/* Compact Controls */}
-            <div className="flex flex-wrap items-center gap-3 mb-4">
-              <div className="flex items-center gap-2 flex-1 min-w-0">
-                <div className="relative flex-1 max-w-xs">
+            {/* Liquid Glass Controls */}
+            <div className="px-4 lg:px-6 py-3 border-b border-border/30 bg-muted/10 backdrop-blur-sm">
+              <div className="flex flex-col sm:flex-row gap-3">
+                {/* Search */}
+                <div className="relative flex-1 min-w-0">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-4 w-4" />
                   <Input
                     ref={searchInputRef}
@@ -1593,74 +2378,83 @@ const LeadsManagementPage: React.FC = () => {
                     onFocus={() => setShowSearchSuggestions(searchTerm.length > 0)}
                     onBlur={() => setTimeout(() => setShowSearchSuggestions(false), 200)}
                     placeholder="Search leads… (⌘K)"
-                    className="w-full pl-9 h-8 text-sm border-border focus:ring-2 focus:ring-ring transition-all duration-200"
+                    className="w-full pl-10 h-9 text-sm border-border/50 bg-background/60 backdrop-blur-sm focus:ring-2 focus:ring-ring/50 focus:bg-background/80 transition-all duration-200 hover:bg-background/70"
                   />
                   <SearchSuggestions />
                 </div>
 
-                <Button
-                  variant={showFilters ? "secondary" : "outline"}
-                  onClick={() => setShowFilters((s) => !s)}
-                  className="gap-1 h-8 px-3 text-xs hover:shadow-md transition-all duration-200"
-                >
-                  <Filter className="h-3 w-3" /> Filters
-                </Button>
-
-
-
-                <div className="flex rounded-lg border border-border overflow-hidden shadow-sm">
-                  <Button variant={viewMode === "table" ? "secondary" : "ghost"} size="icon" onClick={() => setViewMode("table")} className="h-8 w-8">
-                    <List className="h-3 w-3" />
+                {/* Controls Group */}
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant={showFilters ? "default" : "outline"}
+                    onClick={() => setShowFilters((s) => !s)}
+                    className="gap-2 h-9 px-3 text-sm bg-background/60 backdrop-blur-sm border-border/50 hover:bg-background/80 transition-all duration-200 text-foreground hover:text-foreground"
+                  >
+                    <Filter className="h-4 w-4" />
+                    <span className="hidden sm:inline">Filters</span>
                   </Button>
-                  <Button variant={viewMode === "cards" ? "secondary" : "ghost"} size="icon" onClick={() => setViewMode("cards")} className="h-8 w-8">
-                    <LayoutGrid className="h-3 w-3" />
-                  </Button>
-                  <Button variant={viewMode === "compact" ? "secondary" : "ghost"} size="icon" onClick={() => setViewMode("compact")} className="h-8 w-8">
-                    <Grid3X3 className="h-3 w-3" />
-                  </Button>
-                </div>
 
-                <Select
-                  value={String(itemsPerPage)}
-                  onValueChange={(v) => setItemsPerPage(Number(v))}
-                >
-                  <SelectTrigger className="w-20 h-8 border-border text-xs">
-                    <SelectValue placeholder="25" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="25">25</SelectItem>
-                    <SelectItem value="50">50</SelectItem>
-                    <SelectItem value="100">100</SelectItem>
-                    <SelectItem value="200">200</SelectItem>
-                  </SelectContent>
-                </Select>
-
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => setShowKeyboardShortcuts(true)}
-                      className="h-8 w-8"
+                  {/* View Mode Toggle - Clean Design */}
+                  <div className="flex rounded-lg border border-border/50 overflow-hidden bg-background/60 backdrop-blur-sm">
+                    <button
+                      onClick={() => setViewMode("table")}
+                      className={`h-9 px-3 flex items-center justify-center transition-all duration-200 ${
+                        viewMode === "table" 
+                          ? "bg-foreground text-background" 
+                          : "bg-transparent text-foreground hover:bg-foreground/10"
+                      }`}
                     >
-                      <Command className="h-3 w-3" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Keyboard shortcuts</p>
-                  </TooltipContent>
-                </Tooltip>
+                      <List className="h-4 w-4" />
+                    </button>
+                    <button
+                      onClick={() => setViewMode("cards")}
+                      className={`h-9 px-3 flex items-center justify-center transition-all duration-200 ${
+                        viewMode === "cards" 
+                          ? "bg-foreground text-background" 
+                          : "bg-transparent text-foreground hover:bg-foreground/10"
+                      }`}
+                    >
+                      <LayoutGrid className="h-4 w-4" />
+                    </button>
+                    <button
+                      onClick={() => setViewMode("compact")}
+                      className={`h-9 px-3 flex items-center justify-center transition-all duration-200 ${
+                        viewMode === "compact" 
+                          ? "bg-foreground text-background" 
+                          : "bg-transparent text-foreground hover:bg-foreground/10"
+                      }`}
+                    >
+                      <Grid3X3 className="h-4 w-4" />
+                    </button>
+                  </div>
+
+                  {/* Per Page */}
+                  <Select
+                    value={String(itemsPerPage)}
+                    onValueChange={(v) => setItemsPerPage(Number(v))}
+                  >
+                    <SelectTrigger className="w-20 h-9 border-border text-sm">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="25">25</SelectItem>
+                      <SelectItem value="50">50</SelectItem>
+                      <SelectItem value="100">100</SelectItem>
+                      <SelectItem value="200">200</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             </div>
 
             {/* Filter Chips */}
             {activeFilters.length > 0 && <FilterChips />}
 
-            {/* Compact Advanced Filters */}
+            {/* Compact Advanced Filters - Responsive Grid */}
             {showFilters && (
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 pt-3 border-t border-border">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 pt-6 border-t border-border">
                 <Select value={selectedStatus} onValueChange={(value) => handleFilterChange('status', value)}>
-                  <SelectTrigger className="h-8 border-border text-xs"><SelectValue placeholder="Status" /></SelectTrigger>
+                  <SelectTrigger className="h-10 border-border text-sm"><SelectValue placeholder="Status" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Status</SelectItem>
                     <SelectItem value="new">New Lead</SelectItem>
@@ -1672,7 +2466,7 @@ const LeadsManagementPage: React.FC = () => {
                 </Select>
 
                 <Select value={selectedSource} onValueChange={(value) => handleFilterChange('source', value)}>
-                  <SelectTrigger className="h-8 border-border text-xs"><SelectValue placeholder="Source" /></SelectTrigger>
+                  <SelectTrigger className="h-10 border-border text-sm"><SelectValue placeholder="Source" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Sources</SelectItem>
                     <SelectItem value="Google Ads">Google Ads</SelectItem>
@@ -1684,7 +2478,7 @@ const LeadsManagementPage: React.FC = () => {
                 </Select>
 
                 <Select value={selectedCourse} onValueChange={(value) => handleFilterChange('course', value)}>
-                  <SelectTrigger className="h-8 border-border text-xs"><SelectValue placeholder="Course" /></SelectTrigger>
+                  <SelectTrigger className="h-10 border-border text-sm"><SelectValue placeholder="Course" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Courses</SelectItem>
                     <SelectItem value="Music Production">Music Production</SelectItem>
@@ -1697,7 +2491,7 @@ const LeadsManagementPage: React.FC = () => {
                 </Select>
 
                 <Select value={selectedYear} onValueChange={(value) => handleFilterChange('year', value)}>
-                  <SelectTrigger className="h-8 border-border text-xs"><SelectValue placeholder="Year" /></SelectTrigger>
+                  <SelectTrigger className="h-10 border-border text-sm"><SelectValue placeholder="Year" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Years</SelectItem>
                     <SelectItem value="2025/26">2025/26</SelectItem>
@@ -1709,7 +2503,7 @@ const LeadsManagementPage: React.FC = () => {
                   value={String(sortBy)}
                   onValueChange={(v) => setSortBy(v as any)}
                 >
-                  <SelectTrigger className="h-8 border-border text-xs">
+                  <SelectTrigger className="h-10 border-border text-sm">
                     <SelectValue placeholder="Sort by" />
                   </SelectTrigger>
                   <SelectContent>
@@ -1719,12 +2513,29 @@ const LeadsManagementPage: React.FC = () => {
                     <SelectItem value="lastContact">Last Contact</SelectItem>
                   </SelectContent>
                 </Select>
+
+                <Select value={selectedColorTag} onValueChange={setSelectedColorTag}>
+                  <SelectTrigger className="h-10 border-border text-sm">
+                    <SelectValue placeholder="Color Tag" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Colors</SelectItem>
+                    {colorTags.map((tag) => (
+                      <SelectItem key={tag.id} value={tag.id}>
+                        <div className="flex items-center gap-2">
+                          <div className={`w-3 h-3 rounded-full ${tag.color.split(' ')[0]} ${tag.color.split(' ')[1]} ${tag.color.split(' ')[2]}`} />
+                          <span>{tag.name}</span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             )}
           </div>
 
           {/* Content */}
-          <div className="flex-1 overflow-auto p-4 sm:p-6 lg:p-8">
+          <div className="flex-1 overflow-auto p-3 sm:p-4 lg:p-6 xl:p-8">
             {showAnalytics ? (
               <AnalyticsDashboard />
             ) : (
@@ -1732,18 +2543,36 @@ const LeadsManagementPage: React.FC = () => {
                 <Card className="overflow-hidden border-0 shadow-xl">
                   <CardContent className="p-0">
                     {viewMode === "table" && <TableView />}
+                    {viewMode === "cards" && <CardsView />}
+                    {viewMode === "compact" && <CompactView />}
                     {/* You can add Cards/Compact renderers later; table covers your ask */}
                   </CardContent>
                 </Card>
 
+                {/* Bridge Answer - AI Triage Summary */}
+                {aiTriageSummary && (
+                  <Card className="mt-6 border border-accent/20 bg-accent/5">
+                    <CardContent className="p-4">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Brain className="h-4 w-4 text-accent" />
+                        <span className="text-sm font-semibold text-foreground">Bridge Answer</span>
+                        <Badge variant="outline" className="ml-auto text-[10px]">AI</Badge>
+                      </div>
+                      <div className="text-sm text-foreground">
+                        Analysed {aiTriageSummary.cohort_size} leads. Top drivers: {(aiTriageSummary.top_reasons || []).join(', ') || 'High lead scores'}.
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
                 {/* Pagination */}
                 {paginationData.totalPages > 1 && (
-                  <div className="flex items-center justify-between mt-8">
-                    <div className="text-sm text-muted-foreground font-medium">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mt-8">
+                    <div className="text-sm text-muted-foreground font-medium text-center sm:text-left">
                       Showing {paginationData.start + 1} to {paginationData.end} of {filteredLeads.length.toLocaleString()} results
                     </div>
 
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center justify-center gap-2">
                       <Button variant="outline" size="icon" onClick={() => goToPage(1)} disabled={currentPage === 1} className="h-10 w-10">
                         <ChevronsLeft className="h-4 w-4" />
                       </Button>
@@ -1780,7 +2609,7 @@ const LeadsManagementPage: React.FC = () => {
                       </Button>
                     </div>
 
-                    <div className="text-sm text-muted-foreground font-medium">
+                    <div className="text-sm text-muted-foreground font-medium text-center sm:text-right">
                       Page {currentPage} of {paginationData.totalPages.toLocaleString()}
                     </div>
                   </div>
@@ -1834,6 +2663,40 @@ const LeadsManagementPage: React.FC = () => {
                 <div className="flex gap-3 pt-4">
                   <Button variant="outline" className="flex-1 h-12" onClick={() => setShowSaveViewModal(false)}>Cancel</Button>
                   <Button className="flex-1 h-12 shadow-lg" onClick={() => setShowSaveViewModal(false)}>Save View</Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* Color Tag Assignment Modal */}
+        {showColorTagModal && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 backdrop-blur-sm">
+            <Card className="w-80 border-0 shadow-2xl">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg text-foreground">Color Tag</CardTitle>
+                <p className="text-sm text-muted-foreground">
+                  {selectedLeads.size} lead{selectedLeads.size !== 1 ? 's' : ''} selected
+                </p>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="grid grid-cols-3 gap-2">
+                  {colorTags.map((tag) => (
+                    <button
+                      key={tag.id}
+                      onClick={() => assignColorTagToSelected(tag.id)}
+                      className={`p-3 rounded-lg border border-transparent hover:border-border transition-all duration-200 text-center group ${tag.color}`}
+                    >
+                      <div className="text-lg mb-1">{tag.icon}</div>
+                      <div className="text-xs font-medium">{tag.name}</div>
+                    </button>
+                  ))}
+                </div>
+                
+                <div className="flex gap-2 pt-3">
+                  <Button variant="outline" className="flex-1 h-10" onClick={() => setShowColorTagModal(false)}>
+                    Cancel
+                  </Button>
                 </div>
               </CardContent>
             </Card>

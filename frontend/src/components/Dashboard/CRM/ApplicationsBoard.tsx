@@ -3,7 +3,8 @@ import {
   Search, Grid, List, Plus, Mail, Calendar as CalIcon,
   Phone, MoreHorizontal, Eye, Edit, Filter, TrendingUp,
   Clock, AlertTriangle, CheckCircle, XCircle, Star,
-  Users, Target, BarChart3, Zap, ArrowRight, FilterX
+  Users, Target, BarChart3, Zap, ArrowRight, FilterX,
+  RefreshCw
 } from "lucide-react";
 
 // shadcn/ui
@@ -20,37 +21,21 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
-type StageId =
-  | "applied"
-  | "under-review"
-  | "interview-scheduled"
-  | "interview-complete"
-  | "conditional-offer"
-  | "unconditional-offer"
-  | "deposit-received"
-  | "enrolled";
+// Custom hooks and utilities
+import { useApplications } from "@/hooks/useApplications";
+import { getApplicationCardDisplay, getPriorityColor, getUrgencyColor } from "@/utils/dataMapping";
 
-type Application = {
-  id: number;
-  studentName: string;
-  email: string;
-  program: string;
-  campus: string;
-  applicationDate: string;
-  daysInPipeline: number;
-  leadScore: number;
-  leadSource: string;
-  urgency: "high" | "medium" | "low";
-  nextAction: string;
-  lastContact: string;
-  stage: StageId;
-  aiInsights?: string;
-  conversionProbability: number;
-  priority: "critical" | "high" | "medium" | "low";
-  tags: string[];
-  lastActivity: string;
-  nextFollowUp: string;
+// Map backend stages to frontend display stages
+const STAGE_MAPPING: Record<string, string> = {
+  'enquiry': 'Enquiry',
+  'applicant': 'Application Submitted',
+  'interview': 'Interview',
+  'offer': 'Offer Made',
+  'enrolled': 'Enrolled',
 };
+
+// Frontend stage IDs for the Kanban board
+type StageId = 'enquiry' | 'applicant' | 'interview' | 'offer' | 'enrolled';
 
 const STAGES: { 
   id: StageId; 
@@ -60,202 +45,47 @@ const STAGES: {
   icon: React.ReactNode;
 }[] = [
   { 
-    id: "applied", 
-    name: "Applied", 
-    description: "Applications received",
-    color: "bg-slate-100 border-slate-200",
+    id: "enquiry", 
+    name: "Enquiry", 
+    description: "Initial enquiries received",
+    color: "bg-blue-100 border-blue-200",
     icon: <Users className="h-4 w-4" />
   },
   { 
-    id: "under-review", 
-    name: "Under Review", 
-    description: "Academic review in progress",
-    color: "bg-info/10 border-info/20",
+    id: "applicant", 
+    name: "Application Submitted", 
+    description: "Applications under review",
+    color: "bg-slate-100 border-slate-200",
     icon: <Eye className="h-4 w-4" />
   },
   { 
-    id: "interview-scheduled", 
-    name: "Interview Scheduled", 
-    description: "Interview dates set",
+    id: "interview", 
+    name: "Interview", 
+    description: "Interview process",
     color: "bg-warning/10 border-warning/20",
     icon: <CalIcon className="h-4 w-4" />
   },
   { 
-    id: "interview-complete", 
-    name: "Interview Complete", 
-    description: "Awaiting decision",
-    color: "bg-slate-100 border-slate-200",
-    icon: <CheckCircle className="h-4 w-4" />
-  },
-  { 
-    id: "conditional-offer", 
-    name: "Conditional Offer", 
-    description: "Pending requirements",
-    color: "bg-warning/10 border-warning/20",
-    icon: <AlertTriangle className="h-4 w-4" />
-  },
-  { 
-    id: "unconditional-offer", 
-    name: "Unconditional Offer", 
-    description: "Ready to accept",
+    id: "offer", 
+    name: "Offer Made", 
+    description: "Offers pending response",
     color: "bg-success/10 border-success/20",
     icon: <Star className="h-4 w-4" />
   },
   { 
-    id: "deposit-received", 
-    name: "Deposit Received", 
-    description: "Commitment confirmed",
-    color: "bg-success/10 border-success/20",
-    icon: <CheckCircle className="h-4 w-4" />
-  },
-  { 
     id: "enrolled", 
     name: "Enrolled", 
-    description: "Student enrolled",
+    description: "Students enrolled",
     color: "bg-forest-green/10 border-forest-green/20",
     icon: <Target className="h-4 w-4" />
   },
 ];
 
-const SAMPLE: Application[] = [
-  { 
-    id: 1, 
-    studentName: "Sarah Johnson", 
-    email: "sarah.johnson@email.com", 
-    program: "Computer Science", 
-    campus: "Main Campus", 
-    applicationDate: "2024-07-15", 
-    daysInPipeline: 26, 
-    leadScore: 85, 
-    leadSource: "Website", 
-    urgency: "high", 
-    nextAction: "Schedule interview", 
-    lastContact: "2024-08-05", 
-    stage: "applied", 
-    aiInsights: "High conversion probability based on academic background",
-    conversionProbability: 87,
-    priority: "high",
-    tags: ["STEM", "High Achiever", "First Choice"],
-    lastActivity: "2 hours ago",
-    nextFollowUp: "Today"
-  },
-  { 
-    id: 2, 
-    studentName: "Michael Chen", 
-    email: "michael.chen@email.com", 
-    program: "Business Administration", 
-    campus: "Downtown", 
-    applicationDate: "2024-07-20", 
-    daysInPipeline: 21, 
-    leadScore: 92, 
-    leadSource: "Referral", 
-    urgency: "high", 
-    nextAction: "Review application", 
-    lastContact: "2024-08-08", 
-    stage: "under-review", 
-    aiInsights: "Excellent academic record, strong candidate",
-    conversionProbability: 94,
-    priority: "critical",
-    tags: ["Referral", "Top Tier", "Quick Decision"],
-    lastActivity: "1 hour ago",
-    nextFollowUp: "ASAP"
-  },
-  { 
-    id: 3, 
-    studentName: "Emily Rodriguez", 
-    email: "emily.rodriguez@email.com", 
-    program: "Engineering", 
-    campus: "Main Campus", 
-    applicationDate: "2024-07-10", 
-    daysInPipeline: 31, 
-    leadScore: 78, 
-    leadSource: "Social", 
-    urgency: "medium", 
-    nextAction: "Conduct interview", 
-    lastContact: "2024-08-07", 
-    stage: "interview-scheduled", 
-    aiInsights: "Good fit for engineering program",
-    conversionProbability: 72,
-    priority: "medium",
-    tags: ["Engineering", "Social Media", "Good Fit"],
-    lastActivity: "3 hours ago",
-    nextFollowUp: "Tomorrow"
-  },
-  { 
-    id: 4, 
-    studentName: "David Kim", 
-    email: "david.kim@email.com", 
-    program: "Medicine", 
-    campus: "Medical Center", 
-    applicationDate: "2024-07-01", 
-    daysInPipeline: 40, 
-    leadScore: 95, 
-    leadSource: "Event", 
-    urgency: "high", 
-    nextAction: "Decision pending", 
-    lastContact: "2024-08-09", 
-    stage: "interview-complete", 
-    aiInsights: "Outstanding candidate, recommend immediate offer",
-    conversionProbability: 96,
-    priority: "critical",
-    tags: ["Medicine", "Event", "Outstanding"],
-    lastActivity: "30 minutes ago",
-    nextFollowUp: "ASAP"
-  },
-  { 
-    id: 5, 
-    studentName: "Lisa Wang", 
-    email: "lisa.wang@email.com", 
-    program: "Psychology", 
-    campus: "Main Campus", 
-    applicationDate: "2024-06-25", 
-    daysInPipeline: 46, 
-    leadScore: 88, 
-    leadSource: "Website", 
-    urgency: "medium", 
-    nextAction: "Send requirements", 
-    lastContact: "2024-08-06", 
-    stage: "conditional-offer", 
-    aiInsights: "Waiting on final transcripts",
-    conversionProbability: 82,
-    priority: "medium",
-    tags: ["Psychology", "Website", "Conditional"],
-    lastActivity: "1 day ago",
-    nextFollowUp: "This week"
-  },
-  { 
-    id: 6, 
-    studentName: "James Thompson", 
-    email: "james.thompson@email.com", 
-    program: "Law", 
-    campus: "Law School", 
-    applicationDate: "2024-06-20", 
-    daysInPipeline: 51, 
-    leadScore: 91, 
-    leadSource: "Referral", 
-    urgency: "low", 
-    nextAction: "Await response", 
-    lastContact: "2024-08-04", 
-    stage: "unconditional-offer", 
-    aiInsights: "Strong candidate, likely to accept",
-    conversionProbability: 89,
-    priority: "high",
-    tags: ["Law", "Referral", "Strong Candidate"],
-    lastActivity: "2 days ago",
-    nextFollowUp: "Next week"
-  },
-];
-
-function PriorityBadge({ priority }: { priority: Application["priority"] }) {
-  const styles = {
-    critical: "bg-destructive/10 text-destructive border-destructive/20",
-    high: "bg-accent/10 text-accent border-accent/20",
-    medium: "bg-warning/10 text-warning border-warning/20",
-    low: "bg-slate-100 text-slate-600 border-slate-200"
-  };
+function PriorityBadge({ priority }: { priority: string }) {
+  const colorClasses = getPriorityColor(priority);
   
   return (
-    <Badge variant="outline" className={`${styles[priority]} text-xs font-medium`}>
+    <Badge variant="outline" className={`${colorClasses} text-xs font-medium`}>
       {priority === "critical" && <AlertTriangle className="h-3 w-3 mr-1" />}
       {priority === "high" && <Zap className="h-3 w-3 mr-1" />}
       {priority}
@@ -263,22 +93,21 @@ function PriorityBadge({ priority }: { priority: Application["priority"] }) {
   );
 }
 
-function UrgencyBadge({ urgency }: { urgency: Application["urgency"] }) {
-  const styles = {
-    high: "bg-destructive/10 text-destructive border-destructive/20",
-    medium: "bg-warning/10 text-warning border-warning/20",
-    low: "bg-success/10 text-success border-success/20"
-  };
+function UrgencyBadge({ urgency }: { urgency: string }) {
+  const colorClasses = getUrgencyColor(urgency);
   
   return (
-    <Badge variant="outline" className={`${styles[urgency]} text-xs font-medium`}>
+    <Badge variant="outline" className={`${colorClasses} text-xs font-medium`}>
       {urgency === "high" && <Clock className="h-3 w-3 mr-1" />}
       {urgency}
     </Badge>
   );
 }
 
-function ConversionIndicator({ probability }: { probability: number }) {
+function ConversionIndicator({ probability }: { probability: number | undefined }) {
+  if (probability === undefined) return <span className="text-xs text-slate-400">N/A</span>;
+  
+  const percentage = Math.round(probability * 100);
   const getColor = (prob: number) => {
     if (prob >= 80) return "bg-success";
     if (prob >= 60) return "bg-warning";
@@ -289,11 +118,11 @@ function ConversionIndicator({ probability }: { probability: number }) {
     <div className="flex items-center gap-2">
       <div className="w-16 h-2 bg-slate-200 rounded-full overflow-hidden">
         <div 
-          className={`h-full ${getColor(probability)} transition-all duration-300`}
-          style={{ width: `${probability}%` }}
+          className={`h-full ${getColor(percentage)} transition-all duration-300`}
+          style={{ width: `${percentage}%` }}
         />
       </div>
-      <span className="text-xs font-medium text-slate-600">{probability}%</span>
+      <span className="text-xs font-medium text-slate-600">{percentage}%</span>
     </div>
   );
 }
@@ -304,136 +133,209 @@ export default function ApplicationsBoardPage() {
   const [program, setProgram] = React.useState<string>("all");
   const [urgency, setUrgency] = React.useState<string>("all");
   const [priority, setPriority] = React.useState<string>("all");
-  const [selectedApps, setSelectedApps] = React.useState<number[]>([]);
+  const [selectedApps, setSelectedApps] = React.useState<string[]>([]);
   const [showFilters, setShowFilters] = React.useState(false);
 
-  const filtered = React.useMemo(() => {
-    return SAMPLE.filter(a => {
-      const matchesSearch =
-        a.studentName.toLowerCase().includes(search.toLowerCase()) ||
-        a.email.toLowerCase().includes(search.toLowerCase()) ||
-        a.program.toLowerCase().includes(search.toLowerCase());
-      const matchesProgram = program === "all" || a.program === program;
-      const matchesUrgency = urgency === "all" || a.urgency === urgency;
-      const matchesPriority = priority === "all" || a.priority === priority;
-      return matchesSearch && matchesProgram && matchesUrgency && matchesPriority;
-    });
-  }, [search, program, urgency, priority]);
+  // Use the custom hook for applications data
+  const {
+    applications,
+    loading,
+    error,
+    moveStage,
+    updatePriority,
+    refreshBoard,
+    getApplicationsByStage,
+    getPriorityDistribution,
+    getUrgencyDistribution,
+  } = useApplications({
+    priority: priority === "all" ? undefined : priority,
+    urgency: urgency === "all" ? undefined : urgency,
+  });
 
+  // Filter applications based on search and program
+  const filtered = React.useMemo(() => {
+    return applications.filter(app => {
+      const matchesSearch = search === "" || 
+        app.first_name?.toLowerCase().includes(search.toLowerCase()) ||
+        app.last_name?.toLowerCase().includes(search.toLowerCase()) ||
+        app.email?.toLowerCase().includes(search.toLowerCase()) ||
+        app.programme_name.toLowerCase().includes(search.toLowerCase());
+      
+      const matchesProgram = program === "all" || app.programme_name === program;
+      
+      return matchesSearch && matchesProgram;
+    });
+  }, [applications, search, program]);
+
+  // Group applications by stage for Kanban columns
   const grouped = React.useMemo(() => {
-    const g: Record<StageId, Application[]> = {
-      "applied": [], "under-review": [], "interview-scheduled": [],
-      "interview-complete": [], "conditional-offer": [], "unconditional-offer": [],
-      "deposit-received": [], "enrolled": []
+    const g: Record<StageId, typeof applications> = {
+      "enquiry": [],
+      "applicant": [],
+      "interview": [],
+      "offer": [],
+      "enrolled": []
     };
-    filtered.forEach(a => g[a.stage].push(a));
+    
+    filtered.forEach(app => {
+      const stage = app.stage as StageId;
+      if (g[stage]) {
+        g[stage].push(app);
+      }
+    });
+    
     return g;
   }, [filtered]);
 
+  // Calculate pipeline statistics
   const pipelineStats = React.useMemo(() => {
     const total = filtered.length;
     const critical = filtered.filter(a => a.priority === "critical").length;
     const highUrgency = filtered.filter(a => a.urgency === "high").length;
-    const avgConversion = Math.round(
-      filtered.reduce((sum, a) => sum + a.conversionProbability, 0) / total
-    );
+    const avgConversion = total > 0 ? Math.round(
+      filtered.reduce((sum, a) => sum + (a.conversion_probability || 0), 0) / total * 100
+    ) : 0;
     
     return { total, critical, highUrgency, avgConversion };
   }, [filtered]);
 
-  const onDragStart = (e: React.DragEvent, id: number) => {
-    e.dataTransfer.setData("text/plain", String(id));
-  };
-  const onDragOver = (e: React.DragEvent) => e.preventDefault();
-  const onDrop = (e: React.DragEvent, target: StageId) => {
-    e.preventDefault();
-    const id = Number(e.dataTransfer.getData("text/plain"));
-    console.log(`Move app ${id} → ${target}`);
+  // Get unique programmes for filter dropdown
+  const uniqueProgrammes = React.useMemo(() => {
+    return [...new Set(applications.map(app => app.programme_name))];
+  }, [applications]);
+
+  // Handle drag and drop for stage changes
+  const onDragStart = (e: React.DragEvent, applicationId: string) => {
+    e.dataTransfer.setData("text/plain", applicationId);
   };
 
-  const toggleSelection = (id: number) => {
+  const onDragOver = (e: React.DragEvent) => e.preventDefault();
+
+  const onDrop = async (e: React.DragEvent, targetStage: StageId) => {
+    e.preventDefault();
+    const applicationId = e.dataTransfer.getData("text/plain");
+    
+    try {
+      await moveStage(applicationId, {
+        to_stage: targetStage,
+        note: `Moved to ${targetStage} via drag and drop`,
+      });
+    } catch (error) {
+      console.error('Failed to move application:', error);
+    }
+  };
+
+  const toggleSelection = (id: string) => {
     setSelectedApps(prev => 
       prev.includes(id) ? prev.filter(appId => appId !== id) : [...prev, id]
     );
   };
 
-  const ApplicationCard = ({ app }: { app: Application }) => (
-    <Card 
-      draggable 
-      onDragStart={(e) => onDragStart(e, app.id)} 
-      className="border border-slate-200 hover:shadow-md hover:border-slate-300 transition-all duration-200 group cursor-move"
-    >
-      <CardHeader className="pb-3">
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-2">
-              <Checkbox 
-                checked={selectedApps.includes(app.id)}
-                onCheckedChange={() => toggleSelection(app.id)}
-                onClick={(e) => e.stopPropagation()}
-              />
-              <CardTitle className="text-sm font-semibold text-slate-900 truncate">
-                {app.studentName}
-              </CardTitle>
+  const ApplicationCard = ({ app }: { app: typeof applications[0] }) => {
+    const displayData = getApplicationCardDisplay(app);
+    
+    return (
+      <Card 
+        draggable 
+        onDragStart={(e) => onDragStart(e, app.application_id)} 
+        className="border border-slate-200 hover:shadow-md hover:border-slate-300 transition-all duration-200 group cursor-move"
+      >
+        <CardHeader className="pb-3">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 mb-2">
+                <Checkbox 
+                  checked={selectedApps.includes(app.application_id)}
+                  onCheckedChange={() => toggleSelection(app.application_id)}
+                  onClick={(e) => e.stopPropagation()}
+                />
+                <CardTitle className="text-sm font-semibold text-slate-900 truncate">
+                  {displayData.studentName}
+                </CardTitle>
+              </div>
+              <p className="text-xs text-slate-500 mb-2">{app.email || 'No email'}</p>
+              <div className="flex items-center gap-2 mb-2">
+                <PriorityBadge priority={app.priority || 'medium'} />
+                <UrgencyBadge urgency={app.urgency || 'medium'} />
+              </div>
             </div>
-            <p className="text-xs text-slate-500 mb-2">{app.email}</p>
-            <div className="flex items-center gap-2 mb-2">
-              <PriorityBadge priority={app.priority} />
-              <UrgencyBadge urgency={app.urgency} />
-            </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <MoreHorizontal className="h-3.5 w-3.5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem className="gap-2"><Eye className="h-3.5 w-3.5" /> View Details</DropdownMenuItem>
+                <DropdownMenuItem className="gap-2"><Edit className="h-3.5 w-3.5" /> Edit</DropdownMenuItem>
+                <DropdownMenuItem className="gap-2"><Mail className="h-3.5 w-3.5" /> Send Email</DropdownMenuItem>
+                <DropdownMenuItem className="gap-2"><CalIcon className="h-3.5 w-3.5" /> Schedule</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity">
-                <MoreHorizontal className="h-3.5 w-3.5" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem className="gap-2"><Eye className="h-3.5 w-3.5" /> View Details</DropdownMenuItem>
-              <DropdownMenuItem className="gap-2"><Edit className="h-3.5 w-3.5" /> Edit</DropdownMenuItem>
-              <DropdownMenuItem className="gap-2"><Mail className="h-3.5 w-3.5" /> Send Email</DropdownMenuItem>
-              <DropdownMenuItem className="gap-2"><CalIcon className="h-3.5 w-3.5" /> Schedule</DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      </CardHeader>
-      
-      <CardContent className="space-y-3">
-        <div className="space-y-2">
-          <div className="flex items-center justify-between text-xs">
-            <span className="text-slate-500">Program</span>
-            <span className="font-medium text-slate-700">{app.program}</span>
-          </div>
-          <div className="flex items-center justify-between text-xs">
-            <span className="text-slate-500">Lead Score</span>
-            <span className="font-medium text-slate-700">{app.leadScore}%</span>
-          </div>
-          <div className="flex items-center justify-between text-xs">
-            <span className="text-slate-500">Conversion</span>
-            <ConversionIndicator probability={app.conversionProbability} />
-          </div>
-        </div>
+        </CardHeader>
         
-        <div className="pt-2 border-t border-slate-100">
-          <div className="text-xs text-slate-500 mb-2">
-            <span className="font-medium">Next:</span> {app.nextAction}
-          </div>
-          <div className="text-xs text-slate-400 mb-3">
-            {app.daysInPipeline} days in pipeline • {app.lastActivity}
+        <CardContent className="space-y-3">
+          <div className="space-y-2">
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-slate-500">Program</span>
+              <span className="font-medium text-slate-700">{displayData.program}</span>
+            </div>
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-slate-500">Lead Score</span>
+              <span className="font-medium text-slate-700">{displayData.leadScore}</span>
+            </div>
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-slate-500">Conversion</span>
+              <ConversionIndicator probability={app.conversion_probability} />
+            </div>
           </div>
           
-          <div className="flex gap-1.5">
-            <Button variant="outline" size="sm" className="flex-1 h-7 text-xs">
-              <Mail className="mr-1.5 h-3 w-3" /> Email
-            </Button>
-            <Button variant="outline" size="sm" className="flex-1 h-7 text-xs">
-              <CalIcon className="mr-1.5 h-3 w-3" /> Schedule
-            </Button>
+          <div className="pt-2 border-t border-slate-100">
+            <div className="text-xs text-slate-500 mb-2">
+              <span className="font-medium">Next:</span> {displayData.nextAction}
+            </div>
+            <div className="text-xs text-slate-400 mb-3">
+              {displayData.nextFollowUp} • {displayData.lastActivity}
+            </div>
+            
+            <div className="flex gap-1.5">
+              <Button variant="outline" size="sm" className="flex-1 h-7 text-xs">
+                <Mail className="mr-1.5 h-3 w-3" /> Email
+              </Button>
+              <Button variant="outline" size="sm" className="flex-1 h-7 text-xs">
+                <CalIcon className="mr-1.5 h-3 w-3" /> Schedule
+              </Button>
+            </div>
           </div>
+        </CardContent>
+      </Card>
+    );
+  };
+
+  if (loading) {
+    return (
+      <div className="px-6 py-6 bg-slate-50/50 min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-4 text-slate-400" />
+          <p className="text-slate-500">Loading applications...</p>
         </div>
-      </CardContent>
-    </Card>
-  );
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="px-6 py-6 bg-slate-50/50 min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <AlertTriangle className="h-8 w-8 mx-auto mb-4 text-red-400" />
+          <p className="text-red-500 mb-2">Error loading applications</p>
+          <p className="text-slate-500 text-sm mb-4">{error}</p>
+          <Button onClick={() => refreshBoard()}>Retry</Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="px-6 py-6 bg-slate-50/50 min-h-screen">
@@ -456,6 +358,11 @@ export default function ApplicationsBoardPage() {
                 </TabsTrigger>
               </TabsList>
             </Tabs>
+
+            <Button onClick={refreshBoard} variant="outline" className="gap-2">
+              <RefreshCw className="h-4 w-4" />
+              Refresh
+            </Button>
 
             <Button className="bg-accent hover:bg-accent/90 text-white">
               <Plus className="mr-2 h-4 w-4" />
@@ -555,10 +462,9 @@ export default function ApplicationsBoardPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Programs</SelectItem>
-                <SelectItem value="Computer Science">Computer Science</SelectItem>
-                <SelectItem value="Business Administration">Business Administration</SelectItem>
-                <SelectItem value="Engineering">Engineering</SelectItem>
-                <SelectItem value="Medicine">Medicine</SelectItem>
+                {uniqueProgrammes.map(prog => (
+                  <SelectItem key={prog} value={prog}>{prog}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
 
@@ -592,15 +498,15 @@ export default function ApplicationsBoardPage() {
             <div className="pt-3 border-t border-slate-100">
               <div className="flex items-center gap-4 text-sm">
                 <span className="text-slate-500">Quick Filters:</span>
-                                 <Button variant="outline" size="sm" className="h-7 text-xs bg-accent/5 border-accent/20 text-accent hover:bg-accent/10">
-                   High Conversion (&gt;80%)
-                 </Button>
-                 <Button variant="outline" size="sm" className="h-7 text-xs bg-warning/5 border-warning/20 text-warning hover:bg-warning/10">
-                   Stuck &gt;30 Days
-                 </Button>
-                 <Button variant="outline" size="sm" className="h-7 text-xs bg-destructive/5 border-destructive/20 text-destructive hover:bg-destructive/10">
-                   No Activity &gt;7 Days
-                 </Button>
+                <Button variant="outline" size="sm" className="h-7 text-xs bg-accent/5 border-accent/20 text-accent hover:bg-accent/10">
+                  High Conversion (&gt;80%)
+                </Button>
+                <Button variant="outline" size="sm" className="h-7 text-xs bg-warning/5 border-warning/20 text-warning hover:bg-warning/10">
+                  Stuck &gt;30 Days
+                </Button>
+                <Button variant="outline" size="sm" className="h-7 text-xs bg-destructive/5 border-destructive/20 text-destructive hover:bg-destructive/10">
+                  No Activity &gt;7 Days
+                </Button>
               </div>
             </div>
           )}
@@ -667,7 +573,7 @@ export default function ApplicationsBoardPage() {
               
               <div className="space-y-3 min-h-96">
                 {grouped[stage.id]?.map((app) => (
-                  <ApplicationCard key={app.id} app={app} />
+                  <ApplicationCard key={app.application_id} app={app} />
                 ))}
                 {(!grouped[stage.id] || grouped[stage.id].length === 0) && (
                   <div className="h-32 border-2 border-dashed border-slate-200 rounded-lg flex items-center justify-center">
@@ -691,7 +597,7 @@ export default function ApplicationsBoardPage() {
                         checked={selectedApps.length === filtered.length && filtered.length > 0}
                         onCheckedChange={(checked) => {
                           if (checked) {
-                            setSelectedApps(filtered.map(a => a.id));
+                            setSelectedApps(filtered.map(a => a.application_id));
                           } else {
                             setSelectedApps([]);
                           }
@@ -710,94 +616,91 @@ export default function ApplicationsBoardPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filtered.map((a) => (
-                    <tr key={a.id} className="border-b border-slate-100 hover:bg-slate-50/50">
-                      <td className="px-6 py-4">
-                        <Checkbox 
-                          checked={selectedApps.includes(a.id)}
-                          onCheckedChange={() => toggleSelection(a.id)}
-                        />
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="font-medium text-slate-900">{a.studentName}</div>
-                        <div className="text-slate-500">{a.email}</div>
-                      </td>
-                      <td className="px-6 py-4 text-slate-700">{a.program}</td>
-                      <td className="px-6 py-4">
-                        <Badge variant="outline" className="text-xs">
-                          {STAGES.find(s => s.id === a.stage)?.name}
-                        </Badge>
-                      </td>
-                      <td className="px-6 py-4">
-                        <PriorityBadge priority={a.priority} />
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium text-slate-700">{a.leadScore}%</span>
-                          <div className="h-2 w-16 rounded-full bg-slate-200">
-                            <div 
-                              className="h-2 rounded-full bg-slate-600" 
-                              style={{ width: `${a.leadScore}%` }} 
-                            />
+                  {filtered.map((app) => {
+                    const displayData = getApplicationCardDisplay(app);
+                    return (
+                      <tr key={app.application_id} className="border-b border-slate-100 hover:bg-slate-50/50">
+                        <td className="px-6 py-4">
+                          <Checkbox 
+                            checked={selectedApps.includes(app.application_id)}
+                            onCheckedChange={() => toggleSelection(app.application_id)}
+                          />
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="font-medium text-slate-900">{displayData.studentName}</div>
+                          <div className="text-slate-500">{app.email || 'No email'}</div>
+                        </td>
+                        <td className="px-6 py-4 text-slate-700">{displayData.program}</td>
+                        <td className="px-6 py-4">
+                          <Badge variant="outline" className="text-xs">
+                            {displayData.stage}
+                          </Badge>
+                        </td>
+                        <td className="px-6 py-4">
+                          <PriorityBadge priority={app.priority || 'medium'} />
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium text-slate-700">{displayData.leadScore}</span>
                           </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <ConversionIndicator probability={a.conversionProbability} />
-                      </td>
-                      <td className="px-6 py-4 text-slate-700">{a.daysInPipeline}</td>
-                      <td className="px-6 py-4 text-slate-700">{a.nextAction}</td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-1">
-                          <TooltipProvider>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
+                        </td>
+                        <td className="px-6 py-4">
+                          <ConversionIndicator probability={app.conversion_probability} />
+                        </td>
+                        <td className="px-6 py-4 text-slate-700">{displayData.nextFollowUp}</td>
+                        <td className="px-6 py-4 text-slate-700">{displayData.nextAction}</td>
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-1">
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button variant="ghost" size="icon" className="h-7 w-7">
+                                    <Mail className="h-3.5 w-3.5" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>Send Email</TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                            
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button variant="ghost" size="icon" className="h-7 w-7">
+                                    <CalIcon className="h-3.5 w-3.5" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>Schedule Meeting</TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                            
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button variant="ghost" size="icon" className="h-7 w-7">
+                                    <Phone className="h-3.5 w-3.5" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>Call Student</TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                            
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
                                 <Button variant="ghost" size="icon" className="h-7 w-7">
-                                  <Mail className="h-3.5 w-3.5" />
+                                  <MoreHorizontal className="h-3.5 w-3.5" />
                                 </Button>
-                              </TooltipTrigger>
-                              <TooltipContent>Send Email</TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-                          
-                          <TooltipProvider>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-7 w-7">
-                                  <CalIcon className="h-3.5 w-3.5" />
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent>Schedule Meeting</TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-                          
-                          <TooltipProvider>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-7 w-7">
-                                  <Phone className="h-3.5 w-3.5" />
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent>Call Student</TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-                          
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon" className="h-7 w-7">
-                                <MoreHorizontal className="h-3.5 w-3.5" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem className="gap-2"><Eye className="h-3.5 w-3.5" /> View Details</DropdownMenuItem>
-                              <DropdownMenuItem className="gap-2"><Edit className="h-3.5 w-3.5" /> Edit</DropdownMenuItem>
-                              <DropdownMenuItem className="gap-2"><BarChart3 className="h-3.5 w-3.5" /> Analytics</DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem className="gap-2"><Eye className="h-3.5 w-3.5" /> View Details</DropdownMenuItem>
+                                <DropdownMenuItem className="gap-2"><Edit className="h-3.5 w-3.5" /> Edit</DropdownMenuItem>
+                                <DropdownMenuItem className="gap-2"><BarChart3 className="h-3.5 w-3.5" /> Analytics</DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
