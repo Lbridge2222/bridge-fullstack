@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Query, HTTPException
 from typing import List, Optional
 from app.db.db import fetch, execute
-from app.schemas.people import PersonOut, PeoplePage
+from app.schemas.people import PersonOut, PeoplePage, PersonUpdate, LeadUpdate, LeadNote
 
 router = APIRouter()
 
@@ -72,6 +72,26 @@ async def list_people_enriched(
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"/people/enriched DB error: {e}")
 
+@router.get("/{person_id}/enriched", response_model=dict)
+async def get_person_enriched(person_id: str):
+    """
+    Returns a single person's enriched record from vw_people_enriched.
+    """
+    sql = """
+      select * from vw_people_enriched
+      where id::text = %s
+      limit 1
+    """
+    try:
+        rows = await fetch(sql, person_id)
+        if not rows:
+            raise HTTPException(status_code=404, detail="Person not found")
+        return rows[0]
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"/people/{{person_id}}/enriched DB error: {e}")
+
 @router.get("/leads", response_model=List[dict])
 async def list_leads(
     q: Optional[str] = Query(None, description="name or email search"),
@@ -90,7 +110,10 @@ async def list_leads(
         latest_application_stage,
         lead_score,
         conversion_probability::float,
-        created_at
+        created_at,
+        created_at as last_activity_at,
+        'enquiry' as last_activity_kind,
+        'Initial contact required' as last_activity_title
       from vw_leads_management
       where (%s::text is null or (
         (coalesce(first_name,'') || ' ' || coalesce(last_name,'')) ilike %s
@@ -264,3 +287,204 @@ async def debug_leads():
             "traceback": traceback.format_exc(),
             "message": "Error accessing leads view"
         }
+
+# New update endpoints for bidirectional data flow
+@router.patch("/{person_id}")
+async def update_person(person_id: str, update: PersonUpdate):
+    """
+    Update a person's basic information.
+    """
+    try:
+        # Build dynamic update query based on provided fields
+        update_fields = []
+        params = []
+        param_count = 1
+        
+        if update.first_name is not None:
+            update_fields.append(f"first_name = %s")
+            params.append(update.first_name)
+            param_count += 1
+            
+        if update.last_name is not None:
+            update_fields.append(f"last_name = %s")
+            params.append(update.last_name)
+            param_count += 1
+            
+        if update.email is not None:
+            update_fields.append(f"email = %s")
+            params.append(update.email)
+            param_count += 1
+            
+        if update.phone is not None:
+            update_fields.append(f"phone = %s")
+            params.append(update.phone)
+            param_count += 1
+            
+        if update.lifecycle_state is not None:
+            update_fields.append(f"lifecycle_state = %s")
+            params.append(update.lifecycle_state)
+            param_count += 1
+        
+        if not update_fields:
+            raise HTTPException(status_code=400, detail="No fields to update")
+        
+        # Add updated_at timestamp
+        update_fields.append("updated_at = NOW()")
+        
+        sql = f"""
+            UPDATE people 
+            SET {', '.join(update_fields)}
+            WHERE id::text = %s
+            RETURNING id::text, first_name, last_name, email, phone, lifecycle_state, updated_at
+        """
+        params.append(person_id)
+        
+        result = await execute(sql, *params)
+        
+        if not result:
+            raise HTTPException(status_code=404, detail="Person not found")
+            
+        return {
+            "message": "Person updated successfully",
+            "person": result[0] if result else None
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Update failed: {e}")
+
+@router.patch("/{person_id}/lead")
+async def update_lead(person_id: str, update: LeadUpdate):
+    """
+    Update lead-specific information for a person.
+    """
+    try:
+        # First check if this person is actually a lead
+        person_check = await fetch(
+            "SELECT lifecycle_state FROM people WHERE id::text = %s",
+            person_id
+        )
+        
+        if not person_check:
+            raise HTTPException(status_code=404, detail="Person not found")
+            
+        if person_check[0]["lifecycle_state"] != "enquiry":
+            raise HTTPException(status_code=400, detail="Person is not in enquiry stage")
+        
+        # Build dynamic update query for lead fields
+        update_fields = []
+        params = []
+        
+        if update.lead_score is not None:
+            update_fields.append(f"lead_score = %s")
+            params.append(update.lead_score)
+            
+        if update.conversion_probability is not None:
+            update_fields.append(f"conversion_probability = %s")
+            params.append(update.conversion_probability)
+            
+        if update.assigned_to is not None:
+            update_fields.append(f"assigned_to = %s")
+            params.append(update.assigned_to)
+            
+        if update.status is not None:
+            update_fields.append(f"status = %s")
+            params.append(update.status)
+            
+        if update.next_follow_up is not None:
+            update_fields.append(f"next_follow_up = %s")
+            params.append(update.next_follow_up)
+        
+        if not update_fields:
+            raise HTTPException(status_code=400, detail="No lead fields to update")
+        
+        # Add updated_at timestamp
+        update_fields.append("updated_at = NOW()")
+        
+        sql = f"""
+            UPDATE people 
+            SET {', '.join(update_fields)}
+            WHERE id::text = %s
+            RETURNING id::text, lead_score, conversion_probability, assigned_to, status, next_follow_up, updated_at
+        """
+        params.append(person_id)
+        
+        result = await execute(sql, *params)
+        
+        # If notes were provided, add them to a separate notes table
+        if update.notes:
+            await execute("""
+                INSERT INTO lead_notes (person_id, note, note_type, created_by, created_at)
+                VALUES (%s, %s, %s, %s, NOW())
+            """, person_id, update.notes, "general", update.assigned_to or "system")
+        
+        return {
+            "message": "Lead updated successfully",
+            "lead": result[0] if result else None
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Lead update failed: {e}")
+
+@router.post("/{person_id}/lead/notes")
+async def add_lead_note(person_id: str, note: LeadNote):
+    """
+    Add a note to a lead's record.
+    """
+    try:
+        # Check if person exists and is a lead
+        person_check = await fetch(
+            "SELECT lifecycle_state FROM people WHERE id::text = %s",
+            person_id
+        )
+        
+        if not person_check:
+            raise HTTPException(status_code=404, detail="Person not found")
+            
+        if person_check[0]["lifecycle_state"] != "enquiry":
+            raise HTTPException(status_code=400, detail="Person is not in enquiry stage")
+        
+        # Insert the note
+        result = await execute("""
+            INSERT INTO lead_notes (person_id, note, note_type, created_by, created_at)
+            VALUES (%s, %s, %s, %s, NOW())
+            RETURNING id, note, note_type, created_by, created_at
+        """, person_id, note.note, note.note_type, note.created_by or "system")
+        
+        return {
+            "message": "Note added successfully",
+            "note": result[0] if result else None
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to add note: {e}")
+
+@router.get("/{person_id}/lead/notes")
+async def get_lead_notes(person_id: str):
+    """
+    Get all notes for a lead.
+    """
+    try:
+        # Check if person exists and is a lead
+        person_check = await fetch(
+            "SELECT lifecycle_state FROM people WHERE id::text = %s",
+            person_id
+        )
+        
+        if not person_check:
+            raise HTTPException(status_code=404, detail="Person not found")
+            
+        if person_check[0]["lifecycle_state"] != "enquiry":
+            raise HTTPException(status_code=400, detail="Person is not in enquiry stage")
+        
+        # Get the notes
+        notes = await fetch("""
+            SELECT id, note, note_type, created_by, created_at
+            FROM lead_notes 
+            WHERE person_id = %s
+            ORDER BY created_at DESC
+        """, person_id)
+        
+        return {"notes": notes}
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to get notes: {e}")

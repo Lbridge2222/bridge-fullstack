@@ -22,6 +22,7 @@ import ForecastingPage from "@/pages/ai/Forecasting";
 import RiskScoringPage from "@/pages/ai/risk-scoring";
 import NextBestActionPage from "@/pages/ai/NextBestAction";
 import AICommunicationsPage from "@/pages/ai/Communications";
+import PersonDetailPage from "@/pages/people/contact-page";
 
 // import AdmissionsPipelinePage from "@/pages/crm/Admissions"; // future
 // import InterviewsPage from "@/pages/crm/Interviews"; // future
@@ -56,6 +57,11 @@ export default function App() {
         <Route path="students">
           <Route index element={<Navigate to="overview" replace />} />
           <Route path="overview" element={<StudentRecordOverview />} />
+        </Route>
+
+        {/* People Section */}
+        <Route path="people">
+          <Route path=":id" element={<PersonDetailPage />} />
         </Route>
 
         {/* Communications Section */}

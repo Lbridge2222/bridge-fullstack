@@ -40,6 +40,7 @@ export interface PersonEnriched {
   first_name?: string;
   last_name?: string;
   email?: string;
+  phone?: string;
   lifecycle_state: string;
   lead_score?: number;
   conversion_probability?: number;
@@ -50,6 +51,8 @@ export interface PersonEnriched {
   last_activity_at?: string;
   last_activity_title?: string;
   last_activity_kind?: string;
+  source?: string;
+  contact_attempts?: number;
   created_at?: string;
 }
 
@@ -200,6 +203,54 @@ export const peopleApi = {
     
     return apiFetch(`/people/${personId}/promote?${params}`, { method: 'POST' });
   },
+
+  // New update methods for bidirectional data flow
+  updatePerson: (personId: string, updates: {
+    first_name?: string;
+    last_name?: string;
+    email?: string;
+    phone?: string;
+    lifecycle_state?: string;
+  }): Promise<any> => {
+    return apiFetch(`/people/${personId}`, {
+      method: 'PATCH',
+      body: JSON.stringify(updates),
+    });
+  },
+
+  updateLead: (personId: string, updates: {
+    lead_score?: number;
+    conversion_probability?: number;
+    notes?: string;
+    assigned_to?: string;
+    status?: string;
+    next_follow_up?: string;
+  }): Promise<any> => {
+    return apiFetch(`/people/${personId}/lead`, {
+      method: 'PATCH',
+      body: JSON.stringify(updates),
+    });
+  },
+
+  addLeadNote: (personId: string, note: {
+    note: string;
+    note_type?: string;
+    created_by?: string;
+  }): Promise<any> => {
+    return apiFetch(`/people/${personId}/lead/notes`, {
+      method: 'POST',
+      body: JSON.stringify(note),
+    });
+  },
+
+  getLeadNotes: (personId: string): Promise<{ notes: LeadNote[] }> => {
+    return apiFetch<{ notes: LeadNote[] }>(`/people/${personId}/lead/notes`);
+  },
+
+  // Get single enriched person record
+  getPersonEnriched: (personId: string): Promise<PersonEnriched & Record<string, any>> => {
+    return apiFetch<PersonEnriched & Record<string, any>>(`/people/${personId}/enriched`);
+  },
 };
 
 // Dashboard API
@@ -286,6 +337,15 @@ export interface ChecklistItem {
   category: "academic" | "identity" | "financial" | "accommodation" | "health";
   submittedDate: string | null;
   notes?: string | null;
+}
+
+export interface LeadNote {
+  id: number;
+  note: string;
+  note_type: string;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
 }
 
 // Export the main API object

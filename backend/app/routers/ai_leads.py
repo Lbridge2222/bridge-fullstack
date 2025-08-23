@@ -20,19 +20,28 @@ async def triage(payload: Dict[str, Any]):
     t0 = time.time()
     
     try:
-        # Simple rules-based scoring for now
+        # Use AI-enhanced triage if available, otherwise fall back to rules
         leads = await sql_query_leads(filters)
-        scored = []
-        for lead in leads:
-            score, reasons, next_action = _rule_score(lead)
-            scored.append({
-                "id": lead.id,
-                "score": round(score, 1),
-                "reasons": reasons,
-                "next_action": next_action
-            })
-        # Sort by score desc
-        scored.sort(key=lambda x: x["score"], reverse=True)
+        
+        try:
+            # Try AI-enhanced triage first
+            from app.ai.tools.leads import leads_triage
+            scored = await leads_triage(leads)
+            print("🤖 AI triage completed successfully")
+        except Exception as e:
+            print(f"⚠️ AI triage failed: {e}, falling back to rules-only")
+            # Fallback to rules-only scoring
+            scored = []
+            for lead in leads:
+                score, reasons, next_action = _rule_score(lead)
+                scored.append({
+                    "id": lead.id,
+                    "score": round(score, 1),
+                    "reasons": reasons,
+                    "next_action": next_action
+                })
+            # Sort by score desc
+            scored.sort(key=lambda x: x["score"], reverse=True)
         
         # Extract top reasons from the scored leads
         all_reasons = []
@@ -79,6 +88,8 @@ async def compose_outreach_ep(payload: Dict[str, Any]):
     intent = payload.get("intent", "nurture")
     lead_ids = payload.get("lead_ids") or []
     filters = payload.get("filters") or {}
+    user_prompt = payload.get("user_prompt")
+    content = payload.get("content")
     leads: list[LeadLite]
     if lead_ids:
         # Minimal fetch: use existing view and filter by ids (string uuid/text)
@@ -87,7 +98,7 @@ async def compose_outreach_ep(payload: Dict[str, Any]):
     else:
         leads = await sql_query_leads(filters)
     t0 = time.time()
-    draft = await compose_outreach_tool(leads, intent)
+    draft = await compose_outreach_tool(leads, intent, user_prompt, content)
     ms = int((time.time() - t0) * 1000)
     await log_ai_event("compose.outreach", {"rows": len(leads), "latency_ms": ms, "intent": intent})
     return draft

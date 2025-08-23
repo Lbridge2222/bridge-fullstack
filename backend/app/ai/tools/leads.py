@@ -5,10 +5,54 @@ from pydantic import BaseModel
 from datetime import datetime, timezone
 
 from app.db.db import fetch as pg_fetch
-from app.ai import OPENAI_API_KEY, LLM_MODEL
-from langchain_openai import ChatOpenAI
-from langchain.prompts import ChatPromptTemplate
-import json
+from app.ai import OPENAI_API_KEY, GEMINI_API_KEY, ACTIVE_MODEL, OPENAI_MODEL, GEMINI_MODEL
+
+def _extract_json_object(text: str) -> Optional[Dict[str, Any]]:
+    """Best-effort extraction of a single JSON object from free-form text.
+    - Strips markdown code fences
+    - Finds first balanced {...} block
+    - Returns parsed dict or None
+    """
+    import json
+
+    if not text:
+        return None
+
+    cleaned = text.strip()
+    # Remove common markdown fences
+    if cleaned.startswith("```json"):
+        cleaned = cleaned[len("```json"):]
+    if cleaned.startswith("```"):
+        cleaned = cleaned[len("```"):]
+    if cleaned.endswith("```"):
+        cleaned = cleaned[:-3]
+    cleaned = cleaned.strip()
+
+    # If it's already a single JSON object
+    if cleaned.startswith("{") and cleaned.endswith("}"):
+        try:
+            return json.loads(cleaned)
+        except Exception:
+            pass
+
+    # Scan for first balanced JSON object
+    start_idx = cleaned.find("{")
+    while start_idx != -1:
+        depth = 0
+        for i in range(start_idx, len(cleaned)):
+            ch = cleaned[i]
+            if ch == '{':
+                depth += 1
+            elif ch == '}':
+                depth -= 1
+                if depth == 0:
+                    candidate = cleaned[start_idx:i+1]
+                    try:
+                        return json.loads(candidate)
+                    except Exception:
+                        break
+        start_idx = cleaned.find("{", start_idx + 1)
+    return None
 
 
 class LeadLite(BaseModel):
@@ -97,36 +141,35 @@ def _rule_score(lead: LeadLite) -> tuple[float, List[str], str]:
         score += 5
         reasons.append("No recent activity")
     
-    # Email quality bonus (20% of total)
-    if lead.email and "@" in lead.email:
-        score += 20
-        reasons.append("Valid email address")
-    
-    # Name completeness bonus (10% of total)
-    if lead.name and len(lead.name.strip()) > 2:
+    # Engagement bonus (20% of total)
+    if lead.email:
         score += 10
-        reasons.append("Complete name provided")
+        reasons.append("Has email contact")
+    
+    # Course interest bonus (10% of total)
+    if lead.course and lead.course != "Unknown":
+        score += 10
+        reasons.append("Specific course interest")
     
     # Normalize to 0-100 scale
-    score = min(score, 100)
+    score = min(100.0, max(0.0, score))
     
-    # Generate next best action based on score
-    next_action = "follow_up"
+    # Determine next best action
     if score >= 80:
-        next_action = "immediate_contact"
+        next_action = "Schedule interview immediately"
     elif score >= 60:
-        next_action = "schedule_call"
+        next_action = "Send personalized follow-up"
     elif score >= 40:
-        next_action = "send_nurture_email"
+        next_action = "Nurture with course information"
     else:
-        next_action = "basic_outreach"
+        next_action = "Send general information"
     
     return score, reasons, next_action
 
 
 async def leads_triage(items: List[LeadLite]) -> List[Dict[str, Any]]:
     """
-    Hybrid rules + LLM re-rank & explanation via LangChain. Falls back to rules if no API key.
+    Hybrid rules + LLM re-rank & explanation via LangChain. Supports both OpenAI and Gemini.
     """
     # Compute deterministic base scores
     base: List[Dict[str, Any]] = []
@@ -136,83 +179,161 @@ async def leads_triage(items: List[LeadLite]) -> List[Dict[str, Any]]:
     if not base:
         return []
 
-    # If no API key, return normalized rules-only ranking
-    if not OPENAI_API_KEY:
+    # If no AI models available, return normalized rules-only ranking
+    if ACTIVE_MODEL == "none":
         max_score = max(x["score"] for x in base) or 1.0
         for x in base:
             x["score"] = round((x["score"] / max_score) * 100.0, 1)
         return sorted(base, key=lambda x: x["score"], reverse=True)
 
-    # Prepare LLM
-    llm = ChatOpenAI(model=LLM_MODEL, temperature=0.2, api_key=OPENAI_API_KEY)
-    from pathlib import Path
-    schema = Path(__file__).resolve().parents[1] / "schema" / "LEADS_SCHEMA.md"
-    triage_prompt_path = Path(__file__).resolve().parents[1] / "prompts" / "leads_triage.md"
-    schema_text = schema.read_text(encoding="utf-8")
-    prompt_text = triage_prompt_path.read_text(encoding="utf-8")
-    prompt = ChatPromptTemplate.from_template(prompt_text)
-
-    features = [
-        {
-            "id": x["id"],
-            "lead_score": next((l.lead_score for l in items if l.id == x["id"]), 0),
-            "last_activity_at": next((l.last_activity_at.isoformat() if l.last_activity_at else None for l in items if l.id == x["id"]), None),
-        }
-        for x in base
-    ]
-    messages = prompt.format_messages(schema=schema_text, leads=json.dumps(features))
-    resp = await llm.ainvoke(messages)
-    text = resp.content if hasattr(resp, "content") else str(resp)
+    # Prepare LLM based on available model
     try:
-        parsed = json.loads(text)
-        # Ensure required fields and coerce scoring range
-        for it in parsed:
-            if "score" in it:
-                s = float(it["score"]) if it["score"] is not None else 0.0
-                it["score"] = max(0.0, min(100.0, round(s, 1)))
-            it.setdefault("reasons", [])
-            it.setdefault("next_action", "follow_up")
-        # Fallback merge with base if ids missing
-        by_id = {it["id"]: it for it in parsed if it.get("id") is not None}
-        merged = []
-        for b in base:
-            merged.append(by_id.get(b["id"], {**b, "score": round((b["score"]/max(1.0, max(x["score"] for x in base)))*100.0, 1)}))
-        return sorted(merged, key=lambda x: x["score"], reverse=True)
-    except Exception:
-        # Fallback to rules-only if JSON parsing failed
+        if ACTIVE_MODEL == "openai" and OPENAI_API_KEY:
+            from langchain_openai import ChatOpenAI
+            llm = ChatOpenAI(model=OPENAI_MODEL, temperature=0.2, api_key=OPENAI_API_KEY)
+            print(f"🤖 Using OpenAI model: {OPENAI_MODEL}")
+        elif ACTIVE_MODEL == "gemini" and GEMINI_API_KEY:
+            from langchain_google_genai import ChatGoogleGenerativeAI
+            llm = ChatGoogleGenerativeAI(model=GEMINI_MODEL, temperature=0.2, google_api_key=GEMINI_API_KEY)
+            print(f"🤖 Using Gemini model: {GEMINI_MODEL}")
+        else:
+            raise Exception(f"No valid AI model available. Active: {ACTIVE_MODEL}")
+
+        from langchain_core.prompts import ChatPromptTemplate
+        from pathlib import Path
+        
+        schema = Path(__file__).resolve().parents[1] / "schema" / "LEADS_SCHEMA.md"
+        triage_prompt_path = Path(__file__).resolve().parents[1] / "prompts" / "leads_triage.md"
+        
+        if not schema.exists() or not triage_prompt_path.exists():
+            print("⚠️  Prompt files not found, using rules-only fallback")
+            raise Exception("Prompt files missing")
+            
+        schema_text = schema.read_text(encoding="utf-8")
+        prompt_text = triage_prompt_path.read_text(encoding="utf-8")
+        prompt = ChatPromptTemplate.from_template(prompt_text)
+
+        features = [
+            {
+                "id": x["id"],
+                "lead_score": next((l.lead_score for l in items if l.id == x["id"]), 0),
+                "last_activity_at": next((l.last_activity_at.isoformat() if l.last_activity_at else None for l in items if l.id == x["id"]), None),
+            }
+            for x in base
+        ]
+        
+        messages = prompt.format_messages(schema=schema_text, leads=json.dumps(features))
+        resp = await llm.ainvoke(messages)
+        text = resp.content if hasattr(resp, "content") else str(resp)
+        
+        try:
+            parsed = json.loads(text)
+            # Ensure required fields and coerce scoring range
+            for it in parsed:
+                if "score" in it:
+                    s = float(it["score"]) if it["score"] is not None else 0.0
+                    it["score"] = max(0.0, min(100.0, round(s, 1)))
+                it.setdefault("reasons", [])
+                it.setdefault("next_action", "follow_up")
+            # Fallback merge with base if ids missing
+            by_id = {it["id"]: it for it in parsed if it.get("id") is not None}
+            merged = []
+            for b in base:
+                merged.append(by_id.get(b["id"], {**b, "score": round((b["score"]/max(1.0, max(x["score"] for x in base)))*100.0, 1)}))
+            return sorted(merged, key=lambda x: x["score"], reverse=True)
+        except Exception as e:
+            print(f"⚠️  JSON parsing failed: {e}, using rules-only fallback")
+            raise e
+            
+    except Exception as e:
+        print(f"⚠️  AI model failed: {e}, using rules-only fallback")
+        # Fallback to rules-only if AI fails
         max_score = max(x["score"] for x in base) or 1.0
         for x in base:
             x["score"] = round((x["score"] / max_score) * 100.0, 1)
         return sorted(base, key=lambda x: x["score"], reverse=True)
 
 
-async def compose_outreach(leads: List[LeadLite], intent: str) -> Dict[str, Any]:
-    """Compose an outreach email using LangChain, with JSON output contract."""
-    # If no API key, return a simple template
-    if not OPENAI_API_KEY:
+class EmailDraftModel(BaseModel):
+    subject: str
+    body: str
+    merge_fields: List[str] = ["first_name"]
+
+
+async def compose_outreach(leads: List[LeadLite], intent: str, user_prompt: Optional[str] = None, content: Optional[str] = None) -> Dict[str, Any]:
+    """Compose an outreach email using AI (OpenAI or Gemini), with JSON output contract."""
+    
+    if ACTIVE_MODEL == "none":
         first = leads[0] if leads else None
         subject = {
             "book_interview": "Next step: schedule your interview",
             "nurture": "Quick update from Bridge",
             "reengage": "Checking in – still interested?",
+            "grammar_check": "Grammar check completed",
+            "custom": "Custom email assistance"
         }.get(intent, "Hello from Bridge")
         greeting = f"Hi {first.name.split(' ')[0] if first and first.name else 'there'},"
         body = f"{greeting}\n\nWe'd love to help you take the next step."
         return {"subject": subject, "body": body, "merge_fields": ["first_name"]}
 
-    llm = ChatOpenAI(model=LLM_MODEL, temperature=0.4, api_key=OPENAI_API_KEY)
-    from pathlib import Path
-    schema = Path(__file__).resolve().parents[1] / "schema" / "LEADS_SCHEMA.md"
-    prompt_path = Path(__file__).resolve().parents[1] / "prompts" / "outreach_compose.md"
-    schema_text = schema.read_text(encoding="utf-8")
-    prompt_text = prompt_path.read_text(encoding="utf-8")
-    prompt = ChatPromptTemplate.from_template(prompt_text)
-    leads_summary = ", ".join([l.name for l in leads[:3]]) + (" and others" if len(leads) > 3 else "")
-    messages = prompt.format_messages(schema=schema_text, intent=intent, leads_summary=leads_summary)
-    resp = await llm.ainvoke(messages)
     try:
-        return json.loads(resp.content)
-    except Exception:
-        return {"subject": "Hello from Bridge", "body": "", "merge_fields": ["first_name"]}
+        # Base LLMs
+        if ACTIVE_MODEL == "openai" and OPENAI_API_KEY:
+            from langchain_openai import ChatOpenAI
+            llm_base = ChatOpenAI(model=OPENAI_MODEL, temperature=0.4, api_key=OPENAI_API_KEY)
+            print(f"🤖 Composing email with OpenAI: {OPENAI_MODEL}")
+        elif ACTIVE_MODEL == "gemini" and GEMINI_API_KEY:
+            from langchain_google_genai import ChatGoogleGenerativeAI
+            llm_base = ChatGoogleGenerativeAI(
+                model=GEMINI_MODEL,
+                temperature=0.4,
+                google_api_key=GEMINI_API_KEY,
+                generation_config={"response_mime_type": "application/json"}
+            )
+            print(f"🤖 Composing email with Gemini: {GEMINI_MODEL}")
+        else:
+            raise Exception(f"No valid AI model available. Active: {ACTIVE_MODEL}")
+
+        # Enforce structured JSON output
+        llm = llm_base.with_structured_output(EmailDraftModel)
+
+        from langchain_core.prompts import ChatPromptTemplate
+        from pathlib import Path
+        
+        schema = Path(__file__).resolve().parents[1] / "schema" / "LEADS_SCHEMA.md"
+        prompt_path = Path(__file__).resolve().parents[1] / "prompts" / "outreach_compose.md"
+        
+        if not schema.exists() or not prompt_path.exists():
+            print("⚠️  Prompt files not found, using template fallback")
+            raise Exception("Prompt files missing")
+            
+        schema_text = schema.read_text(encoding="utf-8")
+        prompt_text = prompt_path.read_text(encoding="utf-8")
+        prompt = ChatPromptTemplate.from_template(prompt_text)
+        
+        leads_summary = ", ".join([l.name for l in leads[:3]]) + (" and others" if len(leads) > 3 else "")
+        
+        inputs: Dict[str, Any] = {"schema": schema_text, "intent": intent, "leads_summary": leads_summary}
+        # Always include optional fields, using empty strings if not provided
+        inputs["user_prompt"] = user_prompt or ""
+        inputs["content"] = content or ""
+        
+        chain = prompt | llm
+        draft: EmailDraftModel = await chain.ainvoke(inputs)  # type: ignore
+        return draft.dict()
+        
+    except Exception as e:
+        print(f"⚠️  AI composition failed: {e}, using template fallback")
+        first = leads[0] if leads else None
+        subject = {
+            "book_interview": "Next step: schedule your interview",
+            "nurture": "Quick update from Bridge",
+            "reengage": "Checking in – still interested?",
+            "grammar_check": "Grammar check completed",
+            "custom": "Custom email assistance"
+        }.get(intent, "Hello from Bridge")
+        greeting = f"Hi {first.name.split(' ')[0] if first and first.name else 'there'},"
+        body = f"{greeting}\n\nWe'd love to help you take the next step."
+        return {"subject": subject, "body": body, "merge_fields": ["first_name"]}
 
 
