@@ -21,3 +21,6 @@ __pycache__/
 
 # OS
 .DS_Store
+
+# PriorForecast Development (large data files and development artifacts)
+PriorForecast Development/
