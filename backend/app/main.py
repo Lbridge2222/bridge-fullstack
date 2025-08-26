@@ -113,6 +113,14 @@ except Exception as e:
     print(f"❌ Failed to load cohort scoring router: {e}")
     pass
 
+# Cohort Performance router (Phase 3.4)
+try:
+    from app.ai.cohort_performance import router as cohort_performance_router
+    app.include_router(cohort_performance_router)
+except Exception as e:
+    print(f"❌ Failed to load cohort performance router: {e}")
+    pass
+
 @app.get("/healthz/db")
 async def healthz_db():
     from app.db.db import fetchrow
