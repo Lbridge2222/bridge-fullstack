@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from "react";
-import { Mail, Brain, Send, X, Sparkles, Wand2, MessageSquare, Loader2, Sprout, Calendar, RotateCcw, Zap } from "lucide-react";
+import { Mail, Brain, Send, X, Sparkles, Wand2, MessageSquare, Loader2, Sprout, Calendar, RotateCcw, Zap, Users, Target, Clock, TestTube } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -33,6 +33,14 @@ export interface Lead {
     recommendedAction: string;
     urgency: "high" | "medium" | "low";
   };
+  // Phase 3.3: Cohort and persona data
+  cohort?: {
+    id: string;
+    name: string;
+    persona: string;
+    segment: string;
+    performance_tier: "high" | "medium" | "low";
+  };
 }
 
 interface EmailComposerProps {
@@ -54,6 +62,15 @@ export interface EmailComposerData {
     confidence: number;
     action: string;
   }>;
+  // Phase 3.3: Cohort-specific data
+  cohortStrategy?: {
+    persona: string;
+    segment: string;
+    messaging_approach: string;
+    timing_optimization: string;
+    a_b_test_variant: string;
+    personalization_level: "basic" | "moderate" | "high";
+  };
 }
 
 const EmailComposer: React.FC<EmailComposerProps> = ({
@@ -67,7 +84,8 @@ const EmailComposer: React.FC<EmailComposerProps> = ({
     subject: "",
     body: "",
     intent: "nurture",
-    aiSuggestions: []
+    aiSuggestions: [],
+    cohortStrategy: undefined
   });
 
   // AI State
@@ -75,6 +93,10 @@ const EmailComposer: React.FC<EmailComposerProps> = ({
   const [userPrompt, setUserPrompt] = useState("");
   const [aiResponse, setAiResponse] = useState("");
   const [selectedIntent, setSelectedIntent] = useState<"nurture" | "book_interview" | "reengage" | "custom">("nurture");
+
+  // Phase 3.3: Cohort Strategy State
+  const [cohortStrategy, setCohortStrategy] = useState<any>(null);
+  const [isAnalyzingCohort, setIsAnalyzingCohort] = useState(false);
 
   // AI Email Suggestions
   const generateEmailSuggestions = useCallback(async (lead: Lead) => {
@@ -119,6 +141,75 @@ const EmailComposer: React.FC<EmailComposerProps> = ({
       console.error("Failed to generate email suggestions:", error);
     }
   }, []);
+
+  // Phase 3.3: Generate Cohort-Specific Strategy
+  const generateCohortStrategy = useCallback(async (lead: Lead) => {
+    if (!lead.cohort) return;
+    
+    setIsAnalyzingCohort(true);
+    try {
+      // Call our cohort scoring API to get personalized strategy
+      const response = await fetch("http://localhost:8000/ai/cohort-scoring/analyze", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          lead_id: lead.uid,
+          lead_features: {
+            email: lead.email,
+            phone: lead.phone,
+            source: lead.leadSource,
+            course_declared: lead.courseInterest,
+            engagement_data: {
+              email_opens: lead.contactAttempts * 2, // Estimate
+              email_clicks: Math.floor(lead.contactAttempts * 0.5),
+              events_attended: lead.statusType === "qualified" ? 1 : 0,
+              portal_logins: lead.statusType === "contacted" ? 1 : 0,
+              web_visits: lead.contactAttempts
+            }
+          }
+        })
+      });
+
+      if (response.ok) {
+        const cohortData = await response.json();
+        const strategy = {
+          persona: lead.cohort?.persona || "Standard",
+          segment: lead.cohort?.segment || "General",
+          messaging_approach: cohortData.optimization_strategies?.[0]?.strategy || "Value-focused",
+          timing_optimization: cohortData.optimization_strategies?.[0]?.timing || "Standard",
+          a_b_test_variant: "A", // Default variant
+          personalization_level: (lead.leadScore > 70 ? "high" : lead.leadScore > 40 ? "moderate" : "basic") as "high" | "moderate" | "basic"
+        };
+        
+        setCohortStrategy(strategy);
+        setEmailComposerData(prev => ({ ...prev, cohortStrategy: strategy }));
+      }
+    } catch (error) {
+      console.error("Failed to generate cohort strategy:", error);
+      // Fallback to basic strategy
+      const fallbackStrategy = {
+        persona: lead.cohort?.persona || "Standard",
+        segment: lead.cohort?.segment || "General",
+        messaging_approach: "Value-focused",
+        timing_optimization: "Standard",
+        a_b_test_variant: "A",
+        personalization_level: "moderate" as const
+      };
+      setCohortStrategy(fallbackStrategy);
+      setEmailComposerData(prev => ({ ...prev, cohortStrategy: fallbackStrategy }));
+    } finally {
+      setIsAnalyzingCohort(false);
+    }
+  }, []);
+
+  // Phase 3.3: A/B Test Variant Selection
+  const selectABTestVariant = (variant: "A" | "B") => {
+    if (cohortStrategy) {
+      const updatedStrategy = { ...cohortStrategy, a_b_test_variant: variant };
+      setCohortStrategy(updatedStrategy);
+      setEmailComposerData(prev => ({ ...prev, cohortStrategy: updatedStrategy }));
+    }
+  };
 
   // AI Draft Generation
   const generateAIDraft = async (intent: string) => {
@@ -271,8 +362,10 @@ const EmailComposer: React.FC<EmailComposerProps> = ({
     if (isOpen && lead) {
       setEmailComposerData(prev => ({ ...prev, lead }));
       generateEmailSuggestions(lead);
+      // Generate cohort strategy when lead is available
+      generateCohortStrategy(lead);
     }
-  }, [isOpen, lead, generateEmailSuggestions]);
+  }, [isOpen, lead, generateEmailSuggestions, generateCohortStrategy]);
 
   if (!isOpen || !lead) return null;
 
@@ -409,6 +502,99 @@ const EmailComposer: React.FC<EmailComposerProps> = ({
               </div>
             </div>
 
+            {/* Phase 3.3: Cohort Strategy Section */}
+            <div className="mb-6">
+              <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
+                <Users className="h-4 w-4 text-accent" />
+                Cohort Strategy
+              </h3>
+              
+              {cohortStrategy ? (
+                <div className="space-y-3">
+                  <div className="p-3 rounded-lg border border-border bg-background/60 backdrop-blur-sm">
+                    <div className="space-y-2 text-xs">
+                      <div className="flex items-center justify-between">
+                        <span className="text-muted-foreground">Persona:</span>
+                        <Badge variant="outline" className="text-[10px]">{cohortStrategy.persona}</Badge>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-muted-foreground">Segment:</span>
+                        <Badge variant="outline" className="text-[10px]">{cohortStrategy.segment}</Badge>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-muted-foreground">Messaging:</span>
+                        <Badge variant="outline" className="text-[10px]">{cohortStrategy.messaging_approach}</Badge>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-muted-foreground">Timing:</span>
+                        <Badge variant="outline" className="text-[10px]">{cohortStrategy.timing_optimization}</Badge>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-muted-foreground">Personalization:</span>
+                        <Badge variant="outline" className="text-[10px]">{cohortStrategy.personalization_level}</Badge>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* A/B Testing Controls */}
+                  <div className="p-3 rounded-lg border border-border bg-background/60 backdrop-blur-sm">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-xs font-medium text-foreground">A/B Test Variant</span>
+                      <Badge variant="outline" className="text-[10px]">{cohortStrategy.a_b_test_variant}</Badge>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button 
+                        onClick={() => selectABTestVariant("A")}
+                        disabled={isAnalyzingCohort || cohortStrategy.a_b_test_variant === "A"}
+                        variant="outline"
+                        size="sm"
+                        className="flex-1 text-[10px] h-7"
+                      >
+                        <Clock className="h-3 w-3 mr-1" />
+                        Variant A
+                      </Button>
+                      <Button 
+                        onClick={() => selectABTestVariant("B")}
+                        disabled={isAnalyzingCohort || cohortStrategy.a_b_test_variant === "B"}
+                        variant="outline"
+                        size="sm"
+                        className="flex-1 text-[10px] h-7"
+                      >
+                        <TestTube className="h-3 w-3 mr-1" />
+                        Variant B
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="p-3 rounded-lg border border-border bg-muted/20">
+                  <p className="text-xs text-muted-foreground mb-2">
+                    No cohort data available for this lead.
+                  </p>
+                  <Button 
+                    onClick={() => generateCohortStrategy(lead!)}
+                    disabled={isAnalyzingCohort}
+                    variant="outline"
+                    size="sm"
+                    className="w-full text-xs"
+                  >
+                    <Users className="h-3 w-3 mr-2" />
+                    Analyze Cohort
+                  </Button>
+                </div>
+              )}
+            </div>
+
+            {/* Cohort Analysis Status */}
+            {isAnalyzingCohort && (
+              <div className="mb-6 p-4 accent-bg accent-border rounded-lg">
+                <div className="flex items-center gap-2 text-accent">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span className="text-sm font-medium">Analyzing cohort...</span>
+                </div>
+              </div>
+            )}
+
             {/* Quick Actions */}
             <div>
               <h3 className="text-sm font-semibold text-foreground mb-3">Quick Actions</h3>
@@ -435,6 +621,8 @@ const EmailComposer: React.FC<EmailComposerProps> = ({
                 </Button>
               </div>
             </div>
+
+
           </div>
 
           {/* Right Side - Email Composition */}

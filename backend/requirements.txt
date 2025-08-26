@@ -1,11 +1,11 @@
 fastapi==0.104.1
 uvicorn[standard]==0.24.0
 psycopg[binary,pool]==3.1.13
-pydantic==2.5.0
+pydantic>=2.4.0,<3.0.0
 python-multipart==0.0.6
-langchain==0.1.0
-langgraph==0.0.20
+langchain>=0.2.0
+langgraph>=0.0.40
 openai>=1.10.0
-langchain-openai==0.0.5
-google-generativeai==0.3.2
-langchain-google-genai==0.0.5
+langchain-openai>=0.1.0
+google-generativeai>=0.5.0
+langchain-google-genai>=0.1.0

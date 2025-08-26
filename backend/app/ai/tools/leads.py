@@ -194,7 +194,11 @@ async def leads_triage(items: List[LeadLite]) -> List[Dict[str, Any]]:
             print(f"🤖 Using OpenAI model: {OPENAI_MODEL}")
         elif ACTIVE_MODEL == "gemini" and GEMINI_API_KEY:
             from langchain_google_genai import ChatGoogleGenerativeAI
-            llm = ChatGoogleGenerativeAI(model=GEMINI_MODEL, temperature=0.2, google_api_key=GEMINI_API_KEY)
+            llm = ChatGoogleGenerativeAI(
+                model=GEMINI_MODEL,
+                temperature=0.2,
+                google_api_key=GEMINI_API_KEY
+            )
             print(f"🤖 Using Gemini model: {GEMINI_MODEL}")
         else:
             raise Exception(f"No valid AI model available. Active: {ACTIVE_MODEL}")
@@ -262,7 +266,7 @@ class EmailDraftModel(BaseModel):
 
 async def compose_outreach(leads: List[LeadLite], intent: str, user_prompt: Optional[str] = None, content: Optional[str] = None) -> Dict[str, Any]:
     """Compose an outreach email using AI (OpenAI or Gemini), with JSON output contract."""
-    
+
     if ACTIVE_MODEL == "none":
         first = leads[0] if leads else None
         subject = {
@@ -280,48 +284,48 @@ async def compose_outreach(leads: List[LeadLite], intent: str, user_prompt: Opti
         # Base LLMs
         if ACTIVE_MODEL == "openai" and OPENAI_API_KEY:
             from langchain_openai import ChatOpenAI
-            llm_base = ChatOpenAI(model=OPENAI_MODEL, temperature=0.4, api_key=OPENAI_API_KEY)
+            llm = ChatOpenAI(model=OPENAI_MODEL, temperature=0.4, api_key=OPENAI_API_KEY)
             print(f"🤖 Composing email with OpenAI: {OPENAI_MODEL}")
         elif ACTIVE_MODEL == "gemini" and GEMINI_API_KEY:
             from langchain_google_genai import ChatGoogleGenerativeAI
-            llm_base = ChatGoogleGenerativeAI(
+            llm = ChatGoogleGenerativeAI(
                 model=GEMINI_MODEL,
                 temperature=0.4,
-                google_api_key=GEMINI_API_KEY,
-                generation_config={"response_mime_type": "application/json"}
+                google_api_key=GEMINI_API_KEY
             )
             print(f"🤖 Composing email with Gemini: {GEMINI_MODEL}")
         else:
             raise Exception(f"No valid AI model available. Active: {ACTIVE_MODEL}")
 
-        # Enforce structured JSON output
-        llm = llm_base.with_structured_output(EmailDraftModel)
-
         from langchain_core.prompts import ChatPromptTemplate
         from pathlib import Path
-        
+        import json
+
         schema = Path(__file__).resolve().parents[1] / "schema" / "LEADS_SCHEMA.md"
         prompt_path = Path(__file__).resolve().parents[1] / "prompts" / "outreach_compose.md"
-        
+
         if not schema.exists() or not prompt_path.exists():
             print("⚠️  Prompt files not found, using template fallback")
             raise Exception("Prompt files missing")
-            
+
         schema_text = schema.read_text(encoding="utf-8")
         prompt_text = prompt_path.read_text(encoding="utf-8")
         prompt = ChatPromptTemplate.from_template(prompt_text)
-        
+
         leads_summary = ", ".join([l.name for l in leads[:3]]) + (" and others" if len(leads) > 3 else "")
-        
+
         inputs: Dict[str, Any] = {"schema": schema_text, "intent": intent, "leads_summary": leads_summary}
         # Always include optional fields, using empty strings if not provided
         inputs["user_prompt"] = user_prompt or ""
         inputs["content"] = content or ""
+
+        # Enforce structured JSON output
+        llm_structured = llm.with_structured_output(EmailDraftModel)
         
-        chain = prompt | llm
-        draft: EmailDraftModel = await chain.ainvoke(inputs)  # type: ignore
-        return draft.dict()
-        
+        chain = prompt | llm_structured
+        draft: EmailDraftModel = await chain.ainvoke(inputs)
+        return draft.model_dump()
+
     except Exception as e:
         print(f"⚠️  AI composition failed: {e}, using template fallback")
         first = leads[0] if leads else None

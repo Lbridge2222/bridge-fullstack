@@ -197,63 +197,63 @@ const LeadsManagementPage: React.FC = () => {
       id: "priority", 
       name: "Priority", 
       color: "bg-red-500/20 border-red-500/40 text-red-700", 
-      icon: <AlertTriangle className="h-3 w-3" />,
+      icon: "AlertTriangle",
       description: "High-priority leads requiring immediate attention"
     },
     { 
       id: "hot", 
       name: "Hot Lead", 
       color: "bg-orange-500/20 border-orange-500/40 text-orange-700", 
-      icon: <Zap className="h-3 w-3" />,
+      icon: "Zap",
       description: "High-scoring leads with strong conversion potential"
     },
     { 
       id: "qualified", 
       name: "Qualified", 
       color: "bg-green-600/20 border-green-600/40 text-green-700", 
-      icon: <CheckCircle2 className="h-3 w-3" />,
+      icon: "CheckCircle2",
       description: "Leads that meet qualification criteria"
     },
     { 
       id: "nurture", 
       name: "Nurture", 
       color: "bg-blue-500/20 border-blue-500/40 text-blue-700", 
-      icon: <Sprout className="h-3 w-3" />,
+      icon: "Sprout",
       description: "Leads requiring ongoing engagement"
     },
     { 
       id: "follow-up", 
       name: "Follow Up", 
       color: "bg-purple-500/20 border-purple-500/40 text-purple-700", 
-      icon: <MessageCircle className="h-3 w-3" />,
+      icon: "MessageCircle",
       description: "Leads awaiting follow-up communication"
     },
     { 
       id: "research", 
       name: "Research", 
       color: "bg-yellow-500/20 border-yellow-500/40 text-yellow-700", 
-      icon: <Search className="h-3 w-3" />,
+      icon: "Search",
       description: "Leads requiring additional research"
     },
     { 
       id: "cold", 
       name: "Cold", 
       color: "bg-slate-200 border-slate-300 text-slate-700", 
-      icon: <Snowflake className="h-3 w-3" />,
+      icon: "Snowflake",
       description: "Inactive or low-priority leads"
     },
     { 
       id: "custom-1", 
       name: "Custom 1", 
       color: "bg-slate-300/20 border-slate-400/40 text-slate-600", 
-      icon: <Star className="h-3 w-3" />,
+      icon: "Star",
       description: "Custom categorization tag"
     },
     { 
       id: "custom-2", 
       name: "Custom 2", 
       color: "bg-slate-400/20 border-slate-500/40 text-slate-600", 
-      icon: <Target className="h-3 w-3" />,
+      icon: "Target",
       description: "Custom categorization tag"
     },
   ];
@@ -1177,7 +1177,7 @@ const LeadsManagementPage: React.FC = () => {
                  >
                    <div className={`w-2 h-2 rounded-full ${tag.color.split(' ')[0]} ${tag.color.split(' ')[1]} ${tag.color.split(' ')[2]}`} />
                    <div className="flex items-center gap-2">
-                     {tag.icon}
+                     {renderIcon(tag.icon)}
                      <span>{tag.name}</span>
                    </div>
                    {lead.colorTag === tag.id && <span className="ml-auto text-xs text-muted-foreground">•</span>}
@@ -2361,27 +2361,43 @@ const LeadsManagementPage: React.FC = () => {
     setSelectedLeads(new Set()); // Clear selection after assignment
   };
 
-     const ColorTagIndicator = ({ tagId }: { tagId: string }) => {
-     const tag = colorTags.find(t => t.id === tagId);
-     if (!tag) return null;
-     
-     return (
-       <Tooltip>
-         <TooltipTrigger asChild>
-           <div 
-             className={`w-3 h-3 rounded-full border-2 border-white shadow-sm opacity-70 cursor-help ${tag.color.split(' ')[0]} ${tag.color.split(' ')[1]} ${tag.color.split(' ')[2]}`}
-           />
-         </TooltipTrigger>
-         <TooltipContent className="max-w-xs">
-           <div className="flex items-center gap-2 mb-1">
-             {tag.icon}
-             <span className="font-semibold">{tag.name}</span>
-           </div>
-           <p className="text-xs text-muted-foreground">{tag.description}</p>
-         </TooltipContent>
-       </Tooltip>
-     );
-   };
+       // Helper function to render icons based on string names
+  const renderIcon = (iconName: string, className: string = "h-3 w-3") => {
+    switch (iconName) {
+      case "AlertTriangle": return <AlertTriangle className={className} />;
+      case "Zap": return <Zap className={className} />;
+      case "CheckCircle2": return <CheckCircle2 className={className} />;
+      case "Sprout": return <Sprout className={className} />;
+      case "MessageCircle": return <MessageCircle className={className} />;
+      case "Search": return <Search className={className} />;
+      case "Snowflake": return <Snowflake className={className} />;
+      case "Star": return <Star className={className} />;
+      case "Target": return <Target className={className} />;
+      default: return <Star className={className} />;
+    }
+  };
+
+  const ColorTagIndicator = ({ tagId }: { tagId: string }) => {
+    const tag = colorTags.find(t => t.id === tagId);
+    if (!tag) return null;
+    
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <div 
+            className={`w-3 h-3 rounded-full border-2 border-white shadow-sm opacity-70 cursor-help ${tag.color.split(' ')[0]} ${tag.color.split(' ')[1]} ${tag.color.split(' ')[2]}`}
+          />
+        </TooltipTrigger>
+        <TooltipContent className="max-w-xs">
+          <div className="flex items-center gap-2 mb-1">
+            {renderIcon(tag.icon)}
+            <span className="font-semibold">{tag.name}</span>
+          </div>
+          <p className="text-xs text-muted-foreground">{tag.description}</p>
+        </TooltipContent>
+      </Tooltip>
+    );
+  };
 
   // Email Composer State
   const [showEmailComposer, setShowEmailComposer] = useState(false);
@@ -2864,7 +2880,7 @@ const LeadsManagementPage: React.FC = () => {
                         <div className="flex items-center gap-2">
                           <div className={`w-3 h-3 rounded-full ${tag.color.split(' ')[0]} ${tag.color.split(' ')[1]} ${tag.color.split(' ')[2]}`} />
                           <div className="flex items-center gap-2">
-                            {tag.icon}
+                            {renderIcon(tag.icon)}
                             <span>{tag.name}</span>
                           </div>
                         </div>
@@ -3032,7 +3048,7 @@ const LeadsManagementPage: React.FC = () => {
                        title={tag.description}
                      >
                        <div className="flex items-center justify-center mb-2">
-                         {tag.icon}
+                         {renderIcon(tag.icon, "h-5 w-5")}
                        </div>
                        <div className="text-xs font-medium">{tag.name}</div>
                      </button>

@@ -10,12 +10,13 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { 
   Mail, Phone, Calendar, MapPin, Zap, FileText, ChevronRight, Bell, 
   MoreVertical, Heart, Video, Target, MessageSquare, Clock, Star, Download,
-  MessageCircle, CalendarDays, Award, CheckCircle, GraduationCap, Plus, BarChart3, ChevronUp, ChevronDown, Search, Globe, RefreshCw
+  MessageCircle, CalendarDays, Award, CheckCircle, GraduationCap, Plus, BarChart3, ChevronUp, ChevronDown, Search, Globe, RefreshCw, Brain
 } from 'lucide-react';
 import CallComposer from '@/components/CallComposer';
 import EmailComposer from '@/components/EmailComposer';
 import MeetingBooker from '@/components/MeetingBooker';
 import PersonPropertiesPanel from '@/components/Dashboard/CRM/PersonPropertiesPanel';
+import AISummaryPanel from '@/components/AISummaryPanel';
 
 const PersonDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -256,8 +257,7 @@ const PersonDetailPage: React.FC = () => {
             </div>
 
             <div className="flex items-center gap-3 text-sm text-muted-foreground">
-              <span className="flex items-center gap-2"><Bell className="h-4 w-4" />{person.touchpoint_count ?? 0} touchpoints</span>
-              <span className="flex items-center gap-2"><FileText className="h-4 w-4" />{(person as any).documentsCount ?? 0} files</span>
+              <span className="text-muted-foreground">Quick actions available</span>
             </div>
           </div>
         </CardContent>
@@ -268,7 +268,10 @@ const PersonDetailPage: React.FC = () => {
         
                  {/* LEFT COLUMN: Enterprise Properties Panel */}
          <div className="h-[calc(100vh-280px)] max-h-[800px] bg-slate-50/30 rounded-lg">
-           <PersonPropertiesPanel person={person} />
+           <PersonPropertiesPanel 
+             person={person}
+             onPersonPatched={(updates) => setPerson((p) => p ? { ...p, ...updates } : p)}
+           />
          </div>
 
                  {/* MIDDLE COLUMN: Activity Timeline */}
@@ -395,6 +398,26 @@ const PersonDetailPage: React.FC = () => {
               </CardContent>
             </Card>
 
+            {/* AI Summary - Collapsible (Moved up for priority) */}
+            <Card className="border-border bg-white">
+              <CardHeader 
+                className="cursor-pointer hover:bg-slate-50/50 rounded-t-lg transition-colors"
+                onClick={() => setAiSummariesExpanded(!aiSummariesExpanded)}
+              >
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <Brain className="h-4 w-4 text-chart-2" /> AI Intelligence Hub
+                  </CardTitle>
+                  {aiSummariesExpanded ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
+                </div>
+              </CardHeader>
+              {aiSummariesExpanded && (
+                <CardContent className="pt-0">
+                  <AISummaryPanel personId={person.id} personData={person} />
+                </CardContent>
+              )}
+            </Card>
+
             {/* Smart Suggestions - Collapsible */}
             <Card className="border-border bg-white">
               <CardHeader 
@@ -405,7 +428,7 @@ const PersonDetailPage: React.FC = () => {
                   <CardTitle className="text-base flex items-center gap-2">
                     <Zap className="h-4 w-4 text-chart-5" /> Smart Suggestions
                   </CardTitle>
-                  {smartSuggestionsExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                  {smartSuggestionsExpanded ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
                 </div>
               </CardHeader>
               {smartSuggestionsExpanded && (
@@ -436,7 +459,7 @@ const PersonDetailPage: React.FC = () => {
                   <CardTitle className="text-base flex items-center gap-2">
                     <Heart className="h-4 w-4 text-destructive" /> Smart Context
                   </CardTitle>
-                  {smartContextExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                  {smartContextExpanded ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
                 </div>
               </CardHeader>
               {smartContextExpanded && (
@@ -445,33 +468,6 @@ const PersonDetailPage: React.FC = () => {
                   {person.source && (<p className="break-words">• Source: {person.source}</p>)}
                   {person.last_engagement_date && (<p className="break-words">• Last engagement: {new Date(person.last_engagement_date).toLocaleDateString()}</p>)}
                   <p className="break-words">• Preferred time: {person.preferred_contact_method || 'email'}</p>
-                </CardContent>
-              )}
-            </Card>
-
-            {/* AI Summaries - Collapsible */}
-            <Card className="border-border bg-white">
-              <CardHeader 
-                className="cursor-pointer hover:bg-slate-50/50 rounded-t-lg transition-colors"
-                onClick={() => setAiSummariesExpanded(!aiSummariesExpanded)}
-              >
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <MessageSquare className="h-4 w-4 text-chart-4" /> AI Summaries
-                  </CardTitle>
-                  {aiSummariesExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                </div>
-              </CardHeader>
-              {aiSummariesExpanded && (
-                <CardContent className="pt-0 space-y-3 text-sm">
-                  <div className="p-3 bg-slate-50/50 rounded border border-slate-200">
-                    <p className="font-medium text-foreground mb-1">Last 7 Days</p>
-                    <p className="text-muted-foreground">High engagement with course materials, responded positively to follow-up calls, scheduled campus tour.</p>
-                  </div>
-                  <div className="p-3 bg-slate-50/50 rounded border border-slate-200">
-                    <p className="font-medium text-foreground mb-1">Conversation Summary</p>
-                    <p className="text-muted-foreground">Shows strong interest in practical aspects, concerned about accommodation, prefers evening contact.</p>
-                  </div>
                 </CardContent>
               )}
             </Card>
@@ -488,7 +484,7 @@ const PersonDetailPage: React.FC = () => {
                       <lifecycleContent.icon className="h-4 w-4 text-chart-4" />
                       {lifecycleContent.title}
                     </CardTitle>
-                    {lifecycleExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                    {lifecycleExpanded ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
                   </div>
                 </CardHeader>
                 {lifecycleExpanded && (
@@ -507,9 +503,9 @@ const PersonDetailPage: React.FC = () => {
               >
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-base flex items-center gap-2">
-                    <Download className="h-4 w-4" /> Files & Attachments
+                    <Download className="h-4 w-4 text-chart-3" /> Files & Attachments
                   </CardTitle>
-                  {filesExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                  {filesExpanded ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
                 </div>
               </CardHeader>
               {filesExpanded && (

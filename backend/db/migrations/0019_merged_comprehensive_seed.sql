@@ -34,23 +34,23 @@ ON CONFLICT (id) DO NOTHING;
 
 -- Seed People table with diverse lifecycle states - More realistic distribution
 INSERT INTO people (id, org_id, first_name, last_name, email, phone, lifecycle_state, lead_score, conversion_probability) VALUES
--- High-value leads (enquiry stage) - 8 records for better lead board visibility
-('550e8400-e29b-41d4-a716-446655440001', '550e8400-e29b-41d4-a716-446655440000', 'Emma', 'Thompson', 'emma.thompson@gmail.com', '+44 7812 345678', 'enquiry', 95, 0.89),
-('550e8400-e29b-41d4-a716-446655440002', '550e8400-e29b-41d4-a716-446655440000', 'James', 'Wilson', 'james.wilson@yahoo.com', '+44 7912 345679', 'enquiry', 92, 0.85),
-('550e8400-e29b-41d4-a716-446655440003', '550e8400-e29b-41d4-a716-446655440000', 'Sophie', 'Brown', 'sophie.brown@hotmail.com', '+44 7922 345680', 'enquiry', 88, 0.82),
-('550e8400-e29b-41d4-a716-446655440004', '550e8400-e29b-41d4-a716-446655440000', 'Michael', 'Davis', 'michael.davis@outlook.com', '+44 7932 345681', 'enquiry', 85, 0.78),
-('550e8400-e29b-41d4-a716-446655440005', '550e8400-e29b-41d4-a716-446655440000', 'Olivia', 'Miller', 'olivia.miller@icloud.com', '+44 7942 345682', 'enquiry', 90, 0.84),
-('550e8400-e29b-41d4-a716-446655440021', '550e8400-e29b-41d4-a716-446655440000', 'Charlotte', 'White', 'charlotte.white@gmail.com', '+44 7902 345698', 'enquiry', 87, 0.81),
-('550e8400-e29b-41d4-a716-446655440022', '550e8400-e29b-41d4-a716-446655440000', 'Henry', 'Clark', 'henry.clark@yahoo.com', '+44 7912 345699', 'enquiry', 83, 0.77),
-('550e8400-e29b-41d4-a716-446655440023', '550e8400-e29b-41d4-a716-446655440000', 'Grace', 'Lewis', 'grace.lewis@hotmail.com', '+44 7922 345700', 'enquiry', 91, 0.86),
+-- High-value leads (lead stage) - 8 records for better lead board visibility
+('550e8400-e29b-41d4-a716-446655440001', '550e8400-e29b-41d4-a716-446655440000', 'Emma', 'Thompson', 'emma.thompson@gmail.com', '+44 7812 345678', 'lead', 95, 0.89),
+('550e8400-e29b-41d4-a716-446655440002', '550e8400-e29b-41d4-a716-446655440000', 'James', 'Wilson', 'james.wilson@yahoo.com', '+44 7912 345679', 'lead', 92, 0.85),
+('550e8400-e29b-41d4-a716-446655440003', '550e8400-e29b-41d4-a716-446655440000', 'Sophie', 'Brown', 'sophie.brown@hotmail.com', '+44 7922 345680', 'lead', 88, 0.82),
+('550e8400-e29b-41d4-a716-446655440004', '550e8400-e29b-41d4-a716-446655440000', 'Michael', 'Davis', 'michael.davis@outlook.com', '+44 7932 345681', 'lead', 85, 0.78),
+('550e8400-e29b-41d4-a716-446655440005', '550e8400-e29b-41d4-a716-446655440000', 'Olivia', 'Miller', 'olivia.miller@icloud.com', '+44 7942 345682', 'lead', 90, 0.84),
+('550e8400-e29b-41d4-a716-446655440021', '550e8400-e29b-41d4-a716-446655440000', 'Charlotte', 'White', 'charlotte.white@gmail.com', '+44 7902 345698', 'lead', 87, 0.81),
+('550e8400-e29b-41d4-a716-446655440022', '550e8400-e29b-41d4-a716-446655440000', 'Henry', 'Clark', 'henry.clark@yahoo.com', '+44 7912 345699', 'lead', 83, 0.77),
+('550e8400-e29b-41d4-a716-446655440023', '550e8400-e29b-41d4-a716-446655440000', 'Grace', 'Lewis', 'grace.lewis@hotmail.com', '+44 7922 345700', 'lead', 91, 0.86),
 
--- Pre-applicants (admissions stage) - 6 records
-('550e8400-e29b-41d4-a716-446655440006', '550e8400-e29b-41d4-a716-446655440000', 'William', 'Garcia', 'william.garcia@gmail.com', '+44 7952 345683', 'pre_applicant', 78, 0.72),
-('550e8400-e29b-41d4-a716-446655440007', '550e8400-e29b-41d4-a716-446655440000', 'Ava', 'Rodriguez', 'ava.rodriguez@yahoo.com', '+44 7962 345684', 'pre_applicant', 82, 0.76),
-('550e8400-e29b-41d4-a716-446655440008', '550e8400-e29b-41d4-a716-446655440000', 'Ethan', 'Martinez', 'ethan.martinez@hotmail.com', '+44 7972 345685', 'pre_applicant', 75, 0.68),
-('550e8400-e29b-41d4-a716-446655440009', '550e8400-e29b-41d4-a716-446655440000', 'Isabella', 'Anderson', 'isabella.anderson@outlook.com', '+44 7982 345686', 'pre_applicant', 80, 0.74),
-('550e8400-e29b-41d4-a716-446655440010', '550e8400-e29b-41d4-a716-446655440000', 'Noah', 'Taylor', 'noah.taylor@icloud.com', '+44 7992 345687', 'pre_applicant', 77, 0.70),
-('550e8400-e29b-41d4-a716-446655440024', '550e8400-e29b-41d4-a716-446655440000', 'Daniel', 'Walker', 'daniel.walker@outlook.com', '+44 7932 345701', 'pre_applicant', 79, 0.73),
+-- Additional leads (lead stage) - 6 records
+('550e8400-e29b-41d4-a716-446655440006', '550e8400-e29b-41d4-a716-446655440000', 'William', 'Garcia', 'william.garcia@gmail.com', '+44 7952 345683', 'lead', 78, 0.72),
+('550e8400-e29b-41d4-a716-446655440007', '550e8400-e29b-41d4-a716-446655440000', 'Ava', 'Rodriguez', 'ava.rodriguez@yahoo.com', '+44 7962 345684', 'lead', 82, 0.76),
+('550e8400-e29b-41d4-a716-446655440008', '550e8400-e29b-41d4-a716-446655440000', 'Ethan', 'Martinez', 'ethan.martinez@hotmail.com', '+44 7972 345685', 'lead', 75, 0.68),
+('550e8400-e29b-41d4-a716-446655440009', '550e8400-e29b-41d4-a716-446655440000', 'Isabella', 'Anderson', 'isabella.anderson@outlook.com', '+44 7982 345686', 'lead', 80, 0.74),
+('550e8400-e29b-41d4-a716-446655440010', '550e8400-e29b-41d4-a716-446655440000', 'Noah', 'Taylor', 'noah.taylor@icloud.com', '+44 7992 345687', 'lead', 77, 0.70),
+('550e8400-e29b-41d4-a716-446655440024', '550e8400-e29b-41d4-a716-446655440000', 'Daniel', 'Walker', 'daniel.walker@outlook.com', '+44 7932 345701', 'lead', 79, 0.73),
 
 -- Current applicants - 8 records with various stages
 ('550e8400-e29b-41d4-a716-446655440011', '550e8400-e29b-41d4-a716-446655440000', 'Mia', 'Thomas', 'mia.thomas@gmail.com', '+44 7802 345688', 'applicant', 72, 0.65),

@@ -4,7 +4,7 @@
 -- applications.stage tracks the specific application progress
 
 -- Add comments to clarify the purpose of each field
-comment on column people.lifecycle_state is 'Primary system state: enquiry (leads), pre_applicant (admissions), applicant (applications), enrolled (enrollment), student (active), alumni (graduated)';
+comment on column people.lifecycle_state is 'Primary system state: lead (enquiry), applicant (applications), enrolled (enrollment), student (active), alumni (graduated)';
 comment on column applications.stage is 'Application-specific stage: enquiry, applicant, interview, offer, enrolled - tracks progress through the application process';
 
 -- Create a function to automatically update lifecycle_state based on application stage changes
@@ -15,9 +15,9 @@ begin
   if old.stage != new.stage then
     -- Update the person's lifecycle_state based on the application stage
     update people set lifecycle_state = case
-      when new.stage = 'enquiry' then 'enquiry'
-      when new.stage = 'applicant' then 'pre_applicant'
-      when new.stage = 'interview' then 'pre_applicant'
+      when new.stage = 'enquiry' then 'lead'
+      when new.stage = 'applicant' then 'lead'
+      when new.stage = 'interview' then 'applicant'
       when new.stage = 'offer' then 'applicant'
       when new.stage = 'enrolled' then 'enrolled'
       else people.lifecycle_state  -- Don't change if stage doesn't map
@@ -36,8 +36,15 @@ create trigger trg_applications_stage_lifecycle
   for each row execute function update_lifecycle_from_application();
 
 -- Create a function to get people by system area
--- Drop existing function first to allow return type change (with CASCADE to drop dependent views)
-drop function if exists get_people_by_system_area(text) cascade;
+-- Drop dependent views manually to avoid CASCADE issues
+drop view if exists vw_leads_management;
+drop view if exists vw_admissions_management;
+drop view if exists vw_enrollment_management;
+drop view if exists vw_student_records;
+drop view if exists vw_alumni_management;
+
+-- Drop existing function first to allow return type change
+drop function if exists get_people_by_system_area(text);
 
 create function get_people_by_system_area(area text)
 returns table (
@@ -71,8 +78,8 @@ begin
     limit 1
   ) latest_app on true
   where case area
-    when 'leads' then p.lifecycle_state in ('enquiry')
-    when 'admissions' then p.lifecycle_state in ('pre_applicant', 'applicant')
+    when 'leads' then p.lifecycle_state in ('lead')
+    when 'admissions' then p.lifecycle_state in ('lead', 'applicant')
     when 'enrollment' then p.lifecycle_state in ('enrolled')
     when 'student_records' then p.lifecycle_state in ('student', 'enrolled')
     when 'alumni' then p.lifecycle_state in ('alumni')
@@ -109,7 +116,7 @@ create or replace function promote_lifecycle_state(
 returns text as $$
 declare
   old_state text;
-  valid_states text[] := array['enquiry', 'pre_applicant', 'applicant', 'enrolled', 'student', 'alumni'];
+  valid_states text[] := array['lead', 'applicant', 'enrolled', 'student', 'alumni'];
 begin
   -- Validate the new state
   if new_state != all(valid_states) then

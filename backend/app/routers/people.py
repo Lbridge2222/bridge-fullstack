@@ -1,8 +1,10 @@
 from fastapi import APIRouter, Query, HTTPException
+import logging
 from typing import List, Optional
 from app.db.db import fetch, execute
-from app.schemas.people import PersonOut, PeoplePage, PersonUpdate, LeadUpdate, LeadNote
+from app.schemas.people import PersonOut, PeoplePage, PersonUpdate, LeadUpdate, LeadNote, PropertyUpdate, assert_no_system_fields
 
+logger = logging.getLogger(__name__)
 router = APIRouter()
 
 @router.get("", response_model=PeoplePage)
@@ -86,7 +88,49 @@ async def get_person_enriched(person_id: str):
         rows = await fetch(sql, person_id)
         if not rows:
             raise HTTPException(status_code=404, detail="Person not found")
-        return rows[0]
+
+        enriched = rows[0]
+
+        # Always override standard fields from live people table to avoid MV staleness
+        live = await fetch(
+            """
+            select first_name,
+                   last_name,
+                   email,
+                   phone,
+                   lifecycle_state,
+                   lead_score,
+                   conversion_probability,
+                   updated_at
+            from people
+            where id::text = %s
+            limit 1
+            """,
+            person_id,
+        )
+        if live:
+            live_row = live[0]
+            # Log the reconciliation for debugging
+            logger.info(
+                "GET /people/%s/enriched reconcile phone: mv=%s live=%s",
+                person_id,
+                enriched.get("phone"),
+                live_row.get("phone"),
+            )
+            for key in [
+                "first_name",
+                "last_name",
+                "email",
+                "phone",
+                "lifecycle_state",
+                "lead_score",
+                "conversion_probability",
+                "updated_at",
+            ]:
+                if key in live_row and live_row[key] is not None:
+                    enriched[key] = live_row[key]
+
+        return enriched
     except HTTPException:
         raise
     except Exception as e:
@@ -295,6 +339,10 @@ async def update_person(person_id: str, update: PersonUpdate):
     Update a person's basic information.
     """
     try:
+        logger.info("PATCH /people/%s payload=%s", person_id, update.dict(exclude_unset=True))
+        # Guard against system fields (defense-in-depth; PersonUpdate doesn't expose them, but protect anyway)
+        assert_no_system_fields(update.dict(exclude_unset=True))
+
         # Build dynamic update query based on provided fields
         update_fields = []
         params = []
@@ -326,7 +374,7 @@ async def update_person(person_id: str, update: PersonUpdate):
             param_count += 1
         
         if not update_fields:
-            raise HTTPException(status_code=400, detail="No fields to update")
+            raise HTTPException(status_code=422, detail="No fields to update")
         
         # Add updated_at timestamp
         update_fields.append("updated_at = NOW()")
@@ -338,19 +386,92 @@ async def update_person(person_id: str, update: PersonUpdate):
             RETURNING id::text, first_name, last_name, email, phone, lifecycle_state, updated_at
         """
         params.append(person_id)
-        
-        result = await execute(sql, *params)
-        
-        if not result:
+
+        # Use fetch to get RETURNING rows
+        rows = await fetch(sql, *params)
+
+        if not rows:
             raise HTTPException(status_code=404, detail="Person not found")
-            
+
+        logger.info("PATCH /people/%s success fields=%s", person_id, ', '.join([f.split('=')[0].strip() for f in update_fields]))
         return {
             "message": "Person updated successfully",
-            "person": result[0] if result else None
+            "person": rows[0]
         }
-        
+
+    except HTTPException:
+        # Preserve intended status codes
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Update failed: {e}")
+
+
+@router.patch("/{person_id}/properties")
+async def upsert_person_property(person_id: str, body: PropertyUpdate):
+    """
+    Upsert a custom property for a person into custom_values.
+    Accepts either property_id or property_name + org-scoped resolution.
+    """
+    try:
+        # Resolve property by id or name
+        if body.property_id is None and (body.property_name is None or not body.property_name.strip()):
+            raise HTTPException(status_code=422, detail="Either property_id or property_name is required")
+
+        # Get org_id for the person to ensure scoping
+        person_row = await fetch("select org_id from people where id::text = %s", person_id)
+        if not person_row:
+            raise HTTPException(status_code=404, detail="Person not found")
+        org_id = person_row[0]["org_id"]
+
+        if body.property_id is not None:
+            prop_rows = await fetch("select id, name, data_type, label from custom_properties where id = %s and org_id = %s", str(body.property_id), org_id)
+        else:
+            prop_rows = await fetch("select id, name, data_type, label from custom_properties where name = %s and entity = 'people' and org_id = %s", body.property_name, org_id)
+
+        if not prop_rows:
+            raise HTTPException(status_code=404, detail="Property metadata not found")
+        prop = prop_rows[0]
+
+        # Optional: validate/coerce value by data_type (basic types)
+        value = body.value
+        dt = body.data_type or prop.get("data_type")
+        if dt in ("number",):
+            try:
+                value = float(value)
+            except Exception:
+                raise HTTPException(status_code=422, detail="Invalid number value")
+        elif dt in ("boolean",):
+            if isinstance(value, str):
+                value_lower = value.lower()
+                if value_lower in ("true","1","yes"): value = True
+                elif value_lower in ("false","0","no"): value = False
+                else: raise HTTPException(status_code=422, detail="Invalid boolean value")
+            value = bool(value)
+        # date/phone/json accepted as-is; DB stores jsonb
+
+        # Upsert into custom_values
+        upsert_sql = """
+        insert into custom_values (org_id, entity, entity_id, property_id, value, created_at)
+        values (%s, 'people', %s, %s, %s::jsonb, now())
+        on conflict (org_id, entity, entity_id, property_id)
+        do update set value = excluded.value
+        returning property_id
+        """
+        # Always encode as JSON text to satisfy ::jsonb cast
+        import json as _json
+        val_json = _json.dumps(value)
+        upsert_rows = await fetch(upsert_sql, org_id, person_id, prop["id"], val_json)
+
+        return {
+            "name": prop["name"],
+            "label": prop.get("label"),
+            "data_type": dt,
+            "value": value,
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Property update failed: {e}")
 
 @router.patch("/{person_id}/lead")
 async def update_lead(person_id: str, update: LeadUpdate):
@@ -358,6 +479,7 @@ async def update_lead(person_id: str, update: LeadUpdate):
     Update lead-specific information for a person.
     """
     try:
+        logger.info("PATCH /people/%s/lead payload=%s", person_id, update.dict(exclude_unset=True))
         # First check if this person is actually a lead
         person_check = await fetch(
             "SELECT lifecycle_state FROM people WHERE id::text = %s",
@@ -395,7 +517,7 @@ async def update_lead(person_id: str, update: LeadUpdate):
             params.append(update.next_follow_up)
         
         if not update_fields:
-            raise HTTPException(status_code=400, detail="No lead fields to update")
+            raise HTTPException(status_code=422, detail="No lead fields to update")
         
         # Add updated_at timestamp
         update_fields.append("updated_at = NOW()")
@@ -407,8 +529,8 @@ async def update_lead(person_id: str, update: LeadUpdate):
             RETURNING id::text, lead_score, conversion_probability, assigned_to, status, next_follow_up, updated_at
         """
         params.append(person_id)
-        
-        result = await execute(sql, *params)
+
+        rows = await fetch(sql, *params)
         
         # If notes were provided, add them to a separate notes table
         if update.notes:
@@ -417,11 +539,14 @@ async def update_lead(person_id: str, update: LeadUpdate):
                 VALUES (%s, %s, %s, %s, NOW())
             """, person_id, update.notes, "general", update.assigned_to or "system")
         
+        logger.info("PATCH /people/%s/lead success fields=%s", person_id, ', '.join([f.split('=')[0].strip() for f in update_fields]))
         return {
             "message": "Lead updated successfully",
-            "lead": result[0] if result else None
+            "lead": rows[0] if rows else None
         }
-        
+
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Lead update failed: {e}")
 
@@ -488,3 +613,89 @@ async def get_lead_notes(person_id: str):
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to get notes: {e}")
+
+@router.get("/{person_id}/properties/progressive")
+async def get_person_progressive_properties(person_id: str):
+    """
+    Get properties for a person based on their current lifecycle stage.
+    This enables progressive disclosure - properties only appear when relevant.
+    """
+    try:
+        # First get the person's current lifecycle stage
+        person_sql = """
+            SELECT id, lifecycle_state, org_id 
+            FROM people 
+            WHERE id::text = %s
+        """
+        person = await fetch(person_sql, person_id)
+        
+        if not person:
+            raise HTTPException(status_code=404, detail="Person not found")
+        
+        person_data = person[0]
+        current_stage = person_data["lifecycle_state"]
+        org_id = person_data["org_id"]
+        
+        # Map lifecycle stages to progressive disclosure stages
+        stage_mapping = {
+            "enquiry": "lead",
+            "pre_applicant": "lead", 
+            "applicant": "applicant",
+            "enrolled": "enrolled",
+            "student": "enrolled",
+            "alumni": "alumni"
+        }
+        
+        progressive_stage = stage_mapping.get(current_stage, "lead")
+        
+        # Get properties visible at this stage
+        properties_sql = """
+            SELECT 
+                cp.id,
+                cp.name,
+                cp.label,
+                cp.data_type,
+                cp.group_key,
+                cp.lifecycle_stages,
+                cp.display_order,
+                cp.is_required_at_stage,
+                cp.is_system_managed,
+                cp.data_source,
+                cp.options,
+                cp.validation_rules,
+                cp.default_value,
+                cp.is_ai_enhanced,
+                -- Get current value if it exists
+                cv.value as current_value,
+                cv.created_at as value_created_at
+            FROM custom_properties cp
+            LEFT JOIN custom_values cv ON cv.property_id = cp.id 
+                AND cv.entity_id = %s 
+                AND cv.entity = 'people'
+            WHERE cp.org_id = %s 
+              AND cp.entity = 'people'
+              AND cp.lifecycle_stages @> %s::text[]
+            ORDER BY cp.group_key, cp.display_order
+        """
+        
+        properties = await fetch(properties_sql, person_id, org_id, f"{{{progressive_stage}}}")
+        
+        # Group properties by their group
+        grouped_properties = {}
+        for prop in properties:
+            group_key = prop["group_key"] or "other"
+            if group_key not in grouped_properties:
+                grouped_properties[group_key] = []
+            grouped_properties[group_key].append(prop)
+        
+        return {
+            "person_id": person_id,
+            "current_lifecycle_stage": current_stage,
+            "progressive_stage": progressive_stage,
+            "properties": grouped_properties,
+            "total_properties": len(properties),
+            "groups": list(grouped_properties.keys())
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to fetch progressive properties: {str(e)}")

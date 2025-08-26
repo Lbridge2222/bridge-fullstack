@@ -6,7 +6,8 @@ import time
 
 from app.ai import AI_LEADS_ENABLED
 from app.ai.tools.leads import sql_query_leads, compose_outreach as compose_outreach_tool, LeadLite, _rule_score
-from app.telemetry import log_ai_event
+from app.ai.tools.score_explanations import calculate_score_breakdown, score_breakdown_to_dict
+from app.telemetry import log_ai_event, log_ai_event_extended
 
 
 router = APIRouter(prefix="/ai/leads", tags=["ai/leads"])
@@ -70,6 +71,82 @@ async def triage(payload: Dict[str, Any]):
             "items": [],
             "latency_ms": int((time.time() - t0) * 1000)
         }
+
+
+@router.post("/explain-score")
+async def explain_score(payload: Dict[str, Any]):
+    """
+    Explain the score breakdown for a specific lead.
+    Returns detailed factor analysis with weights, contributions, and reason codes.
+    """
+    if not AI_LEADS_ENABLED:
+        raise HTTPException(status_code=404, detail="AI leads is disabled")
+    
+    lead_id = payload.get("lead_id")
+    if not lead_id:
+        raise HTTPException(status_code=400, detail="lead_id is required")
+    
+    t0 = time.time()
+    
+    try:
+        # Fetch the specific lead data
+        from app.db.db import fetch as pg_fetch
+        
+        # Get lead data from the enriched view
+        sql = """
+            SELECT 
+                id::text,
+                first_name,
+                last_name,
+                email,
+                phone,
+                lead_score,
+                conversion_probability,
+                created_at,
+                updated_at,
+                latest_programme_name,
+                latest_campus_name,
+                latest_academic_year,
+                last_activity_at
+            FROM vw_people_enriched
+            WHERE id::text = %s
+            LIMIT 1
+        """
+        
+        rows = await pg_fetch(sql, lead_id)
+        if not rows:
+            raise HTTPException(status_code=404, detail="Lead not found")
+        
+        lead_data = rows[0]
+        
+        # Calculate score breakdown
+        breakdown = calculate_score_breakdown(lead_data)
+        result = score_breakdown_to_dict(breakdown)
+        result["lead_id"] = lead_id
+        
+        # Enhanced telemetry logging
+        ms = int((time.time() - t0) * 1000)
+        reason_codes = [factor["reason_code"] for factor in result["breakdown"]]
+        
+        await log_ai_event_extended(
+            action="leads.explain_score",
+            meta={
+                "lead_id": lead_id,
+                "score": result["score"],
+                "latency_ms": ms,
+                "factor_count": len(result["breakdown"])
+            },
+            confidence=result["confidence"],
+            reason_codes=reason_codes
+        )
+        
+        return result
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Score explanation error: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to explain score: {str(e)}")
 
 
 @router.post("/explain-selection")

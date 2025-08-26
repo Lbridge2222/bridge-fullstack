@@ -22,12 +22,21 @@ fi
 echo "Migrations to run (in order):"
 echo "$MIGRATIONS_LIST" | sed 's/^/ - /'
 
-echo "$MIGRATIONS_LIST" | while IFS= read -r f; do
+# Fix: Use here-string instead of pipe to avoid subshell issues
+# This ensures set -e works properly and errors are caught
+while IFS= read -r f; do
   [ -z "$f" ] && continue
   echo "Running $(basename "$f") ..."
-  psql -v ON_ERROR_STOP=1 "$DATABASE_URL" -f "$f"
-  echo "✅ $(basename "$f")"
-done
+  
+  # Run migration with proper error handling
+  if psql -v ON_ERROR_STOP=1 "$DATABASE_URL" -f "$f"; then
+    echo "✅ $(basename "$f") completed successfully"
+  else
+    echo "❌ $(basename "$f") failed with exit code $?"
+    echo "Stopping migrations due to error"
+    exit 1
+  fi
+done <<< "$MIGRATIONS_LIST"
 
 echo "Refreshing materialized views (best-effort)..."
 # Try CONCURRENTLY first; fallback to non-concurrent; ignore if views don't exist

@@ -231,6 +231,18 @@ export const peopleApi = {
       body: JSON.stringify(updates),
     });
   },
+  // Upsert a custom property for a person
+  updatePersonProperty: (personId: string, payload: {
+    property_id?: string;
+    property_name?: string;
+    data_type: 'text'|'number'|'boolean'|'date'|'phone'|'json';
+    value: any;
+  }): Promise<any> => {
+    return apiFetch(`/people/${personId}/properties`, {
+      method: 'PATCH',
+      body: JSON.stringify(payload),
+    });
+  },
 
   addLeadNote: (personId: string, note: {
     note: string;

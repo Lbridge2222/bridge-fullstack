@@ -43,13 +43,13 @@ async def plan(state: LeadState) -> LeadState:
 
 async def fetch(state: LeadState) -> LeadState:
     leads = await sql_query_leads(state.filters or {})
-    return state.copy(update={"leads": [l.model_dump() for l in leads]})
+    return state.model_copy(update={"leads": [l.model_dump() for l in leads]})
 
 
 async def triage(state: LeadState) -> LeadState:
     leads_models = [LeadLite(**l) for l in (state.leads or [])]
     ranked = await leads_triage(leads_models)
-    return state.copy(update={"triaged": ranked})
+    return state.model_copy(update={"triaged": ranked})
 
 
 def _top_reasons(items: List[Dict[str, Any]]) -> List[str]:
@@ -67,7 +67,7 @@ async def answer(state: LeadState) -> LeadState:
             "cohort_size": len(state.leads or []),
             "top_reasons": _top_reasons(state.triaged or []),
         }
-        return state.copy(update={"answer": {"summary": summary, "triaged": state.triaged}})
+        return state.model_copy(update={"answer": {"summary": summary, "triaged": state.triaged}})
     return state
 
 

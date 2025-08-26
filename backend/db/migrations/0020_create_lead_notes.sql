@@ -37,18 +37,22 @@ BEGIN
 END;
 $$ language 'plpgsql';
 
+-- Drop existing triggers if they exist, then create new ones
+DROP TRIGGER IF EXISTS update_people_updated_at ON people;
 CREATE TRIGGER update_people_updated_at 
     BEFORE UPDATE ON people 
     FOR EACH ROW 
     EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_lead_notes_updated_at ON lead_notes;
 CREATE TRIGGER update_lead_notes_updated_at 
     BEFORE UPDATE ON lead_notes 
     FOR EACH ROW 
     EXECUTE FUNCTION update_updated_at_column();
 
 -- Update the leads management view to include new fields
-CREATE OR REPLACE VIEW vw_leads_management AS
+DROP VIEW IF EXISTS vw_leads_management;
+CREATE VIEW vw_leads_management AS
 SELECT 
     p.id::text,
     p.first_name,
@@ -65,25 +69,24 @@ SELECT
     p.updated_at,
     -- Latest application info
     a.stage as latest_application_stage,
-    a.programme_name as latest_programme_name,
-    a.campus_name as latest_campus_name,
-    a.academic_year as latest_academic_year,
+    pr.name as latest_programme_name,
+    c.name as latest_campus_name,
+    i.cycle_label as latest_academic_year,
     -- Activity tracking
     COALESCE(p.updated_at, p.created_at) as last_activity_at
 FROM people p
 LEFT JOIN LATERAL (
     SELECT 
         ap.stage,
-        pr.name as programme_name,
-        c.name as campus_name,
-        ay.label as academic_year
+        ap.programme_id,
+        ap.intake_id
     FROM applications ap
-    LEFT JOIN programmes pr ON ap.programme_id = pr.id
-    LEFT JOIN campuses c ON ap.campus_id = c.id
-    LEFT JOIN academic_years ay ON ap.academic_year_id = ay.id
     WHERE ap.person_id = p.id
     ORDER BY ap.created_at DESC
     LIMIT 1
 ) a ON true
-WHERE p.lifecycle_state = 'enquiry'
+LEFT JOIN programmes pr ON pr.id = a.programme_id
+LEFT JOIN campuses c ON c.id = pr.campus_id
+LEFT JOIN intakes i ON i.id = a.intake_id
+WHERE p.lifecycle_state = 'lead'
 ORDER BY p.lead_score DESC NULLS LAST, p.created_at DESC;

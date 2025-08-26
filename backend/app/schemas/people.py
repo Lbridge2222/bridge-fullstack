@@ -1,7 +1,9 @@
-from pydantic import BaseModel, EmailStr
-from typing import Optional
+from pydantic import BaseModel
+from pydantic.networks import EmailStr
+from typing import Optional, Any, Literal
 from datetime import datetime
 from uuid import UUID
+from fastapi import HTTPException
 
 class PersonOut(BaseModel):
     id: UUID
@@ -36,3 +38,18 @@ class LeadNote(BaseModel):
     note: str
     note_type: str = "general"  # e.g., "call", "email", "meeting", "general"
     created_by: Optional[str] = None
+
+# Shared policy for read-only system fields
+SYSTEM_FIELDS = {"id", "org_id", "created_at", "updated_at", "external_ref"}
+
+def assert_no_system_fields(payload: dict):
+    illegal = SYSTEM_FIELDS.intersection(payload.keys())
+    if illegal:
+        raise HTTPException(status_code=422, detail=f"Read-only system fields: {sorted(illegal)}")
+
+
+class PropertyUpdate(BaseModel):
+    property_id: Optional[UUID] = None
+    property_name: Optional[str] = None
+    data_type: Literal["text","number","boolean","date","phone","json"]
+    value: Any

@@ -21,3 +21,22 @@ Do not copy, reuse, or adapt any portion of this project or its materials withou
 ## 🔒 Licensing
 
 This project is currently **closed-source** and proprietary. No license is granted for public or commercial use at this time.
+
+## 🤖 AI Implementation - GOSPEL TRUTH
+
+**⚠️ CRITICAL: The AI integration in this project is enshrined as GOSPEL TRUTH.**
+
+The AI system has been tested, proven, and documented. Any deviation from the documented implementation will break the system.
+
+### **Preservation Rules:**
+1. **NEVER** bypass LangChain - it's the substrate orchestration layer
+2. **NEVER** create custom wrappers - use native integrations only
+3. **NEVER** change dependency versions without testing
+4. **ALWAYS** preserve fallback mechanisms
+5. **ALWAYS** test thoroughly before deployment
+
+### **Reference Documents:**
+- **`AI_IMPLEMENTATION_GOSPEL.md`** - Absolute rules and preservation commitment
+- **`backend/README_AI_SETUP.md`** - Complete technical implementation guide
+
+**This is the gospel. Follow it exactly. Preserve it at all costs.**
