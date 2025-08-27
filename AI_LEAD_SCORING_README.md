@@ -1,8 +1,8 @@
-# 🧠 AI-Native Lead Scoring System - Bridge CRM
+# 🧠 AI-Native Lead Scoring System - Ivy – The Higher Education OS
 
 ## 📋 Overview
 
-Bridge CRM's **Adaptive Lead Scoring System** is a world-class conversion intelligence hub that automatically learns and optimizes lead prioritization based on real outcomes. Unlike static scoring systems, this system continuously adapts using machine learning to maximize conversion rates.
+Ivy's **Adaptive Lead Scoring System** is a world-class conversion intelligence hub that automatically learns and optimizes lead prioritization based on real outcomes. Unlike static scoring systems, this system continuously adapts using machine learning to maximize conversion rates.
 
 ## 🏗️ System Architecture
 
@@ -382,11 +382,11 @@ logging.basicConfig(level=logging.DEBUG)
 - ❌ No learning from outcomes
 - ❌ Black-box decisions
 
-**Bridge CRM Adaptive Scoring:**
+**Ivy Adaptive Scoring:**
 - ✅ **Self-optimizing**: Learns from real conversion data
 - ✅ **Transparent**: Every factor visible and auditable
 - ✅ **Intelligent**: ML suggests optimal weight adjustments
 - ✅ **Explainable**: Human-readable reasoning for every score
 - ✅ **Compliant**: Full audit trail and PII protection
 
-This system transforms Bridge CRM from a static database into a **living, learning conversion intelligence engine** that gets smarter with every lead interaction.
+This system transforms Ivy from a static database into a **living, learning conversion intelligence engine** that gets smarter with every lead interaction.

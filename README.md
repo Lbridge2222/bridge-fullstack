@@ -1,10 +1,10 @@
-# Bridge CRM – Full Stack
+# Ivy – The Higher Education OS – Full Stack
 
-This project contains both frontend (React + Vite + Tailwind) and backend (Python + ML/forecasting) code for the Bridge CRM prototype.
+This project contains both frontend (React + Vite + Tailwind) and backend (Python + ML/forecasting) code for the Ivy prototype.
 
 ## 📌 Project Scope
 
-Bridge CRM is an independently developed prototype designed to modernise CRM workflows in the higher education space. It integrates admissions RevOps best practices with real-time analytics and machine learning forecasting models.
+Ivy is an independently developed prototype designed to modernise higher-education operations. It integrates admissions RevOps best practices with real-time analytics and machine learning forecasting models.
 
 ## 🛡️ Ownership & IP
 
@@ -12,7 +12,7 @@ All source code, documentation, and associated assets within this repository are
 
 No part of this codebase was written on employer time, using employer resources, or under instruction from any affiliated organisation.
 
-The Bridge CRM concept, architecture, and implementation are solely owned by Laurance Bridge. All rights reserved.
+The Ivy concept, architecture, and implementation are solely owned by Laurance Bridge. All rights reserved.
 
 ## 🚫 Usage
 

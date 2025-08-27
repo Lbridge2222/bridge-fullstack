@@ -1,10 +1,10 @@
-# 🤖 AI Integration Setup Guide - Bridge CRM
+# 🤖 AI Integration Setup Guide - Ivy – The Higher Education OS
 
 **⚠️ IMPORTANT: This is the GOSPEL implementation. Do not deviate from this setup.**
 
 ## 🎯 **Current Working Implementation**
 
-This document describes the **ONLY** working AI integration setup for Bridge CRM. Any deviations from this implementation will break the system.
+This document describes the **ONLY** working AI integration setup for Ivy. Any deviations from this implementation will break the system.
 
 ## 📦 **Dependencies (CRITICAL - Use Exact Versions)**
 
@@ -200,11 +200,11 @@ async def compose_outreach(leads: List[LeadLite], intent: str, user_prompt: Opti
         first = leads[0] if leads else None
         subject = {
             "book_interview": "Next step: schedule your interview",
-            "nurture": "Quick update from Bridge",
+            "nurture": "Quick update from Ivy",
             "reengage": "Checking in – still interested?",
             "grammar_check": "Grammar check completed",
             "custom": "Custom email assistance"
-        }.get(intent, "Hello from Bridge")
+        }.get(intent, "Hello from Ivy")
         greeting = f"Hi {first.name.split(' ')[0] if first and first.name else 'there'},"
         body = f"{greeting}\n\nWe'd love to help you take the next step."
         return {"subject": subject, "body": body, "merge_fields": ["first_name"]}
@@ -260,11 +260,11 @@ async def compose_outreach(leads: List[LeadLite], intent: str, user_prompt: Opti
         first = leads[0] if leads else None
         subject = {
             "book_interview": "Next step: schedule your interview",
-            "nurture": "Quick update from Bridge",
+            "nurture": "Quick update from Ivy",
             "reengage": "Checking in – still interested?",
             "grammar_check": "Grammar check completed",
             "custom": "Custom email assistance"
-        }.get(intent, "Hello from Bridge")
+        }.get(intent, "Hello from Ivy")
         
         greeting = f"Hi {first.name.split(' ')[0] if first and first.name else 'there'},"
         body = f"{greeting}\n\nWe'd love to help you take the next step."

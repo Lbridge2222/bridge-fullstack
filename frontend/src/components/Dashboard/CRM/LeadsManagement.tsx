@@ -6,8 +6,8 @@ import {
   SortAsc, SortDesc, BookmarkPlus, TrendingUp, Target, Zap, Eye, Command,
   Trash2, Edit3, Send, Clock3, BarChart3,
   PieChart, Activity, Brain, Lightbulb, TrendingDown, CalendarDays,
-  ArrowUpRight, Sparkles, Archive, RefreshCw, CheckCircle2, Sprout, 
-  MessageCircle, Snowflake
+  ArrowUpRight, Sparkles, Archive, RefreshCw, CheckCircle2, Sprout,
+  MessageCircle, Snowflake, Loader2
 } from "lucide-react";
 
 // shadcn/ui primitives (assumes you've run the generator for these)
@@ -117,6 +117,10 @@ type Lead = {
     recommendedAction: string;
     urgency: "high" | "medium" | "low";
   };
+  // ML Prediction fields
+  mlPrediction?: boolean; // true = will convert, false = won't convert
+  mlProbability?: number; // 0.0 to 1.0 conversion probability
+  mlConfidence?: number; // 0.0 to 1.0 model confidence
 };
 
 type SavedView = {
@@ -371,6 +375,10 @@ const LeadsManagementPage: React.FC = () => {
   // Temporary: use empty array to test if hook is causing re-renders
   // const people: any[] = [];
 
+  // ML Predictions state and fetching (moved before useMemo that uses it)
+  const [mlPredictions, setMlPredictions] = useState<Record<string, { prediction: boolean; probability: number; confidence: number }>>({});
+  const [isLoadingPredictions, setIsLoadingPredictions] = useState(false);
+
   const datasetLeads = useMemo((): Lead[] => {
     const now = Date.now();
     const leads = (people || []).map((p: any, idx: number) => {
@@ -437,11 +445,65 @@ const LeadsManagementPage: React.FC = () => {
             return 'low';
           })(),
         },
+        // ML Prediction fields - populated by batch prediction API
+        mlPrediction: mlPredictions[p.id]?.prediction ?? undefined,
+        mlProbability: mlPredictions[p.id]?.probability ?? 0,
+        mlConfidence: mlPredictions[p.id]?.confidence ?? 0,
       };
     });
     
     return leads;
-  }, [people]);
+  }, [people, mlPredictions]);
+
+  // Function to fetch ML predictions for visible leads
+  const fetchMLPredictions = useCallback(async () => {
+    if (!datasetLeads.length || isLoadingPredictions) return;
+
+    setIsLoadingPredictions(true);
+    try {
+      const leadIds = datasetLeads.map(lead => lead.uid);
+
+      const response = await fetch('http://localhost:8000/ai/advanced-ml/predict-batch', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(leadIds),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        const predictionsMap: Record<string, { prediction: boolean; probability: number; confidence: number }> = {};
+
+        result.predictions.forEach((pred: any) => {
+          if (pred.probability !== null) {
+            predictionsMap[pred.lead_id] = {
+              prediction: pred.prediction,
+              probability: pred.probability,
+              confidence: pred.confidence,
+            };
+          }
+        });
+
+        setMlPredictions(predictionsMap);
+      }
+    } catch (error) {
+      console.error('Failed to fetch ML predictions:', error);
+    } finally {
+      setIsLoadingPredictions(false);
+    }
+  }, [datasetLeads, isLoadingPredictions]);
+
+  // Auto-fetch predictions when leads change
+  useEffect(() => {
+    if (datasetLeads.length > 0 && Object.keys(mlPredictions).length === 0) {
+      // Small delay to avoid too many requests
+      const timer = setTimeout(() => {
+        fetchMLPredictions();
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [datasetLeads, mlPredictions, fetchMLPredictions]);
 
   // Map original UUID -> numeric id, and numeric id -> UUID, to align AI results with UI keys
   const uuidToNumericId = useMemo(() => {
@@ -1081,6 +1143,74 @@ const LeadsManagementPage: React.FC = () => {
             )}
           </td>
           <td className="px-3 sm:px-4 lg:px-6 py-3 sm:py-4 lg:py-5">
+            <div className="flex items-center justify-center">
+              {isLoadingPredictions ? (
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span className="text-xs">Loading...</span>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <Brain className="h-4 w-4 text-muted-foreground" />
+                  <Badge
+                    variant={lead.mlPrediction !== undefined ? (lead.mlPrediction ? "default" : "secondary") : "outline"}
+                    className={`text-xs font-medium ${
+                      lead.mlPrediction === undefined
+                        ? 'bg-gray-100 text-gray-700 border-gray-200'
+                        : lead.mlPrediction
+                        ? 'bg-green-100 text-green-700 border-green-200'
+                        : 'bg-red-100 text-red-700 border-red-200'
+                    }`}
+                  >
+                    {lead.mlPrediction === undefined
+                      ? 'No Prediction'
+                      : lead.mlPrediction
+                      ? 'Will Convert'
+                      : 'Will Not Convert'}
+                  </Badge>
+                </div>
+              )}
+            </div>
+          </td>
+          <td className="px-3 sm:px-4 lg:px-6 py-3 sm:py-4 lg:py-5">
+            {isLoadingPredictions ? (
+              <div className="flex items-center justify-center">
+                <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+              </div>
+            ) : (
+              <div className="space-y-1">
+                <div className="text-lg font-bold text-foreground">
+                  {((lead.mlProbability || 0) * 100).toFixed(1)}%
+                </div>
+                <div className="w-full bg-muted rounded-full h-2">
+                  <div
+                    className="bg-gradient-to-r from-red-500 to-green-500 h-2 rounded-full transition-all duration-300"
+                    style={{ width: `${(lead.mlProbability || 0) * 100}%` }}
+                  />
+                </div>
+              </div>
+            )}
+          </td>
+          <td className="px-3 sm:px-4 lg:px-6 py-3 sm:py-4 lg:py-5">
+            {isLoadingPredictions ? (
+              <div className="flex items-center justify-center">
+                <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+              </div>
+            ) : (
+              <div className="space-y-1">
+                <div className="text-lg font-bold text-foreground">
+                  {((lead.mlConfidence || 0) * 100).toFixed(0)}%
+                </div>
+                <Progress value={(lead.mlConfidence || 0) * 100} className="w-full h-2" />
+                <div className="text-xs text-muted-foreground">
+                  {(lead.mlConfidence || 0) > 0.8 ? 'Very High' :
+                   (lead.mlConfidence || 0) > 0.6 ? 'High' :
+                   (lead.mlConfidence || 0) > 0.4 ? 'Medium' : 'Low'}
+                </div>
+              </div>
+            )}
+          </td>
+          <td className="px-3 sm:px-4 lg:px-6 py-3 sm:py-4 lg:py-5">
             <div className="space-y-2">
               <StatusBadge status={lead.status} statusType={lead.statusType} />
               <SLABadge sla={lead.slaStatus} />
@@ -1120,21 +1250,19 @@ const LeadsManagementPage: React.FC = () => {
               >
                 <Calendar className="h-3 w-3 sm:h-4 sm:w-4" />
               </Button>
-              <Button size="icon" variant="ghost" aria-label="More actions" className="hover:bg-foreground hover:text-background h-8 w-8 sm:h-9 sm:w-9">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 sm:h-9 sm:w-9">
-                      <MoreHorizontal className="h-3 w-3 sm:h-4 sm:w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => lead.uid && navigate(`/people/${lead.uid}`)}>
-                      <Eye className="mr-2 h-4 w-4" />
-                      View Person Record
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-8 w-8 sm:h-9 sm:w-9 hover:bg-foreground hover:text-background">
+                    <MoreHorizontal className="h-3 w-3 sm:h-4 sm:w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => lead.uid && navigate(`/people/${lead.uid}`)}>
+                    <Eye className="mr-2 h-4 w-4" />
+                    View Person Record
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
             
             {/* AI Triage Insights */}
@@ -1245,10 +1373,31 @@ const LeadsManagementPage: React.FC = () => {
                   <span className="hidden sm:inline">Score</span>
                   <span className="sm:hidden">Score</span>
                   {sortBy === "leadScore" && (
-                    sortOrder === "asc" ? 
-                      <SortAsc className="h-4 w-4 text-muted-foreground" /> : 
+                    sortOrder === "asc" ?
+                      <SortAsc className="h-4 w-4 text-muted-foreground" /> :
                       <SortDesc className="h-4 w-4 text-muted-foreground" />
                   )}
+                </div>
+              </th>
+              <th className="px-3 sm:px-4 lg:px-6 py-3 sm:py-4 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                <div className="flex items-center gap-2">
+                  <Brain className="h-4 w-4 text-muted-foreground" />
+                  <span className="hidden sm:inline">ML Prediction</span>
+                  <span className="sm:hidden">ML</span>
+                </div>
+              </th>
+              <th className="px-3 sm:px-4 lg:px-6 py-3 sm:py-4 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                <div className="flex items-center gap-2">
+                  <Target className="h-4 w-4 text-muted-foreground" />
+                  <span className="hidden sm:inline">ML Probability</span>
+                  <span className="sm:hidden">Prob</span>
+                </div>
+              </th>
+              <th className="px-3 sm:px-4 lg:px-6 py-3 sm:py-4 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                <div className="flex items-center gap-2">
+                  <BarChart3 className="h-4 w-4 text-muted-foreground" />
+                  <span className="hidden sm:inline">ML Confidence</span>
+                  <span className="sm:hidden">Conf</span>
                 </div>
               </th>
               <th className="px-3 sm:px-4 lg:px-6 py-3 sm:py-4 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">
@@ -1267,7 +1416,7 @@ const LeadsManagementPage: React.FC = () => {
             onScroll={onScroll}
           >
             {visibleItems.map((lead, index) => (
-              <TableRow key={lead.id} lead={lead} index={index} />
+              <TableRow key={lead.uid} lead={lead} index={index} />
             ))}
           </tbody>
         </table>
@@ -1280,7 +1429,7 @@ const LeadsManagementPage: React.FC = () => {
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
       {paginationData.paginatedLeads.map((lead) => (
         <Card 
-          key={lead.id} 
+          key={lead.uid} 
           className={cn(
             "hover:shadow-lg transition-all duration-200 cursor-pointer",
             selectedLeads.has(lead.uid) && "ring-2 ring-primary bg-primary/5",
@@ -1424,21 +1573,19 @@ const LeadsManagementPage: React.FC = () => {
             >
               <Calendar className="h-3 w-3" />
             </Button>
-              <Button size="icon" variant="ghost" className="h-8 w-8 hover:bg-foreground hover:text-background">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 sm:h-9 sm:w-9">
-                      <MoreHorizontal className="h-3 w-3 sm:h-4 sm:w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => lead.uid && navigate(`/people/${lead.uid}`)}>
-                      <Eye className="mr-2 h-4 w-4" />
-                      View Person Record
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-foreground hover:text-background">
+                    <MoreHorizontal className="h-3 w-3 sm:h-4 sm:w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => lead.uid && navigate(`/people/${lead.uid}`)}>
+                    <Eye className="mr-2 h-4 w-4" />
+                    View Person Record
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </CardContent>
         </Card>
@@ -1451,7 +1598,7 @@ const LeadsManagementPage: React.FC = () => {
     <div className="space-y-2">
       {paginationData.paginatedLeads.map((lead) => (
         <div
-          key={lead.id}
+          key={lead.uid}
           className={cn(
             "flex items-center gap-4 p-3 rounded-lg border border-border hover:bg-muted/50 transition-all duration-200 cursor-pointer",
             selectedLeads.has(lead.uid) && "ring-2 ring-primary bg-primary/5",
@@ -1560,14 +1707,24 @@ const LeadsManagementPage: React.FC = () => {
     <div className="space-y-4">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-semibold text-foreground">Edit Lead Information</h3>
-        <Button 
-          variant="outline" 
-          size="sm" 
+        <Button
+          variant="outline"
+          size="sm"
           onClick={handleRefresh}
           className="gap-2"
         >
           <RefreshCw className="h-4 w-4" />
           Refresh
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={fetchMLPredictions}
+          disabled={isLoadingPredictions}
+          className="gap-2"
+        >
+          <Brain className="h-4 w-4" />
+          {isLoadingPredictions ? 'Loading ML...' : 'Refresh ML'}
         </Button>
       </div>
       
@@ -1590,7 +1747,7 @@ const LeadsManagementPage: React.FC = () => {
           
           return (
             <EditableLeadCard
-              key={lead.id}
+              key={lead.uid}
               lead={personEnriched}
               onUpdate={(updatedLead) => {
                 console.log('Lead updated:', updatedLead);

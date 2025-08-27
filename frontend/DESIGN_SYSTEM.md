@@ -1,4 +1,4 @@
-# Bridge Dashboard Design System
+# Ivy Design System
 
 ## Professional Color System Architecture
 

@@ -1,6 +1,6 @@
 # Email Composer Component
 
-A modern, AI-powered email composition component for the Bridge CRM system. This component integrates with the LangChain backend to provide intelligent email generation, user prompt assistance, and grammar/spelling correction.
+A modern, AI-powered email composition component for the Ivy system. This component integrates with the LangChain backend to provide intelligent email generation, user prompt assistance, and grammar/spelling correction.
 
 ## Features
 
@@ -9,7 +9,7 @@ A modern, AI-powered email composition component for the Bridge CRM system. This
 - **Grammar & Spelling Check**: AI-powered text correction and improvement
 - **Intent-Based Templates**: Generate emails for nurture, interview booking, and re-engagement
 - **Smart Merge Fields**: Dynamic content insertion using lead data
-- **Professional Design**: Uses the Bridge CRM color system from `index.css` for consistent theming
+- **Professional Design**: Uses the Ivy color system from `index.css` for consistent theming
 - **Responsive Layout**: Optimized for both desktop and mobile use
 
 ## AI Integration
@@ -119,7 +119,7 @@ The component integrates with these AI endpoints:
 
 ## Color System
 
-The component uses the Bridge CRM color system defined in `index.css`:
+The component uses the Ivy color system defined in `index.css`:
 
 - **Primary Colors**: Uses `--foreground`, `--background`, `--card` for main elements
 - **Accent Colors**: Uses `--accent`, `--info` for interactive elements and highlights
@@ -182,7 +182,7 @@ function LeadsPage() {
 
 ## Styling
 
-The component follows the Bridge CRM design system:
+The component follows the Ivy design system:
 
 - **Liquid Glass Effect**: Uses `backdrop-blur` and transparent backgrounds
 - **Consistent Spacing**: Follows the 4px grid system
@@ -203,7 +203,7 @@ The component follows the Bridge CRM design system:
 - React 18+
 - Lucide React (for icons)
 - shadcn/ui components (Button, Input, Badge)
-- Bridge CRM color system (`index.css`)
+- Ivy color system (`index.css`)
 - LangChain backend integration
 
 ## Browser Support

@@ -140,6 +140,14 @@ export const NAVIGATION: Navigation = [
     ],
   },
   {
+    title: "Analytics & Reporting",
+    icon: BarChart3,
+    description: "Cohort and performance analytics",
+    children: [
+      { title: "Cohort Analysis", icon: TrendingUp, href: "/analytics/cohort-analysis", description: "Cohort conversion, lifecycle & ROI" },
+    ],
+  },
+  {
     title: "AI",
     icon: Brain,
     description: "Predictive insights and automation",
@@ -148,6 +156,8 @@ export const NAVIGATION: Navigation = [
       { title: "Risk Scoring", icon: Shield, href: "/ai/riskscoring", description: "Student success prediction" },
       { title: "Next Best Action", icon: Sparkles, href: "/ai/actions", description: "AI recommendations" },
       { title: "AI Communications", icon: Bot, href: "/ai/ai-comms", description: "Automated outreach" },
+      { title: "Natural Language Queries", icon: MessageSquare, href: "/ai/natural-language", description: "Ask questions about leads in plain English" },
+    { title: "Advanced ML Models", icon: Brain, href: "/ai/advanced-ml", description: "Deep learning & feature engineering for lead intelligence" },
     ],
   },
 ];

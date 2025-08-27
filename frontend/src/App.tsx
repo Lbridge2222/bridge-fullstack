@@ -22,7 +22,10 @@ import ForecastingPage from "@/pages/ai/Forecasting";
 import RiskScoringPage from "@/pages/ai/risk-scoring";
 import NextBestActionPage from "@/pages/ai/NextBestAction";
 import AICommunicationsPage from "@/pages/ai/Communications";
+import NaturalLanguageQueriesPage from "@/pages/ai/NaturalLanguageQueries";
+import AdvancedMLPage from "@/pages/ai/AdvancedML";
 import PersonDetailPage from "@/pages/people/contact-page";
+import CohortAnalysisPage from "@/pages/analytics/CohortAnalysis";
 
 // import AdmissionsPipelinePage from "@/pages/crm/Admissions"; // future
 // import InterviewsPage from "@/pages/crm/Interviews"; // future
@@ -77,12 +80,19 @@ export default function App() {
           <Route path="integrations" element={<Integrations />} />
         </Route>
 
+        {/* Analytics & Reporting */}
+        <Route path="analytics">
+          <Route path="cohort-analysis" element={<CohortAnalysisPage />} />
+        </Route>
+
         {/* AI Section */}
         <Route path="ai">
           <Route path="forecasting" element={<ForecastingPage />} />
           <Route path="riskscoring" element={<RiskScoringPage />} />
           <Route path="ai-comms" element={<AICommunicationsPage />} />
           <Route path="actions" element={<NextBestActionPage />} />
+          <Route path="natural-language" element={<NaturalLanguageQueriesPage />} />
+        <Route path="advanced-ml" element={<AdvancedMLPage />} />
         </Route>
       </Route>
 

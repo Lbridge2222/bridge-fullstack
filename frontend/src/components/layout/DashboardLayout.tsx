@@ -59,7 +59,10 @@ export default function DashboardLayout() {
                   (item as NavLeaf).href === '/ai/riskscoring' ||
                   (item as NavLeaf).href === '/ai/ai-comms' ||
                   (item as NavLeaf).href === '/ai/actions' ||
-                  (item as NavLeaf).href === '/ai/communications') {
+                  (item as NavLeaf).href === '/ai/natural-language' ||
+                  (item as NavLeaf).href === '/ai/advanced-ml' ||
+                  (item as NavLeaf).href === '/ai/communications' ||
+                  (item as NavLeaf).href === '/analytics/cohort-analysis') {
                 navigate((item as NavLeaf).href!);
               } else {
                 // Show placeholder for routes without pages
@@ -101,11 +104,11 @@ export default function DashboardLayout() {
         <div className={`${sidebarCollapsed ? 'px-4 py-5' : 'px-6 py-5'} border-b border-slate-200 relative`}>
           <div className={`flex items-center ${sidebarCollapsed ? 'justify-center' : 'gap-3'}`}>
             <div className="w-8 h-8 bg-slate-900 rounded-lg flex items-center justify-center flex-shrink-0">
-              <span className="text-white font-bold text-sm">HE</span>
+              <span className="text-white font-bold text-sm">I</span>
             </div>
             {!sidebarCollapsed && (
               <div>
-                <h1 className="font-semibold text-slate-900">HE OS</h1>
+                <h1 className="font-semibold text-slate-900">IVY</h1>
                 <p className="text-xs text-slate-500">Higher Education OS</p>
               </div>
             )}
@@ -175,7 +178,10 @@ export default function DashboardLayout() {
                             section.href === '/ai/riskscoring' ||
                             section.href === '/ai/ai-comms' ||
                             section.href === '/ai/actions' ||
-                            section.href === '/ai/communications') {
+                            section.href === '/ai/natural-language' ||
+        section.href === '/ai/advanced-ml' ||
+                            section.href === '/ai/communications' ||
+                            section.href === '/analytics/cohort-analysis') {
                           navigate(section.href);
                         } else {
                           // Show placeholder for routes without pages

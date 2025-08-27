@@ -1,6 +1,6 @@
 # CallComposer Component
 
-A comprehensive, AI-powered call management component for lead interactions in the Bridge CRM system.
+A comprehensive, AI-powered call management component for lead interactions in the Ivy system.
 
 ## Overview
 
@@ -179,7 +179,7 @@ For recorded calls, AI analyzes:
 
 ## Styling
 
-The component follows the Bridge CRM design system:
+The component follows the Ivy design system:
 - **Color Palette**: Slate theme with professional grays and blacks
 - **Typography**: Clean, readable fonts with proper hierarchy
 - **Spacing**: Consistent spacing using Tailwind CSS utilities
@@ -235,4 +235,4 @@ For questions or issues with the CallComposer component:
 - Check the component documentation
 - Review the TypeScript interfaces
 - Test with the demo component
-- Consult the Bridge CRM development team
+- Consult the Ivy development team

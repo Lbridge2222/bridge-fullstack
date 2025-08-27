@@ -121,6 +121,22 @@ except Exception as e:
     print(f"❌ Failed to load cohort performance router: {e}")
     pass
 
+# Natural Language Queries router (Phase 4.1)
+try:
+    from app.ai.natural_language import router as natural_language_router
+    app.include_router(natural_language_router)
+except Exception as e:
+    print(f"❌ Failed to load natural language router: {e}")
+    pass
+
+# Advanced ML router (Phase 4.2)
+try:
+    from app.ai.advanced_ml import router as advanced_ml_router
+    app.include_router(advanced_ml_router)
+except Exception as e:
+    print(f"❌ Failed to load advanced ML router: {e}")
+    pass
+
 @app.get("/healthz/db")
 async def healthz_db():
     from app.db.db import fetchrow

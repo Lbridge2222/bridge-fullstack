@@ -1,4 +1,4 @@
-# Bridge CRM Backend (FastAPI)
+# Ivy Backend (FastAPI)
 
 ## Quickstart
 1. Create `.env` from `.env.example` and set `DATABASE_URL` (your Supabase project's Postgres connection string) and optional `CORS_ORIGINS`.
