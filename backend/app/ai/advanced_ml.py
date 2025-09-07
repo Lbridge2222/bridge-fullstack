@@ -15,6 +15,7 @@ import joblib
 import os
 from pathlib import Path
 from app.db.db import fetch, fetchrow, execute
+from app.cache import cached
 
 router = APIRouter(prefix="/ai/advanced-ml", tags=["advanced-ml"])
 
@@ -88,23 +89,26 @@ class AdvancedMLPipeline:
         try:
             print(f"🔍 Querying database for up to {limit} leads...")
             
-            # Query enriched lead data using actual schema
+            # Query enriched lead data using ACTUAL current schema
             query = """
             SELECT 
                 p.id, p.first_name, p.last_name, p.email, p.phone,
                 p.lead_score, p.lifecycle_state, p.created_at,
-                p.engagement_score, p.conversion_probability::double precision as conversion_probability,
+                p.engagement_score, p.conversion_probability,
                 p.touchpoint_count, p.status,
                 (EXTRACT(EPOCH FROM (NOW() - p.created_at)) / 86400.0)::double precision as days_since_creation,
-                CASE WHEN a.id IS NOT NULL THEN 1 ELSE 0 END as target,
-                COALESCE(a.source, 'unknown') as source,
-                COALESCE(pr.name, 'unknown') as course_declared,
-                COALESCE(c.name, 'unknown') as campus_preference,
+                CASE WHEN a.id IS NOT NULL THEN 1 ELSE 0 END as has_application,
+                COALESCE(a.source, 'unknown') as application_source,
+                COALESCE(pr.name, 'unknown') as programme_name,
+                COALESCE(c.name, 'unknown') as campus_name,
                 CASE 
                     WHEN p.engagement_score >= 80 THEN 'high'
                     WHEN p.engagement_score >= 50 THEN 'medium'
                     ELSE 'low'
-                END as engagement_level
+                END as engagement_level,
+                EXTRACT(MONTH FROM p.created_at) as created_month,
+                EXTRACT(DOW FROM p.created_at) as created_day_of_week,
+                EXTRACT(HOUR FROM p.created_at) as created_hour
             FROM people p
             LEFT JOIN applications a ON p.id = a.person_id
             LEFT JOIN programmes pr ON a.programme_id = pr.id
@@ -115,8 +119,6 @@ class AdvancedMLPipeline:
             """
             
             print(f"📝 Executing query: {query}")
-            # Pass scalar param; our fetch packs *args, so (limit,) became a string "(1000)"
-            # Use a single positional arg to map to %s properly
             results = await fetch(query, limit)
             print(f"📊 Query returned {len(results) if results else 0} results")
             
@@ -136,18 +138,30 @@ class AdvancedMLPipeline:
                 df['days_since_creation'] = pd.to_numeric(df['days_since_creation'], errors='coerce')
             if 'conversion_probability' in df.columns:
                 df['conversion_probability'] = pd.to_numeric(df['conversion_probability'], errors='coerce')
+            if 'lead_score' in df.columns:
+                df['lead_score'] = pd.to_numeric(df['lead_score'], errors='coerce')
+            if 'engagement_score' in df.columns:
+                df['engagement_score'] = pd.to_numeric(df['engagement_score'], errors='coerce')
+            if 'touchpoint_count' in df.columns:
+                df['touchpoint_count'] = pd.to_numeric(df['touchpoint_count'], errors='coerce')
 
             # Basic data cleaning
             print(f"🧹 Cleaning data...")
             print(f"📊 Before cleaning - rows: {len(df)}")
             print(f"📊 Missing lead_score: {df['lead_score'].isna().sum()}")
-            print(f"📊 Missing target: {df['target'].isna().sum()}")
+            print(f"📊 Missing has_application: {df['has_application'].isna().sum()}")
             
-            df = df.dropna(subset=['lead_score', 'target'])
-            df['target'] = df['target'].astype(int)
+            # Fill missing values with defaults
+            df['lead_score'] = df['lead_score'].fillna(0)
+            df['engagement_score'] = df['engagement_score'].fillna(0)
+            df['touchpoint_count'] = df['touchpoint_count'].fillna(0)
+            df['has_application'] = df['has_application'].fillna(0)
+            df['conversion_probability'] = df['conversion_probability'].fillna(0.0)
+            
+            df['has_application'] = df['has_application'].astype(int)
             
             print(f"✅ After cleaning - rows: {len(df)}")
-            print(f"📊 Target distribution: {df['target'].value_counts().to_dict()}")
+            print(f"📊 Target distribution: {df['has_application'].value_counts().to_dict()}")
             
             return df
             
@@ -162,11 +176,15 @@ class AdvancedMLPipeline:
         
         df_engineered = df.copy()
         
-        # 1. Temporal Features
+        # 1. Temporal Features (already extracted in query)
         if config.create_lag_features:
-            df_engineered['created_month'] = pd.to_datetime(df_engineered['created_at']).dt.month
-            df_engineered['created_day_of_week'] = pd.to_datetime(df_engineered['created_at']).dt.dayofweek
-            df_engineered['created_hour'] = pd.to_datetime(df_engineered['created_at']).dt.hour
+            # These are already extracted in the SQL query, but ensure they exist
+            if 'created_month' not in df_engineered.columns:
+                df_engineered['created_month'] = pd.to_datetime(df_engineered['created_at']).dt.month
+            if 'created_day_of_week' not in df_engineered.columns:
+                df_engineered['created_day_of_week'] = pd.to_datetime(df_engineered['created_at']).dt.dayofweek
+            if 'created_hour' not in df_engineered.columns:
+                df_engineered['created_hour'] = pd.to_datetime(df_engineered['created_at']).dt.hour
             
             # Academic calendar features
             df_engineered['academic_week'] = pd.to_datetime(df_engineered['created_at']).dt.isocalendar().week
@@ -333,6 +351,127 @@ class AdvancedMLPipeline:
         
         return model_id, performance
     
+    async def predict_batch(self, lead_ids: List[str]) -> Dict[str, Any]:
+        """Predict conversion probability for multiple leads"""
+        try:
+            # Get the most recent model (should already be loaded on startup)
+            if not self.models:
+                raise ValueError("No trained models available - models should be loaded on startup")
+            
+            # Get the most recent model
+            model_id = list(self.models.keys())[-1]
+            model_info = self.models[model_id]
+            
+            # Fetch lead data for prediction
+            placeholders = ','.join(['%s'] * len(lead_ids))
+            query = f"""
+            SELECT
+                p.id, p.first_name, p.last_name, p.email, p.phone,
+                p.lead_score, p.lifecycle_state, p.created_at,
+                p.engagement_score, p.conversion_probability,
+                p.touchpoint_count, p.status,
+                (EXTRACT(EPOCH FROM (NOW() - p.created_at)) / 86400.0)::double precision as days_since_creation,
+                COALESCE(a.source, 'unknown') as application_source,
+                COALESCE(pr.name, 'unknown') as programme_name,
+                COALESCE(c.name, 'unknown') as campus_name,
+                CASE
+                    WHEN p.engagement_score >= 80 THEN 'high'
+                    WHEN p.engagement_score >= 50 THEN 'medium'
+                    ELSE 'low'
+                END as engagement_level,
+                EXTRACT(MONTH FROM p.created_at) as created_month,
+                EXTRACT(DOW FROM p.created_at) as created_day_of_week,
+                EXTRACT(HOUR FROM p.created_at) as created_hour
+            FROM people p
+            LEFT JOIN applications a ON p.id = a.person_id
+            LEFT JOIN programmes pr ON a.programme_id = pr.id
+            LEFT JOIN campuses c ON pr.campus_id = c.id
+            WHERE p.id IN ({placeholders})
+            ORDER BY p.created_at DESC
+            """
+            
+            from app.db.db import fetch
+            results = await fetch(query, *lead_ids)
+            
+            if not results:
+                return {"predictions": [], "model_used": model_id, "total_processed": 0, "successful_predictions": 0}
+            
+            predictions = []
+            for lead_data in results:
+                try:
+                    # Prepare features for this lead
+                    features = self.prepare_features_for_prediction(lead_data, model_info['feature_names'])
+                    
+                    # Scale features - ensure proper feature alignment with column names
+                    features_df = pd.DataFrame([features], columns=model_info['feature_names'])
+                    features_scaled = model_info['scaler'].transform(features_df)
+
+                    # Make prediction
+                    model = model_info['model']
+                    prediction = model.predict(features_scaled)[0]
+                    prediction_proba = model.predict_proba(features_scaled)[0] if hasattr(model, 'predict_proba') else None
+
+                    # Apply probability calibration
+                    if prediction_proba is not None:
+                        raw_prob = prediction_proba[1]
+                        calibrated_prob = 1 / (1 + np.exp(-2 * (raw_prob - 0.5)))
+                        calibrated_prob = max(0.05, min(0.95, calibrated_prob))
+                    else:
+                        calibrated_prob = 0.5
+
+                    predictions.append({
+                        "lead_id": str(lead_data['id']),
+                        "prediction": bool(prediction),
+                        "probability": float(calibrated_prob),
+                        "confidence": float(max(prediction_proba) - 0.5) * 2 if prediction_proba is not None else 0.5
+                    })
+
+                except Exception as e:
+                    print(f"❌ Prediction failed for lead {lead_data['id']}: {e}")
+                    predictions.append({
+                        "lead_id": str(lead_data['id']),
+                        "prediction": None,
+                        "probability": None,
+                        "confidence": None,
+                        "error": str(e)
+                    })
+
+            return {
+                "predictions": predictions,
+                "model_used": model_id,
+                "total_processed": len(predictions),
+                "successful_predictions": len([p for p in predictions if p.get('probability') is not None])
+            }
+
+        except Exception as e:
+            raise Exception(f"Batch prediction failed: {str(e)}")
+    
+    def _load_latest_model(self):
+        """Load the latest saved model"""
+        if os.path.exists(MODEL_STORAGE_PATH):
+            model_files = list(MODEL_STORAGE_PATH.glob("*.joblib"))
+            if model_files:
+                latest_model_file = max(model_files, key=lambda f: f.stat().st_mtime)
+                try:
+                    model_data = joblib.load(latest_model_file)
+                    model_id = latest_model_file.stem
+                    self.models[model_id] = {
+                        'model': model_data['model'],
+                        'scaler': model_data['scaler'],
+                        'feature_selector': model_data.get('feature_selector'),
+                        'feature_names': model_data['feature_names'],
+                        'performance': model_data['performance'],
+                        'feature_importance': model_data['feature_importance']
+                    }
+                    # Set as active model
+                    global active_model_id
+                    active_model_id = model_id
+                    print(f"✅ Loaded model: {model_id} (set as active)")
+                    return True
+                except Exception as e:
+                    print(f"❌ Failed to load model {latest_model_file}: {e}")
+        return False
+    
     def predict(self, lead_data: Dict[str, Any], model_id: Optional[str] = None) -> Dict[str, Any]:
         """Make predictions using trained model"""
 
@@ -353,9 +492,9 @@ class AdvancedMLPipeline:
         # Prepare features
         features = self.prepare_features_for_prediction(lead_data, feature_names)
         
-        # Scale features - ensure proper feature alignment
-        features_array = np.array(features).reshape(1, -1)
-        features_scaled = scaler.transform(features_array)
+        # Scale features - ensure proper feature alignment with column names
+        features_df = pd.DataFrame([features], columns=feature_names)
+        features_scaled = scaler.transform(features_df)
         
         # Make prediction
         start_time = datetime.now()
@@ -608,10 +747,32 @@ def load_latest_model():
                 print(f"❌ Failed to load model {latest_model_file}: {e}")
     return False
 
-# Load latest model on startup
+# Load the latest model on startup
+print("🔄 Loading latest ML model on startup...")
 load_latest_model()
 
 # API Endpoints
+@router.get("")
+@router.get("/")
+async def get_advanced_ml_info():
+    """Get information about the Advanced ML system"""
+    return {
+        "name": "Advanced ML Pipeline",
+        "version": "1.0",
+        "endpoints": [
+            "/train",
+            "/predict", 
+            "/predict-batch",
+            "/models",
+            "/activate",
+            "/active",
+            "/feature-analysis",
+            "/health"
+        ],
+        "status": "active",
+        "models_loaded": len(ml_pipeline.models) if hasattr(ml_pipeline, 'models') else 0
+    }
+
 @router.post("/train")
 async def train_advanced_model(request: ModelTrainingRequest):
     """Train advanced ML model with feature engineering"""
@@ -631,9 +792,9 @@ async def train_advanced_model(request: ModelTrainingRequest):
         print(f"✅ Engineered features shape: {df_engineered.shape}")
         
         # Prepare features and target: keep only numeric columns for modeling
-        feature_columns = [col for col in df_engineered.columns if col not in ['id', 'target', 'created_at', 'first_name', 'last_name', 'email', 'phone', 'source', 'course_declared', 'campus_preference', 'lifecycle_state', 'engagement_level', 'status']]
+        feature_columns = [col for col in df_engineered.columns if col not in ['id', 'has_application', 'created_at', 'first_name', 'last_name', 'email', 'phone', 'application_source', 'programme_name', 'campus_name', 'lifecycle_state', 'engagement_level', 'status']]
         X = df_engineered[feature_columns].select_dtypes(include=[np.number])
-        y = df_engineered['target']
+        y = df_engineered['has_application']
         
         print(f"🎯 Features: {len(feature_columns)} columns")
         print(f"🎯 Target distribution: {y.value_counts().to_dict()}")
@@ -758,6 +919,7 @@ async def get_active_model_info():
         raise HTTPException(status_code=500, detail=f"Failed to get active model: {str(e)}")
 
 @router.post("/predict-batch")
+@cached(ttl=300)  # Cache predictions for 5 minutes
 async def predict_batch_leads(lead_ids: list[str]):
     """Predict conversion probability for multiple leads"""
     try:
@@ -774,9 +936,9 @@ async def predict_batch_leads(lead_ids: list[str]):
             p.engagement_score, p.conversion_probability,
             p.touchpoint_count, p.status,
             (EXTRACT(EPOCH FROM (NOW() - p.created_at)) / 86400.0)::double precision as days_since_creation,
-            COALESCE(a.source, 'unknown') as source,
-            COALESCE(pr.name, 'unknown') as course_declared,
-            COALESCE(c.name, 'unknown') as campus_preference,
+            COALESCE(a.source, 'unknown') as application_source,
+            COALESCE(pr.name, 'unknown') as programme_name,
+            COALESCE(c.name, 'unknown') as campus_name,
             CASE
                 WHEN p.engagement_score >= 80 THEN 'high'
                 WHEN p.engagement_score >= 50 THEN 'medium'
@@ -801,18 +963,13 @@ async def predict_batch_leads(lead_ids: list[str]):
                 # Prepare features for this lead
                 features = ml_pipeline.prepare_features_for_prediction(lead_data, active_model['feature_names'])
                 
-                # Debug: Print feature values for first few leads
-                if len(predictions) < 3:  # Only debug first 3 leads
-                    print(f"🔍 Lead {lead_data['id']} features: {dict(zip(active_model['feature_names'], features))}")
-                    
-                # Debug: Print model info for first prediction
+                # Debug: Print model info for first prediction only
                 if len(predictions) == 0:
                     print(f"🤖 Model info: {len(active_model['feature_names'])} features")
-                    print(f"📋 Feature names: {active_model['feature_names'][:10]}...")  # First 10 features
 
-                # Scale features - ensure proper feature alignment
-                features_array = np.array(features).reshape(1, -1)
-                features_scaled = active_model['scaler'].transform(features_array)
+                # Scale features - ensure proper feature alignment with column names
+                features_df = pd.DataFrame([features], columns=active_model['feature_names'])
+                features_scaled = active_model['scaler'].transform(features_df)
 
                 # Make prediction
                 model = active_model['model']
@@ -830,7 +987,7 @@ async def predict_batch_leads(lead_ids: list[str]):
                     calibrated_prob = max(0.05, min(0.95, calibrated_prob))
                     
                     # Debug: Print prediction details for first few leads
-                    if len(predictions) < 3:
+                    if len(predictions) == 0:
                         print(f"🎯 Lead {lead_data['id']}: raw_prob={raw_prob:.4f}, calibrated={calibrated_prob:.4f}")
                 else:
                     calibrated_prob = 0.5

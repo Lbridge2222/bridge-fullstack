@@ -123,7 +123,7 @@ const CohortPerformanceDashboard: React.FC = () => {
       cohort: cohortId,
       source: 'cohort-analytics'
     });
-    window.open(`/people/leads?${params.toString()}`, '_blank');
+    window.open(`/admissions/leads?${params.toString()}`, '_blank');
   };
 
   // Intelligent cohort analysis functions

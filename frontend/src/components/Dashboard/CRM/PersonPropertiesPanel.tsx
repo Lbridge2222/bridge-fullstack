@@ -124,7 +124,7 @@ const PersonPropertiesPanel: React.FC<PersonPropertiesPanelProps> = ({ person, o
       setError(null);
       
       // Get properties for the person's current lifecycle stage WITH their actual values
-      const response = await fetch(`http://localhost:8000/properties/people/by-lifecycle-stage/${person.id}?lifecycle_stages=${person.lifecycle_state}`);
+      const response = await fetch(`http://localhost:8000/people/${person.id}/properties/progressive`);
       
       if (!response.ok) {
         throw new Error(`Failed to fetch properties: ${response.statusText}`);

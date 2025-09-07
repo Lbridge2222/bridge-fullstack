@@ -1,5 +1,5 @@
 // API service layer for backend integration
-const API_BASE = 'http://localhost:8000';
+const API_BASE = '';
 
 export interface ApiError {
   detail: string;
@@ -262,6 +262,20 @@ export const peopleApi = {
   // Get single enriched person record
   getPersonEnriched: (personId: string): Promise<PersonEnriched & Record<string, any>> => {
     return apiFetch<PersonEnriched & Record<string, any>>(`/people/${personId}/enriched`);
+  },
+
+  // Get all people (for Directory)
+  getAllPeople: (filters?: {
+    lifecycle_state?: string;
+    q?: string;
+    limit?: number;
+  }): Promise<PersonEnriched[]> => {
+    const params = new URLSearchParams();
+    if (filters?.lifecycle_state) params.append('lifecycle_state', filters.lifecycle_state);
+    if (filters?.q) params.append('q', filters.q);
+    if (filters?.limit) params.append('limit', filters.limit.toString());
+    
+    return apiFetch<PersonEnriched[]>(`/people/enriched?${params}`);
   },
 };
 

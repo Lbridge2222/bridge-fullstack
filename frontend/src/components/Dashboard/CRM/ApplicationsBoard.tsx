@@ -152,8 +152,10 @@ export default function ApplicationsBoardPage() {
     urgency: urgency === "all" ? undefined : urgency,
   });
 
+
   // Filter applications based on search and program
   const filtered = React.useMemo(() => {
+    if (!applications) return [];
     return applications.filter(app => {
       const matchesSearch = search === "" || 
         app.first_name?.toLowerCase().includes(search.toLowerCase()) ||
@@ -201,6 +203,7 @@ export default function ApplicationsBoardPage() {
 
   // Get unique programmes for filter dropdown
   const uniqueProgrammes = React.useMemo(() => {
+    if (!applications) return [];
     return [...new Set(applications.map(app => app.programme_name))];
   }, [applications]);
 

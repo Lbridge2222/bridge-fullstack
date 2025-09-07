@@ -181,6 +181,45 @@ async def compose_outreach_ep(payload: Dict[str, Any]):
     return draft
 
 
+@router.post("/predict-batch")
+async def predict_batch_leads(payload: Dict[str, Any]):
+    """
+    Get ML predictions for a batch of lead IDs.
+    Returns conversion probabilities and confidence scores.
+    """
+    if not AI_LEADS_ENABLED:
+        raise HTTPException(status_code=404, detail="AI leads is disabled")
+    
+    lead_ids = payload.get("lead_ids", [])
+    if not lead_ids:
+        raise HTTPException(status_code=400, detail="lead_ids array is required")
+    
+    try:
+        # Import the ML pipeline
+        from app.ai.advanced_ml import AdvancedMLPipeline
+        
+        # Initialize the pipeline
+        ml_pipeline = AdvancedMLPipeline()
+        
+        # Get predictions
+        predictions = await ml_pipeline.predict_batch(lead_ids)
+        
+        return {
+            "model_used": "random_forest_v1",
+            "total_processed": len(lead_ids),
+            "predictions": predictions.get("predictions", []),
+            "metadata": {
+                "model_version": "2025-08-27",
+                "confidence_threshold": 0.7,
+                "processing_time": predictions.get("processing_time", 0)
+            }
+        }
+        
+    except Exception as e:
+        print(f"ML prediction error: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to get predictions: {str(e)}")
+
+
 async def pg_fetch_ids(ids: list[str]):
     # Helper: fetch minimal fields by id from the same view
     if not ids:

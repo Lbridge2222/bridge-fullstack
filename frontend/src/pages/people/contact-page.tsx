@@ -19,7 +19,7 @@ import PersonPropertiesPanel from '@/components/Dashboard/CRM/PersonPropertiesPa
 import AISummaryPanel from '@/components/AISummaryPanel';
 
 const PersonDetailPage: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
+  const { personId } = useParams<{ personId: string }>();
   const [person, setPerson] = useState<(PersonEnriched & Record<string, any>) | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -41,12 +41,12 @@ const PersonDetailPage: React.FC = () => {
 
 
   useEffect(() => {
-    if (!id) return;
+    if (!personId) return;
     let mounted = true;
     setLoading(true);
     setError(null);
     peopleApi
-      .getPersonEnriched(id)
+      .getPersonEnriched(personId)
       .then((data) => {
         if (mounted) setPerson(data);
       })
@@ -59,7 +59,7 @@ const PersonDetailPage: React.FC = () => {
     return () => {
       mounted = false;
     };
-  }, [id]);
+  }, [personId]);
 
   // Convert PersonEnriched to Lead format for the composer components
   const convertToLead = useMemo(() => {

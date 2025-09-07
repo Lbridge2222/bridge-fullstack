@@ -3,6 +3,7 @@ import logging
 from typing import List, Optional
 from app.db.db import fetch, execute
 from app.schemas.people import PersonOut, PeoplePage, PersonUpdate, LeadUpdate, LeadNote, PropertyUpdate, assert_no_system_fields
+from app.cache import cached
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -137,6 +138,7 @@ async def get_person_enriched(person_id: str):
         raise HTTPException(status_code=500, detail=f"/people/{{person_id}}/enriched DB error: {e}")
 
 @router.get("/leads", response_model=List[dict])
+@cached(ttl=60)  # Cache for 1 minute
 async def list_leads(
     q: Optional[str] = Query(None, description="name or email search"),
     limit: int = Query(50, ge=1, le=200)
@@ -169,13 +171,8 @@ async def list_leads(
     pattern = f"%{q}%" if q else None
     try:
         # First test if the view exists and has data
-        test_sql = "SELECT COUNT(*) as count FROM vw_leads_management"
-        count_result = await fetch(test_sql)
-        print(f"DEBUG: View test result: {count_result}")
-        
         # Now run the actual query
         result = await fetch(sql, q, pattern, pattern, limit)
-        print(f"DEBUG: Query result count: {len(result) if result else 0}")
         return result
     except Exception as e:
         import traceback
@@ -257,15 +254,12 @@ async def debug_people():
     try:
         # Test basic people table
         people_count = await fetch("SELECT COUNT(*) as count FROM people")
-        print(f"DEBUG: People table count: {people_count}")
         
         # Test basic people with lifecycle_state = 'enquiry'
         enquiry_count = await fetch("SELECT COUNT(*) as count FROM people WHERE lifecycle_state = 'enquiry'")
-        print(f"DEBUG: Enquiry count: {enquiry_count}")
         
         # Test a simple enquiry record
         enquiry_sample = await fetch("SELECT id::text, first_name, last_name, lifecycle_state FROM people WHERE lifecycle_state = 'enquiry' LIMIT 1")
-        print(f"DEBUG: Enquiry sample: {enquiry_sample}")
         
         return {
             "people_table_accessible": True,
@@ -291,11 +285,9 @@ async def debug_leads():
     try:
         # Test if view exists
         view_test = await fetch("SELECT COUNT(*) as count FROM vw_leads_management")
-        print(f"DEBUG: View count test: {view_test}")
         
         # Test a simple select 
         sample = await fetch("SELECT id::text, first_name, lifecycle_state FROM vw_leads_management LIMIT 1")
-        print(f"DEBUG: Sample record test: {sample}")
         
         # Test the exact columns we're using
         columns_test = await fetch("""
@@ -312,7 +304,6 @@ async def debug_leads():
             FROM vw_leads_management 
             LIMIT 1
         """)
-        print(f"DEBUG: Columns test: {columns_test}")
         
         return {
             "view_accessible": True,
@@ -699,3 +690,25 @@ async def get_person_progressive_properties(person_id: str):
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to fetch progressive properties: {str(e)}")
+
+@router.get("/{person_id}", response_model=dict)
+async def get_person(person_id: str):
+    """
+    Returns a single person's basic record.
+    """
+    sql = """
+      select id, first_name, last_name, email, phone, lifecycle_state, 
+             lead_score, conversion_probability, created_at, updated_at
+      from people
+      where id::text = %s
+      limit 1
+    """
+    try:
+        rows = await fetch(sql, person_id)
+        if not rows:
+            raise HTTPException(status_code=404, detail="Person not found")
+        return rows[0]
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"/people/{{person_id}} DB error: {e}")

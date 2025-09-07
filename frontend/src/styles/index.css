@@ -9,33 +9,33 @@
 @layer base {
   :root {
     /* ===== BRAND COLORS ===== */
-    --brand-primary: 220 25% 15%;      /* Slate foundation */
-    --brand-accent: 0 85% 55%;         /* Candy apple red */
-    --brand-secondary: 120 45% 25%;    /* Forest green */
+    --brand-primary: 0 0% 7%;          /* Shadcn Black #111111 */
+    --brand-accent: 0 100% 50%;        /* Candy Apple Red #FF0800 */
+    --brand-secondary: 150 60% 8%;     /* Darker Ivy Green #1A3D2A */
     
     /* ===== SEMANTIC COLORS ===== */
-    --semantic-success: 160 70% 35%;   /* Confident, vibrant emerald */
+    --semantic-success: 150 60% 8%;   /* Ivy Green #2D6B4A */
     --semantic-warning: 220 15% 35%;   /* Sophisticated charcoal */
-    --semantic-error: 0 75% 45%;       /* Bold, serious crimson */
+    --semantic-error: 0 100% 50%;      /* Candy Apple Red #FF0800 */
     --semantic-info: 200 30% 50%;      /* Cool slate with blue undertone */
     
     /* ===== INTERACTIVE STATES ===== */
-    --interactive-primary: 220 25% 15%;
-    --interactive-secondary: 120 45% 25%;
-    --interactive-accent: 0 85% 55%;
+    --interactive-primary: 0 0% 7%;          /* Shadcn Black #111111 */
+    --interactive-secondary: 150 60% 8%;    /* Ivy Green #2D6B4A */
+    --interactive-accent: 0 100% 50%;        /* Candy Apple Red #FF0800 */
     --interactive-muted: 215 25% 90%;
     
     /* ===== SURFACE COLORS ===== */
-    --surface-primary: 0 0% 100%;      /* Pure white */
-    --surface-secondary: 210 25% 98%;  /* Very light slate */
+    --surface-primary: 0 0% 100%;      /* Pure white #FFFFFF */
+    --surface-secondary: 0 0% 96%;     /* Light Gray #F5F5F5 */
     --surface-tertiary: 210 25% 96%;   /* Light slate */
-    --surface-overlay: 220 25% 8%;     /* Dark overlay */
+    --surface-overlay: 0 0% 7%;        /* Shadcn Black #111111 */
     
     /* ===== TEXT HIERARCHY ===== */
-    --text-primary: 220 25% 12%;      /* Main text */
+    --text-primary: 0 0% 7%;          /* Shadcn Black #111111 */
     --text-secondary: 215 20% 45%;     /* Secondary text */
     --text-tertiary: 215 20% 65%;      /* Tertiary text */
-    --text-inverse: 210 40% 98%;       /* Text on dark backgrounds */
+    --text-inverse: 0 0% 100%;         /* White #FFFFFF */
     
     /* ===== COLOR SCALES ===== */
     /* Slate Scale */
@@ -51,43 +51,43 @@
     --slate-900: 220 25% 15%;
     
     /* Red Scale (Candy Apple) */
-    --red-50: 0 85% 95%;
-    --red-100: 0 85% 90%;
-    --red-200: 0 85% 80%;
-    --red-300: 0 85% 70%;
-    --red-400: 0 85% 60%;
-    --red-500: 0 85% 55%;              /* Our candy apple */
-    --red-600: 0 85% 45%;
-    --red-700: 0 85% 35%;
-    --red-800: 0 85% 25%;
-    --red-900: 0 85% 15%;
+    --red-50: 0 100% 95%;
+    --red-100: 0 100% 90%;
+    --red-200: 0 100% 80%;
+    --red-300: 0 100% 70%;
+    --red-400: 0 100% 60%;
+    --red-500: 0 100% 50%;              /* Candy Apple Red #FF0800 */
+    --red-600: 0 100% 40%;
+    --red-700: 0 100% 30%;
+    --red-800: 0 100% 20%;
+    --red-900: 0 100% 10%;
     
-    /* Green Scale (Forest) */
-    --green-50: 120 45% 95%;
-    --green-100: 120 45% 90%;
-    --green-200: 120 45% 80%;
-    --green-300: 120 45% 70%;
-    --green-400: 120 45% 60%;
-    --green-500: 120 45% 50%;
-    --green-600: 120 45% 40%;
-    --green-700: 120 45% 30%;
-    --green-800: 120 45% 25%;          /* Our forest green */
-    --green-900: 120 45% 20%;
+    /* Green Scale (Punchier Ivy) */
+    --green-50: 150 45% 95%;
+    --green-100: 150 45% 90%;
+    --green-200: 150 45% 80%;
+    --green-300: 150 45% 70%;
+    --green-400: 150 45% 60%;
+    --green-500: 150 45% 50%;
+    --green-600: 150 45% 40%;
+    --green-700: 150 45% 30%;
+    --green-800: 150 60% 6%;          /* Darker Ivy Black #0A1F1A */
+    --green-900: 150 45% 5%;
     
     /* ===== COMPONENT TOKENS ===== */
     /* Button Colors */
-    --button-primary-bg: 220 25% 15%;
-    --button-primary-text: 210 40% 98%;
-    --button-primary-hover: 220 25% 15% / 0.9;
-    --button-primary-active: 220 25% 15% / 0.8;
+    --button-primary-bg: 0 0% 7%;          /* Shadcn Black #111111 */
+    --button-primary-text: 0 0% 100%;      /* White #FFFFFF */
+    --button-primary-hover: 0 0% 7% / 0.9;
+    --button-primary-active: 0 0% 7% / 0.8;
     
-    --button-accent-bg: 0 85% 55%;
-    --button-accent-text: 210 40% 98%;
-    --button-accent-hover: 0 85% 55% / 0.9;
+    --button-accent-bg: 0 100% 50%;        /* Candy Apple Red #FF0800 */
+    --button-accent-text: 0 0% 100%;       /* White #FFFFFF */
+    --button-accent-hover: 0 100% 50% / 0.9;
     
-    --button-forest-bg: 120 45% 25%;
-    --button-forest-text: 210 40% 98%;
-    --button-forest-hover: 120 45% 25% / 0.9;
+    --button-forest-bg: 150 60% 8%;       /* Ivy Black #0A1F1A */
+    --button-forest-text: 0 0% 100%;       /* White #FFFFFF */
+    --button-forest-hover: 150 60% 8% / 0.9;
     
     /* Card Colors */
     --card-bg: 0 0% 100%;
@@ -95,55 +95,55 @@
     --card-shadow: 0 1px 3px 0 220 25% 8% / 0.1;
     
     /* Status Colors */
-    --status-success-bg: 160 70% 35% / 0.1;
-    --status-success-text: 160 70% 35%;
-    --status-success-border: 160 70% 35% / 0.2;
+    --status-success-bg: 150 60% 8% / 0.1;    /* Ivy Black */
+    --status-success-text: 150 60% 8%;
+    --status-success-border: 150 60% 8% / 0.2;
     
     --status-warning-bg: 220 15% 35% / 0.1;
     --status-warning-text: 220 15% 35%;
     --status-warning-border: 220 15% 35% / 0.2;
     
-    --status-error-bg: 0 75% 45% / 0.1;
-    --status-error-text: 0 75% 45%;
-    --status-error-border: 0 75% 45% / 0.2;
+    --status-error-bg: 0 100% 50% / 0.1;       /* Candy Apple Red */
+    --status-error-text: 0 100% 50%;
+    --status-error-border: 0 100% 50% / 0.2;
     
     --status-info-bg: 200 30% 50% / 0.1;
     --status-info-text: 200 30% 50%;
     --status-info-border: 200 30% 50% / 0.2;
     
     /* ===== LEGACY SUPPORT (for existing components) ===== */
-    --background: 210 25% 98%;
-    --foreground: 220 25% 12%;
-    --card: 0 0% 100%;
-    --card-foreground: 220 25% 12%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 220 25% 12%;
-    --primary: 220 25% 15%;
-    --primary-foreground: 210 40% 98%;
+    --background: 0 0% 100%;           /* White #FFFFFF */
+    --foreground: 0 0% 7%;             /* Shadcn Black #111111 */
+    --card: 0 0% 100%;                 /* White #FFFFFF */
+    --card-foreground: 0 0% 7%;        /* Shadcn Black #111111 */
+    --popover: 0 0% 100%;              /* White #FFFFFF */
+    --popover-foreground: 0 0% 7%;     /* Shadcn Black #111111 */
+    --primary: 0 0% 7%;                /* Shadcn Black #111111 */
+    --primary-foreground: 0 0% 100%;   /* White #FFFFFF */
     --secondary: 215 25% 92%;
-    --secondary-foreground: 220 25% 12%;
+    --secondary-foreground: 0 0% 7%;   /* Shadcn Black #111111 */
     --muted: 210 25% 96%;
     --muted-foreground: 215 20% 45%;
-    --accent: 0 85% 55%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 75% 45%;
-    --destructive-foreground: 210 40% 98%;
-    --success: 160 70% 35%;
-    --success-foreground: 210 40% 98%;
+    --accent: 0 100% 50%;              /* Candy Apple Red #FF0800 */
+    --accent-foreground: 0 0% 100%;    /* White #FFFFFF */
+    --destructive: 0 100% 50%;         /* Candy Apple Red #FF0800 */
+    --destructive-foreground: 0 0% 100%; /* White #FFFFFF */
+    --success: 150 60% 8%;            /* Ivy Green #2D6B4A */
+    --success-foreground: 0 0% 100%;   /* White #FFFFFF */
     --warning: 220 15% 35%;
-    --warning-foreground: 210 40% 98%;
+    --warning-foreground: 0 0% 100%;   /* White #FFFFFF */
     --info: 200 30% 50%;
-    --info-foreground: 210 40% 98%;
+    --info-foreground: 0 0% 100%;      /* White #FFFFFF */
     --border: 215 25% 90%;
     --input: 215 25% 90%;
-    --ring: 220 25% 15%;
-    --forest-green: 120 45% 25%;
-    --forest-green-foreground: 210 40% 98%;
+    --ring: 0 0% 7%;                   /* Shadcn Black #111111 */
+    --forest-green: 150 60% 8%;       /* Ivy Green #2D6B4A */
+    --forest-green-foreground: 0 0% 100%; /* White #FFFFFF */
     
     /* Chart Colors */
-    --chart-1: 220 25% 15%;            /* Slate */
-    --chart-2: 0 85% 55%;              /* Candy Apple Red */
-    --chart-3: 120 45% 25%;            /* Forest Green */
+    --chart-1: 0 0% 7%;                /* Shadcn Black #111111 */
+    --chart-2: 0 100% 50%;             /* Candy Apple Red #FF0800 */
+    --chart-3: 150 60% 8%;            /* Ivy Green #2D6B4A */
     --chart-4: 220 15% 35%;            /* Sophisticated Charcoal */
     --chart-5: 200 30% 50%;            /* Cool Slate Info */
     
@@ -153,33 +153,33 @@
   
   .dark {
     /* ===== BRAND COLORS ===== */
-    --brand-primary: 210 25% 95%;
-    --brand-accent: 0 85% 65%;
-    --brand-secondary: 120 45% 65%;
+    --brand-primary: 0 0% 100%;        /* White #FFFFFF */
+    --brand-accent: 0 100% 50%;        /* Candy Apple Red #FF0800 */
+    --brand-secondary: 150 60% 8%;    /* Ivy Green #2D6B4A */
     
     /* ===== SEMANTIC COLORS ===== */
-    --semantic-success: 160 70% 65%;
+    --semantic-success: 150 60% 8%;   /* Ivy Green #2D6B4A */
     --semantic-warning: 220 15% 65%;
-    --semantic-error: 0 75% 65%;
+    --semantic-error: 0 100% 50%;      /* Candy Apple Red #FF0800 */
     --semantic-info: 200 30% 65%;
     
     /* ===== INTERACTIVE STATES ===== */
-    --interactive-primary: 210 25% 95%;
-    --interactive-secondary: 120 45% 65%;
-    --interactive-accent: 0 85% 65%;
+    --interactive-primary: 0 0% 100%;      /* White #FFFFFF */
+    --interactive-secondary: 150 60% 8%;  /* Ivy Green #2D6B4A */
+    --interactive-accent: 0 100% 50%;      /* Candy Apple Red #FF0800 */
     --interactive-muted: 220 25% 20%;
     
     /* ===== SURFACE COLORS ===== */
-    --surface-primary: 220 25% 12%;
+    --surface-primary: 0 0% 7%;            /* Shadcn Black #111111 */
     --surface-secondary: 220 25% 15%;
     --surface-tertiary: 220 25% 18%;
-    --surface-overlay: 210 25% 95%;
+    --surface-overlay: 0 0% 100%;          /* White #FFFFFF */
     
     /* ===== TEXT HIERARCHY ===== */
-    --text-primary: 210 25% 95%;
+    --text-primary: 0 0% 100%;          /* White #FFFFFF */
     --text-secondary: 215 20% 65%;
     --text-tertiary: 215 20% 45%;
-    --text-inverse: 220 25% 15%;
+    --text-inverse: 0 0% 7%;            /* Shadcn Black #111111 */
     
     /* ===== COLOR SCALES ===== */
     /* Slate Scale (Dark) */
@@ -256,38 +256,38 @@
     --status-info-border: 200 30% 65% / 0.2;
     
     /* ===== LEGACY SUPPORT ===== */
-    --background: 220 25% 8%;
-    --foreground: 210 25% 95%;
-    --card: 220 25% 12%;
-    --card-foreground: 210 25% 95%;
-    --popover: 220 25% 12%;
-    --popover-foreground: 210 25% 95%;
-    --primary: 210 25% 95%;
-    --primary-foreground: 220 25% 15%;
+    --background: 0 0% 7%;             /* Shadcn Black #111111 */
+    --foreground: 0 0% 100%;           /* White #FFFFFF */
+    --card: 0 0% 7%;                   /* Shadcn Black #111111 */
+    --card-foreground: 0 0% 100%;      /* White #FFFFFF */
+    --popover: 0 0% 7%;                /* Shadcn Black #111111 */
+    --popover-foreground: 0 0% 100%;   /* White #FFFFFF */
+    --primary: 0 0% 100%;              /* White #FFFFFF */
+    --primary-foreground: 0 0% 7%;     /* Shadcn Black #111111 */
     --secondary: 220 25% 15%;
-    --secondary-foreground: 210 25% 95%;
+    --secondary-foreground: 0 0% 100%; /* White #FFFFFF */
     --muted: 220 25% 15%;
     --muted-foreground: 215 20% 65%;
-    --accent: 0 85% 65%;
-    --accent-foreground: 220 25% 15%;
-    --destructive: 0 75% 65%;
-    --destructive-foreground: 220 25% 15%;
-    --success: 160 70% 65%;
-    --success-foreground: 220 25% 15%;
+    --accent: 0 100% 50%;              /* Candy Apple Red #FF0800 */
+    --accent-foreground: 0 0% 100%;    /* White #FFFFFF */
+    --destructive: 0 100% 50%;         /* Candy Apple Red #FF0800 */
+    --destructive-foreground: 0 0% 100%; /* White #FFFFFF */
+    --success: 150 60% 8%;            /* Ivy Green #2D6B4A */
+    --success-foreground: 0 0% 100%;   /* White #FFFFFF */
     --warning: 220 15% 65%;
-    --warning-foreground: 220 25% 15%;
+    --warning-foreground: 0 0% 7%;     /* Shadcn Black #111111 */
     --info: 200 30% 65%;
-    --info-foreground: 220 25% 15%;
+    --info-foreground: 0 0% 7%;        /* Shadcn Black #111111 */
     --border: 220 25% 20%;
     --input: 220 25% 20%;
-    --ring: 210 25% 85%;
-    --forest-green: 120 45% 65%;
-    --forest-green-foreground: 220 25% 15%;
+    --ring: 0 0% 100%;                 /* White #FFFFFF */
+    --forest-green: 150 60% 8%;       /* Ivy Green #2D6B4A */
+    --forest-green-foreground: 0 0% 100%; /* White #FFFFFF */
     
     /* Chart Colors */
-    --chart-1: 210 25% 95%;            /* Light Slate */
-    --chart-2: 0 85% 65%;              /* Candy Apple Red */
-    --chart-3: 120 45% 65%;            /* Forest Green */
+    --chart-1: 0 0% 100%;              /* White #FFFFFF */
+    --chart-2: 0 100% 50%;             /* Candy Apple Red #FF0800 */
+    --chart-3: 150 60% 8%;            /* Ivy Green #2D6B4A */
     --chart-4: 220 15% 65%;            /* Sophisticated Charcoal */
     --chart-5: 200 30% 65%;            /* Cool Slate Info */
   }
@@ -322,7 +322,18 @@
     font-family: 'Satoshi', sans-serif;
     background-color: hsl(var(--background));
     color: hsl(var(--foreground));
+    overflow-x: hidden; /* prevent accidental horizontal scroll from 100vw gaps */
   }
+}
+
+/* Ensure the app can use the full viewport height and flex layout without nested scrollbars */
+html, body, #root {
+  height: 100%;
+}
+#root {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 /* ===== UTILITY CLASSES ===== */
@@ -432,12 +443,75 @@
   .destructive-bg {
     @apply bg-destructive/5;
   }
+  
+     /* Active navigation accent bar */
+   .nav-active-accent {
+     position: relative;
+   }
+   
+   .nav-active-accent::before {
+     content: '';
+     position: absolute;
+     left: 0;
+     top: 6px;
+     bottom: 6px;
+     width: 3px;
+     border-radius: 0 2px 2px 0;
+     background-color: hsl(var(--brand-secondary)); /* Ivy Green from design system */
+   }
+   
+   .dark .nav-active-accent::before {
+     background-color: hsl(var(--brand-secondary)); /* Ivy Green from design system */
+   }
+   
+   /* Navigation selection styling */
+   .nav-selected {
+     background: linear-gradient(135deg, hsl(0, 0%, 99%) 0%, hsl(0, 0%, 98%) 100%); /* Very subtle gray */
+     border-left: 2px solid hsl(0, 100%, 50%); /* Candy Apple Red accent - thinner */
+     box-shadow: none; /* Remove shadow for softer look */
+   }
+   
+   .dark .nav-selected {
+     background: linear-gradient(135deg, hsl(220, 25%, 12%) 0%, hsl(220, 25%, 10%) 100%); /* Very subtle dark gray */
+     border-left: 2px solid hsl(0, 100%, 50%); /* Candy Apple Red accent - thinner */
+     box-shadow: none; /* Remove shadow for softer look */
+   }
+   
+   /* Alternative vibrant selection */
+   .nav-selected-vibrant {
+     background: linear-gradient(135deg, hsl(150, 60%, 95%) 0%, hsl(150, 40%, 98%) 100%);
+     border-left: 3px solid hsl(0, 100%, 50%);
+     box-shadow: 0 2px 8px rgba(21, 107, 74, 0.15);
+   }
+   
+   .dark .nav-selected-vibrant {
+     background: linear-gradient(135deg, hsl(150, 40%, 20%) 0%, hsl(150, 30%, 25%) 100%);
+     border-left: 3px solid hsl(0, 100%, 50%);
+     box-shadow: 0 2px 8px rgba(21, 107, 74, 0.3);
+   }
+   
+   /* Logo/Icon background options */
+   .logo-bg-primary {
+     background-color: hsl(var(--brand-primary));
+   }
+   
+   .logo-bg-accent {
+     background-color: hsl(var(--brand-accent));
+   }
+   
+   .logo-bg-secondary {
+     background-color: hsl(var(--brand-secondary));
+   }
+   
+   .logo-bg-muted {
+     background-color: hsl(var(--muted));
+   }
 }
 
 /* ===== FONT FACES ===== */
 @font-face {
   font-family: 'Satoshi';
-  src: url('/src/assets/fonts/satoshi/Satoshi-Variable.woff2') format('woff2');
+  src: url('/src/assets/Fonts/satoshi/Satoshi-Variable.woff2') format('woff2');
   font-weight: 100 900;
   font-style: normal;
   font-display: swap;
@@ -445,7 +519,7 @@
 
 @font-face {
   font-family: 'Satoshi';
-  src: url('/src/assets/fonts/satoshi/Satoshi-VariableItalic.woff2') format('woff2');
+  src: url('/src/assets/Fonts/satoshi/Satoshi-VariableItalic.woff2') format('woff2');
   font-weight: 100 900;
   font-style: italic;
   font-display: swap;
@@ -453,7 +527,7 @@
 
 @font-face {
   font-family: 'Satoshi';
-  src: url('/src/assets/fonts/satoshi/Satoshi-Light.woff2') format('woff2');
+  src: url('/src/assets/Fonts/satoshi/Satoshi-Light.woff2') format('woff2');
   font-weight: 300;
   font-style: normal;
   font-display: swap;
@@ -461,7 +535,7 @@
 
 @font-face {
   font-family: 'Satoshi';
-  src: url('/src/assets/fonts/satoshi/Satoshi-Regular.woff2') format('woff2');
+  src: url('/src/assets/Fonts/satoshi/Satoshi-Regular.woff2') format('woff2');
   font-weight: 400;
   font-style: normal;
   font-display: swap;
@@ -469,7 +543,7 @@
 
 @font-face {
   font-family: 'Satoshi';
-  src: url('/src/assets/fonts/satoshi/Satoshi-Medium.woff2') format('woff2');
+  src: url('/src/assets/Fonts/satoshi/Satoshi-Medium.woff2') format('woff2');
   font-weight: 500;
   font-style: normal;
   font-display: swap;
@@ -477,7 +551,7 @@
 
 @font-face {
   font-family: 'Satoshi';
-  src: url('/src/assets/fonts/satoshi/Satoshi-Bold.woff2') format('woff2');
+  src: url('/src/assets/Fonts/satoshi/Satoshi-Bold.woff2') format('woff2');
   font-weight: 700;
   font-style: normal;
   font-display: swap;
@@ -485,7 +559,7 @@
 
 @font-face {
   font-family: 'Satoshi';
-  src: url('/src/assets/fonts/satoshi/Satoshi-Black.woff2') format('woff2');
+  src: url('/src/assets/Fonts/satoshi/Satoshi-Black.woff2') format('woff2');
   font-weight: 900;
   font-style: normal;
   font-display: swap;

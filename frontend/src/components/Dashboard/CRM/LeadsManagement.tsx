@@ -7,7 +7,7 @@ import {
   Trash2, Edit3, Send, Clock3, BarChart3,
   PieChart, Activity, Brain, Lightbulb, TrendingDown, CalendarDays,
   ArrowUpRight, Sparkles, Archive, RefreshCw, CheckCircle2, Sprout,
-  MessageCircle, Snowflake, Loader2
+  MessageCircle, Snowflake, Loader2, Plus, Save
 } from "lucide-react";
 
 // shadcn/ui primitives (assumes you've run the generator for these)
@@ -28,6 +28,7 @@ import MeetingBooker, { type Lead as MeetingBookerLead } from "@/components/Meet
 import { EditableLeadCard } from "@/components/CRM/EditableLeadCard";
 import { useNavigate } from "react-router-dom";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 // Small utility
 const cn = (...c: (string | false | null | undefined)[]) => c.filter(Boolean).join(" ");
@@ -138,10 +139,10 @@ type SavedView = {
 
 const LeadsManagementPage: React.FC = () => {
   // View state
-  const [viewMode, setViewMode] = useState<"table" | "cards" | "compact" | "editable">("table");
+  const [viewMode, setViewMode] = useState<"table" | "cards" | "compact" | "editable">("compact");
   const [itemsPerPage, setItemsPerPage] = useState(25);
   const [currentPage, setCurrentPage] = useState(1);
-  const [showFilters, setShowFilters] = useState(true);
+  const [showFilters, setShowFilters] = useState(false);
   const [selectedLeads, setSelectedLeads] = useState<Set<string>>(new Set());
   const navigate = useNavigate();
 
@@ -158,7 +159,7 @@ const LeadsManagementPage: React.FC = () => {
   const [selectedCourse, setSelectedCourse] = useState("all");
   const [selectedYear, setSelectedYear] = useState("all");
   const [urgentOnly, setUrgentOnly] = useState(false);
-  const [sortBy, setSortBy] = useState<keyof Lead | "createdDate" | "lastContact">("leadScore");
+  const [sortBy, setSortBy] = useState<keyof Lead | "createdDate" | "lastContact" | "mlProbability">("mlProbability");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
 
   // UX Enhancements
@@ -168,8 +169,11 @@ const LeadsManagementPage: React.FC = () => {
   const [bulkAction, setBulkAction] = useState<string>("");
   const [showKeyboardShortcuts, setShowKeyboardShortcuts] = useState(false);
   const [showActionsMenu, setShowActionsMenu] = useState(false);
-  const [showStats, setShowStats] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const focusedLeadRef = useRef<Lead | null>(null);
+  const [slaOverrides, setSlaOverrides] = useState<Record<string, Lead["slaStatus"]>>({});
+  const DEV_SHOW_ALT_VIEWS = false;
+  const DEV_ENABLE_EDITABLE = false;
 
   // Data Visualization & AI
   const [showAnalytics, setShowAnalytics] = useState(false);
@@ -197,70 +201,50 @@ const LeadsManagementPage: React.FC = () => {
   
   // Predefined color tags using professional colors aligned with index.css design system
   const colorTags = [
-    { 
-      id: "priority", 
-      name: "Priority", 
-      color: "bg-red-500/20 border-red-500/40 text-red-700", 
-      icon: "AlertTriangle",
-      description: "High-priority leads requiring immediate attention"
-    },
-    { 
-      id: "hot", 
-      name: "Hot Lead", 
-      color: "bg-orange-500/20 border-orange-500/40 text-orange-700", 
-      icon: "Zap",
-      description: "High-scoring leads with strong conversion potential"
-    },
-    { 
-      id: "qualified", 
-      name: "Qualified", 
-      color: "bg-green-600/20 border-green-600/40 text-green-700", 
-      icon: "CheckCircle2",
-      description: "Leads that meet qualification criteria"
-    },
-    { 
-      id: "nurture", 
-      name: "Nurture", 
-      color: "bg-blue-500/20 border-blue-500/40 text-blue-700", 
-      icon: "Sprout",
-      description: "Leads requiring ongoing engagement"
-    },
-    { 
-      id: "follow-up", 
-      name: "Follow Up", 
-      color: "bg-purple-500/20 border-purple-500/40 text-purple-700", 
-      icon: "MessageCircle",
-      description: "Leads awaiting follow-up communication"
-    },
-    { 
-      id: "research", 
-      name: "Research", 
-      color: "bg-yellow-500/20 border-yellow-500/40 text-yellow-700", 
-      icon: "Search",
-      description: "Leads requiring additional research"
-    },
-    { 
-      id: "cold", 
-      name: "Cold", 
-      color: "bg-slate-200 border-slate-300 text-slate-700", 
-      icon: "Snowflake",
-      description: "Inactive or low-priority leads"
-    },
-    { 
-      id: "custom-1", 
-      name: "Custom 1", 
-      color: "bg-slate-300/20 border-slate-400/40 text-slate-600", 
-      icon: "Star",
-      description: "Custom categorization tag"
-    },
-    { 
-      id: "custom-2", 
-      name: "Custom 2", 
-      color: "bg-slate-400/20 border-slate-500/40 text-slate-600", 
-      icon: "Target",
-      description: "Custom categorization tag"
-    },
+    { id: "priority",  name: "Priority",  bg: "bg-red-500/20",     br: "border-red-500/40",     tx: "text-red-700",     icon: "AlertTriangle", description: "High-priority leads requiring immediate attention" },
+    { id: "hot",       name: "Hot Lead",   bg: "bg-orange-500/20",  br: "border-orange-500/40",  tx: "text-orange-700",  icon: "Zap",           description: "High-scoring leads with strong conversion potential" },
+    { id: "qualified", name: "Qualified",  bg: "bg-green-600/20",   br: "border-green-600/40",   tx: "text-green-700",   icon: "CheckCircle2",  description: "Leads that meet qualification criteria" },
+    { id: "nurture",   name: "Nurture",    bg: "bg-blue-500/20",    br: "border-blue-500/40",    tx: "text-blue-700",    icon: "Sprout",        description: "Leads requiring ongoing engagement" },
+    { id: "follow-up", name: "Follow Up",  bg: "bg-purple-500/20",  br: "border-purple-500/40",  tx: "text-purple-700",  icon: "MessageCircle", description: "Leads awaiting follow-up communication" },
+    { id: "research",  name: "Research",   bg: "bg-yellow-500/20",  br: "border-yellow-500/40",  tx: "text-yellow-700",  icon: "Search",        description: "Leads requiring additional information gathering" },
+    { id: "cold",      name: "Cold",       bg: "bg-slate-100/55",   br: "border-slate-200/70",   tx: "text-slate-600",   icon: "Snowflake",     description: "Low-priority leads with minimal engagement" },
+    { id: "custom-1",  name: "Custom 1",   bg: "bg-slate-200/40",   br: "border-slate-300/60",   tx: "text-slate-700",   icon: "Star",          description: "Custom tag for special workflows" },
+    { id: "custom-2",  name: "Custom 2",   bg: "bg-slate-300/35",   br: "border-slate-400/60",   tx: "text-slate-800",   icon: "Target",        description: "Custom tag for additional categorization" },
   ];
+
+  const colorCls = (t?: typeof colorTags[number]) => t ? `${t.bg} ${t.br} ${t.tx}` : "";
+
+  const tagToBar: Record<string, string> = {
+    priority: "hsl(var(--destructive))",
+    hot: "hsl(var(--accent))",
+    qualified: "hsl(var(--success))",
+    nurture: "hsl(var(--info))",
+    "follow-up": "rebeccapurple",
+    research: "hsl(var(--warning))",
+    cold: "hsl(var(--slate-300))",
+  };
+
+  const ColorBar: React.FC<{ tag?: string; w?: number }> = ({ tag, w = 8 }) => (
+    <div
+      role="presentation"
+      aria-hidden="true"
+      style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: w, borderTopLeftRadius: w, borderBottomLeftRadius: w, background: tagToBar[tag ?? ""] ?? "transparent" }}
+    />
+  );
+
+  const AIScore: React.FC<{ prob?: number; conf?: number; tight?: boolean }> = ({ prob = 0, conf = 0, tight }) => (
+    <div className={cn("space-y-1 text-right", tight && "space-y-0")}> 
+      <div className="text-sm font-bold text-foreground">{(prob * 100).toFixed(1)}%</div>
+      <div className={cn("bg-muted rounded-full", tight ? "h-1 w-20" : "h-1.5 w-24")}>
+        <div className={cn(tight ? "h-1" : "h-1.5", "rounded-full transition-all bg-gradient-to-r from-red-500 to-green-500")} style={{ width: `${prob * 100}%` }} />
+      </div>
+      {!tight && (
+        <div className="text-xs text-muted-foreground">
+          {conf > 0.8 ? 'Very High' : conf > 0.6 ? 'High' : conf > 0.4 ? 'Medium' : 'Low'}
+        </div>
+      )}
+    </div>
+  );
 
   // Performance optimizations
   const [isLoading, setIsLoading] = useState(false);
@@ -463,7 +447,8 @@ const LeadsManagementPage: React.FC = () => {
     try {
       const leadIds = datasetLeads.map(lead => lead.uid);
 
-      const response = await fetch('http://localhost:8000/ai/advanced-ml/predict-batch', {
+      const API_BASE = import.meta.env.VITE_API_BASE ?? "http://127.0.0.1:8000";
+      const response = await fetch(`${API_BASE}/ai/advanced-ml/predict-batch`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -472,18 +457,18 @@ const LeadsManagementPage: React.FC = () => {
       });
 
       if (response.ok) {
-        const result = await response.json();
+        const result: { predictions: Array<{ lead_id: string; prediction: boolean; probability: number; confidence: number }> } = await response.json();
         const predictionsMap: Record<string, { prediction: boolean; probability: number; confidence: number }> = {};
 
-        result.predictions.forEach((pred: any) => {
-          if (pred.probability !== null) {
-            predictionsMap[pred.lead_id] = {
+        for (const pred of result.predictions) {
+          if (pred && pred.probability !== null && pred.probability !== undefined) {
+            predictionsMap[String(pred.lead_id)] = {
               prediction: pred.prediction,
-              probability: pred.probability,
-              confidence: pred.confidence,
+              probability: pred.probability ?? 0,
+              confidence: pred.confidence ?? 0,
             };
           }
-        });
+        }
 
         setMlPredictions(predictionsMap);
       }
@@ -663,6 +648,22 @@ const LeadsManagementPage: React.FC = () => {
         e.preventDefault();
         selectAllVisible();
       }
+      // Row-level quick actions when a lead is focused/selected
+      if (!e.ctrlKey && !e.metaKey && !e.altKey) {
+        const focused = focusedLeadRef.current;
+        if (focused) {
+          const key = e.key.toLowerCase();
+          if (key === 'c') handlePhoneClick(focused);
+          if (key === 'e') handleEmailClick(focused);
+          if (key === 'm') handleMeetingClick(focused);
+          if (key === 'u') {
+            setSlaOverrides(prev => ({
+              ...prev,
+              [focused.uid]: prev[focused.uid] === 'urgent' ? 'within_sla' : 'urgent'
+            }));
+          }
+        }
+      }
     };
 
     document.addEventListener('keydown', handleKeyDown);
@@ -751,8 +752,20 @@ const LeadsManagementPage: React.FC = () => {
       // Optimized sorting (original logic)
       if (sortBy && sortOrder) {
         filtered.sort((a, b) => {
-          const aV = (a as any)[sortBy];
-          const bV = (b as any)[sortBy];
+          let aV, bV;
+          
+          if (sortBy === "mlProbability") {
+            const aHas = typeof a.mlProbability === 'number' && (a.mlConfidence ?? 0) > 0;
+            const bHas = typeof b.mlProbability === 'number' && (b.mlConfidence ?? 0) > 0;
+            if (!aHas && !bHas) return 0;
+            if (!aHas) return 1; // push missing to bottom
+            if (!bHas) return -1;
+            aV = a.mlProbability as number;
+            bV = b.mlProbability as number;
+          } else {
+            aV = (a as any)[sortBy];
+            bV = (b as any)[sortBy];
+          }
           
           if (typeof aV === "number" && typeof bV === "number") {
             return sortOrder === "asc" ? aV - bV : bV - aV;
@@ -787,7 +800,7 @@ const LeadsManagementPage: React.FC = () => {
     total: filteredLeads.length,
     urgent: filteredLeads.filter((l) => l.slaStatus === "urgent").length,
     newToday: filteredLeads.filter((l) => new Date(l.createdDate).toDateString() === new Date().toDateString()).length,
-    highScore: filteredLeads.filter((l) => l.leadScore >= 80).length,
+    highScore: filteredLeads.filter((l) => (l.mlProbability || 0) >= 0.8).length,
     selected: selectedLeads.size,
   }), [filteredLeads, selectedLeads]);
 
@@ -1046,26 +1059,27 @@ const LeadsManagementPage: React.FC = () => {
       <>
         <tr 
           className={cn(
-            "hover:bg-muted/50 transition-colors duration-200", 
-            selectedLeads.has(lead.uid) && "bg-muted ring-1 ring-border",
-            // Add subtle background tint for color-coded leads
-            lead.colorTag && (() => {
-              const tag = colorTags.find(t => t.id === lead.colorTag);
-              if (!tag) return "";
-              if (tag.id === "priority") return "bg-red-500/6";
-              if (tag.id === "hot") return "bg-accent/6";
-              if (tag.id === "qualified") return "bg-success/6";
-              if (tag.id === "nurture") return "bg-info/6";
-              if (tag.id === "follow-up") return "bg-forest-green/6";
-              if (tag.id === "research") return "bg-warning/6";
-              if (tag.id === "cold") return "bg-slate-100/55";
-              if (tag.id === "custom-1") return "bg-slate-200/40";
-              if (tag.id === "custom-2") return "bg-slate-300/35";
-              return "";
-            })()
+            "group hover:bg-muted/50 transition-colors duration-200", 
+            selectedLeads.has(lead.uid) && "bg-muted ring-1 ring-border"
           )}
+          style={{ position: 'relative' } as React.CSSProperties}
           onContextMenu={handleContextMenu}
         >
+          {(() => {
+            const bar = (() => {
+              switch (lead.colorTag) {
+                case "priority": return "hsl(var(--destructive))";
+                case "hot": return "hsl(var(--accent))";
+                case "qualified": return "hsl(var(--success))";
+                case "nurture": return "hsl(var(--info))";
+                case "follow-up": return "rebeccapurple";
+                case "research": return "hsl(var(--warning))";
+                case "cold": return "hsl(var(--slate-300))";
+                default: return "transparent";
+              }
+            })();
+            return <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 4, borderRadius: 4, background: bar }} />;
+          })()}
           <td className="px-3 sm:px-4 lg:px-6 py-3 sm:py-4 lg:py-5">
             <Checkbox
               checked={selectedLeads.has(lead.uid)}
@@ -1096,7 +1110,10 @@ const LeadsManagementPage: React.FC = () => {
                 <div className="flex items-center gap-2">
                   <button
                     className="text-sm font-semibold text-foreground truncate hover:text-red-600 text-left transition-colors"
-                    onClick={() => lead.uid && navigate(`/people/${lead.uid}`)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      lead.uid && navigate(`/directory/${lead.uid}`);
+                    }}
                     title="View person record"
                   >
                     {lead.name}
@@ -1106,14 +1123,6 @@ const LeadsManagementPage: React.FC = () => {
                       <ColorTagIndicator tagId={lead.colorTag} />
                     </div>
                   )}
-                </div>
-                <div className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
-                  <Mail className="h-3 w-3" />
-                  <span className="truncate">{lead.email}</span>
-                </div>
-                <div className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
-                  <Zap className="h-3 w-3" />
-                  <span className="truncate">{lead.leadSource}</span>
                 </div>
               </div>
             </div>
@@ -1128,17 +1137,26 @@ const LeadsManagementPage: React.FC = () => {
             </div>
           </td>
           <td className="px-3 sm:px-4 lg:px-6 py-3 sm:py-4 lg:py-5">
-            <LeadScoreIndicator score={lead.leadScore} />
-            <div className="text-xs text-muted-foreground mt-2">
-              {lead.aiInsights.conversionProbability}% conversion probability
-            </div>
-            {/* Add prominent color indicator */}
-            {lead.colorTag && (
-              <div className="mt-2 flex items-center gap-2">
-                <ColorTagIndicator tagId={lead.colorTag} />
-                <span className="text-xs text-muted-foreground">
-                  {colorTags.find(t => t.id === lead.colorTag)?.name}
-                </span>
+            {isLoadingPredictions ? (
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span className="text-xs">Loading AI Score...</span>
+              </div>
+            ) : (
+              <div className="space-y-1">
+                <div className="text-lg font-bold text-foreground">
+                  {((lead.mlProbability || 0) * 100).toFixed(1)}%
+                </div>
+                <div className="w-full bg-muted rounded-full h-1.5">
+                  <div
+                    className="bg-gradient-to-r from-red-500 to-green-500 h-1.5 rounded-full transition-all duration-300"
+                    style={{ width: `${(lead.mlProbability || 0) * 100}%` }}
+                  />
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-muted-foreground">AI Score</span>
+                  {lead.colorTag && <ColorTagIndicator tagId={lead.colorTag} />}
+                </div>
               </div>
             )}
           </td>
@@ -1180,29 +1198,10 @@ const LeadsManagementPage: React.FC = () => {
             ) : (
               <div className="space-y-1">
                 <div className="text-lg font-bold text-foreground">
-                  {((lead.mlProbability || 0) * 100).toFixed(1)}%
-                </div>
-                <div className="w-full bg-muted rounded-full h-2">
-                  <div
-                    className="bg-gradient-to-r from-red-500 to-green-500 h-2 rounded-full transition-all duration-300"
-                    style={{ width: `${(lead.mlProbability || 0) * 100}%` }}
-                  />
-                </div>
-              </div>
-            )}
-          </td>
-          <td className="px-3 sm:px-4 lg:px-6 py-3 sm:py-4 lg:py-5">
-            {isLoadingPredictions ? (
-              <div className="flex items-center justify-center">
-                <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-              </div>
-            ) : (
-              <div className="space-y-1">
-                <div className="text-lg font-bold text-foreground">
                   {((lead.mlConfidence || 0) * 100).toFixed(0)}%
                 </div>
-                <Progress value={(lead.mlConfidence || 0) * 100} className="w-full h-2" />
-                <div className="text-xs text-muted-foreground">
+                <Progress value={(lead.mlConfidence || 0) * 100} className="w-full h-1.5" />
+                <div className="text-xs text-muted-foreground text-center">
                   {(lead.mlConfidence || 0) > 0.8 ? 'Very High' :
                    (lead.mlConfidence || 0) > 0.6 ? 'High' :
                    (lead.mlConfidence || 0) > 0.4 ? 'Medium' : 'Low'}
@@ -1211,9 +1210,11 @@ const LeadsManagementPage: React.FC = () => {
             )}
           </td>
           <td className="px-3 sm:px-4 lg:px-6 py-3 sm:py-4 lg:py-5">
-            <div className="space-y-2">
-              <StatusBadge status={lead.status} statusType={lead.statusType} />
-              <SLABadge sla={lead.slaStatus} />
+            <div className="space-y-1">
+              <div className="flex items-center gap-1 flex-wrap">
+                <StatusBadge status={lead.status} statusType={lead.statusType} />
+                <SLABadge sla={lead.slaStatus} />
+              </div>
               {aiTriageExtras.has(String(lead.uid)) && (
                 <div className="text-xs text-muted-foreground">
                   NBA: {aiTriageExtras.get(String(lead.uid))!.next_action}
@@ -1228,7 +1229,10 @@ const LeadsManagementPage: React.FC = () => {
                 variant="ghost" 
                 aria-label="Call lead" 
                 className="hover:bg-success/10 hover:text-success h-8 w-8 sm:h-9 sm:w-9"
-                onClick={() => handlePhoneClick(lead)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handlePhoneClick(lead);
+                }}
               >
                 <Phone className="h-3 w-3 sm:h-4 sm:w-4" />
               </Button>
@@ -1237,7 +1241,10 @@ const LeadsManagementPage: React.FC = () => {
                 variant="ghost" 
                 aria-label="Email lead" 
                 className="hover:bg-blue-500/10 hover:text-blue-600 h-8 w-8 sm:h-9 sm:w-9"
-                onClick={() => handleEmailClick(lead)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleEmailClick(lead);
+                }}
               >
                 <Mail className="h-3 w-3 sm:h-4 sm:w-4" />
               </Button>
@@ -1246,7 +1253,10 @@ const LeadsManagementPage: React.FC = () => {
                 variant="ghost" 
                 aria-label="Schedule" 
                 className="hover:bg-warning/10 hover:text-warning h-8 w-8 sm:h-9 sm:w-9"
-                onClick={() => handleMeetingClick(lead)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleMeetingClick(lead);
+                }}
               >
                 <Calendar className="h-3 w-3 sm:h-4 sm:w-4" />
               </Button>
@@ -1257,7 +1267,10 @@ const LeadsManagementPage: React.FC = () => {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => lead.uid && navigate(`/people/${lead.uid}`)}>
+                  <DropdownMenuItem onClick={(e) => {
+                    e.stopPropagation();
+                    lead.uid && navigate(`/directory/${lead.uid}`);
+                  }}>
                     <Eye className="mr-2 h-4 w-4" />
                     View Person Record
                   </DropdownMenuItem>
@@ -1303,7 +1316,7 @@ const LeadsManagementPage: React.FC = () => {
                      lead.colorTag === tag.id ? 'bg-muted/50' : ''
                    }`}
                  >
-                   <div className={`w-2 h-2 rounded-full ${tag.color.split(' ')[0]} ${tag.color.split(' ')[1]} ${tag.color.split(' ')[2]}`} />
+                   <div className={cn("w-2 h-2 rounded-full", tag.bg, tag.br)} />
                    <div className="flex items-center gap-2">
                      {renderIcon(tag.icon)}
                      <span>{tag.name}</span>
@@ -1318,111 +1331,106 @@ const LeadsManagementPage: React.FC = () => {
     );
   });
 
-  // Optimized table view with virtual scrolling
-  const TableView = () => (
-    <div className="overflow-hidden" ref={tableContainerRef}>
-      <div className="overflow-x-auto">
-        <table className="w-full">
-          <thead className="bg-gradient-to-r from-slate-50 to-slate-100 border-b border-slate-200 sticky top-0 z-10">
-            <tr>
-              <th className="px-3 sm:px-4 lg:px-6 py-3 sm:py-4 text-left">
-                <Checkbox
-                  onCheckedChange={(checked) => {
-                    if (checked) {
-                      // Select all visible leads
-                      const visibleIds = new Set(paginationData.paginatedLeads.map(l => l.uid));
-                      setSelectedLeads(prev => new Set([...prev, ...visibleIds]));
-                    } else {
-                      // Deselect all visible leads
-                      const visibleIds = new Set(paginationData.paginatedLeads.map(l => l.uid));
-                      setSelectedLeads(prev => {
-                        const newSet = new Set(prev);
-                        visibleIds.forEach(id => newSet.delete(id));
-                        return newSet;
-                      });
-                    }
-                  }}
-                  checked={paginationData.paginatedLeads.length > 0 && 
-                          paginationData.paginatedLeads.every((l) => selectedLeads.has(l.uid))}
-                  aria-label="Select all visible"
-                />
-              </th>
-              <th
-                className="px-3 sm:px-4 lg:px-6 py-3 sm:py-4 text-left text-xs font-semibold uppercase tracking-wider cursor-pointer hover:text-muted-foreground transition-colors duration-200"
-                onClick={() => setSortBy("name")}
-              >
-                <div className="flex items-center gap-2">
-                  <span className="hidden sm:inline">Lead Details</span>
-                  <span className="sm:hidden">Lead</span>
-                  {sortBy === "name" && (
-                    sortOrder === "asc" ? 
-                      <SortAsc className="h-4 w-4 text-muted-foreground" /> : 
-                      <SortDesc className="h-4 w-4 text-muted-foreground" />
-                  )}
-                </div>
-              </th>
-              <th className="px-3 sm:px-4 lg:px-6 py-3 sm:py-4 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                <span className="hidden sm:inline">Course</span>
-                <span className="sm:hidden">Course</span>
-              </th>
-              <th
-                className="px-3 sm:px-4 lg:px-6 py-3 sm:py-4 text-left text-xs font-semibold uppercase tracking-wider cursor-pointer hover:text-muted-foreground transition-colors duration-200"
-                onClick={() => setSortBy("leadScore")}
-              >
-                <div className="flex items-center gap-2">
-                  <span className="hidden sm:inline">Score</span>
-                  <span className="sm:hidden">Score</span>
-                  {sortBy === "leadScore" && (
-                    sortOrder === "asc" ?
-                      <SortAsc className="h-4 w-4 text-muted-foreground" /> :
-                      <SortDesc className="h-4 w-4 text-muted-foreground" />
-                  )}
-                </div>
-              </th>
-              <th className="px-3 sm:px-4 lg:px-6 py-3 sm:py-4 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                <div className="flex items-center gap-2">
-                  <Brain className="h-4 w-4 text-muted-foreground" />
-                  <span className="hidden sm:inline">ML Prediction</span>
-                  <span className="sm:hidden">ML</span>
-                </div>
-              </th>
-              <th className="px-3 sm:px-4 lg:px-6 py-3 sm:py-4 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                <div className="flex items-center gap-2">
-                  <Target className="h-4 w-4 text-muted-foreground" />
-                  <span className="hidden sm:inline">ML Probability</span>
-                  <span className="sm:hidden">Prob</span>
-                </div>
-              </th>
-              <th className="px-3 sm:px-4 lg:px-6 py-3 sm:py-4 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                <div className="flex items-center gap-2">
-                  <BarChart3 className="h-4 w-4 text-muted-foreground" />
-                  <span className="hidden sm:inline">ML Confidence</span>
-                  <span className="sm:hidden">Conf</span>
-                </div>
-              </th>
-              <th className="px-3 sm:px-4 lg:px-6 py-3 sm:py-4 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                <span className="hidden sm:inline">Status</span>
-                <span className="sm:hidden">Status</span>
-              </th>
-              <th className="px-3 sm:px-4 lg:px-6 py-3 sm:py-4 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                <span className="hidden sm:inline">Actions</span>
-                <span className="sm:hidden">Actions</span>
-              </th>
-            </tr>
-          </thead>
-          <tbody 
-            className="divide-y divide-border bg-background"
-            style={{ height: totalHeight }}
+  const ROW_HEIGHT = 80;
+  const TableView = () => {
+    const scrollRef = useRef<HTMLDivElement>(null);
+    const { visibleItems, totalHeight, offsetY, onScroll } = useVirtualScrolling(
+      paginationData.paginatedLeads,
+      ROW_HEIGHT,
+      600,
+      5
+    );
+
+    return (
+      <div className="overflow-hidden">
+        <div className="overflow-x-auto">
+          <div
+            ref={scrollRef}
             onScroll={onScroll}
+            className="relative"
+            style={{ height: 600, overflowY: "auto", willChange: "transform" }}
+            aria-label="Lead table scroll region"
           >
-            {visibleItems.map((lead, index) => (
-              <TableRow key={lead.uid} lead={lead} index={index} />
-            ))}
-          </tbody>
-        </table>
+            <table className="w-full">
+              <thead className="bg-gradient-to-r from-slate-50 to-slate-100 border-b border-slate-200 sticky top-0 z-10">
+                <tr>
+                  <th className="px-3 sm:px-4 lg:px-6 py-3 sm:py-4 text-left">
+                    <Checkbox
+                      onCheckedChange={(checked) => {
+                        const visibleIds = new Set(paginationData.paginatedLeads.map(l => l.uid));
+                        setSelectedLeads(prev => {
+                          const next = new Set(prev);
+                          if (checked) visibleIds.forEach(id => next.add(id));
+                          else visibleIds.forEach(id => next.delete(id));
+                          return next;
+                        });
+                      }}
+                      checked={
+                        paginationData.paginatedLeads.length > 0 &&
+                        paginationData.paginatedLeads.every(l => selectedLeads.has(l.uid))
+                      }
+                      aria-label="Select all visible"
+                    />
+                  </th>
+                  <th
+                    className="px-3 sm:px-4 lg:px-6 py-3 sm:py-4 text-left text-xs font-semibold uppercase tracking-wider cursor-pointer hover:text-muted-foreground transition-colors duration-200"
+                    onClick={() => setSortBy("name")}
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className="hidden sm:inline">Lead Details</span>
+                      <span className="sm:hidden">Lead</span>
+                      {sortBy === "name" && (
+                        sortOrder === "asc"
+                          ? <SortAsc className="h-4 w-4 text-muted-foreground" />
+                          : <SortDesc className="h-4 w-4 text-muted-foreground" />
+                      )}
+                    </div>
+                  </th>
+                  <th className="px-3 sm:px-4 lg:px-6 py-3 sm:py-4 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">Course</th>
+                  <th className="px-3 sm:px-4 lg:px-6 py-3 sm:py-4 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    <div className="flex items-center gap-2">
+                      <Brain className="h-4 w-4 text-muted-foreground" />
+                      <span className="hidden sm:inline">AI Score</span>
+                      <span className="sm:hidden">AI</span>
+                    </div>
+                  </th>
+                  <th className="px-3 sm:px-4 lg:px-6 py-3 sm:py-4 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    <div className="flex items-center gap-2">
+                      <Brain className="h-4 w-4 text-muted-foreground" />
+                      <span className="hidden sm:inline">ML Prediction</span>
+                      <span className="sm:hidden">ML</span>
+                    </div>
+                  </th>
+                  <th className="px-3 sm:px-4 lg:px-6 py-3 sm:py-4 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    <div className="flex items-center gap-2">
+                      <BarChart3 className="h-4 w-4 text-muted-foreground" />
+                      <span className="hidden sm:inline">ML Confidence</span>
+                      <span className="sm:hidden">Conf</span>
+                    </div>
+                  </th>
+                  <th className="px-3 sm:px-4 lg:px-6 py-3 sm:py-4 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">Status</th>
+                  <th className="px-3 sm:px-4 lg:px-6 py-3 sm:py-4 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="bg-background">
+                <tr style={{ height: totalHeight }} aria-hidden />
+              </tbody>
+            </table>
+
+            <div className="absolute left-0 right-0" style={{ transform: `translateY(${offsetY}px)` }}>
+              <table className="w-full border-separate border-spacing-0">
+                <tbody className="divide-y divide-border/70">
+                  {visibleItems.map((lead, index) => (
+                    <TableRow key={lead.uid} lead={lead} index={index} />
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   // Cards view implementation
   const CardsView = () => (
@@ -1496,30 +1504,24 @@ const LeadsManagementPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Lead score and conversion */}
+            {/* AI Score and conversion */}
             <div className="mb-3">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium">Lead Score</span>
-                <span className="text-sm font-bold text-foreground">{lead.leadScore}</span>
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-sm font-medium">AI Score</span>
+                <span className="text-sm font-bold text-foreground">
+                  {isLoadingPredictions ? '...' : `${((lead.mlProbability || 0) * 100).toFixed(1)}%`}
+                </span>
               </div>
-              <Progress value={lead.leadScore} className="h-2 mb-2" />
-              <p className="text-xs text-muted-foreground">
-                {lead.aiInsights.conversionProbability}% conversion probability
-              </p>
-              {/* Add prominent color indicator */}
-              {lead.colorTag && (
-                <div className="mt-2 flex items-center gap-2">
-                  <ColorTagIndicator tagId={lead.colorTag} />
-                  <span className="text-xs text-muted-foreground">
-                    {colorTags.find(t => t.id === lead.colorTag)?.name}
-                  </span>
-                </div>
-              )}
+              <Progress value={(lead.mlProbability || 0) * 100} className="h-1.5 mb-1" />
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-muted-foreground">AI Conversion</span>
+                {lead.colorTag && <ColorTagIndicator tagId={lead.colorTag} />}
+              </div>
             </div>
 
             {/* Status and SLA */}
             <div className="mb-3">
-              <div className="flex items-center gap-2 mb-2">
+              <div className="flex items-center gap-1 flex-wrap mb-1">
                 <StatusBadge status={lead.status} statusType={lead.statusType} />
                 <SLABadge sla={lead.slaStatus} />
               </div>
@@ -1553,7 +1555,10 @@ const LeadsManagementPage: React.FC = () => {
               size="icon" 
               variant="ghost" 
               className="h-8 w-8 hover:bg-success/10 hover:text-success"
-              onClick={() => handlePhoneClick(lead)}
+              onClick={(e) => {
+                e.stopPropagation();
+                handlePhoneClick(lead);
+              }}
             >
               <Phone className="h-3 w-3" />
             </Button>
@@ -1561,7 +1566,10 @@ const LeadsManagementPage: React.FC = () => {
               size="icon" 
               variant="ghost" 
               className="h-8 w-8 hover:bg-blue-500/10 hover:text-blue-600"
-              onClick={() => handleEmailClick(lead)}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleEmailClick(lead);
+              }}
             >
               <Mail className="h-3 w-3" />
             </Button>
@@ -1569,7 +1577,10 @@ const LeadsManagementPage: React.FC = () => {
               size="icon" 
               variant="ghost" 
               className="h-8 w-8 hover:bg-warning/10 hover:text-warning"
-              onClick={() => handleMeetingClick(lead)}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleMeetingClick(lead);
+              }}
             >
               <Calendar className="h-3 w-3" />
             </Button>
@@ -1580,7 +1591,10 @@ const LeadsManagementPage: React.FC = () => {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => lead.uid && navigate(`/people/${lead.uid}`)}>
+                  <DropdownMenuItem onClick={(e) => {
+                    e.stopPropagation();
+                    lead.uid && navigate(`/directory/${lead.uid}`);
+                  }}>
                     <Eye className="mr-2 h-4 w-4" />
                     View Person Record
                   </DropdownMenuItem>
@@ -1596,109 +1610,145 @@ const LeadsManagementPage: React.FC = () => {
   // Compact view implementation
   const CompactView = () => (
     <div className="space-y-2">
-      {paginationData.paginatedLeads.map((lead) => (
-        <div
-          key={lead.uid}
-          className={cn(
-            "flex items-center gap-4 p-3 rounded-lg border border-border hover:bg-muted/50 transition-all duration-200 cursor-pointer",
-            selectedLeads.has(lead.uid) && "ring-2 ring-primary bg-primary/5",
-            // Add subtle background tint for color-coded leads
-            lead.colorTag && (() => {
-              const tag = colorTags.find(t => t.id === lead.colorTag);
-              if (!tag) return "";
-              if (tag.id === "priority") return "bg-red-500/30";
-              if (tag.id === "hot") return "bg-orange-500/30";
-              if (tag.id === "qualified") return "bg-green-500/30";
-              if (tag.id === "nurture") return "bg-blue-500/30";
-              if (tag.id === "follow-up") return "bg-purple-500/30";
-              if (tag.id === "research") return "bg-yellow-500/30";
-              if (tag.id === "cold") return "bg-gray-500/30";
-              if (tag.id === "custom-1") return "bg-indigo-500/30";
-              if (tag.id === "custom-2") return "bg-pink-500/30";
-              return "";
-            })()
-          )}
-          onClick={() => toggleLeadSelection(lead.uid)}
-        >
-          <Checkbox
-            checked={selectedLeads.has(lead.uid)}
-            onCheckedChange={(checked) => {
-              if (checked) {
-                setSelectedLeads(prev => {
-                  const newSet: Set<string> = new Set(prev);
-                  newSet.add(lead.uid);
-                  return newSet;
-                });
-              } else {
-                setSelectedLeads(prev => {
-                  const newSet: Set<string> = new Set(prev);
-                  newSet.delete(lead.uid);
-                  return newSet;
-                });
-              }
-            }}
-            onClick={(e) => e.stopPropagation()}
-          />
-          
-          <div className="h-8 w-8 rounded-full bg-gradient-to-br from-muted to-muted/80 flex items-center justify-center text-xs font-bold border border-border flex-shrink-0">
-            {lead.avatar || lead.name.charAt(0)}
-          </div>
-          
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-3">
-              <span className="font-medium text-foreground truncate">{lead.name}</span>
-              {lead.colorTag && <ColorTagIndicator tagId={lead.colorTag} />}
-              <span className="text-sm text-muted-foreground">{lead.email}</span>
-              <Badge variant="outline" className="text-xs">{lead.courseInterest}</Badge>
-              <Badge variant="secondary" className="text-xs">{lead.campusPreference}</Badge>
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-3 flex-shrink-0">
-            <div className="text-right">
-              <div className="text-sm font-bold text-foreground">{lead.leadScore}</div>
-              <div className="text-xs text-muted-foreground">Score</div>
-            </div>
-            
-            <StatusBadge status={lead.status} statusType={lead.statusType} />
-            <SLABadge sla={lead.slaStatus} />
-            
-            {aiTriageExtras.has(String(lead.uid)) && (
-              <div className="flex items-center gap-1 px-2 py-1 bg-accent/10 rounded border border-accent/20">
-                <Brain className="h-3 w-3 text-accent" />
-                <span className="text-xs text-accent">{aiTriageExtras.get(String(lead.uid))!.score}</span>
-              </div>
+      {paginationData.paginatedLeads.map((lead) => {
+        const effectiveTag = colorOverrides[lead.uid] ?? lead.colorTag;
+        return (
+          <div
+            key={lead.uid}
+            className={cn(
+              "group relative flex items-center gap-3 p-2.5 rounded-lg border border-border/70 hover:bg-muted/50 transition-all duration-200 cursor-pointer",
+              selectedLeads.has(lead.uid) && "ring-2 ring-primary bg-primary/5"
             )}
+            onClick={() => toggleLeadSelection(lead.uid)}
+            onMouseEnter={() => { focusedLeadRef.current = lead; }}
+            onFocus={() => { focusedLeadRef.current = lead; }}
+          >
+            <ColorBar tag={effectiveTag} w={8} />
+            <Checkbox
+              checked={selectedLeads.has(lead.uid)}
+              onCheckedChange={(checked) => {
+                setSelectedLeads(prev => {
+                  const s = new Set(prev);
+                  checked ? s.add(lead.uid) : s.delete(lead.uid);
+                  return s;
+                });
+              }}
+              onClick={(e) => e.stopPropagation()}
+            />
+            
+            <div className="h-8 w-8 rounded-full bg-gradient-to-br from-muted to-muted/80 flex items-center justify-center text-xs font-bold border border-border flex-shrink-0">
+              {lead.avatar || lead.name.charAt(0)}
+            </div>
+            
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2">
+                <button
+                  className="font-bold text-foreground truncate hover:text-red-600 text-left transition-colors"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    lead.uid && navigate(`/directory/${lead.uid}`);
+                  }}
+                  title="View person record"
+                >
+                  {lead.name}
+                </button>
+                {effectiveTag && <ColorTagIndicator tagId={effectiveTag} />}
+                <Badge variant="outline" className="text-xs">{lead.courseInterest}</Badge>
+                <Badge variant="secondary" className="text-xs">{lead.campusPreference}</Badge>
+              </div>
+            </div>
+            
+            <div className="flex items-center gap-2 flex-shrink-0">
+              {(() => {
+                const hasML = lead.mlProbability !== undefined && lead.mlProbability !== null && (lead.mlConfidence ?? 0) > 0;
+                return !hasML ? (
+                  <div className="flex items-center gap-1 text-muted-foreground">
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                    <span className="text-xs">Loading ML…</span>
+                  </div>
+                ) : (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="cursor-help">
+                        <AIScore prob={lead.mlProbability} conf={lead.mlConfidence} tight />
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <div className="text-xs space-y-1">
+                        <div>Prediction: {(lead.mlProbability ?? 0).toFixed(3)}</div>
+                        <div>Confidence: {Math.round((lead.mlConfidence ?? 0) * 100)}%</div>
+                      </div>
+                    </TooltipContent>
+                  </Tooltip>
+                );
+              })()}
+              
+              <StatusBadge status={lead.status} statusType={lead.statusType} />
+              <SLABadge sla={slaOverrides[lead.uid] ?? lead.slaStatus} />
+              
+              {aiTriageExtras.has(String(lead.uid)) && (
+                <div className="flex items-center gap-1 px-2 py-1 bg-accent/10 rounded border border-accent/20">
+                  <Brain className="h-3 w-3 text-accent" />
+                  <span className="text-xs text-accent">{aiTriageExtras.get(String(lead.uid))!.score}</span>
+                </div>
+              )}
+            </div>
+            
+            <div className="flex items-center gap-1 flex-shrink-0">
+              <Button 
+                size="icon" 
+                variant="ghost" 
+                className="h-7 w-7 hover:bg-success/10 hover:text-success"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handlePhoneClick(lead);
+                }}
+              >
+                <Phone className="h-3 w-3" />
+              </Button>
+              <Button 
+                size="icon" 
+                variant="ghost" 
+                className="h-7 w-7 hover:bg-blue-500/10 hover:text-blue-600"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleEmailClick(lead);
+                }}
+              >
+                <Mail className="h-3 w-3" />
+              </Button>
+              <Button 
+                size="icon" 
+                variant="ghost" 
+                className="h-7 w-7 hover:bg-warning/10 hover:text-warning"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleMeetingClick(lead);
+                }}
+              >
+                <Calendar className="h-3 w-3" />
+              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-7 w-7 hover:bg-foreground hover:text-background">
+                    <MoreHorizontal className="h-3 w-3" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={(e) => {
+                    e.stopPropagation();
+                    lead.uid && navigate(`/directory/${lead.uid}`);
+                  }}>
+                    <Eye className="mr-2 h-4 w-4" />
+                    View Person Record
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setColorOverride(lead.uid, "priority"); }}>Mark Priority</DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           </div>
-          
-          <div className="flex items-center gap-1 flex-shrink-0">
-            <Button 
-              size="icon" 
-              variant="ghost" 
-              className="h-7 w-7 hover:bg-success/10 hover:text-success"
-              onClick={() => handlePhoneClick(lead)}
-            >
-              <Phone className="h-3 w-3" />
-            </Button>
-            <Button 
-              size="icon" 
-              variant="ghost" 
-              className="h-7 w-7 hover:bg-blue-500/10 hover:text-blue-600"
-              onClick={() => handleEmailClick(lead)}
-            >
-              <Mail className="h-3 w-3" />
-            </Button>
-            <Button 
-              size="icon" 
-              variant="ghost" 
-              className="h-7 w-7 hover:bg-warning/10 hover:text-warning"
-              onClick={() => handleMeetingClick(lead)}
-            >
-              <Calendar className="h-3 w-3" />
-            </Button>
-          </div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 
@@ -1892,11 +1942,11 @@ const LeadsManagementPage: React.FC = () => {
           <button
             onClick={() => {
               setShowActionsMenu(false);
-              // Handle add lead action
+              setShowAddLeadDialog(true);
             }}
             className="w-full text-left px-3 py-2 text-sm text-foreground hover:bg-foreground hover:text-background rounded-md transition-colors duration-200 flex items-center gap-3"
           >
-            <UserPlus className="h-4 w-4" />
+            <Plus className="h-4 w-4" />
             Add Lead
           </button>
           <button
@@ -1906,13 +1956,13 @@ const LeadsManagementPage: React.FC = () => {
             }}
             className="w-full text-left px-3 py-2 text-sm text-foreground hover:bg-foreground hover:text-background rounded-md transition-colors duration-200 flex items-center gap-3"
           >
-            <BookmarkPlus className="h-4 w-4" />
+            <Save className="h-4 w-4" />
             Save View
           </button>
           <button
             onClick={() => {
               setShowActionsMenu(false);
-              // Handle export action
+              setShowExportDialog(true);
             }}
             className="w-full text-left px-3 py-2 text-sm text-foreground hover:bg-foreground hover:text-background rounded-md transition-colors duration-200 flex items-center gap-3"
           >
@@ -1920,16 +1970,7 @@ const LeadsManagementPage: React.FC = () => {
             Export
           </button>
           <div className="border-t border-border my-1"></div>
-          <button
-            onClick={() => {
-              setShowActionsMenu(false);
-              setShowAnalytics(!showAnalytics);
-            }}
-            className="w-full text-left px-3 py-2 text-sm text-foreground hover:bg-foreground hover:text-background rounded-md transition-colors duration-200 flex items-center gap-3"
-          >
-            <BarChart3 className="h-4 w-4" />
-            Analytics
-          </button>
+          {/* Analytics removed - moved to separate Analytics section in nav */}
         </div>
       </div>
     )
@@ -2542,7 +2583,7 @@ const LeadsManagementPage: React.FC = () => {
       <Tooltip>
         <TooltipTrigger asChild>
           <div 
-            className={`w-3 h-3 rounded-full border-2 border-white shadow-sm opacity-70 cursor-help ${tag.color.split(' ')[0]} ${tag.color.split(' ')[1]} ${tag.color.split(' ')[2]}`}
+            className={cn("w-3.5 h-3.5 rounded-full border-2 border-white shadow-sm cursor-help", tag.bg, tag.br)}
           />
         </TooltipTrigger>
         <TooltipContent className="max-w-xs">
@@ -2656,6 +2697,48 @@ const LeadsManagementPage: React.FC = () => {
     setSelectedLeadForMeeting(lead);
     setShowMeetingBooker(true);
   };
+
+  // Manual color overrides (per-user via localStorage)
+  const [colorOverrides, setColorOverrides] = useState<Record<string, string>>(() => {
+    try {
+      return JSON.parse(localStorage.getItem("leadColorOverrides") || "{}");
+    } catch {
+      return {};
+    }
+  });
+  const setColorOverride = useCallback((uid: string, tagId: string) => {
+    setColorOverrides(prev => {
+      const next = { ...prev, [uid]: tagId };
+      localStorage.setItem("leadColorOverrides", JSON.stringify(next));
+      return next;
+    });
+  }, []);
+
+  // Custom filters persistence (per-user via localStorage)
+  type CustomFilter = { id: string; name: string; predicateJson: string };
+  const [customFilters, setCustomFilters] = useState<CustomFilter[]>(() => {
+    try { return JSON.parse(localStorage.getItem("leadCustomFilters") || "[]"); } catch { return []; }
+  });
+  const saveCustomFilter = (f: CustomFilter) => {
+    setCustomFilters(prev => {
+      const next = [...prev, f];
+      localStorage.setItem("leadCustomFilters", JSON.stringify(next));
+      return next;
+    });
+  };
+  const [showAddFilterDialog, setShowAddFilterDialog] = useState(false);
+  const [filterDraftName, setFilterDraftName] = useState("");
+  const [filterDraftJson, setFilterDraftJson] = useState("{\\n  \\\"field\\\": \\\"lead_score\\\",\\n  \\\"op\\\": \\\">=\\\",\\n  \\\"value\\\": 80\\n}");
+
+  // Add Lead / Export dialogs
+  const [showAddLeadDialog, setShowAddLeadDialog] = useState(false);
+  const [showExportDialog, setShowExportDialog] = useState(false);
+  const [newLead, setNewLead] = useState({ first: "", last: "", email: "", course: "", campus: "" });
+  const [exportScope, setExportScope] = useState<"current" | "all">("current");
+  const [exportFormat, setExportFormat] = useState<"csv" | "xlsx">("csv");
+
+  // Select All dialog
+  const [showSelectAllDialog, setShowSelectAllDialog] = useState(false);
 
   return (
     <TooltipProvider>
@@ -2773,14 +2856,14 @@ const LeadsManagementPage: React.FC = () => {
             </div>
 
             {/* Collapsible Stats Section - Liquid Glass Style */}
-            {showStats && (
+            {false && (
               <div className="px-4 lg:px-6 pb-4 border-b border-border/50">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-sm font-medium text-foreground/90">Quick Stats</h3>
                   <Button 
                     variant="ghost" 
                     size="sm" 
-                    onClick={() => setShowStats(false)} 
+                    onClick={() => {/* Stats removed */}} 
                     className="h-8 px-3 text-sm hover:bg-muted/50 transition-all duration-200 group"
                   >
                     <span className="mr-2 text-muted-foreground group-hover:text-foreground transition-colors">Collapse Stats</span>
@@ -2821,7 +2904,7 @@ const LeadsManagementPage: React.FC = () => {
                     </div>
                     <div className="min-w-0">
                       <div className="text-sm font-semibold text-foreground">{stats.highScore}</div>
-                      <div className="text-xs text-muted-foreground">High Score</div>
+                      <div className="text-xs text-muted-foreground">High AI Score</div>
                     </div>
                   </div>
                   <div className="flex items-center gap-3 bg-warning/10 backdrop-blur-sm border border-warning/20 rounded-xl px-4 py-3 shadow-sm hover:shadow-md transition-all duration-200 hover:bg-warning/15">
@@ -2839,7 +2922,7 @@ const LeadsManagementPage: React.FC = () => {
                         <Brain className="h-4 w-4 text-accent" />
                       </div>
                       <div className="min-w-0">
-                        <div className="text-sm font-semibold text-accent">{aiTriageSummary.cohort_size}</div>
+                        <div className="text-sm font-semibold text-accent">{aiTriageSummary?.cohort_size || 0}</div>
                         <div className="text-xs text-accent/80">AI Analyzed</div>
                       </div>
                     </div>
@@ -2849,12 +2932,12 @@ const LeadsManagementPage: React.FC = () => {
             )}
 
             {/* Show Stats Toggle (when hidden) - Better UX */}
-            {!showStats && (
+            {false && (
               <div className="px-4 lg:px-6 py-4 border-b border-border/50">
                 <Button 
                   variant="ghost" 
                   size="default" 
-                  onClick={() => setShowStats(true)} 
+                  onClick={() => {/* Stats removed */}} 
                   className="gap-3 h-10 px-4 text-sm text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all duration-200 group"
                 >
                   <div className="p-1.5 rounded-lg bg-muted/40 backdrop-blur-sm">
@@ -2886,6 +2969,25 @@ const LeadsManagementPage: React.FC = () => {
 
                 {/* Controls Group */}
                 <div className="flex items-center gap-2">
+                  {selectedLeads.size > 0 ? (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setSelectedLeads(new Set())}
+                      className="h-9 px-3 text-sm bg-background/60 backdrop-blur-sm border-border/50 hover:bg-background/80 transition-all duration-200"
+                    >
+                      Clear ({selectedLeads.size})
+                    </Button>
+                  ) : (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowSelectAllDialog(true)}
+                      className="h-9 px-3 text-sm bg-background/60 backdrop-blur-sm border-border/50 hover:bg-background/80 transition-all duration-200"
+                    >
+                      Select all
+                    </Button>
+                  )}
                   <Button
                     variant={showFilters ? "default" : "outline"}
                     onClick={() => setShowFilters((s) => !s)}
@@ -2895,50 +2997,7 @@ const LeadsManagementPage: React.FC = () => {
                     <span className="hidden sm:inline">Filters</span>
                   </Button>
 
-                  {/* View Mode Toggle - Clean Design */}
-                  <div className="flex rounded-lg border border-border/50 overflow-hidden bg-background/60 backdrop-blur-sm">
-                    <button
-                      onClick={() => setViewMode("table")}
-                      className={`h-9 px-3 flex items-center justify-center transition-all duration-200 ${
-                        viewMode === "table" 
-                          ? "bg-foreground text-background" 
-                          : "bg-transparent text-foreground hover:bg-foreground/10"
-                      }`}
-                    >
-                      <List className="h-4 w-4" />
-                    </button>
-                    <button
-                      onClick={() => setViewMode("cards")}
-                      className={`h-9 px-3 flex items-center justify-center transition-all duration-200 ${
-                        viewMode === "cards" 
-                          ? "bg-foreground text-background" 
-                          : "bg-transparent text-foreground hover:bg-foreground/10"
-                      }`}
-                    >
-                      <LayoutGrid className="h-4 w-4" />
-                    </button>
-                    <button
-                      onClick={() => setViewMode("compact")}
-                      className={`h-9 px-3 flex items-center justify-center transition-all duration-200 ${
-                        viewMode === "compact" 
-                          ? "bg-foreground text-background" 
-                          : "bg-transparent text-foreground hover:bg-foreground/10"
-                      }`}
-                    >
-                      <Grid3X3 className="h-4 w-4" />
-                    </button>
-                    <button
-                      onClick={() => setViewMode("editable")}
-                      className={`h-9 px-3 flex items-center justify-center transition-all duration-200 ${
-                        viewMode === "editable" 
-                          ? "bg-foreground text-background" 
-                          : "bg-transparent text-foreground hover:bg-foreground/10"
-                      }`}
-                      title="Edit Lead Information"
-                    >
-                      <Edit3 className="h-4 w-4" />
-                    </button>
-                  </div>
+                  {/* View mode toggle removed: Compact is the sole visible view */}
 
                   {/* Per Page */}
                   <Select
@@ -3019,7 +3078,7 @@ const LeadsManagementPage: React.FC = () => {
                     <SelectValue placeholder="Sort by" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="leadScore">Score</SelectItem>
+                    <SelectItem value="mlProbability">AI Score</SelectItem>
                     <SelectItem value="name">Name</SelectItem>
                     <SelectItem value="createdDate">Created</SelectItem>
                     <SelectItem value="lastContact">Last Contact</SelectItem>
@@ -3035,7 +3094,7 @@ const LeadsManagementPage: React.FC = () => {
                     {colorTags.map((tag) => (
                       <SelectItem key={tag.id} value={tag.id}>
                         <div className="flex items-center gap-2">
-                          <div className={`w-3 h-3 rounded-full ${tag.color.split(' ')[0]} ${tag.color.split(' ')[1]} ${tag.color.split(' ')[2]}`} />
+                          <div className={cn("w-3 h-3 rounded-full", tag.bg, tag.br)} />
                           <div className="flex items-center gap-2">
                             {renderIcon(tag.icon)}
                             <span>{tag.name}</span>
@@ -3051,16 +3110,13 @@ const LeadsManagementPage: React.FC = () => {
 
           {/* Content */}
           <div className="flex-1 overflow-auto p-3 sm:p-4 lg:p-6 xl:p-8">
-            {showAnalytics ? (
+            {false ? (
               <AnalyticsDashboard />
             ) : (
               <>
                 <Card className="overflow-hidden border-0 shadow-xl">
                   <CardContent className="p-0">
-                    {viewMode === "table" && <TableView />}
-                    {viewMode === "cards" && <CardsView />}
                     {viewMode === "compact" && <CompactView />}
-                    {viewMode === "editable" && <EditableLeadView />}
                     {/* You can add Cards/Compact renderers later; table covers your ask */}
                   </CardContent>
                 </Card>
@@ -3075,7 +3131,7 @@ const LeadsManagementPage: React.FC = () => {
                         <Badge variant="outline" className="ml-auto text-[10px]">AI</Badge>
                       </div>
                       <div className="text-sm text-foreground">
-                        Analysed {aiTriageSummary.cohort_size} leads. Top drivers: {(aiTriageSummary.top_reasons || []).join(', ') || 'High lead scores'}.
+                        Analysed {aiTriageSummary?.cohort_size || 0} leads. Top drivers: {(aiTriageSummary?.top_reasons || []).join(', ') || 'High lead scores'}.
                       </div>
                     </CardContent>
                   </Card>
@@ -3201,7 +3257,7 @@ const LeadsManagementPage: React.FC = () => {
                      <button
                        key={tag.id}
                        onClick={() => assignColorTagToSelected(tag.id)}
-                       className={`p-3 rounded-lg border border-transparent hover:border-border transition-all duration-200 text-center group ${tag.color}`}
+                       className={cn("p-3 rounded-lg border border-transparent hover:border-border transition-all duration-200 text-center group", tag.bg, tag.br, tag.tx)}
                        title={tag.description}
                      >
                        <div className="flex items-center justify-center mb-2">
@@ -3248,6 +3304,130 @@ const LeadsManagementPage: React.FC = () => {
 
         {/* Keyboard Shortcuts Help */}
         {showKeyboardShortcuts && <KeyboardShortcutsHelp />}
+
+        {/* Add Lead Dialog */}
+        <Dialog open={showAddLeadDialog} onOpenChange={setShowAddLeadDialog}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Add Lead</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-2">
+                <Input placeholder="First name" value={newLead.first} onChange={(e) => setNewLead(prev => ({ ...prev, first: e.target.value }))} />
+                <Input placeholder="Last name" value={newLead.last} onChange={(e) => setNewLead(prev => ({ ...prev, last: e.target.value }))} />
+              </div>
+              <Input placeholder="Email" value={newLead.email} onChange={(e) => setNewLead(prev => ({ ...prev, email: e.target.value }))} />
+              <div className="grid grid-cols-2 gap-2">
+                <Input placeholder="Course" value={newLead.course} onChange={(e) => setNewLead(prev => ({ ...prev, course: e.target.value }))} />
+                <Input placeholder="Campus" value={newLead.campus} onChange={(e) => setNewLead(prev => ({ ...prev, campus: e.target.value }))} />
+              </div>
+              <div className="flex justify-end gap-2 pt-2">
+                <Button variant="outline" onClick={() => setShowAddLeadDialog(false)}>Cancel</Button>
+                <Button onClick={() => { console.log("Stub create lead", newLead); setShowAddLeadDialog(false); }}>Create</Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Export Dialog */}
+        <Dialog open={showExportDialog} onOpenChange={setShowExportDialog}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Export Leads</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <div className="text-sm font-medium mb-1">Scope</div>
+                <div className="flex items-center gap-3 text-sm">
+                  <label className="flex items-center gap-2 cursor-pointer"><input type="radio" checked={exportScope === "current"} onChange={() => setExportScope("current")} value="current" /> Current view</label>
+                  <label className="flex items-center gap-2 cursor-pointer"><input type="radio" checked={exportScope === "all"} onChange={() => setExportScope("all")} value="all" /> All</label>
+                </div>
+              </div>
+              <div>
+                <div className="text-sm font-medium mb-1">Format</div>
+                <div className="flex items-center gap-3 text-sm">
+                  <label className="flex items-center gap-2 cursor-pointer"><input type="radio" checked={exportFormat === "csv"} onChange={() => setExportFormat("csv")} value="csv" /> CSV</label>
+                  <label className="flex items-center gap-2 cursor-pointer"><input type="radio" checked={exportFormat === "xlsx"} onChange={() => setExportFormat("xlsx")} value="xlsx" /> XLSX</label>
+                </div>
+              </div>
+              <div className="flex justify-end gap-2 pt-2">
+                <Button variant="outline" onClick={() => setShowExportDialog(false)}>Cancel</Button>
+                <Button onClick={() => { console.log("Stub export", { exportScope, exportFormat }); setShowExportDialog(false); }}>Export</Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+  {/* Add Filter Dialog */}
+  <Dialog open={showAddFilterDialog} onOpenChange={setShowAddFilterDialog}>
+    <DialogContent className="max-w-lg">
+      <DialogHeader>
+        <DialogTitle>Create Custom Filter</DialogTitle>
+      </DialogHeader>
+      <div className="space-y-3">
+        <Input placeholder="Filter name" value={filterDraftName} onChange={(e) => setFilterDraftName(e.target.value)} />
+        <div>
+          <div className="text-sm mb-1 text-muted-foreground">JSON predicate</div>
+          <textarea className="w-full h-40 rounded-md border border-border bg-background p-2 text-sm font-mono" value={filterDraftJson} onChange={(e) => setFilterDraftJson(e.target.value)} />
+        </div>
+        <div className="flex justify-end gap-2">
+          <Button variant="outline" onClick={() => setShowAddFilterDialog(false)}>Cancel</Button>
+          <Button onClick={() => { if (!filterDraftName.trim()) return; saveCustomFilter({ id: crypto.randomUUID(), name: filterDraftName.trim(), predicateJson: filterDraftJson }); setShowAddFilterDialog(false); setFilterDraftName(""); }}>Save</Button>
+        </div>
+      </div>
+    </DialogContent>
+  </Dialog>
+
+  {/* Select All Dialog */}
+  <Dialog open={showSelectAllDialog} onOpenChange={setShowSelectAllDialog}>
+    <DialogContent className="max-w-md">
+      <DialogHeader>
+        <DialogTitle>Select All Leads</DialogTitle>
+      </DialogHeader>
+      <div className="space-y-4">
+        <div className="text-sm text-muted-foreground mb-4">
+          Choose which leads to select:
+        </div>
+        <div className="space-y-3">
+          <Button
+            variant="outline"
+            className="w-full justify-start h-auto p-4 hover:bg-green-600 hover:text-white transition-colors"
+            onClick={() => {
+              const visibleIds = new Set(paginationData.paginatedLeads.map(l => l.uid));
+              setSelectedLeads(prev => {
+                const next = new Set(prev);
+                visibleIds.forEach(id => next.add(id));
+                return next;
+              });
+              setShowSelectAllDialog(false);
+            }}
+          >
+            <div className="text-left w-full">
+              <div className="font-medium text-base">Current page only</div>
+              <div className="text-sm text-muted-foreground mt-1">{paginationData.paginatedLeads.length} leads on this page</div>
+            </div>
+          </Button>
+          <Button
+            variant="outline"
+            className="w-full justify-start h-auto p-4 hover:bg-green-600 hover:text-white transition-colors"
+            onClick={() => {
+              const allIds = new Set(datasetLeads.map(l => l.uid));
+              setSelectedLeads(allIds);
+              setShowSelectAllDialog(false);
+            }}
+          >
+            <div className="text-left w-full">
+              <div className="font-medium text-base">All leads</div>
+              <div className="text-sm text-muted-foreground mt-1">{datasetLeads.length} total leads across all pages</div>
+            </div>
+          </Button>
+        </div>
+        <div className="flex justify-end gap-2 pt-4">
+          <Button variant="outline" onClick={() => setShowSelectAllDialog(false)}>Cancel</Button>
+        </div>
+      </div>
+    </DialogContent>
+  </Dialog>
       </div>
     </TooltipProvider>
   );

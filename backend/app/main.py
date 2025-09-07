@@ -8,6 +8,13 @@ load_dotenv()
 
 app = FastAPI(title="Bridge CRM API", version="0.1")
 
+# Startup event
+@app.on_event("startup")
+async def startup_event():
+    """Initialize application on startup"""
+    print("🚀 Starting Bridge CRM API...")
+    print("✅ Application initialized")
+
 # CORS for your Vite dev server
 origins_env = os.getenv("CORS_ORIGINS", "http://localhost:5173,http://localhost:5174,http://localhost:3000,http://127.0.0.1:5173,http://127.0.0.1:5174,http://127.0.0.1:3000")
 allow_origins = [o.strip() for o in origins_env.split(",") if o.strip()]
@@ -135,6 +142,58 @@ try:
     app.include_router(advanced_ml_router)
 except Exception as e:
     print(f"❌ Failed to load advanced ML router: {e}")
+    pass
+
+# AI Chat router (Phase 4.2 - Gemini Integration)
+try:
+    from app.routers.ai_chat import router as ai_chat_router
+    app.include_router(ai_chat_router)
+except Exception as e:
+    print(f"❌ Failed to load AI chat router: {e}")
+    pass
+
+# Predictive Analytics router (Phase 4.4 - Dashboard Data Integration)
+try:
+    from app.routers.predictive_analytics import router as predictive_analytics_router
+    app.include_router(predictive_analytics_router)
+except Exception as e:
+    print(f"❌ Failed to load predictive analytics router: {e}")
+    pass
+
+# PII Redaction router (Phase 5.1 - Enhanced PII Redaction & GDPR Compliance)
+try:
+    from app.routers.pii_redaction import router as pii_redaction_router
+    app.include_router(pii_redaction_router)
+    print("✅ PII Redaction router loaded successfully")
+except Exception as e:
+    print(f"❌ Failed to load PII redaction router: {e}")
+    pass
+
+# User Management router (Phase 5.2 - Advanced User Management & RBAC)
+try:
+    from app.routers.user_management import router as user_management_router
+    app.include_router(user_management_router)
+    print("✅ User Management router loaded successfully")
+except Exception as e:
+    print(f"❌ Failed to load user management router: {e}")
+    pass
+
+# Optimization router (Phase 5.3 - API Rate Limiting & Optimization)
+try:
+    from app.routers.optimization import router as optimization_router
+    app.include_router(optimization_router)
+    print("✅ Optimization router loaded successfully")
+except Exception as e:
+    print(f"❌ Failed to load optimization router: {e}")
+    pass
+
+# Security router (Phase 5.4 - Advanced Security & Compliance)
+try:
+    from app.routers.security import router as security_router
+    app.include_router(security_router)
+    print("✅ Security router loaded successfully")
+except Exception as e:
+    print(f"❌ Failed to load security router: {e}")
     pass
 
 @app.get("/healthz/db")
