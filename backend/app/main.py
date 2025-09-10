@@ -8,11 +8,26 @@ load_dotenv()
 
 app = FastAPI(title="Bridge CRM API", version="0.1")
 
+# Add request ID middleware
+from app.middleware.request_id import RequestIDMiddleware
+app.add_middleware(RequestIDMiddleware)
+
 # Startup event
 @app.on_event("startup")
 async def startup_event():
     """Initialize application on startup"""
     print("🚀 Starting Bridge CRM API...")
+    
+    # Pre-warm ML model for faster first requests
+    try:
+        from app.ai.model_registry import load_active_model
+        print("🔄 Pre-warming ML model...")
+        model = load_active_model()
+        print(f"✅ ML model pre-warmed: {model.version} (SHA256: {model.sha256[:8]}...)")
+    except Exception as e:
+        print(f"⚠️  ML model pre-warming failed: {e}")
+        print("ℹ️  First ML request may be slower due to cold start")
+    
     print("✅ Application initialized")
 
 # CORS for your Vite dev server
@@ -136,13 +151,27 @@ except Exception as e:
     print(f"❌ Failed to load natural language router: {e}")
     pass
 
-# Advanced ML router (Phase 4.2)
+# Advanced ML router (Phase 4.2) - Hardened Version (mounted first)
 try:
-    from app.ai.advanced_ml import router as advanced_ml_router
-    app.include_router(advanced_ml_router)
+    from app.ai.advanced_ml_hardened import router as advanced_ml_hardened_router
+    app.include_router(advanced_ml_hardened_router, tags=["advanced-ml (hardened)"])
+    print("✅ Advanced ML (hardened) router loaded successfully")
 except Exception as e:
-    print(f"❌ Failed to load advanced ML router: {e}")
+    print(f"❌ Failed to load advanced ML (hardened) router: {e}")
     pass
+
+# Advanced ML router (Phase 4.2) - Legacy (for backward compatibility)
+# Can be disabled in production with AI_ENABLE_LEGACY_ADVANCED_ML=false
+if os.getenv("AI_ENABLE_LEGACY_ADVANCED_ML", "true").lower() == "true":
+    try:
+        from app.ai.advanced_ml import router as advanced_ml_legacy_router
+        app.include_router(advanced_ml_legacy_router, prefix="/ai/advanced-ml-legacy", tags=["advanced-ml (legacy)"])
+        print("✅ Advanced ML (legacy) router loaded successfully")
+    except Exception as e:
+        print(f"❌ Failed to load advanced ML (legacy) router: {e}")
+        pass
+else:
+    print("ℹ️  Advanced ML (legacy) router disabled via environment variable")
 
 # AI Chat router (Phase 4.2 - Gemini Integration)
 try:

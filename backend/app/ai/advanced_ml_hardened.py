@@ -1,4 +1,16 @@
-from fastapi import APIRouter, HTTPException, Depends, Body
+"""
+Hardened Advanced ML Pipeline
+
+This is the improved version of advanced_ml.py with:
+- Model registry integration
+- Proper error handling and input validation
+- Structured telemetry
+- Feature safety guards
+- Calibration utilities
+- Pydantic schemas
+"""
+
+from fastapi import APIRouter, HTTPException, Depends, Request
 from pydantic import BaseModel
 from typing import List, Dict, Optional, Any, Union
 from datetime import datetime, timedelta
@@ -13,9 +25,24 @@ from sklearn.metrics import classification_report, roc_auc_score, precision_reca
 from sklearn.feature_selection import SelectKBest, f_classif
 import joblib
 import os
+import time
 from pathlib import Path
 from app.db.db import fetch, fetchrow, execute
 from app.cache import cached
+
+# Import new components
+from app.ai.model_registry import get_model_registry, load_active_model, get_model_info
+from app.ai.calibration import calibrate_probability, calculate_confidence, apply_probability_bounds
+from app.ai.feature_safety import get_feature_guard, safe_prepare_features
+from app.ai.ml_telemetry import (
+    log_prediction_request, log_prediction_success, log_prediction_error,
+    log_model_load, log_feature_engineering, log_calibration
+)
+from app.schemas.ai_ml import (
+    PredictBatchRequest, PredictBatchResponse, PredictBatchResponseItem,
+    PredictSingleRequest, PredictSingleResponse, ModelInfoResponse,
+    HealthCheckResponse, ErrorResponse, normalize_predict_batch_request
+)
 
 router = APIRouter(prefix="/ai/advanced-ml", tags=["advanced-ml"])
 
@@ -351,16 +378,40 @@ class AdvancedMLPipeline:
         
         return model_id, performance
     
-    async def predict_batch(self, lead_ids: List[str]) -> Dict[str, Any]:
-        """Predict conversion probability for multiple leads"""
-        try:
-            # Get the most recent model (should already be loaded on startup)
-            if not self.models:
-                raise ValueError("No trained models available - models should be loaded on startup")
+    async def predict_batch_hardened(self, lead_ids: List[str], request_id: Optional[str] = None) -> PredictBatchResponse:
+        """
+        Hardened batch prediction with proper error handling and telemetry.
+        
+        Args:
+            lead_ids: List of lead IDs to predict
+            request_id: Optional request ID for correlation
             
-            # Get the most recent model
-            model_id = list(self.models.keys())[-1]
-            model_info = self.models[model_id]
+        Returns:
+            PredictBatchResponse with predictions and metadata
+        """
+        if request_id is None:
+            import uuid
+            request_id = str(uuid.uuid4())
+        
+        log_prediction_request(len(lead_ids), request_id)
+        start_time = time.time()
+        
+        try:
+            # Load active model with error handling
+            try:
+                loaded_model = load_active_model()
+                model_version = loaded_model.version
+                model_sha256 = loaded_model.sha256
+                cache_hit = False  # Model registry handles caching internally
+            except Exception as e:
+                log_prediction_error(
+                    request_id, "model_load_error", str(e), len(lead_ids), 
+                    (time.time() - start_time) * 1000
+                )
+                raise HTTPException(status_code=503, detail=f"Model loading failed: {str(e)}")
+            
+            # Log model load
+            log_model_load(model_version, model_sha256, 0, cache_hit, len(loaded_model.feature_names))
             
             # Fetch lead data for prediction
             placeholders = ','.join(['%s'] * len(lead_ids))
@@ -378,10 +429,7 @@ class AdvancedMLPipeline:
                     WHEN p.engagement_score >= 80 THEN 'high'
                     WHEN p.engagement_score >= 50 THEN 'medium'
                     ELSE 'low'
-                END as engagement_level,
-                EXTRACT(MONTH FROM p.created_at) as created_month,
-                EXTRACT(DOW FROM p.created_at) as created_day_of_week,
-                EXTRACT(HOUR FROM p.created_at) as created_hour
+                END as engagement_level
             FROM people p
             LEFT JOIN applications a ON p.id = a.person_id
             LEFT JOIN programmes pr ON a.programme_id = pr.id
@@ -389,318 +437,126 @@ class AdvancedMLPipeline:
             WHERE p.id IN ({placeholders})
             ORDER BY p.created_at DESC
             """
-            
-            from app.db.db import fetch
+
             results = await fetch(query, *lead_ids)
-            
+
             if not results:
-                return {"predictions": [], "model_used": model_id, "total_processed": 0, "successful_predictions": 0}
-            
+                # Return empty response for no results
+                latency_ms = (time.time() - start_time) * 1000
+                return PredictBatchResponse(
+                    predictions=[],
+                    model_version=model_version,
+                    model_sha256=model_sha256,
+                    total_processed=0,
+                    successful_predictions=0,
+                    failed_predictions=0,
+                    processing_time_ms=latency_ms,
+                    cache_hit=cache_hit
+                )
+
             predictions = []
+            raw_probabilities = []
+            calibrated_probabilities = []
+            
             for lead_data in results:
                 try:
-                    # Prepare features for this lead
-                    features = self.prepare_features_for_prediction(lead_data, model_info['feature_names'])
+                    # Use feature safety guard for robust feature preparation
+                    features, features_present_ratio = safe_prepare_features(lead_data, loaded_model.feature_names)
                     
-                    # Scale features - ensure proper feature alignment with column names
-                    features_df = pd.DataFrame([features], columns=model_info['feature_names'])
-                    features_scaled = model_info['scaler'].transform(features_df)
+                    # Log feature engineering
+                    log_feature_engineering(
+                        request_id, len(loaded_model.feature_names), features_present_ratio, 0, True
+                    )
+                    
+                    # Scale features
+                    features_df = pd.DataFrame([features], columns=loaded_model.feature_names)
+                    features_scaled = loaded_model.scaler.transform(features_df)
 
                     # Make prediction
-                    model = model_info['model']
+                    model = loaded_model.model
                     prediction = model.predict(features_scaled)[0]
                     prediction_proba = model.predict_proba(features_scaled)[0] if hasattr(model, 'predict_proba') else None
 
-                    # Apply probability calibration
+                    # Apply calibration
                     if prediction_proba is not None:
                         raw_prob = prediction_proba[1]
-                        calibrated_prob = 1 / (1 + np.exp(-2 * (raw_prob - 0.5)))
-                        calibrated_prob = max(0.05, min(0.95, calibrated_prob))
+                        calibrated_prob = calibrate_probability(raw_prob, method="sigmoid")
+                        calibrated_prob = apply_probability_bounds(calibrated_prob)
+                        
+                        raw_probabilities.append(raw_prob)
+                        calibrated_probabilities.append(calibrated_prob)
+                        
+                        # Calculate confidence
+                        confidence = calculate_confidence(prediction_proba, method="max_distance")
                     else:
                         calibrated_prob = 0.5
+                        confidence = 0.5
+                        raw_probabilities.append(0.5)
+                        calibrated_probabilities.append(0.5)
 
-                    predictions.append({
-                        "lead_id": str(lead_data['id']),
-                        "prediction": bool(prediction),
-                        "probability": float(calibrated_prob),
-                        "confidence": float(max(prediction_proba) - 0.5) * 2 if prediction_proba is not None else 0.5
-                    })
+                    predictions.append(PredictBatchResponseItem(
+                        lead_id=str(lead_data['id']),
+                        probability=float(calibrated_prob),
+                        confidence=float(confidence),
+                        calibrated_probability=float(calibrated_prob),
+                        features_present_ratio=float(features_present_ratio),
+                        prediction=bool(prediction)
+                    ))
 
                 except Exception as e:
                     print(f"❌ Prediction failed for lead {lead_data['id']}: {e}")
-                    predictions.append({
-                        "lead_id": str(lead_data['id']),
-                        "prediction": None,
-                        "probability": None,
-                        "confidence": None,
-                        "error": str(e)
-                    })
+                    predictions.append(PredictBatchResponseItem(
+                        lead_id=str(lead_data['id']),
+                        probability=0.0,
+                        confidence=0.0,
+                        calibrated_probability=0.0,
+                        features_present_ratio=0.0,
+                        prediction=False
+                    ))
 
-            return {
-                "predictions": predictions,
-                "model_used": model_id,
-                "total_processed": len(predictions),
-                "successful_predictions": len([p for p in predictions if p.get('probability') is not None])
-            }
+            # Log calibration
+            if raw_probabilities and calibrated_probabilities:
+                log_calibration(request_id, raw_probabilities, calibrated_probabilities, 0)
+            
+            # Calculate final metrics
+            latency_ms = (time.time() - start_time) * 1000
+            successful_predictions = len([p for p in predictions if p.probability > 0])
+            failed_predictions = len(predictions) - successful_predictions
+            avg_features_ratio = np.mean([p.features_present_ratio for p in predictions]) if predictions else 0.0
+            
+            # Log success
+            log_prediction_success(
+                request_id, len(lead_ids), latency_ms, model_version, model_sha256,
+                avg_features_ratio, cache_hit, [p.dict() for p in predictions]
+            )
+            
+            return PredictBatchResponse(
+                predictions=predictions,
+                model_version=model_version,
+                model_sha256=model_sha256,
+                model_id=f"advanced_ml_{model_version}",
+                total_processed=len(predictions),
+                successful_predictions=successful_predictions,
+                failed_predictions=failed_predictions,
+                processing_time_ms=latency_ms,
+                cache_hit=cache_hit,
+                calibration_metadata={
+                    "calibration_method": "sigmoid",
+                    "raw_probabilities_count": len(raw_probabilities),
+                    "calibrated_probabilities_count": len(calibrated_probabilities),
+                    "avg_feature_coverage": avg_features_ratio
+                },
+                request_id=request_id
+            )
 
+        except HTTPException:
+            raise
         except Exception as e:
-            raise Exception(f"Batch prediction failed: {str(e)}")
-    
-    def _load_latest_model(self):
-        """Load the latest saved model"""
-        if os.path.exists(MODEL_STORAGE_PATH):
-            model_files = list(MODEL_STORAGE_PATH.glob("*.joblib"))
-            if model_files:
-                latest_model_file = max(model_files, key=lambda f: f.stat().st_mtime)
-                try:
-                    model_data = joblib.load(latest_model_file)
-                    model_id = latest_model_file.stem
-                    self.models[model_id] = {
-                        'model': model_data['model'],
-                        'scaler': model_data['scaler'],
-                        'feature_selector': model_data.get('feature_selector'),
-                        'feature_names': model_data['feature_names'],
-                        'performance': model_data['performance'],
-                        'feature_importance': model_data['feature_importance']
-                    }
-                    # Set as active model
-                    global active_model_id
-                    active_model_id = model_id
-                    print(f"✅ Loaded model: {model_id} (set as active)")
-                    return True
-                except Exception as e:
-                    print(f"❌ Failed to load model {latest_model_file}: {e}")
-        return False
-    
-    def predict(self, lead_data: Dict[str, Any], model_id: Optional[str] = None) -> Dict[str, Any]:
-        """Make predictions using trained model"""
-
-        # Use specified model or active model
-        if model_id is None:
-            active_model = get_active_model()
-            if not active_model:
-                raise ValueError("No active model available")
-            model_id = active_model_id
-        elif model_id not in self.models:
-            raise ValueError(f"Model {model_id} not found")
-        
-        model_info = self.models[model_id]
-        model = model_info['model']
-        scaler = model_info['scaler']
-        feature_names = model_info['feature_names']
-        
-        # Prepare features
-        features = self.prepare_features_for_prediction(lead_data, feature_names)
-        
-        # Scale features - ensure proper feature alignment with column names
-        features_df = pd.DataFrame([features], columns=feature_names)
-        features_scaled = scaler.transform(features_df)
-        
-        # Make prediction
-        start_time = datetime.now()
-        prediction = model.predict(features_scaled)[0]
-        prediction_proba = model.predict_proba(features_scaled)[0] if hasattr(model, 'predict_proba') else None
-        
-        # Apply probability calibration to spread out the scores
-        if prediction_proba is not None:
-            # Simple sigmoid calibration to spread probabilities
-            raw_prob = prediction_proba[1]
-            calibrated_prob = 1 / (1 + np.exp(-2 * (raw_prob - 0.5)))
-            # Ensure probabilities are in reasonable range
-            calibrated_prob = max(0.05, min(0.95, calibrated_prob))
-        else:
-            calibrated_prob = 0.5
-        
-        prediction_time = (datetime.now() - start_time).total_seconds()
-        
-        return {
-            'prediction': int(prediction),
-            'probability': float(calibrated_prob),
-            'confidence': float(max(prediction_proba)) if prediction_proba is not None else 0.5,
-            'prediction_time': prediction_time
-        }
-    
-    def prepare_features_for_prediction(self, lead_data: Dict[str, Any], feature_names: List[str]) -> List[float]:
-        """Prepare lead data for model prediction - comprehensive feature engineering"""
-        
-        features = []
-        for feature in feature_names:
-            try:
-                if feature == 'lead_score':
-                    features.append(lead_data.get('lead_score', 0))
-                elif feature == 'days_since_creation':
-                    days = lead_data.get('days_since_creation', 0)
-                    features.append(float(days) if days is not None else 0.0)
-                elif feature == 'score_squared':
-                    score = lead_data.get('lead_score', 0)
-                    features.append(score ** 2)
-                elif feature == 'score_log':
-                    score = lead_data.get('lead_score', 0)
-                    features.append(np.log1p(score))
-                elif feature == 'score_percentile':
-                    # For prediction, we'll use a normalized score
-                    score = lead_data.get('lead_score', 0)
-                    features.append(score / 100.0)  # Normalize to 0-1 range
-                elif feature == 'created_month':
-                    created_at = lead_data.get('created_at')
-                    if created_at:
-                        features.append(pd.to_datetime(created_at).month)
-                    else:
-                        features.append(1)
-                elif feature == 'created_day_of_week':
-                    created_at = lead_data.get('created_at')
-                    if created_at:
-                        features.append(pd.to_datetime(created_at).dayofweek)
-                    else:
-                        features.append(0)
-                elif feature == 'created_hour':
-                    created_at = lead_data.get('created_at')
-                    if created_at:
-                        features.append(pd.to_datetime(created_at).hour)
-                    else:
-                        features.append(12)
-                elif feature == 'academic_week':
-                    created_at = lead_data.get('created_at')
-                    if created_at:
-                        features.append(pd.to_datetime(created_at).isocalendar().week)
-                    else:
-                        features.append(1)
-                elif feature == 'is_application_season':
-                    created_at = lead_data.get('created_at')
-                    if created_at:
-                        month = pd.to_datetime(created_at).month
-                        features.append(1 if month in [9, 10, 11, 12, 1, 2] else 0)
-                    else:
-                        features.append(0)
-                elif feature == 'engagement_score':
-                    features.append(lead_data.get('engagement_score', 0))
-                elif feature == 'engagement_squared':
-                    engagement = lead_data.get('engagement_score', 0)
-                    features.append(engagement ** 2)
-                elif feature == 'engagement_percentile':
-                    engagement = lead_data.get('engagement_score', 0)
-                    features.append(engagement / 100.0)  # Normalize to 0-1 range
-                elif feature == 'touchpoint_count':
-                    features.append(lead_data.get('touchpoint_count', 0))
-                elif feature == 'touchpoint_log':
-                    touchpoints = lead_data.get('touchpoint_count', 0)
-                    features.append(np.log1p(touchpoints))
-                elif feature == 'touchpoint_percentile':
-                    touchpoints = lead_data.get('touchpoint_count', 0)
-                    features.append(touchpoints / 10.0)  # Normalize assuming max ~10 touchpoints
-                elif feature == 'lifecycle_state_encoded':
-                    # Encode lifecycle state
-                    lifecycle = lead_data.get('lifecycle_state', 'unknown')
-                    if lifecycle == 'lead': features.append(0)
-                    elif lifecycle == 'applicant': features.append(1)
-                    elif lifecycle == 'student': features.append(2)
-                    else: features.append(0)
-                elif feature == 'source_encoded':
-                    # Encode source
-                    source = lead_data.get('source', 'unknown')
-                    if source == 'website': features.append(0)
-                    elif source == 'referral': features.append(1)
-                    elif source == 'social': features.append(2)
-                    elif source == 'email': features.append(3)
-                    else: features.append(0)
-                elif feature == 'campus_preference_encoded':
-                    # Encode campus preference
-                    campus = lead_data.get('campus_preference', 'unknown')
-                    if campus == 'london': features.append(0)
-                    elif campus == 'manchester': features.append(1)
-                    elif campus == 'birmingham': features.append(2)
-                    else: features.append(0)
-                elif feature == 'engagement_level_encoded':
-                    # Encode engagement level
-                    engagement = lead_data.get('engagement_score', 0)
-                    if engagement >= 80: features.append(2)  # high
-                    elif engagement >= 50: features.append(1)  # medium
-                    else: features.append(0)  # low
-                elif feature == 'status_encoded':
-                    # Encode status
-                    status = lead_data.get('status', 'unknown')
-                    if status == 'new': features.append(0)
-                    elif status == 'contacted': features.append(1)
-                    elif status == 'qualified': features.append(2)
-                    elif status == 'converted': features.append(3)
-                    else: features.append(0)
-                elif feature == 'score_engagement_interaction':
-                    score = lead_data.get('lead_score', 0)
-                    engagement = lead_data.get('engagement_score', 0)
-                    features.append(score * (engagement / 100.0))
-                elif feature == 'score_time_interaction':
-                    score = lead_data.get('lead_score', 0)
-                    days = lead_data.get('days_since_creation', 0)
-                    features.append(score * days)
-                elif feature == 'score_engagement_score_interaction':
-                    score = lead_data.get('lead_score', 0)
-                    engagement = lead_data.get('engagement_score', 0)
-                    features.append(score * engagement)
-                elif feature == 'score_touchpoint_interaction':
-                    score = lead_data.get('lead_score', 0)
-                    touchpoints = lead_data.get('touchpoint_count', 0)
-                    features.append(score * touchpoints)
-                elif feature == 'score_cubed':
-                    score = lead_data.get('lead_score', 0)
-                    features.append(score ** 3)
-                elif feature == 'days_squared':
-                    days = lead_data.get('days_since_creation', 0)
-                    features.append(days ** 2)
-                else:
-                    # For any other features, try to get from lead_data or use sensible defaults
-                    if feature in lead_data:
-                        value = lead_data[feature]
-                        if isinstance(value, (int, float)):
-                            features.append(float(value))
-                        else:
-                            features.append(0.0)
-                    else:
-                        # Default value for unknown features
-                        features.append(0.0)
-            except Exception as e:
-                print(f"⚠️ Feature preparation failed for {feature}: {e}")
-                features.append(0.0)
-        
-        return features
-
-class EnsembleModel:
-    """Ensemble model combining multiple ML algorithms"""
-    
-    def __init__(self, models: List[Any]):
-        self.models = models
-    
-    def fit(self, X, y):
-        for model in self.models:
-            model.fit(X, y)
-    
-    def predict(self, X):
-        predictions = [model.predict(X) for model in self.models]
-        # Simple voting
-        return np.mean(predictions, axis=0) > 0.5
-    
-    def predict_proba(self, X):
-        probas = []
-        for model in self.models:
-            if hasattr(model, 'predict_proba'):
-                probas.append(model.predict_proba(X))
-            else:
-                # For models without predict_proba, create binary probabilities
-                pred = model.predict(X)
-                proba = np.zeros((len(pred), 2))
-                proba[:, 1] = pred.astype(float)
-                proba[:, 0] = 1 - proba[:, 1]
-                probas.append(proba)
-        
-        if probas:
-            # Average probabilities
-            return np.mean(probas, axis=0)
-        else:
-            # Fallback
-            pred = self.predict(X)
-            proba = np.zeros((len(pred), 2))
-            proba[:, 1] = pred.astype(float)
-            proba[:, 0] = 1 - proba[:, 1]
-            return proba
+            latency_ms = (time.time() - start_time) * 1000
+            log_prediction_error(
+                request_id, "prediction_error", str(e), len(lead_ids), latency_ms
+            )
+            raise HTTPException(status_code=500, detail=f"Batch prediction failed: {str(e)}")
 
 # Initialize pipeline
 ml_pipeline = AdvancedMLPipeline()
@@ -773,6 +629,79 @@ async def get_advanced_ml_info():
         "models_loaded": len(ml_pipeline.models) if hasattr(ml_pipeline, 'models') else 0
     }
 
+@router.post("/predict-batch", response_model=PredictBatchResponse)
+async def predict_batch_leads_hardened(request: Union[PredictBatchRequest, List[str]]):
+    """
+    Hardened batch prediction endpoint with proper validation and error handling.
+    
+    Supports both legacy raw array format and canonical wrapped object format.
+    """
+    try:
+        # Normalize request format
+        lead_ids = normalize_predict_batch_request(request)
+        
+        # Validate input
+        if not lead_ids:
+            raise HTTPException(status_code=400, detail="lead_ids cannot be empty")
+        
+        if len(lead_ids) > 1000:
+            raise HTTPException(status_code=400, detail="Maximum 1000 leads per request")
+        
+        # Use hardened prediction method
+        return await ml_pipeline.predict_batch_hardened(lead_ids)
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Request processing failed: {str(e)}")
+
+@router.get("/health", response_model=HealthCheckResponse)
+async def health_check():
+    """Health check for ML service with detailed model information"""
+    try:
+        model_info = get_model_info()
+        
+        if model_info["status"] == "loaded":
+            return HealthCheckResponse(
+                status="healthy",
+                model_version=model_info["version"],
+                model_sha256=model_info["sha256"],
+                loaded=True,
+                since_seconds=model_info["loaded_since_seconds"],
+                feature_count=model_info["feature_count"],
+                cache_status="hit"  # Model registry handles caching
+            )
+        else:
+            return HealthCheckResponse(
+                status="unhealthy",
+                model_version=None,
+                model_sha256=None,
+                loaded=False,
+                since_seconds=None,
+                feature_count=None,
+                cache_status="miss"
+            )
+    except Exception as e:
+        return HealthCheckResponse(
+            status="unhealthy",
+            model_version=None,
+            model_sha256=None,
+            loaded=False,
+            since_seconds=None,
+            feature_count=None,
+            cache_status="error"
+        )
+
+@router.get("/models", response_model=ModelInfoResponse)
+async def get_model_info_endpoint():
+    """Get detailed information about the currently loaded model"""
+    try:
+        model_info = get_model_info()
+        return ModelInfoResponse(**model_info)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to get model info: {str(e)}")
+
+# Keep existing endpoints for backward compatibility
 @router.post("/train")
 async def train_advanced_model(request: ModelTrainingRequest):
     """Train advanced ML model with feature engineering"""
@@ -845,61 +774,7 @@ async def train_advanced_model(request: ModelTrainingRequest):
         print(f"📋 Full traceback: {traceback.format_exc()}")
         raise HTTPException(status_code=500, detail=f"Training failed: {str(e)}")
 
-@router.post("/predict")
-async def predict_lead_conversion(lead_data: Dict[str, Any], model_id: Optional[str] = None):
-    """Predict lead conversion probability using trained model"""
-    try:
-        prediction = ml_pipeline.predict(lead_data, model_id)
-        
-        # Generate insights
-        insights = generate_ml_insights(lead_data, prediction, model_id)
-        
-        return {
-            "prediction": prediction,
-            "insights": insights,
-            "model_id": model_id
-        }
-        
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Prediction failed: {str(e)}")
-
-@router.get("/models")
-async def list_trained_models():
-    """List all trained models"""
-    try:
-        models = []
-        for model_id, model_info in ml_pipeline.models.items():
-            models.append({
-                "model_id": model_id,
-                "performance": model_info['performance'],
-                "feature_count": len(model_info['feature_names']),
-                "feature_importance": model_info['feature_importance']
-            })
-        
-        return {"models": models}
-        
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to list models: {str(e)}")
-
-@router.post("/activate")
-async def activate_model(model_id: str):
-    """Activate a specific model for predictions"""
-    try:
-        if model_id not in ml_pipeline.models:
-            raise HTTPException(status_code=404, detail=f"Model {model_id} not found")
-
-        global active_model_id
-        active_model_id = model_id
-
-        return {
-            "message": f"Model {model_id} activated successfully",
-            "active_model": model_id,
-            "performance": ml_pipeline.models[model_id]['performance']
-        }
-
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to activate model: {str(e)}")
-
+# Additional endpoints for backward compatibility
 @router.get("/active")
 async def get_active_model_info():
     """Get information about the currently active model"""
@@ -917,177 +792,6 @@ async def get_active_model_info():
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to get active model: {str(e)}")
-
-@router.post("/predict-batch")
-@cached(ttl=300)  # Cache predictions for 5 minutes
-async def predict_batch_leads(body: Any = Body(...)):
-    """
-    Legacy predict-batch endpoint - now proxies to hardened implementation.
-    Maintains backward compatibility while using the improved ML pipeline.
-    Supports both raw array and wrapped object payload formats.
-    """
-    import uuid
-    request_id = str(uuid.uuid4())
-    
-    try:
-        # Normalize payload format (support both raw array and wrapped object)
-        if isinstance(body, list):
-            lead_ids = body
-            payload_shape = "raw_array"
-        elif isinstance(body, dict) and "lead_ids" in body:
-            lead_ids = body["lead_ids"]
-            payload_shape = "wrapped_object"
-        else:
-            raise HTTPException(
-                status_code=422, 
-                detail={
-                    "error": "validation_error",
-                    "error_code": "INVALID_PAYLOAD_FORMAT",
-                    "message": "Payload must be either a raw array of lead IDs or an object with 'lead_ids' field",
-                    "request_id": request_id
-                }
-            )
-        
-        # Validate batch size limit
-        if len(lead_ids) > 2000:
-            raise HTTPException(
-                status_code=413,
-                detail={
-                    "error": "payload_too_large",
-                    "error_code": "BATCH_SIZE_EXCEEDED",
-                    "message": "Maximum 2000 lead IDs per request",
-                    "request_id": request_id
-                }
-            )
-        
-        # Import hardened implementation
-        from app.ai.advanced_ml_hardened import ml_pipeline
-        
-        # Delegate to hardened implementation
-        response = await ml_pipeline.predict_batch_hardened(lead_ids)
-        
-        # Convert hardened response to legacy format for backward compatibility
-        legacy_response = {
-            "predictions": [
-                {
-                    "lead_id": pred.lead_id,
-                    "prediction": pred.prediction,
-                    "probability": pred.probability,
-                    "confidence": pred.confidence
-                }
-                for pred in response.predictions
-            ],
-            "model_used": response.model_version,
-            "total_processed": response.total_processed,
-            "successful_predictions": response.successful_predictions,
-            "request_id": request_id,
-            "via": "legacy-proxy"
-        }
-        
-        return legacy_response
-        
-    except HTTPException as e:
-        # Re-raise HTTP exceptions as-is
-        raise e
-    except Exception as e:
-        print(f"❌ Legacy predict-batch proxy failed: {e}")
-        # Circuit breaker: return clear error instead of silent fallback
-        raise HTTPException(
-            status_code=500,
-            detail={
-                "error": "internal_error",
-                "error_code": "LEGACY_PROXY_FAILURE",
-                "message": "Legacy proxy failed to process request",
-                "request_id": request_id
-            }
-        )
-
-async def predict_batch_leads_fallback(lead_ids: list[str]):
-    """Fallback implementation if hardened version fails"""
-    try:
-        active_model = get_active_model()
-        if not active_model:
-            raise HTTPException(status_code=400, detail="No active model available")
-
-        # Fetch lead data for prediction using IN clause
-        placeholders = ','.join(['%s'] * len(lead_ids))
-        query = f"""
-        SELECT
-            p.id, p.first_name, p.last_name, p.email, p.phone,
-            p.lead_score, p.lifecycle_state, p.created_at,
-            p.engagement_score, p.conversion_probability,
-            p.touchpoint_count, p.status,
-            (EXTRACT(EPOCH FROM (NOW() - p.created_at)) / 86400.0)::double precision as days_since_creation,
-            COALESCE(a.source, 'unknown') as application_source,
-            COALESCE(pr.name, 'unknown') as programme_name,
-            COALESCE(c.name, 'unknown') as campus_name,
-            CASE
-                WHEN p.engagement_score >= 80 THEN 'high'
-                WHEN p.engagement_score >= 50 THEN 'medium'
-                ELSE 'low'
-            END as engagement_level
-        FROM people p
-        LEFT JOIN applications a ON p.id = a.person_id
-        LEFT JOIN programmes pr ON a.programme_id = pr.id
-        LEFT JOIN campuses c ON pr.campus_id = c.id
-        WHERE p.id IN ({placeholders})
-        ORDER BY p.created_at DESC
-        """
-
-        results = await fetch(query, *lead_ids)
-
-        if not results:
-            return {"predictions": []}
-
-        predictions = []
-        for lead_data in results:
-            try:
-                # Prepare features for this lead
-                features = ml_pipeline.prepare_features_for_prediction(lead_data, active_model['feature_names'])
-                
-                # Scale features - ensure proper feature alignment with column names
-                features_df = pd.DataFrame([features], columns=active_model['feature_names'])
-                features_scaled = active_model['scaler'].transform(features_df)
-
-                # Make prediction
-                model = active_model['model']
-                prediction = model.predict(features_scaled)[0]
-                prediction_proba = model.predict_proba(features_scaled)[0] if hasattr(model, 'predict_proba') else None
-
-                # Apply probability calibration
-                if prediction_proba is not None:
-                    raw_prob = prediction_proba[1]
-                    calibrated_prob = 1 / (1 + np.exp(-2 * (raw_prob - 0.5)))
-                    calibrated_prob = max(0.05, min(0.95, calibrated_prob))
-                else:
-                    calibrated_prob = 0.5
-
-                predictions.append({
-                    "lead_id": lead_data['id'],
-                    "prediction": bool(prediction),
-                    "probability": float(calibrated_prob),
-                    "confidence": float(max(prediction_proba) - 0.5) * 2 if prediction_proba is not None else 0.5
-                })
-
-            except Exception as e:
-                print(f"❌ Prediction failed for lead {lead_data['id']}: {e}")
-                predictions.append({
-                    "lead_id": lead_data['id'],
-                    "prediction": None,
-                    "probability": None,
-                    "confidence": None,
-                    "error": str(e)
-                })
-
-        return {
-            "predictions": predictions,
-            "model_used": active_model_id,
-            "total_processed": len(predictions),
-            "successful_predictions": len([p for p in predictions if p.get('probability') is not None])
-        }
-
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Batch prediction failed: {str(e)}")
 
 @router.get("/feature-analysis")
 async def analyze_features():
@@ -1126,23 +830,44 @@ async def analyze_features():
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Feature analysis failed: {str(e)}")
 
-@router.get("/health")
-async def health_check():
-    """Health check for ML service"""
-    try:
-        active_model = get_active_model()
-        return {
-            "status": "healthy",
-            "models_loaded": len(ml_pipeline.models),
-            "active_model": active_model_id,
-            "model_performance": active_model['performance'] if active_model else None
-        }
-    except Exception as e:
-        return {
-            "status": "unhealthy",
-            "error": str(e),
-            "models_loaded": len(ml_pipeline.models)
-        }
+class EnsembleModel:
+    """Ensemble model combining multiple ML algorithms"""
+    
+    def __init__(self, models: List[Any]):
+        self.models = models
+    
+    def fit(self, X, y):
+        for model in self.models:
+            model.fit(X, y)
+    
+    def predict(self, X):
+        predictions = [model.predict(X) for model in self.models]
+        # Simple voting
+        return np.mean(predictions, axis=0) > 0.5
+    
+    def predict_proba(self, X):
+        probas = []
+        for model in self.models:
+            if hasattr(model, 'predict_proba'):
+                probas.append(model.predict_proba(X))
+            else:
+                # For models without predict_proba, create binary probabilities
+                pred = model.predict(X)
+                proba = np.zeros((len(pred), 2))
+                proba[:, 1] = pred.astype(float)
+                proba[:, 0] = 1 - proba[:, 1]
+                probas.append(proba)
+        
+        if probas:
+            # Average probabilities
+            return np.mean(probas, axis=0)
+        else:
+            # Fallback
+            pred = self.predict(X)
+            proba = np.zeros((len(pred), 2))
+            proba[:, 1] = pred.astype(float)
+            proba[:, 0] = 1 - proba[:, 1]
+            return proba
 
 def generate_ml_insights(lead_data: Dict[str, Any], prediction: Dict[str, Any], model_id: str) -> List[str]:
     """Generate AI insights from ML predictions"""

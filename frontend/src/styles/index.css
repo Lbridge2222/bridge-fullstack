@@ -140,6 +140,12 @@
     --forest-green: 150 60% 8%;       /* Ivy Green #2D6B4A */
     --forest-green-foreground: 0 0% 100%; /* White #FFFFFF */
     
+    /* ===== LEAD STATUS COLORS ===== */
+    --status-cold: 200 100% 50%;        /* Bright Blue for Gone Cold */
+    --status-progressing: 142 76% 36%;  /* Shadcn Green for Progressing */
+    --status-urgent: 25 95% 53%;        /* Shadcn Orange for Urgent/Call Quick */
+    --status-do-not-contact: 0 84% 60%; /* Shadcn Red for Do Not Contact */
+    
     /* Chart Colors */
     --chart-1: 0 0% 7%;                /* Shadcn Black #111111 */
     --chart-2: 0 100% 50%;             /* Candy Apple Red #FF0800 */
@@ -283,6 +289,12 @@
     --ring: 0 0% 100%;                 /* White #FFFFFF */
     --forest-green: 150 60% 8%;       /* Ivy Green #2D6B4A */
     --forest-green-foreground: 0 0% 100%; /* White #FFFFFF */
+    
+    /* ===== LEAD STATUS COLORS (DARK) ===== */
+    --status-cold: 200 100% 60%;        /* Lighter Blue for Gone Cold */
+    --status-progressing: 142 76% 46%;  /* Lighter Shadcn Green for Progressing */
+    --status-urgent: 25 95% 63%;        /* Lighter Shadcn Orange for Urgent/Call Quick */
+    --status-do-not-contact: 0 84% 70%; /* Lighter Shadcn Red for Do Not Contact */
     
     /* Chart Colors */
     --chart-1: 0 0% 100%;              /* White #FFFFFF */

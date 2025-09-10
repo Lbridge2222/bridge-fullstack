@@ -4,10 +4,12 @@ import { lazy, Suspense } from "react";
 
 // Layout
 import DashboardLayout from "@/components/layout/DashboardLayout";
+import { ToasterProvider } from "@/components/ui/toast";
 
 // Core pages (loaded immediately)
 import LeadsManagementPage from "@/pages/crm/Leads";
 import EnquiriesPage from "@/pages/crm/Enquiries";
+import ConversationsPage from "@/pages/crm/Conversations";
 import Overviewpage from "@/pages/crm/Overview";
 import InterviewsPage from "@/pages/crm/Interviews";
 import ApplicationsBoard from "@/pages/crm/ApplicationsBoard";
@@ -42,6 +44,7 @@ const LoadingSpinner = () => (
 
 export default function App() {
   return (
+    <ToasterProvider>
     <Routes>
       {/* All app routes go through the DashboardLayout */}
       <Route element={<DashboardLayout />}>
@@ -53,6 +56,7 @@ export default function App() {
           <Route path="overview" element={<Overviewpage/>} />
           <Route path="leads" element={<LeadsManagementPage />} />
           <Route path="enquiries" element={<EnquiriesPage />} />
+          <Route path="conversations" element={<ConversationsPage />} />
           <Route path="interviews" element={<InterviewsPage />} />
           <Route path="applications" element={<ApplicationsBoard />} />
           <Route path="offers" element={<OffersPage />} />
@@ -123,5 +127,6 @@ export default function App() {
       {/* Catch-all */}
       <Route path="*" element={<div>Not found</div>} />
     </Routes>
+    </ToasterProvider>
   );
 }

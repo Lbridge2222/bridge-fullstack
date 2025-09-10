@@ -49,8 +49,8 @@ export const NAVIGATION: Navigation = [
                 title: "CRM",
                 icon: LayoutDashboard,
                 children: [
-                  { title: "Leads", icon: Users, href: "/admissions/leads" },
-                  { title: "Enquiries", icon: Inbox, href: "/admissions/enquiries" },
+                  { title: "Enquiries", icon: Users, href: "/admissions/leads" },
+                  { title: "Conversations", icon: MessageSquareIcon, href: "/admissions/conversations" },
                   { title: "Interviews", icon: CalendarClock, href: "/admissions/interviews" },
                   { title: "Applications Board", icon: LayoutDashboard, href: "/admissions/applications" },
                   { title: "Offers", icon: FileSignature, href: "/admissions/offers" },

@@ -63,33 +63,78 @@ class LeadLite(BaseModel):
     course: Optional[str] = None
     lead_score: float = 0.0
     last_activity_at: Optional[datetime] = None
+    # Additional ML features
+    engagement_score: Optional[float] = None
+    conversion_probability: Optional[float] = None
+    touchpoint_count: Optional[int] = None
+    lifecycle_state: Optional[str] = None
+    status: Optional[str] = None
+    days_since_creation: Optional[float] = None
+    engagement_level: Optional[str] = None
 
 
-async def sql_query_leads(filters: Dict[str, Any]) -> List[LeadLite]:
+async def sql_query_leads(filters: Dict[str, Any], lead_ids: List[str] = None) -> List[LeadLite]:
     """
-    Read-only, whitelisted query into a view for leads management.
-    Applies an automatic LIMIT and optional campus/course/stalled filters.
+    Read-only query using enriched data matching the ML pipeline.
+    Uses the same data source as the hardened ML system for consistency.
     """
     base = [
-        "SELECT id::text as id,",
-        "trim(coalesce(first_name,'')||' '||coalesce(last_name,'')) as name,",
-        "email, NULL::text as campus, NULL::text as course,",
-        "coalesce(lead_score,0) as lead_score, created_at as last_activity_at",
-        "FROM vw_leads_management",
-        "WHERE 1=1",
+        "SELECT p.id::text as id,",
+        "trim(coalesce(p.first_name,'')||' '||coalesce(p.last_name,'')) as name,",
+        "p.email, p.lead_score, p.created_at as last_activity_at,",
+        "p.engagement_score, p.conversion_probability, p.touchpoint_count,",
+        "p.lifecycle_state, p.status,",
+        "COALESCE(pr.name, 'unknown') as course,",
+        "COALESCE(c.name, 'unknown') as campus,",
+        "(EXTRACT(EPOCH FROM (NOW() - p.created_at)) / 86400.0)::double precision as days_since_creation,",
+        "CASE ",
+        "    WHEN p.engagement_score >= 80 THEN 'high'",
+        "    WHEN p.engagement_score >= 50 THEN 'medium'",
+        "    ELSE 'low'",
+        "END as engagement_level",
+        "FROM people p",
+        "LEFT JOIN applications a ON p.id = a.person_id",
+        "LEFT JOIN programmes pr ON a.programme_id = pr.id",
+        "LEFT JOIN campuses c ON pr.campus_id = c.id",
+        "WHERE p.lifecycle_state = 'lead'",
     ]
     params: List[Any] = []
 
-    # Campus and course not present in vw_leads_management; omit for now
+    # If specific lead IDs are provided, filter by them
+    if lead_ids:
+        placeholders = ",".join(["%s"] * len(lead_ids))
+        base.append(f"AND p.id::text IN ({placeholders})")
+        params.extend(lead_ids)
+
+    # Apply filters
+    status = filters.get("status")
+    if status:
+        base.append("AND p.status = %s")
+        params.append(status)
+    
+    source = filters.get("source")
+    if source:
+        base.append("AND p.source = %s")
+        params.append(source)
+    
+    course = filters.get("course")
+    if course:
+        base.append("AND pr.name = %s")
+        params.append(course)
+    
+    year = filters.get("year")
+    if year:
+        base.append("AND EXTRACT(YEAR FROM p.created_at) = %s")
+        params.append(int(year))
 
     stalled = filters.get("stalled_days_gte")
     if stalled:
         base.append(
-            "AND now() - created_at >= (%s || ' days')::interval"
+            "AND now() - p.created_at >= (%s || ' days')::interval"
         )
         params.append(int(stalled))
 
-    base.append("ORDER BY created_at DESC LIMIT 500")
+    base.append("ORDER BY p.created_at DESC LIMIT 500")
     sql = "\n".join(base)
     rows = await pg_fetch(sql, *params)
     return [LeadLite(**r) for r in rows]
@@ -158,7 +203,7 @@ def _rule_score(lead: LeadLite) -> tuple[float, List[str], str]:
     if score >= 80:
         next_action = "Schedule interview immediately"
     elif score >= 60:
-        next_action = "Send personalized follow-up"
+        next_action = "Send personalised follow-up"
     elif score >= 40:
         next_action = "Nurture with course information"
     else:
@@ -169,93 +214,355 @@ def _rule_score(lead: LeadLite) -> tuple[float, List[str], str]:
 
 async def leads_triage(items: List[LeadLite]) -> List[Dict[str, Any]]:
     """
-    Hybrid rules + LLM re-rank & explanation via LangChain. Supports both OpenAI and Gemini.
+    ML-first triage using the hardened ML pipeline as primary scoring engine.
+    LLM provides explanations and next actions, not scores.
     """
-    # Compute deterministic base scores
-    base: List[Dict[str, Any]] = []
-    for l in items:
-        score, reasons, next_action = _rule_score(l)
-        base.append({"id": l.id, "score": score, "reasons": reasons, "next_action": next_action})
-    if not base:
-        return []
+    try:
+        # 1. Get ML predictions using the hardened pipeline
+        from app.ai.advanced_ml_hardened import ml_pipeline
+        
+        lead_ids = [item.id for item in items]
+        print(f"🤖 Getting ML predictions for {len(lead_ids)} leads...")
+        
+        ml_response = await ml_pipeline.predict_batch_hardened(lead_ids)
+        
+        # 2. Create base scores from ML predictions
+        ml_scores = {pred.lead_id: pred.probability for pred in ml_response.predictions}
+        ml_confidence = {pred.lead_id: pred.confidence for pred in ml_response.predictions}
+        ml_calibrated = {pred.lead_id: pred.calibrated_probability for pred in ml_response.predictions}
+        
+        print(f"✅ ML predictions complete. Model: {ml_response.model_version}")
+        
+        # 3. Use LLM for explanations and next actions only
+        ai_insights = await get_ai_explanations(items, ml_scores)
+        
+        # 4. Combine ML scores with AI insights
+        combined = []
+        for item in items:
+            ml_score = ml_scores.get(item.id, 0.0) * 100  # Convert to 0-100 scale
+            ml_conf = ml_confidence.get(item.id, 0.0)
+            ml_cal = ml_calibrated.get(item.id, 0.0) * 100
+            ai_insight = ai_insights.get(item.id, {})
+            
+            # Use calibrated probability as primary score
+            primary_score = ml_cal if ml_cal > 0 else ml_score
+            
+            # Enforce escalation when calibrated >= 0.7
+            should_escalate = (primary_score >= 70.0)
 
-    # If no AI models available, return normalized rules-only ranking
+            combined.append({
+                    "id": item.id,
+                    "score": round(primary_score, 1),  # ML score is primary
+                    "ml_confidence": round(ml_conf, 2),
+                    "ml_probability": round(ml_score / 100, 3),
+                    "ml_calibrated": round(ml_cal / 100, 3),
+                    "reasons": ai_insight.get("reasons", []),
+                    "next_action": (
+                        ai_insight.get("next_action", "follow_up")
+                        if not should_escalate else "schedule_interview_urgent"
+                    ),
+                    "insight": ai_insight.get("insight", ""),
+                    "suggested_content": ai_insight.get("suggested_content", ""),
+                    "action_rationale": ai_insight.get("action_rationale", _generate_action_rationale(item, ml_cal / 100.0)),
+                    "escalate_to_interview": should_escalate or bool(ai_insight.get("escalate_to_interview", False)),
+                    "feature_coverage": ai_insight.get("feature_coverage", 0.0)
+                })
+        
+        return sorted(combined, key=lambda x: x['score'], reverse=True)
+        
+    except Exception as e:
+        print(f"⚠️ ML-first triage failed: {e}, falling back to rules")
+        return await leads_triage_rules_fallback(items)
+
+
+async def get_ai_explanations(items: List[LeadLite], ml_scores: Dict[str, float]) -> Dict[str, Dict[str, Any]]:
+    """
+    Get AI explanations for ML scores using LLM.
+    Focuses on explaining WHY the ML model gave this score, not changing it.
+    """
     if ACTIVE_MODEL == "none":
-        max_score = max(x["score"] for x in base) or 1.0
-        for x in base:
-            x["score"] = round((x["score"] / max_score) * 100.0, 1)
-        return sorted(base, key=lambda x: x["score"], reverse=True)
+        # Return basic explanations without LLM
+        explanations = {}
+        for item in items:
+            score = ml_scores.get(item.id, 0.0)
+            explanations[item.id] = {
+                "reasons": _generate_basic_reasons(item, score),
+                "next_action": _suggest_basic_action(item, score)[0],
+                "suggested_content": _suggest_basic_action(item, score)[1],
+                "insight": f"ML score: {score:.1%}",
+                "action_rationale": _generate_action_rationale(item, score),
+                "escalate_to_interview": True if (score >= 0.7) else False,
+                "feature_coverage": 1.0
+            }
+        return explanations
 
-    # Prepare LLM based on available model
     try:
         if ACTIVE_MODEL == "openai" and OPENAI_API_KEY:
             from langchain_openai import ChatOpenAI
-            llm = ChatOpenAI(model=OPENAI_MODEL, temperature=0.2, api_key=OPENAI_API_KEY)
-            print(f"🤖 Using OpenAI model: {OPENAI_MODEL}")
+            llm = ChatOpenAI(model=OPENAI_MODEL, temperature=0.3, api_key=OPENAI_API_KEY)
+            print(f"🤖 Using OpenAI for explanations: {OPENAI_MODEL}")
         elif ACTIVE_MODEL == "gemini" and GEMINI_API_KEY:
             from langchain_google_genai import ChatGoogleGenerativeAI
             llm = ChatGoogleGenerativeAI(
                 model=GEMINI_MODEL,
-                temperature=0.2,
+                temperature=0.3,
                 google_api_key=GEMINI_API_KEY
             )
-            print(f"🤖 Using Gemini model: {GEMINI_MODEL}")
+            print(f"🤖 Using Gemini for explanations: {GEMINI_MODEL}")
         else:
             raise Exception(f"No valid AI model available. Active: {ACTIVE_MODEL}")
 
         from langchain_core.prompts import ChatPromptTemplate
         from pathlib import Path
+        import json
         
         schema = Path(__file__).resolve().parents[1] / "schema" / "LEADS_SCHEMA.md"
         triage_prompt_path = Path(__file__).resolve().parents[1] / "prompts" / "leads_triage.md"
         
         if not schema.exists() or not triage_prompt_path.exists():
-            print("⚠️  Prompt files not found, using rules-only fallback")
+            print("⚠️  Prompt files not found, using basic explanations")
             raise Exception("Prompt files missing")
             
         schema_text = schema.read_text(encoding="utf-8")
         prompt_text = triage_prompt_path.read_text(encoding="utf-8")
         prompt = ChatPromptTemplate.from_template(prompt_text)
 
-        features = [
-            {
-                "id": x["id"],
-                "lead_score": next((l.lead_score for l in items if l.id == x["id"]), 0),
-                "last_activity_at": next((l.last_activity_at.isoformat() if l.last_activity_at else None for l in items if l.id == x["id"]), None),
-            }
-            for x in base
-        ]
+        # Prepare enriched features for AI
+        features = []
+        for item in items:
+            ml_score = ml_scores.get(item.id, 0.0)
+            features.append({
+                "id": item.id,
+                "name": item.name,
+                "lead_score": item.lead_score or 0,
+                "engagement_score": item.engagement_score or 0,
+                "conversion_probability": item.conversion_probability or 0,
+                "touchpoint_count": item.touchpoint_count or 0,
+                "days_since_creation": item.days_since_creation or 0,
+                "course": item.course or "unknown",
+                "campus": item.campus or "unknown",
+                "engagement_level": item.engagement_level or "low",
+                "status": item.status or "new",
+                "last_activity_at": item.last_activity_at.isoformat() if item.last_activity_at else None,
+                "ml_score": ml_score,
+                "ml_percentage": f"{ml_score:.1%}"
+            })
         
         messages = prompt.format_messages(schema=schema_text, leads=json.dumps(features))
         resp = await llm.ainvoke(messages)
         text = resp.content if hasattr(resp, "content") else str(resp)
         
         try:
-            parsed = json.loads(text)
-            # Ensure required fields and coerce scoring range
-            for it in parsed:
-                if "score" in it:
-                    s = float(it["score"]) if it["score"] is not None else 0.0
-                    it["score"] = max(0.0, min(100.0, round(s, 1)))
-                it.setdefault("reasons", [])
-                it.setdefault("next_action", "follow_up")
-            # Fallback merge with base if ids missing
-            by_id = {it["id"]: it for it in parsed if it.get("id") is not None}
-            merged = []
-            for b in base:
-                merged.append(by_id.get(b["id"], {**b, "score": round((b["score"]/max(1.0, max(x["score"] for x in base)))*100.0, 1)}))
-            return sorted(merged, key=lambda x: x["score"], reverse=True)
+            # Clean the response text - remove any markdown formatting
+            cleaned_text = text.strip()
+            if cleaned_text.startswith("```json"):
+                cleaned_text = cleaned_text[7:]
+            if cleaned_text.endswith("```"):
+                cleaned_text = cleaned_text[:-3]
+            cleaned_text = cleaned_text.strip()
+            
+            print(f"🔍 LLM Response (first 200 chars): {cleaned_text[:200]}")
+            
+            raw_parsed = json.loads(cleaned_text)
+
+            # Normalize to a list of items with ids
+            def to_items(obj: Any) -> List[Dict[str, Any]]:
+                if isinstance(obj, list):
+                    return [x for x in obj if isinstance(x, dict)]
+                if isinstance(obj, dict):
+                    # Common wrappers
+                    for key in ["items", "results", "explanations", "data"]:
+                        if key in obj and isinstance(obj[key], list):
+                            return [x for x in obj[key] if isinstance(x, dict)]
+                    # Single object case
+                    return [obj]
+                return []
+
+            items_list = to_items(raw_parsed)
+            if not items_list:
+                # Last resort: attempt best-effort extraction of a JSON object and retry
+                extracted = _extract_json_object(cleaned_text)
+                items_list = to_items(extracted) if extracted else []
+
+            explanations: Dict[str, Dict[str, Any]] = {}
+            for itm in items_list:
+                lead_id = itm.get("id") or itm.get("lead_id") or itm.get("uid")
+                if not lead_id:
+                    continue
+                explanations[str(lead_id)] = {
+                    "reasons": itm.get("reasons", []),
+                    "next_action": itm.get("next_action", "follow_up"),
+                    "insight": itm.get("insight", ""),
+                    "suggested_content": itm.get("suggested_content", ""),
+                    "action_rationale": itm.get("action_rationale", ""),
+                    "escalate_to_interview": bool(itm.get("escalate_to_interview", False)),
+                    "feature_coverage": 1.0  # Assume full coverage for now
+                }
+            if explanations:
+                return explanations
+            raise ValueError("No valid explanation items with ids found")
         except Exception as e:
-            print(f"⚠️  JSON parsing failed: {e}, using rules-only fallback")
+            print(f"⚠️  JSON parsing failed: {e}")
+            print(f"🔍 Raw response: {text[:500]}")
             raise e
             
     except Exception as e:
-        print(f"⚠️  AI model failed: {e}, using rules-only fallback")
-        # Fallback to rules-only if AI fails
-        max_score = max(x["score"] for x in base) or 1.0
-        for x in base:
-            x["score"] = round((x["score"] / max_score) * 100.0, 1)
-        return sorted(base, key=lambda x: x["score"], reverse=True)
+        print(f"⚠️  AI explanations failed: {e}, using basic explanations")
+        # Fallback to basic explanations
+        explanations = {}
+        for item in items:
+            score = ml_scores.get(item.id, 0.0)
+            explanations[item.id] = {
+                "reasons": _generate_basic_reasons(item, score),
+                "next_action": _suggest_basic_action(item, score)[0],
+                "suggested_content": _suggest_basic_action(item, score)[1],
+                "insight": f"ML score: {score:.1%}",
+                "action_rationale": _generate_action_rationale(item, score),
+                "escalate_to_interview": True if (score >= 0.7) else False,
+                "feature_coverage": 1.0
+            }
+        return explanations
+
+
+def _generate_basic_reasons(item: LeadLite, ml_score: float) -> List[str]:
+    """Generate basic reasons for ML score without LLM"""
+    reasons = []
+    
+    if ml_score >= 0.8:
+        reasons.append("Very high conversion probability")
+    elif ml_score >= 0.6:
+        reasons.append("High conversion probability")
+    elif ml_score >= 0.4:
+        reasons.append("Moderate conversion probability")
+    else:
+        reasons.append("Low conversion probability")
+    
+    if item.lead_score and item.lead_score >= 80:
+        reasons.append("Strong lead score")
+    elif item.lead_score and item.lead_score >= 60:
+        reasons.append("Good lead score")
+    
+    if item.engagement_score and item.engagement_score >= 80:
+        reasons.append("High engagement")
+    elif item.engagement_score and item.engagement_score >= 50:
+        reasons.append("Moderate engagement")
+    
+    if item.days_since_creation and item.days_since_creation <= 7:
+        reasons.append("Recent lead")
+    elif item.days_since_creation and item.days_since_creation <= 30:
+        reasons.append("Recent activity")
+    
+    return reasons[:3]  # Limit to 3 reasons
+
+
+def _suggest_basic_action(lead: LeadLite, ml_score: float) -> tuple[str, str]:
+    """Suggest personalised next action based on lead's individual profile"""
+    course = lead.course or "general_course"
+    campus = lead.campus or "main_campus"
+    days_old = lead.days_since_creation or 0
+    engagement = lead.engagement_level or "low"
+    touchpoints = lead.touchpoint_count or 0
+    
+    # Personalize based on individual characteristics, not just score
+    course_clean = course.lower().replace(' ', '_').replace('(', '').replace(')', '')
+    campus_clean = campus.lower().replace(' ', '_')
+    
+    # Factor in timeline urgency
+    is_new = days_old <= 7
+    is_stalled = days_old > 21
+    is_highly_engaged = engagement == "high" or touchpoints > 5
+    
+    # Personalized action selection
+    if ml_score >= 0.8:
+        if is_highly_engaged:
+            action = f"schedule_course_director_meeting_{course_clean}"
+            content = f"Book urgent meeting with {course} Course Director for {lead.name}. High engagement + high score = priority candidate."
+        else:
+            action = "schedule_interview_urgent"
+            content = f"Fast-track {lead.name} for interview. High conversion probability - book within 48 hours."
+    
+    elif ml_score >= 0.6:
+        if is_new:
+            action = f"send_welcome_package_{course_clean}"
+            content = f"Send personalised welcome package for {course} including virtual tour and course highlights."
+        elif is_stalled:
+            action = f"invite_exclusive_taster_{course_clean}"
+            content = f"Re-engage {lead.name} with exclusive {course} taster session at {campus}."
+        elif "music" in course.lower():
+            action = f"send_studio_showcase_{campus_clean}"
+            content = f"Share latest music studio equipment and recent student productions from {campus}."
+        elif "business" in course.lower():
+            action = f"send_industry_connections_{course_clean}"
+            content = f"Highlight {course} industry partnerships and recent graduate employment success."
+        else:
+            action = f"invite_open_day_{campus_clean}"
+            content = f"Invite to next open day at {campus}. Personalized campus tour and faculty meetings."
+    
+    elif ml_score >= 0.4:
+        if touchpoints < 2:
+            action = f"send_course_overview_{course_clean}"
+            content = f"Send comprehensive {course} overview with career pathways and module breakdown."
+        elif is_stalled:
+            action = "send_student_testimonials"
+            content = f"Share authentic {course} student stories and career progression examples."
+        else:
+            action = "schedule_course_consultation"
+            content = f"Book consultation with {course} admissions advisor to address specific questions."
+    
+    else:
+        if is_new:
+            action = f"nurture_sequence_start_{course_clean}"
+            content = f"Begin nurturing sequence with {course} career prospects and industry insights."
+        else:
+            action = "send_financial_aid_info"
+            content = f"Provide funding options and payment plans for {course}. Include scholarship opportunities."
+    
+    return action, content
+
+
+def _generate_action_rationale(lead: LeadLite, ml_score: float) -> str:
+    """Generate a concise rationale explaining why the chosen action is appropriate.
+    Uses concrete drivers like engagement_score, touchpoints, recency, and course/campus.
+    """
+    parts: List[str] = []
+    if lead.engagement_score is not None:
+        parts.append(f"engagement score {int(lead.engagement_score)}")
+    if lead.touchpoint_count is not None:
+        parts.append(f"{lead.touchpoint_count} touchpoints")
+    if lead.days_since_creation is not None:
+        days = int(lead.days_since_creation)
+        parts.append(f"created {days} day{'s' if days != 1 else ''} ago")
+    if lead.course and lead.course != "unknown":
+        parts.append(f"interested in {lead.course}")
+    if lead.campus and lead.campus != "unknown":
+        parts.append(f"{lead.campus} campus preference")
+
+    prob = f"{int(round(ml_score * 100))}% prob"
+    summary = ", ".join(parts) if parts else "profile signals"
+    return f"Chosen due to {summary}; ML indicates {prob}."
+
+
+async def leads_triage_rules_fallback(items: List[LeadLite]) -> List[Dict[str, Any]]:
+    """Fallback to rules-based scoring if ML fails"""
+    base: List[Dict[str, Any]] = []
+    for l in items:
+        score, reasons, next_action = _rule_score(l)
+        base.append({"id": l.id, "score": score, "reasons": reasons, "next_action": next_action})
+    
+    if not base:
+        return []
+
+    # Normalize scores to 0-100 range
+    max_score = max(x["score"] for x in base) or 1.0
+    for x in base:
+        x["score"] = round((x["score"] / max_score) * 100.0, 1)
+        x["ml_confidence"] = 0.5  # Default confidence for rules
+        x["ml_probability"] = x["score"] / 100.0
+        x["ml_calibrated"] = x["score"] / 100.0
+        x["insight"] = f"Rules-based score: {x['score']:.1f}%"
+        x["feature_coverage"] = 0.8  # Assume 80% coverage for rules
+    
+    return sorted(base, key=lambda x: x["score"], reverse=True)
 
 
 class EmailDraftModel(BaseModel):

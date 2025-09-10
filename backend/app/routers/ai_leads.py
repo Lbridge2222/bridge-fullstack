@@ -8,6 +8,7 @@ from app.ai import AI_LEADS_ENABLED
 from app.ai.tools.leads import sql_query_leads, compose_outreach as compose_outreach_tool, LeadLite, _rule_score
 from app.ai.tools.score_explanations import calculate_score_breakdown, score_breakdown_to_dict
 from app.telemetry import log_ai_event, log_ai_event_extended
+from app.schemas.ai_ml import PredictBatchRequest
 
 
 router = APIRouter(prefix="/ai/leads", tags=["ai/leads"])
@@ -18,11 +19,17 @@ async def triage(payload: Dict[str, Any]):
     if not AI_LEADS_ENABLED:
         raise HTTPException(status_code=404, detail="AI leads is disabled")
     filters = payload.get("filters", {})
+    lead_ids = payload.get("lead_ids", [])
     t0 = time.time()
     
     try:
         # Use AI-enhanced triage if available, otherwise fall back to rules
-        leads = await sql_query_leads(filters)
+        if lead_ids:
+            # If specific lead IDs are provided, only analyze those
+            leads = await sql_query_leads(filters, lead_ids=lead_ids)
+        else:
+            # Otherwise, analyze all leads matching the filters
+            leads = await sql_query_leads(filters)
         
         try:
             # Try AI-enhanced triage first
@@ -182,7 +189,7 @@ async def compose_outreach_ep(payload: Dict[str, Any]):
 
 
 @router.post("/predict-batch")
-async def predict_batch_leads(payload: Dict[str, Any]):
+async def predict_batch_leads(payload: PredictBatchRequest):
     """
     Get ML predictions for a batch of lead IDs.
     Returns conversion probabilities and confidence scores.
@@ -190,7 +197,7 @@ async def predict_batch_leads(payload: Dict[str, Any]):
     if not AI_LEADS_ENABLED:
         raise HTTPException(status_code=404, detail="AI leads is disabled")
     
-    lead_ids = payload.get("lead_ids", [])
+    lead_ids = payload.lead_ids
     if not lead_ids:
         raise HTTPException(status_code=400, detail="lead_ids array is required")
     
