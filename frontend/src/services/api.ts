@@ -68,9 +68,9 @@ export interface PriorityUpdateRequest {
 }
 
 // Generic fetch wrapper with error handling and return-type aware parsing
-function apiFetch(endpoint: string, options: (RequestInit & { returnType: 'void' })): Promise<void>;
-function apiFetch<T>(endpoint: string, options?: (RequestInit & { returnType?: 'json' })): Promise<T>;
-async function apiFetch<T>(endpoint: string, options?: RequestInit & { returnType?: 'json' | 'void' }): Promise<T | void> {
+export function apiFetch(endpoint: string, options: (RequestInit & { returnType: 'void' })): Promise<void>;
+export function apiFetch<T>(endpoint: string, options?: (RequestInit & { returnType?: 'json' })): Promise<T>;
+export async function apiFetch<T>(endpoint: string, options?: RequestInit & { returnType?: 'json' | 'void' }): Promise<T | void> {
   const response = await fetch(`${API_BASE}${endpoint}`, {
     headers: {
       'Content-Type': 'application/json',
@@ -381,3 +381,49 @@ export const api = {
 };
 
 export default api;
+
+// AI Leads API (ML-backed)
+export const aiLeadsApi = {
+  predictBatch: (leadIds: string[]): Promise<{
+    model_used: string;
+    total_processed: number;
+    successful_predictions: number;
+    predictions: Array<{ lead_id: string; probability: number | null; prediction?: boolean | number | null; confidence?: number | null }>;
+    metadata?: any;
+  }> => {
+    return apiFetch(`/ai/advanced-ml/predict-batch`, {
+      method: 'POST',
+      body: JSON.stringify(leadIds),
+    });
+  },
+
+  triage: (leadIds: string[]): Promise<{
+    summary: { cohort_size: number; top_reasons: string[] };
+    items: Array<{ id: string | number; score: number; reasons: string[]; next_action?: string }>;
+    latency_ms: number;
+  }> => {
+    return apiFetch(`/ai/leads/triage`, {
+      method: 'POST',
+      body: JSON.stringify({ lead_ids: leadIds, filters: {} }),
+    });
+  },
+
+  explainScore: (leadId: string): Promise<any> => {
+    return apiFetch(`/ai/leads/explain-score`, { method: 'POST', body: JSON.stringify({ lead_id: leadId }) });
+  },
+
+  generateCallScript: (request: {
+    lead_data: any;
+    guardrails: any;
+    context: any;
+  }): Promise<{
+    script: string;
+    confidence: number;
+    metadata: any;
+  }> => {
+    return apiFetch(`/api/ai/generate-script`, {
+      method: 'POST',
+      body: JSON.stringify(request),
+    });
+  },
+};

@@ -178,15 +178,24 @@ async def list_leads(
     """
     pattern = f"%{q}%" if q else None
     try:
-        # First test if the view exists and has data
-        # Now run the actual query
+        # Run the query
         result = await fetch(sql, q, pattern, pattern, limit)
         return result
     except Exception as e:
+        import logging
         import traceback
-        error_detail = f"/people/leads DB error: {str(e)}\nTraceback: {traceback.format_exc()}"
-        print(f"DEBUG: Full error: {error_detail}")
-        raise HTTPException(status_code=500, detail=error_detail)
+        
+        # Log full error details server-side (safe for debugging)
+        log = logging.getLogger("people.leads")
+        log.error("Database error in /people/leads: %s", str(e))
+        log.error("Full traceback: %s", traceback.format_exc())
+        log.error("Query parameters: q=%s, pattern=%s, limit=%s", q, pattern, limit)
+        
+        # Return generic error to client (no sensitive details)
+        raise HTTPException(
+            status_code=500, 
+            detail="Failed to fetch leads data. Check server logs for details."
+        )
 
 @router.get("/admissions", response_model=List[dict])
 async def list_admissions(
@@ -677,7 +686,7 @@ async def get_person_progressive_properties(person_id: str):
             ORDER BY cp.group_key, cp.display_order
         """
         
-        properties = await fetch(properties_sql, person_id, org_id, f"{{{progressive_stage}}}")
+        properties = await fetch(properties_sql, person_id, org_id, [progressive_stage])
         
         # Group properties by their group
         grouped_properties = {}

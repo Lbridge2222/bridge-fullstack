@@ -22,6 +22,16 @@ class ChatResponse(BaseModel):
     followUpQuestions: List[str]
     confidence: float
 
+class ScriptRequest(BaseModel):
+    lead_data: Dict[str, Any]
+    guardrails: Dict[str, Any]
+    context: Dict[str, Any]
+
+class ScriptResponse(BaseModel):
+    script: str
+    confidence: float
+    metadata: Dict[str, Any]
+
 @router.post("/chat")
 async def chat_with_gemini(request: ChatRequest):
     """Chat with Gemini AI about lead insights"""
@@ -129,6 +139,91 @@ async def chat_with_gemini(request: ChatRequest):
             
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"AI chat failed: {str(e)}")
+
+@router.post("/generate-script")
+async def generate_call_script(request: ScriptRequest):
+    """Generate personalized call script using Gemini AI"""
+    try:
+        if not GEMINI_API_KEY:
+            raise HTTPException(status_code=500, detail="Gemini API key not configured")
+        
+        # Extract lead data
+        lead_data = request.lead_data
+        guardrails = request.guardrails
+        context = request.context
+        
+        # Create comprehensive prompt for script generation
+        prompt = f"""
+        You are an expert sales script writer for higher education admissions. Create a personalized, professional call script.
+        
+        📋 LEAD INFORMATION:
+        • Name: {lead_data.get('name', 'Lead')}
+        • Course Interest: {lead_data.get('course_interest', 'Not specified')}
+        • Academic Year: {lead_data.get('academic_year', 'Not specified')}
+        • Conversion Probability: {lead_data.get('conversion_probability', 50)}%
+        • Lead Score: {lead_data.get('lead_score', 'Unknown')}/100
+        • Best Contact Time: {lead_data.get('best_contact_time', 'Business hours')}
+        • Recommended Action: {lead_data.get('recommended_action', 'General inquiry')}
+        
+        🎯 CONTEXT:
+        • Call Strategy: {context.get('call_strategy', 'Standard approach')}
+        • Urgency Level: {context.get('urgency', 'medium')}
+        • Contact Attempts: {context.get('contact_attempts', 0)}
+        
+        📝 GUARDRAILS:
+        • Tone: {guardrails.get('tone', 'professional and friendly')}
+        • Max Length: {guardrails.get('max_length', 300)} words
+        • Include Sections: {', '.join(guardrails.get('include_sections', []))}
+        • Compliance Notes: {', '.join(guardrails.get('compliance_notes', []))}
+        
+        🎯 SCRIPT REQUIREMENTS:
+        1. Start with a warm, professional greeting using their name
+        2. Mention their specific course interest and academic year
+        3. Reference their conversion probability level (high/medium/low) subtly
+        4. Include the recommended action naturally
+        5. Ask for permission to continue (compliance)
+        6. Keep it conversational and natural
+        7. End with a clear next step or question
+        
+        Create a natural, engaging script that doesn't sound robotic. Make it feel like a real conversation starter.
+        Return ONLY the script text, no additional formatting or explanations.
+        """
+        
+        # Call Gemini
+        model = genai.GenerativeModel('gemini-1.5-flash')
+        response = model.generate_content(prompt)
+        
+        # Clean up the response
+        script = response.text.strip()
+        
+        # Remove any markdown formatting or extra text
+        if script.startswith('```'):
+            lines = script.split('\n')
+            script = '\n'.join(lines[1:-1]) if len(lines) > 2 else script
+        
+        # Calculate confidence based on data completeness
+        data_completeness = sum([
+            1 if lead_data.get('name') else 0,
+            1 if lead_data.get('course_interest') else 0,
+            1 if lead_data.get('conversion_probability', 0) > 0 else 0,
+            1 if context.get('call_strategy') else 0
+        ]) / 4
+        
+        confidence = min(0.9, 0.6 + (data_completeness * 0.3))
+        
+        return ScriptResponse(
+            script=script,
+            confidence=confidence,
+            metadata={
+                "model_used": "gemini-1.5-flash",
+                "data_completeness": data_completeness,
+                "script_length": len(script.split()),
+                "guardrails_applied": list(guardrails.keys()) if guardrails else []
+            }
+        )
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Script generation failed: {str(e)}")
 
 @router.get("/health")
 async def health_check():

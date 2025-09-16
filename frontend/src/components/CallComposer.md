@@ -12,6 +12,17 @@ The CallComposer provides a complete solution for managing phone calls with lead
 - **Compliance**: Consent capture and Do‑Not‑Call markers
 - **Wrap‑up**: Validated save flow that prevents saving while a call is active
 - **Autosave**: Drafts persist per lead and reload automatically
+- **Prospect Snapshot**: Inline badges for status, score, conversion %, best contact time, source, tags
+- **Quick Dispositions**: One‑click common outcomes (Connected, Callback, Voicemail, No Answer)
+- **Smart Follow‑up Chips**: Instant scheduling shortcuts (+2h, Tomorrow 09:00, Next Mon 10:00)
+- **History Tab**: Optional recent interactions list for fast context
+- **Compact Mode**: Minimal, focused layout; depth lives in a right‑side Details sheet
+- **Compact Mode**: Minimal, focused layout; depth lives in a right‑side Details sheet
+- **Progressive Disclosure**: Aircall‑style call states — Idle (summary) → Dialing → In Call (notes) → Wrap‑up (bottom sheet)
+- **Transcript Drawer**: On-demand right drawer with simple search, available in-call or when a recording exists
+- **After-Call Work (ACW)**: Wrap-up countdown with optional auto-end when required fields are completed
+- **Tags & Assign**: Add tags and assign ownership in wrap-up
+- **Power Dialer Hook**: Optional “Save & Start Next” if a queue exists
 
 ## Feature Details
 
@@ -74,6 +85,10 @@ function MyComponent() {
 | `onClose` | `() => void` | Yes | Called when the modal is closed |
 | `lead` | `Lead \| null` | Yes | Lead data for the call |
 | `onSaveCall` | `(data: CallComposerData) => void` | Yes | Called on validated save |
+| `history` | `{ id; type; title; timestamp; channel?; summary? }[]` | No | Optional recent interactions rendered in the History tab |
+| `mode` | `'compact' \| 'full'` | No | Visual density; `compact` (default) shows a single page with Outcome + Quick Note and a Details sheet; `full` shows tabs and all context inline |
+| `hasQueue` | `boolean` | No | If true, shows a "Save & Start Next" CTA in wrap-up |
+| `onStartNextCall` | `() => void` | No | Callback when user wants to start the next call |
 
 ## Interfaces
 
@@ -114,6 +129,7 @@ export interface CallComposerData {
 - **R** – Toggle recording (while a call is active)
 - **N** – Add the current note
 - **⌘/Ctrl + S** – Save
+  - Hint appears in full mode only and can be hidden
 
 ## Styling
 - Tailwind + shadcn/ui, responsive, accessible labels, keyboard navigation.
@@ -121,3 +137,12 @@ export interface CallComposerData {
 ## Integration Notes
 - Wire recording/transcription to your telephony provider (e.g., Twilio) and store `callSid` on `CallRecording`.
 - Post `CallComposerData` to your backend on save and link to the lead timeline.
+- Provide `history` from your CRM timeline API for best results (e.g., last emails, calls, notes, meetings).
+
+## Design Rationale (Less‑is‑More)
+- Primary jobs appear on one screen: Start/End, add a quick note, then wrap‑up.
+- Outcome entry is revealed only after hang‑up in a bottom Wrap‑up sheet.
+- Secondary depth (AI, full notes, transcript, history, compliance) moves to a Details sheet to keep cognitive load low.
+- Minimal color and typography emphasize content; badges and chips are reduced or hidden in compact mode.
+ - Transcript is on-demand to avoid visual noise during the call; search supports quick retrieval of key moments.
+ - ACW timer nudges timely completion without forcing long forms; auto-end mirrors industry patterns (Aircall).

@@ -1,18 +1,18 @@
-import os, psycopg
-from psycopg.rows import dict_row
-from dotenv import load_dotenv, find_dotenv
+"""
+Legacy database module for backward compatibility.
+This module now delegates to the new database.py module.
+"""
 
-# Load env from multiple likely locations so local setups work reliably
-# 1) nearest .env from current working dir (uvicorn)
-load_dotenv(find_dotenv(), override=False)
-# 2) backend/.env and 3) backend/db/.env relative to this file
-_here = os.path.abspath(os.path.dirname(__file__))               # backend/app/db
-_backend_dir = os.path.abspath(os.path.join(_here, "..", "..")) # backend/
-_backend_env = os.path.join(_backend_dir, ".env")
-_backend_db_env = os.path.join(_backend_dir, "db", ".env")
-for _p in (_backend_env, _backend_db_env):
-    if os.path.exists(_p):
-        load_dotenv(_p, override=False)
+import os
+import psycopg
+from psycopg.rows import dict_row
+import logging
+import asyncio
+import json
+from typing import Optional
+from contextlib import asynccontextmanager
+
+log = logging.getLogger("db.legacy")
 
 def _build_dsn_from_parts() -> str:
     host = (
@@ -63,28 +63,103 @@ def _resolve_dsn() -> str:
     # Fall back to parts if full URL not provided
     return _build_dsn_from_parts()
 
-DSN = _resolve_dsn()
-if not DSN:
-    raise RuntimeError(
-        "DATABASE_URL (or parts) not set. Create backend/.env or backend/db/.env with either:\n"
-        "DATABASE_URL=postgresql://USER:PASSWORD@HOST:PORT/DBNAME\n"
-        "or DATABASE_HOST/PORT/NAME/USER/PASSWORD values."
-    )
+# Connection pool for legacy module
+_connection_pool: Optional[psycopg.AsyncConnection] = None
+_pool_lock = asyncio.Lock()
+
+@asynccontextmanager
+async def _get_connection():
+    """Get a connection from the pool or create a new one."""
+    global _connection_pool
+    
+    async with _pool_lock:
+        if _connection_pool is None:
+            dsn = _get_dsn()
+            _connection_pool = await psycopg.AsyncConnection.connect(dsn)
+            log.info("Created new database connection for legacy module")
+    
+    try:
+        yield _connection_pool
+    except Exception:
+        # Reset connection on error
+        _connection_pool = None
+        raise
+
+def _get_dsn():
+    """Get DSN using the new database module."""
+    try:
+        from .database import get_sync_dsn
+        return get_sync_dsn()
+    except Exception as e:
+        log.error("Failed to get DSN from new database module: %s", e)
+        # Fallback to old logic
+        dsn = _resolve_dsn()
+        if not dsn:
+            raise RuntimeError(
+                "DATABASE_URL (or parts) not set. Create .env with:\n"
+                "DATABASE_URL=postgresql://USER:PASSWORD@HOST:PORT/DBNAME"
+            )
+        return dsn
 
 async def fetch(sql: str, *args):
-    async with await psycopg.AsyncConnection.connect(DSN) as conn:
-        async with conn.cursor(row_factory=dict_row) as cur:
-            await cur.execute(sql, args)
-            return await cur.fetchall()
+    """Execute a SELECT query and return all rows as dictionaries."""
+    try:
+        # Sanitize args to ensure no dict objects
+        sanitized_args = []
+        for i, arg in enumerate(args):
+            if isinstance(arg, dict):
+                log.debug("Dict object found in fetch args at position %d: %s", i, arg)
+                # Convert dict to proper JSON string
+                sanitized_args.append(json.dumps(arg))
+            elif isinstance(arg, list) and arg and isinstance(arg[0], dict):
+                log.debug("List of dict objects found in fetch args at position %d: %s", i, arg)
+                # Convert to list of JSON strings
+                sanitized_args.append([json.dumps(item) for item in arg])
+            else:
+                sanitized_args.append(arg)
+        
+        async with _get_connection() as conn:
+            async with conn.cursor(row_factory=dict_row) as cur:
+                await cur.execute(sql, sanitized_args)
+                return await cur.fetchall()
+    except Exception as e:
+        log.error("Database fetch error in legacy module: %s", e)
+        log.error("SQL: %s", sql)
+        log.error("Args: %s", args)
+        log.error("Args types: %s", [type(arg).__name__ for arg in args])
+        raise
 
 async def fetchrow(sql: str, *args):
+    """Execute a SELECT query and return the first row as a dictionary."""
     rows = await fetch(sql, *args)
     return rows[0] if rows else None
 
 async def execute(sql: str, *args):
-    async with await psycopg.AsyncConnection.connect(DSN) as conn:
-        async with conn.cursor() as cur:
-            await cur.execute(sql, args)
-            await conn.commit()
+    """Execute a non-SELECT query (INSERT, UPDATE, DELETE)."""
+    try:
+        # Sanitize args to ensure no dict objects
+        sanitized_args = []
+        for i, arg in enumerate(args):
+            if isinstance(arg, dict):
+                log.debug("Dict object found in execute args at position %d: %s", i, arg)
+                # Convert dict to proper JSON string
+                sanitized_args.append(json.dumps(arg))
+            elif isinstance(arg, list) and arg and isinstance(arg[0], dict):
+                log.debug("List of dict objects found in execute args at position %d: %s", i, arg)
+                # Convert to list of JSON strings
+                sanitized_args.append([json.dumps(item) for item in arg])
+            else:
+                sanitized_args.append(arg)
+        
+        async with _get_connection() as conn:
+            async with conn.cursor() as cur:
+                await cur.execute(sql, sanitized_args)
+                await conn.commit()
+    except Exception as e:
+        log.error("Database execute error in legacy module: %s", e)
+        log.error("SQL: %s", sql)
+        log.error("Args: %s", args)
+        log.error("Args types: %s", [type(arg).__name__ for arg in args])
+        raise
 
 

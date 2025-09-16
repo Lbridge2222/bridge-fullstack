@@ -270,3 +270,10 @@ LEFT JOIN applications a ON a.programme_id = pr.id AND a.id::text LIKE '550e8400
 WHERE pr.org_id = '550e8400-e29b-41d4-a716-446655440000'
 GROUP BY pr.name, c.name, pr.id
 ORDER BY pr.name;
+
+-- ============================================================================
+-- 9) Refresh materialized views to include new data
+-- ============================================================================
+
+-- Refresh the materialized view to include the new people data
+REFRESH MATERIALIZED VIEW vw_people_enriched;

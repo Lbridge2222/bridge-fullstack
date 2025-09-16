@@ -1,10 +1,22 @@
+import logging
+
+# Configure logging early
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+
+# Bootstrap environment variables FIRST, before any other imports
+from app.bootstrap_env import bootstrap_env
+bootstrap_env()
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import os
-from dotenv import load_dotenv
 
-# load .env
-load_dotenv()
+# Initialize settings after environment bootstrap
+from app.core.settings import get_settings
+settings = get_settings()
 
 app = FastAPI(title="Bridge CRM API", version="0.1")
 
@@ -31,8 +43,7 @@ async def startup_event():
     print("✅ Application initialized")
 
 # CORS for your Vite dev server
-origins_env = os.getenv("CORS_ORIGINS", "http://localhost:5173,http://localhost:5174,http://localhost:3000,http://127.0.0.1:5173,http://127.0.0.1:5174,http://127.0.0.1:3000")
-allow_origins = [o.strip() for o in origins_env.split(",") if o.strip()]
+allow_origins = settings.cors_origins_list
 
 app.add_middleware(
     CORSMiddleware,
@@ -52,11 +63,35 @@ async def root():
 
 @app.get("/healthz")
 async def healthz():
-    return {"ok": True}
+    """
+    Basic health check endpoint.
+    Returns the application status and database connectivity.
+    """
+    try:
+        from app.db.database import test_database_connection
+        db_ok = await test_database_connection()
+        
+        return {
+            "ok": db_ok,
+            "app": "Bridge CRM API",
+            "version": app.version,
+            "database": "connected" if db_ok else "disconnected"
+        }
+    except Exception as e:
+        # Log the full error but return minimal info to the client
+        logging.getLogger("healthz").error("Health check failed: %s", e)
+        return {
+            "ok": False,
+            "app": "Bridge CRM API", 
+            "version": app.version,
+            "error": "Database connection failed"
+        }
 
 # Routers
 from app.routers.people import router as people_router
 app.include_router(people_router, prefix="/people", tags=["people"])
+from app.routers.crm import router as crm_router
+app.include_router(crm_router, prefix="/crm", tags=["crm"])
 from app.routers.applications import router as apps_router
 app.include_router(apps_router, prefix="/applications", tags=["applications"])
 from app.routers.events import router as events_router
@@ -225,11 +260,51 @@ except Exception as e:
     print(f"❌ Failed to load security router: {e}")
     pass
 
+# RAG router (Phase 6.1 - Ask Ivy Intelligence)
+try:
+    from app.routers.rag import router as rag_router
+    app.include_router(rag_router)
+    print("✅ RAG router loaded successfully")
+except Exception as e:
+    print(f"❌ Failed to load RAG router: {e}")
+    pass
+
+# Calls router (Call Management & Tracking)
+try:
+    from app.routers.calls import router as calls_router
+    app.include_router(calls_router)
+    print("✅ Calls router loaded successfully")
+except Exception as e:
+    print(f"❌ Failed to load calls router: {e}")
+    pass
+
 @app.get("/healthz/db")
 async def healthz_db():
-    from app.db.db import fetchrow
+    """
+    Detailed database health check endpoint.
+    Tests both async engine and psycopg connections.
+    """
     try:
-        row = await fetchrow("select 1 as ok")
-        return {"ok": bool(row and row.get("ok") == 1)}
-    except Exception:
-        return {"ok": False}
+        from app.db.database import test_database_connection, fetchrow
+        
+        # Test async engine
+        engine_ok = await test_database_connection()
+        
+        # Test legacy psycopg connection
+        psycopg_ok = False
+        try:
+            row = await fetchrow("SELECT 1 as ok")
+            psycopg_ok = bool(row and row.get("ok") == 1)
+        except Exception as e:
+            logging.getLogger("healthz").error("Psycopg connection test failed: %s", e)
+        
+        overall_ok = engine_ok and psycopg_ok
+        
+        return {
+            "ok": overall_ok,
+            "engine": "connected" if engine_ok else "disconnected", 
+            "psycopg": "connected" if psycopg_ok else "disconnected"
+        }
+    except Exception as e:
+        logging.getLogger("healthz").error("Database health check failed: %s", e)
+        return {"ok": False, "error": "Database health check failed"}

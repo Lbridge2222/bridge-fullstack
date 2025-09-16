@@ -23,6 +23,24 @@ class PredictBatchRequest(BaseModel):
         """Handle both raw array and wrapped object formats"""
         if v is None:
             raise ValueError("lead_ids is required")
+        
+        # Ensure all lead_ids are strings, not dicts
+        if isinstance(v, list):
+            validated_ids = []
+            for item in v:
+                if isinstance(item, dict):
+                    # Extract string value from dict if it's a dict
+                    if 'id' in item:
+                        validated_ids.append(str(item['id']))
+                    elif 'lead_id' in item:
+                        validated_ids.append(str(item['lead_id']))
+                    else:
+                        # Convert dict to string representation
+                        validated_ids.append(str(item))
+                else:
+                    validated_ids.append(str(item))
+            return validated_ids
+        
         return v
     
     class Config:

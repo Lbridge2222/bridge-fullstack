@@ -389,6 +389,23 @@ class AdvancedMLPipeline:
         Returns:
             PredictBatchResponse with predictions and metadata
         """
+        # Ensure all lead_ids are strings, not dicts
+        validated_lead_ids = []
+        for item in lead_ids:
+            if isinstance(item, dict):
+                # Extract string value from dict if it's a dict
+                if 'id' in item:
+                    validated_lead_ids.append(str(item['id']))
+                elif 'lead_id' in item:
+                    validated_lead_ids.append(str(item['lead_id']))
+                else:
+                    # Convert dict to string representation
+                    validated_lead_ids.append(str(item))
+            else:
+                validated_lead_ids.append(str(item))
+        
+        lead_ids = validated_lead_ids
+        
         if request_id is None:
             import uuid
             request_id = str(uuid.uuid4())

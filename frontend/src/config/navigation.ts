@@ -4,7 +4,7 @@ import {
   BookUser, NotebookTabs, TrendingUp, ShieldCheck, UsersRound,
   MessagesSquare, BarChart2, Layers, PieChart,
   Workflow, PlugZap, FlaskConical, MessageSquare as MessageSquareIcon,
-  Brain, Inbox
+  Brain, Inbox, Settings, Phone
 } from "lucide-react";
 
 export type IconType = React.ComponentType<{ size?: number; className?: string }>;
@@ -88,10 +88,10 @@ export const NAVIGATION: Navigation = [
       { title: "Source Quality", icon: PieChart, href: "/analytics/source-quality" },
     ],
   },
-  // 6) Settings (with Labs and AI subsections)
+  // 6) Settings (with Labs, AI, and Call subsections)
   {
     title: "Settings",
-    icon: Workflow,
+    icon: Settings,
     children: [
       { title: "Workflow Studio", icon: Workflow, href: "/workflows/studio" },
       { title: "Integrations", icon: PlugZap, href: "/workflows/integrations" },
@@ -103,6 +103,15 @@ export const NAVIGATION: Navigation = [
           { title: "Natural Language Querying", icon: MessageSquareIcon, href: "/settings/ai/nlq" },
           { title: "Lead Insights Config", icon: MessageSquareIcon, href: "/settings/ai/lead-insights" },
           { title: "Advanced ML Models", icon: Brain, href: "/settings/ai/advanced-ml" },
+        ],
+      },
+      {
+        title: "Call Settings",
+        icon: Phone,
+        children: [
+          { title: "Call Templates", icon: Phone, href: "/settings/calls/templates" },
+          { title: "Highlight Scanning", icon: Brain, href: "/settings/calls/highlights" },
+          { title: "Recording Settings", icon: Settings, href: "/settings/calls/recording" },
         ],
       },
     ],

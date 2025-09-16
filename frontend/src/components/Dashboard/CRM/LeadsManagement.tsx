@@ -25,7 +25,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { Progress } from "@/components/ui/progress";
 import { usePeople } from "@/hooks/usePeople";
 import EmailComposer, { type Lead as EmailComposerLead } from "@/components/EmailComposer";
-import CallComposer, { type Lead as CallComposerLead } from "@/components/CallComposer";
+import CallConsole, { type Lead as CallConsoleLead } from "@/components/CallConsole";
 import MeetingBooker, { type Lead as MeetingBookerLead } from "@/components/MeetingBooker";
 import { EditableLeadCard } from "@/components/CRM/EditableLeadCard";
 import { useNavigate } from "react-router-dom";
@@ -1317,11 +1317,31 @@ const LeadsManagementPage: React.FC = () => {
     return suggestions.slice(0, 5);
   }, [searchTerm, datasetLeads]);
 
+  // Transform Enquiry to CallConsole Lead format
+  const transformEnquiryToCallConsoleLead = useCallback((enquiry: Enquiry): CallConsoleLead => {
+    return {
+      id: enquiry.id,
+      uid: enquiry.uid,
+      name: enquiry.name,
+      email: enquiry.email,
+      phone: enquiry.phone,
+      courseInterest: enquiry.courseInterest,
+      statusType: enquiry.statusType,
+      nextAction: enquiry.status, // Map status to nextAction
+      followUpDate: undefined, // Could be derived from enquiry data if available
+      aiInsights: {
+        conversionProbability: 0.5, // Default value, could be enhanced with ML
+        callStrategy: "standard",
+        recommendedAction: "Follow up"
+      }
+    };
+  }, []);
+
   // Handler functions (needed for keyboard shortcuts)
   const handlePhoneClick = useCallback((lead: Enquiry) => {
     if (lead.phone) {
       setSelectedLeadForCall(lead);
-      setShowCallComposer(true);
+      setShowCallConsole(true);
     } else {
       push({ title: "No phone number", description: `${lead.name} has no phone number`, variant: "destructive" });
     }
@@ -3610,7 +3630,7 @@ const LeadsManagementPage: React.FC = () => {
   const [selectedLeadForEmail, setSelectedLeadForEmail] = useState<Enquiry | null>(null);
 
   // Call Composer State
-  const [showCallComposer, setShowCallComposer] = useState(false);
+  const [showCallConsole, setShowCallConsole] = useState(false);
   const [selectedLeadForCall, setSelectedLeadForCall] = useState<Enquiry | null>(null);
 
   // Meeting Booker State
@@ -3638,14 +3658,15 @@ const LeadsManagementPage: React.FC = () => {
     }
   };
 
-  // Handle Call Save
+  // Handle Call Save (now works with CallConsole)
   const handleCallSave = async (callData: any) => {
     try {
-      // In a real app, you'd save this call data to your CRM system
-      console.log("Saving call:", {
+      // The CallConsole already saves to the backend via API
+      // This function can be used for additional local handling
+      console.log("Call completed:", {
         lead: callData.lead?.name,
         callType: callData.callType,
-        outcome: callData.outcome?.type ?? callData.callOutcome?.type,
+        outcome: callData.outcome?.type,
         duration: callData.duration,
         notes: callData.notes?.length ?? 0,
         timestamp: callData.timestamp,
@@ -3653,11 +3674,16 @@ const LeadsManagementPage: React.FC = () => {
       });
       
       // Log the call activity
-      console.log(`Call with ${callData.lead?.name ?? "Unknown"} saved successfully`);
+      console.log(`Call with ${callData.lead?.name ?? "Unknown"} completed successfully`);
+      
+      // You could add additional logic here like:
+      // - Refresh the leads list
+      // - Update local state
+      // - Show success notifications
       
     } catch (error) {
-      console.error("Failed to save call:", error);
-      throw error; // Re-throw to let CallComposer handle the error
+      console.error("Failed to handle call completion:", error);
+      // Don't re-throw as CallConsole handles its own errors
     }
   };
 
@@ -4794,12 +4820,14 @@ const LeadsManagementPage: React.FC = () => {
           onSendEmail={handleEmailSend}
         />
 
-        {/* Call Composer Component */}
-        <CallComposer
-          isOpen={showCallComposer}
-          onClose={() => setShowCallComposer(false)}
-          lead={selectedLeadForCall}
+        {/* Call Console Component */}
+        <CallConsole
+          isOpen={showCallConsole}
+          onClose={() => setShowCallConsole(false)}
+          lead={selectedLeadForCall ? transformEnquiryToCallConsoleLead(selectedLeadForCall) : null}
           onSaveCall={handleCallSave}
+          mode="compact"
+          hasQueue={false}
         />
 
         {/* Meeting Booker Component */}
