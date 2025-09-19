@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { peopleApi, PersonEnriched } from '@/services/api';
+import { aiLeadsApi } from '@/services/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -551,9 +552,24 @@ const PersonDetailPage: React.FC = () => {
         onClose={() => setIsEmailComposerOpen(false)}
         lead={convertToLead}
         onSendEmail={async (emailData) => {
-          console.log('Email sent:', emailData);
-          setIsEmailComposerOpen(false);
-          // TODO: Update person data or refresh
+          try {
+            // Log the email to the database
+            await aiLeadsApi.logSentEmail({
+              lead_id: emailData.lead.uid, // Use uid like CallConsole does
+              subject: emailData.subject,
+              body: emailData.body,
+              html_body: emailData.htmlBody,
+              sent_by: "user",
+              intent: emailData.intent || "manual"
+            });
+            
+            console.log('Email logged successfully:', emailData);
+            setIsEmailComposerOpen(false);
+          } catch (error) {
+            console.error('Failed to log email:', error);
+            // Still close the composer even if logging fails
+            setIsEmailComposerOpen(false);
+          }
         }}
       />
 

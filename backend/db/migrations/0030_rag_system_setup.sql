@@ -2,7 +2,10 @@
 -- Creates tables for Ask Ivy's knowledge base and vector search capabilities
 
 -- Create knowledge base documents table
-CREATE TABLE IF NOT EXISTS knowledge_documents (
+-- Drop existing table if it exists to avoid conflicts
+DROP TABLE IF EXISTS knowledge_documents CASCADE;
+
+CREATE TABLE knowledge_documents (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     title VARCHAR(500) NOT NULL,
     content TEXT NOT NULL,
@@ -10,7 +13,7 @@ CREATE TABLE IF NOT EXISTS knowledge_documents (
     category VARCHAR(100),
     tags TEXT[], -- Array of tags for better organization
     metadata JSONB DEFAULT '{}', -- Additional metadata like author, version, etc.
-    embedding VECTOR(1536), -- OpenAI ada-002 embedding dimension
+    embedding VECTOR(768), -- Gemini embedding-001 dimension
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     is_active BOOLEAN DEFAULT TRUE
@@ -34,7 +37,10 @@ USING gin (to_tsvector('english', title || ' ' || content))
 WHERE is_active = TRUE;
 
 -- Create RAG query history table for analytics and improvement
-CREATE TABLE IF NOT EXISTS rag_query_history (
+-- Drop existing table if it exists to avoid conflicts
+DROP TABLE IF EXISTS rag_query_history CASCADE;
+
+CREATE TABLE rag_query_history (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     query_text TEXT NOT NULL,
     query_type VARCHAR(50), -- lead_info, course_info, objection_handling, etc.
@@ -57,7 +63,10 @@ CREATE INDEX IF NOT EXISTS rag_query_history_lead_idx
 ON rag_query_history (lead_id, created_at);
 
 -- Create function to update the updated_at timestamp
-CREATE OR REPLACE FUNCTION update_updated_at_column()
+-- Drop existing function if it exists to avoid conflicts
+DROP FUNCTION IF EXISTS update_updated_at_column() CASCADE;
+
+CREATE FUNCTION update_updated_at_column()
 RETURNS TRIGGER AS $$
 BEGIN
     NEW.updated_at = NOW();
@@ -65,13 +74,17 @@ BEGIN
 END;
 $$ language 'plpgsql';
 
--- Create trigger to automatically update updated_at
+-- Create trigger to automatically update updated_at (if not exists)
+DROP TRIGGER IF EXISTS update_knowledge_documents_updated_at ON knowledge_documents;
 CREATE TRIGGER update_knowledge_documents_updated_at 
     BEFORE UPDATE ON knowledge_documents 
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- Create view for active knowledge documents with search capabilities
-CREATE OR REPLACE VIEW active_knowledge_documents AS
+-- Drop existing view if it exists to avoid conflicts
+DROP VIEW IF EXISTS active_knowledge_documents CASCADE;
+
+CREATE VIEW active_knowledge_documents AS
 SELECT 
     id,
     title,
@@ -88,9 +101,12 @@ FROM knowledge_documents
 WHERE is_active = TRUE;
 
 -- Create function for hybrid search (vector + text search)
-CREATE OR REPLACE FUNCTION hybrid_search(
+-- Drop existing function if it exists to avoid conflicts
+DROP FUNCTION IF EXISTS hybrid_search(TEXT, VECTOR, TEXT[], TEXT[], INTEGER, FLOAT) CASCADE;
+
+CREATE FUNCTION hybrid_search(
     query_text TEXT,
-    query_embedding VECTOR(1536),
+    query_embedding VECTOR(768),
     document_types TEXT[] DEFAULT NULL,
     categories TEXT[] DEFAULT NULL,
     limit_count INTEGER DEFAULT 5,
@@ -130,7 +146,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Insert some initial knowledge base documents
+-- Insert some initial knowledge base documents (skip if already exist)
 INSERT INTO knowledge_documents (title, content, document_type, category, tags) VALUES
 (
     'Computer Science Course Overview',
@@ -169,7 +185,10 @@ INSERT INTO knowledge_documents (title, content, document_type, category, tags) 
 );
 
 -- Create function to get contextual recommendations
-CREATE OR REPLACE FUNCTION get_contextual_recommendations(
+-- Drop existing function if it exists to avoid conflicts
+DROP FUNCTION IF EXISTS get_contextual_recommendations(JSONB, VARCHAR) CASCADE;
+
+CREATE FUNCTION get_contextual_recommendations(
     lead_context JSONB,
     call_state VARCHAR(50) DEFAULT 'active'
 )

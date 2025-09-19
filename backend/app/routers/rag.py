@@ -26,7 +26,7 @@ class RagQuery(BaseModel):
     document_types: Optional[List[str]] = None
     categories: Optional[List[str]] = None
     limit: int = 5
-    similarity_threshold: float = 0.7
+    similarity_threshold: float = 0.5
 
 class RagResponse(BaseModel):
     answer: str
@@ -54,11 +54,38 @@ class EmbeddingResponse(BaseModel):
     model: str
     usage: Dict[str, int]
 
-# Mock embedding service (replace with real OpenAI/Gemini embedding API)
-async def get_embedding(text: str, model: str = "text-embedding-ada-002") -> List[float]:
-    """Generate embedding for text using OpenAI API"""
-    # TODO: Replace with actual OpenAI embedding API call
-    # For now, return a mock embedding
+# Real embedding service using Gemini API
+async def get_embedding(text: str, model: str = "models/embedding-001") -> List[float]:
+    """Generate real embedding using Gemini API"""
+    try:
+        from app.ai import GEMINI_API_KEY
+        
+        if not GEMINI_API_KEY:
+            logger.warning("Gemini API key not available, falling back to mock embedding")
+            return await get_mock_embedding(text)
+        
+        import google.generativeai as genai
+        
+        # Configure Gemini
+        genai.configure(api_key=GEMINI_API_KEY)
+        
+        # Generate embedding using Gemini
+        result = genai.embed_content(
+            model=model,
+            content=text,
+            task_type="retrieval_document"
+        )
+        
+        logger.info(f"✅ Generated real Gemini embedding for text: '{text[:50]}...' using {model}")
+        return result['embedding']
+        
+    except Exception as e:
+        logger.error(f"Gemini embedding failed: {e}")
+        logger.info("Falling back to mock embedding")
+        return await get_mock_embedding(text)
+
+async def get_mock_embedding(text: str) -> List[float]:
+    """Fallback mock embedding when Gemini is unavailable"""
     import hashlib
     import random
     
@@ -67,8 +94,9 @@ async def get_embedding(text: str, model: str = "text-embedding-ada-002") -> Lis
     seed = int(hash_obj.hexdigest()[:8], 16)
     random.seed(seed)
     
-    # Generate 1536-dimensional embedding (OpenAI ada-002 dimension)
-    embedding = [random.uniform(-1, 1) for _ in range(1536)]
+    # Generate 768-dimensional embedding (Gemini embedding-001 dimension)
+    embedding = [random.uniform(-1, 1) for _ in range(768)]
+    logger.warning(f"⚠️ Using mock embedding for text: '{text[:50]}...'")
     return embedding
 
 @router.post("/query", response_model=RagResponse)
@@ -79,10 +107,13 @@ async def query_rag(request: RagQuery):
     try:
         session_id = str(uuid.uuid4())
         
-        # Step 1: Generate embedding for the query
-        query_embedding = await get_embedding(request.query)
+        # Step 1: Expand query for better agent usage patterns
+        expanded_query = expand_query_for_agent_usage(request.query)
         
-        # Step 2: Perform hybrid search on knowledge base
+        # Step 2: Generate embedding for the expanded query
+        query_embedding = await get_embedding(expanded_query)
+        
+        # Step 3: Perform hybrid search on knowledge base
         # Ensure document_types and categories are lists, not dicts
         document_types = request.document_types
         categories = request.categories
@@ -94,7 +125,7 @@ async def query_rag(request: RagQuery):
             categories = list(categories.values()) if categories else None
         
         knowledge_results = await hybrid_search(
-            query_text=request.query,
+            query_text=expanded_query,  # Use expanded query
             query_embedding=query_embedding,
             document_types=document_types,
             categories=categories,
@@ -104,7 +135,7 @@ async def query_rag(request: RagQuery):
         
         logger.info(f"Knowledge search for '{request.query}' found {len(knowledge_results)} results")
         
-        # Step 3: Also try natural language lead queries if relevant
+        # Step 4: Also try natural language lead queries if relevant
         lead_results = None
         if any(keyword in request.query.lower() for keyword in ['lead', 'leads', 'student', 'prospect']):
             try:
@@ -117,7 +148,7 @@ async def query_rag(request: RagQuery):
             except Exception as e:
                 logger.warning(f"Lead query failed: {e}")
         
-        # Step 4: Generate intelligent response
+        # Step 5: Generate intelligent response
         logger.info(f"Generating response with knowledge_results={len(knowledge_results)}, lead_results={len(lead_results) if lead_results else 0}")
         answer, query_type, confidence = await generate_rag_response(
             query=request.query,
@@ -149,8 +180,11 @@ async def query_rag(request: RagQuery):
             lead_id=request.context.get("lead", {}).get("uid") if request.context else None
         )
         
+        # Sanitize response to remove specific university names
+        sanitized_answer = sanitize_response_content(answer)
+        
         return RagResponse(
-            answer=answer,
+            answer=sanitized_answer,
             sources=sources,
             query_type=query_type,
             confidence=confidence,
@@ -161,6 +195,45 @@ async def query_rag(request: RagQuery):
     except Exception as e:
         logger.error(f"RAG query failed: {e}")
         raise HTTPException(status_code=500, detail=f"RAG query failed: {str(e)}")
+
+def sanitize_response_content(content: str) -> str:
+    """Remove specific university names from responses to maintain neutrality"""
+    import re
+    
+    # List of university names to replace with generic terms
+    university_replacements = {
+        r'\bUniversity of Bristol\b': 'universities',
+        r'\bUniversity of Dundee\b': 'universities', 
+        r'\bUCL\b': 'universities',
+        r'\bUniversity of Stirling\b': 'universities',
+        r'\bKing\'s College London\b': 'universities',
+        r'\bKCL\b': 'universities',
+        r'\bUniversity of Manchester\b': 'universities',
+        r'\bLSE\b': 'universities',
+        r'\bLondon School of Economics\b': 'universities',
+        r'\bManchester University\b': 'universities',
+        r'\bBristol\b': 'universities',
+        r'\bDundee\b': 'universities',
+        r'\bStirling\b': 'universities',
+        r'\bManchester\b': 'universities',
+        r'\bUniversity of Sheffield\b': 'universities',
+        r'\bSheffield\b': 'universities',
+        r'\bQueen Mary University of London\b': 'universities',
+        r'\bQMUL\b': 'universities',
+        r'\bUniversity of Derby\b': 'universities',
+        r'\bDerby\b': 'universities',
+        r'\bNewman University\b': 'universities',
+        r'\bBirmingham Newman University\b': 'universities',
+        r'\bNewman\b': 'universities',
+        r'\bBrunel University\b': 'universities',
+        r'\bBrunel\b': 'universities'
+    }
+    
+    sanitized_content = content
+    for pattern, replacement in university_replacements.items():
+        sanitized_content = re.sub(pattern, replacement, sanitized_content, flags=re.IGNORECASE)
+    
+    return sanitized_content
 
 def extract_search_keywords(query: str) -> str:
     """Extract meaningful keywords from natural language query for better search"""
@@ -211,15 +284,115 @@ def extract_search_keywords(query: str) -> str:
     logger.info(f"Extracted keywords: '{query}' -> '{result}'")
     return result
 
+def expand_query_for_agent_usage(query_text: str) -> str:
+    """Expand person-specific queries to include underlying concepts for better search"""
+    
+    # Common patterns where agents ask about specific people but need concept-based info
+    person_specific_patterns = {
+        # APEL patterns - more comprehensive
+        r'\b(\w+)\s+(?:is|does|can|should|would)\s+(?:an?\s+)?apel\b': r'\1 apel accreditation prior learning',
+        r'\b(\w+)\s+doesn\'t\s+have\s+any\s+qualifications\s+is\s+she\s+apel\?': r'\1 apel accreditation prior learning qualifications',
+        r'\b(\w+)\s+(?:doesn\'t|does not|has no|without)\s+(?:any\s+)?qualifications?\s+(?:is|does|can|should|would)\s+(?:she|he|they)\s+apel\b': r'\1 apel accreditation prior learning qualifications',
+        r'\bapel\s+(?:for|with|regarding|about)\s+(\w+)\b': r'apel accreditation prior learning \1',
+        r'\bwhat\s+(?:should\s+i\s+tell|to\s+tell)\s+(\w+)\s+about\s+apel\b': r'apel accreditation prior learning \1 guidance',
+        r'\b(\w+)\s+(?:is|does|can|should|would)\s+(?:an?\s+)?apel\s+applicant\b': r'\1 apel accreditation prior learning applicant',
+        r'\b(\w+)\s+(?:is|does|can|should|would)\s+(?:an?\s+)?apel\s+applicant\?': r'\1 apel accreditation prior learning applicant',
+        r'\b(\w+)\s+.*apel.*applicant': r'\1 apel accreditation prior learning applicant',
+        r'\b(\w+)\s+(?:is|does|can|should|would)\s+(?:an?\s+)?apel\?': r'\1 apel accreditation prior learning',
+        
+        # Other common patterns can be added here
+        r'\b(\w+)\s+(?:is|does|can|should|would)\s+(?:an?\s+)?international\b': r'\1 international student visa requirements',
+        r'\b(\w+)\s+(?:is|does|can|should|would)\s+(?:an?\s+)?mature\s+student\b': r'\1 mature student entry requirements',
+        r'\b(\w+)\s+(?:is|does|can|should|would)\s+(?:an?\s+)?deferred\s+entry\b': r'\1 deferred entry process',
+    }
+    
+    expanded_query = query_text.lower()
+    
+    # Apply pattern expansions
+    import re
+    for pattern, replacement in person_specific_patterns.items():
+        expanded_query = re.sub(pattern, replacement, expanded_query, flags=re.IGNORECASE)
+    
+    # If we made expansions, combine original and expanded
+    if expanded_query != query_text.lower():
+        combined_query = f"{query_text} {expanded_query}"
+        logger.info(f"Expanded query: '{query_text}' -> '{combined_query}'")
+        return combined_query
+    
+    return query_text
+
 async def hybrid_search(
     query_text: str,
     query_embedding: Optional[List[float]] = None,
     document_types: Optional[List[str]] = None,
     categories: Optional[List[str]] = None,
     limit_count: int = 5,
-    similarity_threshold: float = 0.7
+    similarity_threshold: float = 0.5
 ) -> List[Dict[str, Any]]:
-    """Perform text-based search on knowledge documents"""
+    """Perform hybrid vector + text search on knowledge documents with query expansion"""
+    
+    try:
+        # Expand query for better agent usage patterns
+        expanded_query = expand_query_for_agent_usage(query_text)
+        
+        # If we have embeddings, use vector similarity search
+        if query_embedding:
+            logger.info(f"Using vector similarity search for: '{query_text[:50]}...'")
+            
+            # Convert embedding to PostgreSQL vector format
+            embedding_str = "[" + ",".join(map(str, query_embedding)) + "]"
+            
+            # Use the hybrid_search function from the database
+            query = """
+                SELECT 
+                    id,
+                    title,
+                    content,
+                    document_type,
+                    category,
+                    similarity_score,
+                    rank_score
+                FROM hybrid_search(%s, %s, %s, %s, %s, %s)
+            """
+            
+            # Call the database function with proper parameters
+            logger.info(f"Calling hybrid_search with threshold: {similarity_threshold}")
+            results = await fetch(query, 
+                expanded_query,              # query_text (expanded)
+                embedding_str,                # query_embedding
+                document_types,               # document_types
+                categories,                   # categories
+                limit_count,                  # limit_count
+                similarity_threshold          # similarity_threshold
+            )
+            
+            logger.info(f"Vector search found {len(results)} results")
+            if len(results) == 0:
+                logger.warning(f"No results found for query: '{query_text[:50]}...' with threshold {similarity_threshold}")
+                # Debug: check if we can find any documents at all
+                debug_results = await fetch("SELECT COUNT(*) as count FROM active_knowledge_documents WHERE embedding IS NOT NULL")
+                logger.info(f"Total documents with embeddings: {debug_results[0]['count']}")
+            else:
+                logger.info(f"Top result: {results[0]['title']} (similarity: {results[0]['similarity_score']:.3f})")
+            return results
+        
+        else:
+            # Fallback to text search if no embeddings
+            logger.info(f"Falling back to text search for: '{query_text[:50]}...'")
+            return await text_search(expanded_query, document_types, categories, limit_count)
+            
+    except Exception as e:
+        logger.error(f"Hybrid search failed: {e}")
+        # Fallback to text search
+        return await text_search(expanded_query, document_types, categories, limit_count)
+
+async def text_search(
+    query_text: str,
+    document_types: Optional[List[str]] = None,
+    categories: Optional[List[str]] = None,
+    limit_count: int = 5
+) -> List[Dict[str, Any]]:
+    """Fallback text-based search on knowledge documents"""
     
     # Extract keywords for better search
     search_keywords = extract_search_keywords(query_text)

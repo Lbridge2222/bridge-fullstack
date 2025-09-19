@@ -436,7 +436,7 @@ export class RagApi {
           query,
           context,
           limit: 5,
-          similarity_threshold: 0.7
+          similarity_threshold: 0.4
         }),
         signal
       });

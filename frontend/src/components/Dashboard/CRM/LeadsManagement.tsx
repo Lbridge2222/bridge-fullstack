@@ -24,6 +24,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Progress } from "@/components/ui/progress";
 import { usePeople } from "@/hooks/usePeople";
+import { aiLeadsApi } from "@/services/api";
 import EmailComposer, { type Lead as EmailComposerLead } from "@/components/EmailComposer";
 import CallConsole, { type Lead as CallConsoleLead } from "@/components/CallConsole";
 import MeetingBooker, { type Lead as MeetingBookerLead } from "@/components/MeetingBooker";
@@ -3641,19 +3642,31 @@ const LeadsManagementPage: React.FC = () => {
   // Handle Email Send
   const handleEmailSend = async (emailData: any) => {
     try {
-      // In a real app, you'd send this via your email service
-      console.log("Sending email:", {
-        to: emailData.lead.email,
+      console.log("handleEmailSend called with:", emailData);
+      console.log("Lead data:", emailData.lead);
+      
+      // Log the email to the database
+      const logData = {
+        lead_id: emailData.lead.uid, // Use uid like CallConsole does
         subject: emailData.subject,
         body: emailData.body,
+        html_body: emailData.htmlBody,
+        sent_by: "user", // Could be enhanced to get actual user ID
+        intent: emailData.intent || "manual"
+      };
+      
+      console.log("Calling aiLeadsApi.logSentEmail with:", logData);
+      const result = await aiLeadsApi.logSentEmail(logData);
+      console.log("Email logging result:", result);
+      
+      console.log("Email logged successfully:", {
+        to: emailData.lead.email,
+        subject: emailData.subject,
         lead: emailData.lead.name
       });
       
-      // Log the email activity
-      console.log(`Email sent to ${emailData.lead.name} for ${emailData.intent}`);
-      
     } catch (error) {
-      console.error("Failed to send email:", error);
+      console.error("Failed to log email:", error);
       throw error; // Re-throw to let EmailComposer handle the error
     }
   };

@@ -1,5 +1,5 @@
 // API service layer for backend integration
-const API_BASE = '';
+const API_BASE = 'http://localhost:8000';
 
 export interface ApiError {
   detail: string;
@@ -71,7 +71,10 @@ export interface PriorityUpdateRequest {
 export function apiFetch(endpoint: string, options: (RequestInit & { returnType: 'void' })): Promise<void>;
 export function apiFetch<T>(endpoint: string, options?: (RequestInit & { returnType?: 'json' })): Promise<T>;
 export async function apiFetch<T>(endpoint: string, options?: RequestInit & { returnType?: 'json' | 'void' }): Promise<T | void> {
-  const response = await fetch(`${API_BASE}${endpoint}`, {
+  const fullUrl = `${API_BASE}${endpoint}`;
+  console.log(`API Fetch: ${options?.method || 'GET'} ${fullUrl}`, options?.body ? JSON.parse(options.body as string) : '');
+  
+  const response = await fetch(fullUrl, {
     headers: {
       'Content-Type': 'application/json',
       ...options?.headers,
@@ -91,6 +94,7 @@ export async function apiFetch<T>(endpoint: string, options?: RequestInit & { re
         if (text) message = text;
       } catch (_) {}
     }
+    console.error(`API Error: ${options?.method || 'GET'} ${fullUrl} - ${response.status} ${message}`);
     throw new Error(message);
   }
 
@@ -408,6 +412,30 @@ export const aiLeadsApi = {
     });
   },
 
+  triageLeads: (leadIds: string[], filters: any = {}): Promise<{
+    summary: { cohort_size: number; top_reasons: string[] };
+    items: Array<{ 
+      id: string; 
+      score: number; 
+      reasons: string[]; 
+      next_action?: string;
+      ml_confidence?: number;
+      ml_probability?: number;
+      ml_calibrated?: number;
+      insight?: string;
+      suggested_content?: string;
+      action_rationale?: string;
+      escalate_to_interview?: boolean;
+      feature_coverage?: number;
+    }>;
+    latency_ms: number;
+  }> => {
+    return apiFetch(`/ai/leads/triage`, {
+      method: 'POST',
+      body: JSON.stringify({ lead_ids: leadIds, filters }),
+    });
+  },
+
   explainScore: (leadId: string): Promise<any> => {
     return apiFetch(`/ai/leads/explain-score`, { method: 'POST', body: JSON.stringify({ lead_id: leadId }) });
   },
@@ -424,6 +452,53 @@ export const aiLeadsApi = {
     return apiFetch(`/api/ai/generate-script`, {
       method: 'POST',
       body: JSON.stringify(request),
+    });
+  },
+
+  logSentEmail: async (emailData: {
+    lead_id: string;
+    subject: string;
+    body: string;
+    html_body?: string;
+    sent_by?: string;
+    intent?: string;
+  }): Promise<{
+    success: boolean;
+    email_log_id: number;
+    sent_at: string;
+    message: string;
+  }> => {
+    console.log('aiLeadsApi.logSentEmail called with:', emailData);
+    return apiFetch(`/crm/emails/log`, {
+      method: 'POST',
+      body: JSON.stringify(emailData),
+    });
+  },
+
+  getEmailHistory: (leadId: string, limit: number = 10): Promise<{
+    lead_id: string;
+    email_history: Array<{
+      id: number;
+      subject: string;
+      sent_at: string;
+      sent_by: string;
+      intent: string;
+      status: string;
+      created_at: string;
+    }>;
+    activities: Array<{
+      id: number;
+      activity_type: string;
+      activity_title: string;
+      activity_description?: string;
+      created_at: string;
+      metadata?: any;
+    }>;
+    total_emails: number;
+    total_activities: number;
+  }> => {
+    return apiFetch(`/crm/emails/history/${leadId}?limit=${limit}`, {
+      method: 'GET',
     });
   },
 };

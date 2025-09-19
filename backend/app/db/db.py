@@ -162,4 +162,34 @@ async def execute(sql: str, *args):
         log.error("Args types: %s", [type(arg).__name__ for arg in args])
         raise
 
+async def execute_returning(sql: str, *args):
+    """Execute a non-SELECT query with RETURNING clause and return the results."""
+    try:
+        # Sanitize args to ensure no dict objects
+        sanitized_args = []
+        for i, arg in enumerate(args):
+            if isinstance(arg, dict):
+                log.debug("Dict object found in execute_returning args at position %d: %s", i, arg)
+                # Convert dict to proper JSON string
+                sanitized_args.append(json.dumps(arg))
+            elif isinstance(arg, list) and arg and isinstance(arg[0], dict):
+                log.debug("List of dict objects found in execute_returning args at position %d: %s", i, arg)
+                # Convert to list of JSON strings
+                sanitized_args.append([json.dumps(item) for item in arg])
+            else:
+                sanitized_args.append(arg)
+        
+        async with _get_connection() as conn:
+            async with conn.cursor(row_factory=dict_row) as cur:
+                await cur.execute(sql, sanitized_args)
+                result = await cur.fetchall()
+                await conn.commit()
+                return result
+    except Exception as e:
+        log.error("Database execute_returning error in legacy module: %s", e)
+        log.error("SQL: %s", sql)
+        log.error("Args: %s", args)
+        log.error("Args types: %s", [type(arg).__name__ for arg in args])
+        raise
+
 

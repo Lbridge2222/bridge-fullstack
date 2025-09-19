@@ -5,6 +5,8 @@ CRM router for handling CRM-specific endpoints like field options and saved view
 from fastapi import APIRouter, HTTPException
 from typing import List, Dict, Any, Optional
 from pydantic import BaseModel
+from datetime import datetime
+from app.db.db import fetch, execute, execute_returning
 
 router = APIRouter()
 
@@ -129,3 +131,158 @@ async def create_saved_view(view_data: Dict[str, Any]):
         "created_at": "2024-01-01T00:00:00Z",
         "updated_at": "2024-01-01T00:00:00Z"
     }
+
+class EmailLogRequest(BaseModel):
+    lead_id: str
+    subject: str
+    body: str
+    html_body: Optional[str] = None
+    sent_by: Optional[str] = None
+    intent: Optional[str] = None
+
+@router.post("/emails/log")
+async def log_sent_email(email_data: EmailLogRequest):
+    """Log a sent email to the database."""
+    try:
+        # First check if the table exists
+        try:
+            table_check = await fetch("SELECT COUNT(*) as count FROM email_logs")
+            print(f"Email logs table check: {table_check}")
+        except Exception as e:
+            print(f"Table check failed: {e}")
+            raise HTTPException(status_code=500, detail=f"Email logs table not found: {str(e)}")
+        
+        # Insert email log into database
+        sql = """
+        INSERT INTO email_logs (
+            lead_id, 
+            subject, 
+            body, 
+            html_body, 
+            sent_by, 
+            intent, 
+            sent_at, 
+            status
+        ) VALUES (
+            %s, %s, %s, %s, %s, %s, %s, %s
+        )
+        RETURNING id, sent_at
+        """
+        
+        now = datetime.utcnow()
+        print(f"About to insert email log with data: {email_data}")
+        
+        try:
+            result = await execute_returning(sql, 
+                email_data.lead_id,
+                email_data.subject,
+                email_data.body,
+                email_data.html_body,
+                email_data.sent_by or "system",
+                email_data.intent or "manual",
+                now,
+                "sent"
+            )
+            print(f"Insert result: {result}")
+        except Exception as e:
+            print(f"Insert failed: {e}")
+            raise HTTPException(status_code=500, detail=f"Insert failed: {str(e)}")
+        
+        if result and len(result) > 0:
+            email_log_id = result[0]["id"]
+            sent_at = result[0]["sent_at"]
+            
+            # Also add an activity entry to the lead's timeline
+            try:
+                activity_sql = """
+                INSERT INTO lead_activities (
+                    lead_id,
+                    activity_type,
+                    activity_title,
+                    activity_description,
+                    created_at,
+                    metadata
+                ) VALUES (
+                    %s, %s, %s, %s, %s, %s
+                )
+                """
+                
+                await execute(activity_sql, 
+                    email_data.lead_id,
+                    "email_sent",
+                    f"Email sent: {email_data.subject}",
+                    f"Email sent to lead with subject: {email_data.subject}",
+                    now,
+                    {"email_log_id": email_log_id, "intent": email_data.intent}
+                )
+                print(f"Activity logged successfully")
+            except Exception as e:
+                print(f"Activity logging failed: {e}")
+                # Don't fail the whole operation if activity logging fails
+            
+            return {
+                "success": True,
+                "email_log_id": email_log_id,
+                "sent_at": sent_at.isoformat(),
+                "message": "Email logged successfully"
+            }
+        else:
+            raise HTTPException(status_code=500, detail="Insert completed but no result returned")
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Email logging error: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to log email: {str(e)}")
+
+
+@router.get("/emails/history/{lead_id}")
+async def get_email_history(lead_id: str, limit: int = 10):
+    """Get email history for a specific lead"""
+    try:
+        # Get recent emails for this lead
+        email_history_sql = """
+            SELECT 
+                id,
+                subject,
+                sent_at,
+                sent_by,
+                intent,
+                status,
+                created_at
+            FROM email_logs 
+            WHERE lead_id = %s 
+            ORDER BY sent_at DESC 
+            LIMIT %s
+        """
+        
+        email_history = await fetch(email_history_sql, lead_id, limit)
+        
+        # Get recent activities for this lead
+        activities_sql = """
+            SELECT 
+                id,
+                activity_type,
+                activity_title,
+                activity_description,
+                created_at,
+                metadata
+            FROM lead_activities 
+            WHERE lead_id = %s 
+            ORDER BY created_at DESC 
+            LIMIT %s
+        """
+        
+        activities = await fetch(activities_sql, lead_id, limit)
+        
+        return {
+            "lead_id": lead_id,
+            "email_history": email_history,
+            "activities": activities,
+            "total_emails": len(email_history),
+            "total_activities": len(activities)
+        }
+        
+    except Exception as e:
+        print(f"Email history error: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to fetch email history: {str(e)}")
