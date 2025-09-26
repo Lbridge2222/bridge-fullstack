@@ -24,6 +24,48 @@ This project is currently **closed-source** and proprietary. No license is grant
 
 ## 🤖 AI Implementation - GOSPEL TRUTH
 
+### Dual-mode Ivy Responses (Backend)
+
+- Conversational (default)
+  - Endpoint: `POST /ai/router/v2` or `POST /rag/query_v2`
+  - Returns envelope:
+    - kind: "conversational"
+    - answer_markdown: short paragraphs, British English
+    - actions: array of `{label, action}` where action ∈ {open_call_console, open_email_composer, open_meeting_scheduler, view_profile}
+    - maybe_modal: optional `{type, payload}` suggestion (safe to ignore)
+    - sources: optional compact previews (≤3)
+  - Feature flag: `IVY_ORGANIC_ENABLED=true` enables organic prompt and paragraph style.
+
+- Modal (structured)
+  - Endpoint: `POST /ai/router/v2` with modal intent or explicit FE flow
+  - Returns envelope:
+    - kind: "modal"
+    - modal: `{type, payload}` exactly as FE expects today
+    - actions: optional UI actions (canonical names)
+
+Example (conversational):
+
+```
+{
+  "kind": "conversational",
+  "answer_markdown": "Isla is interested in Music Performance...",
+  "actions": [{"label": "Open Call Console", "action": "open_call_console"}],
+  "maybe_modal": {"type": "suggestions", "payload": {"leadId": "..."}},
+  "sources": [{"title": "Entry Requirements", "preview": "..."}]
+}
+```
+
+Example (modal):
+
+```
+{
+  "kind": "modal",
+  "modal": {"type": "suggestions", "payload": {"modal_title": "AI Suggestions — Isla", "summary_bullets": ["…"]}},
+  "actions": [{"label": "Book 1-1", "action": "open_meeting_scheduler"}]
+}
+```
+
+
 **⚠️ CRITICAL: The AI integration in this project is enshrined as GOSPEL TRUTH.**
 
 The AI system has been tested, proven, and documented. Any deviation from the documented implementation will break the system.

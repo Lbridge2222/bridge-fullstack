@@ -213,7 +213,7 @@ confidence = float(max(prediction_proba) - 0.5) * 2
 
 ### Immediate (1-2 hours)
 1. **Add Input Validation**: Pydantic schemas for all ML endpoints
-2. **Standardize Payloads**: Accept both formats, return consistent response
+2. **Standardise Payloads**: Accept both formats, return consistent response
 3. **Add Health Check**: `/ai/advanced-ml/health` endpoint with model status
 4. **Feature Safety**: Add NaN/inf handling in feature engineering
 
@@ -316,7 +316,7 @@ ORDER BY p.created_at DESC
 ### Immediate Actions
 1. Implement proper model registry with checksums and versioning
 2. Add comprehensive input validation with Pydantic schemas
-3. Standardize request/response formats across all ML endpoints
+3. Standardise request/response formats across all ML endpoints
 4. Add structured telemetry for ML operations
 5. Implement feature safety guards for NaN/inf handling
 

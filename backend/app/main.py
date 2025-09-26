@@ -24,6 +24,10 @@ app = FastAPI(title="Bridge CRM API", version="0.1")
 from app.middleware.request_id import RequestIDMiddleware
 app.add_middleware(RequestIDMiddleware)
 
+# Add rate limiting middleware
+from app.middleware.rate_limit import rate_limiter
+app.middleware("http")(rate_limiter)
+
 # Startup event
 @app.on_event("startup")
 async def startup_event():
@@ -39,6 +43,24 @@ async def startup_event():
     except Exception as e:
         print(f"⚠️  ML model pre-warming failed: {e}")
         print("ℹ️  First ML request may be slower due to cold start")
+    
+    # Warm up narrate() cache for common modes
+    try:
+        import asyncio
+        from app.ai.runtime import narrate
+        
+        # Warm up cache with minimal calls
+        warmup_tasks = [
+            narrate("conversational", {"person": "."}),
+            narrate("rag-answer", {"query": "."}),
+            narrate("triage-bullets", {"score": 0})
+        ]
+        
+        # Run warmup in background
+        asyncio.create_task(asyncio.gather(*warmup_tasks, return_exceptions=True))
+        print("🔄 AI cache warmup initiated")
+    except Exception as e:
+        print(f"⚠️  AI cache warmup failed: {e}")
     
     print("✅ Application initialized")
 
@@ -113,7 +135,7 @@ except Exception:
     # Allow app to start if optional AI deps missing
     pass
 
-# Adaptive triage router (ML-optimized lead scoring)
+# Adaptive triage router (ML-optimised lead scoring)
 try:
     from app.ai.triage import router as triage_router
     app.include_router(triage_router)
@@ -269,6 +291,15 @@ except Exception as e:
     print(f"❌ Failed to load RAG router: {e}")
     pass
 
+# AI Router (Multi-step orchestration for Ask Ivy)
+try:
+    from app.routers.ai_router import router as ai_router_router
+    app.include_router(ai_router_router)
+    print("✅ AI Router loaded successfully")
+except Exception as e:
+    print(f"❌ Failed to load AI Router: {e}")
+    pass
+
 # Calls router (Call Management & Tracking)
 try:
     from app.routers.calls import router as calls_router
@@ -276,6 +307,15 @@ try:
     print("✅ Calls router loaded successfully")
 except Exception as e:
     print(f"❌ Failed to load calls router: {e}")
+    pass
+
+# Meetings router (Meeting Booking & Scheduling)
+try:
+    from app.routers.meetings import router as meetings_router
+    app.include_router(meetings_router)
+    print("✅ Meetings router loaded successfully")
+except Exception as e:
+    print(f"❌ Failed to load meetings router: {e}")
     pass
 
 @app.get("/healthz/db")

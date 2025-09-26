@@ -217,7 +217,7 @@ const EmailComposer: React.FC<EmailComposerProps> = ({
   const [viewMode, setViewMode] = useState<ViewMode>("edit");
   const subjectRef = useRef<HTMLInputElement>(null);
   const messageRef = useRef<HTMLTextAreaElement>(null);
-  const autosaveTimeoutRef = useRef<number | null>(null);
+  const autosaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [availableFields, setAvailableFields] = useState<Array<{ key: string; label: string; description?: string }>>([]);
 
   // Drag and resize state
@@ -1306,6 +1306,25 @@ const EmailComposer: React.FC<EmailComposerProps> = ({
       window.removeEventListener("pointerup", onPointerUp as any);
     };
   }, [isDragging, isResizing, dragStart, resizeStart, getClampBounds, getSafeTop]);
+
+  // Listen for prefill events from AI router
+  useEffect(() => {
+    const onPrefill = (e: Event) => {
+      const detail = (e as CustomEvent).detail as { subject?: string; body?: string };
+      if (detail) {
+        setEmailComposerData(prev => ({
+          ...prev,
+          subject: detail.subject ?? prev.subject,
+          body: detail.body ?? prev.body,
+        }));
+        if (richTextRef.current && (detail.body ?? '').length > 0 && viewMode === 'edit') {
+          richTextRef.current.innerHTML = markdownToRichHtml(detail.body!);
+        }
+      }
+    };
+    window.addEventListener('email.prefill', onPrefill as EventListener);
+    return () => window.removeEventListener('email.prefill', onPrefill as EventListener);
+  }, [viewMode]);
 
   if (!lead || !isOpen) return null;
 

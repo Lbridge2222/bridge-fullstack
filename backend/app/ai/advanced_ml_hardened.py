@@ -737,7 +737,7 @@ async def train_advanced_model(request: ModelTrainingRequest):
         df_engineered = ml_pipeline.engineer_features(df, request.feature_config)
         print(f"✅ Engineered features shape: {df_engineered.shape}")
         
-        # Prepare features and target: keep only numeric columns for modeling
+        # Prepare features and target: keep only numeric columns for modelling
         feature_columns = [col for col in df_engineered.columns if col not in ['id', 'has_application', 'created_at', 'first_name', 'last_name', 'email', 'phone', 'application_source', 'programme_name', 'campus_name', 'lifecycle_state', 'engagement_level', 'status']]
         X = df_engineered[feature_columns].select_dtypes(include=[np.number])
         y = df_engineered['has_application']
@@ -812,7 +812,7 @@ async def get_active_model_info():
 
 @router.get("/feature-analysis")
 async def analyze_features():
-    """Analyze feature importance and relationships"""
+    """Analyse feature importance and relationships"""
     try:
         if not ml_pipeline.models:
             return {"message": "No trained models available"}

@@ -1,0 +1,80 @@
+# Prompt Evaluation Test Cases
+# Tests for typos, slang, pronouns, messy requests, vague/overlapping intents
+
+test_cases:
+  # Typo and grammar tests
+  - query: "show me hgh scrore leeds last mnth"
+    expected_intent: "high_score_leads"
+    expected_sections: ["What You Know", "Next Steps"]
+    
+  - query: "whos the best lead we got rn"
+    expected_intent: "high_score_leads"
+    expected_sections: ["What You Know", "Ask", "Say"]
+    
+  # Pronoun resolution tests
+  - query: "tell me about this person"
+    expected_intent: "lead_profile"
+    expected_sections: ["What You Know", "Ask", "Say", "Next Steps"]
+    
+  - query: "what should I say to her"
+    expected_intent: "lead_info"
+    expected_sections: ["Ask", "Say", "Next Steps"]
+    
+  # Messy requests
+  - query: "like idk what to do with this lead they seem interested but like not really"
+    expected_intent: "lead_info"
+    expected_sections: ["What You Know", "Ask", "Say", "Next Steps"]
+    
+  # Vague/overlapping intents
+  - query: "help me with this student"
+    expected_intent: "lead_info"
+    expected_sections: ["What You Know", "Ask", "Say", "Next Steps"]
+    
+  - query: "what's the deal with this application"
+    expected_intent: "general_query"
+    expected_sections: ["What You Know", "Ask", "Say", "Next Steps"]
+    
+  # Course-specific queries
+  - query: "tell me about computer science course"
+    expected_intent: "course_info"
+    expected_sections: ["What You Know", "Ask", "Say", "Next Steps"]
+    
+  # UCAS queries
+  - query: "when is the UCAS deadline"
+    expected_intent: "policy_info"
+    expected_sections: ["What You Know", "Next Steps"]
+    
+  # Call coaching
+  - query: "what should I ask on this call"
+    expected_intent: "lead_info"
+    expected_sections: ["Ask", "Say", "Next Steps"]
+    
+  # Risk assessment
+  - query: "is this lead at risk"
+    expected_intent: "risk_check"
+    expected_sections: ["What You Know", "Ask", "Say", "Next Steps"]
+    
+  # Conversion forecasting
+  - query: "will this lead convert"
+    expected_intent: "conversion_forecast"
+    expected_sections: ["What You Know", "Ask", "Say", "Next Steps"]
+    
+  # Meeting scheduling
+  - query: "book a meeting with this lead"
+    expected_intent: "schedule"
+    expected_sections: ["What You Know", "Next Steps"]
+    
+  # Property updates
+  - query: "update their date of birth to 25.09.1989"
+    expected_intent: "update_property"
+    expected_sections: ["What You Know", "Next Steps"]
+    
+  # Analytics queries
+  - query: "show me leads from last week"
+    expected_intent: "recent_leads"
+    expected_sections: ["What You Know", "Next Steps"]
+    
+  # General help
+  - query: "how do I use this system"
+    expected_intent: "general_help"
+    expected_sections: ["What You Know", "Next Steps"]

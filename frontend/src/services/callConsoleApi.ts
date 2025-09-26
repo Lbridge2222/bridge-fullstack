@@ -63,6 +63,10 @@ export interface RagResponse {
     snippet: string;
   }>;
   streaming?: boolean;
+  query_type?: string;
+  confidence?: number;
+  generated_at?: string;
+  session_id?: string;
 }
 
 /**

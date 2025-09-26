@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 from pydantic.networks import EmailStr
 from typing import Optional, Any, Literal
-from datetime import datetime
+from datetime import datetime, date
 from uuid import UUID
 from fastapi import HTTPException
 
@@ -24,6 +24,9 @@ class PersonUpdate(BaseModel):
     last_name: Optional[str] = None
     email: Optional[EmailStr] = None
     phone: Optional[str] = None
+    date_of_birth: Optional[date] = None
+    nationality: Optional[str] = None
+    programme: Optional[str] = None
     lifecycle_state: Optional[str] = None
 
 class LeadUpdate(BaseModel):

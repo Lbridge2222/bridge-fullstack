@@ -214,6 +214,8 @@ export const peopleApi = {
     last_name?: string;
     email?: string;
     phone?: string;
+    date_of_birth?: string;
+    programme?: string;
     lifecycle_state?: string;
   }): Promise<any> => {
     return apiFetch(`/people/${personId}`, {
@@ -499,6 +501,44 @@ export const aiLeadsApi = {
   }> => {
     return apiFetch(`/crm/emails/history/${leadId}?limit=${limit}`, {
       method: 'GET',
+    });
+  },
+};
+
+export interface UIAction {
+  label: string;
+  action: 'open_call_console' | 'open_email_composer' | 'open_meeting_scheduler' | 'view_profile';
+}
+
+export interface IvyConversationalResponse {
+  kind: 'conversational';
+  answer_markdown: string;
+  actions?: UIAction[];
+  sources?: Array<{ id?: string; title?: string; preview?: string }>;
+}
+
+export interface IvyModalResponse {
+  kind: 'modal';
+  modal: { type: string; payload: any };
+  actions?: UIAction[];
+}
+
+export type IvyRouterV2Response = IvyConversationalResponse | IvyModalResponse;
+
+export const aiRouterApi = {
+  routerV2: (payload: { query: string; context?: any; ui_capabilities?: string[] }): Promise<IvyRouterV2Response> => {
+    return apiFetch<IvyRouterV2Response>(`/ai/router/v2`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  },
+};
+
+export const ragApi = {
+  queryV2: (payload: { query: string; limit?: number; context?: any }): Promise<IvyConversationalResponse> => {
+    return apiFetch<IvyConversationalResponse>(`/rag/query_v2`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
     });
   },
 };

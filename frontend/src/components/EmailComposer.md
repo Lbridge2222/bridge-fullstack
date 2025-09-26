@@ -1,223 +1,296 @@
-# Email Composer Component
+# EmailComposer Component
 
-A modern, AI-powered email composition component for the Ivy system. This component integrates with the LangChain backend to provide intelligent email generation, user prompt assistance, and grammar/spelling correction.
+A sophisticated, AI-powered email composition tool designed for CRM lead management. Features rich text editing, AI strategy suggestions, email history tracking, and seamless integration with existing ML models.
 
-## Features
+## 🚀 Features
 
-- **AI-Powered Generation**: Generates personalized emails using LangChain and OpenAI
-- **User Prompt Interface**: Custom AI assistance for specific writing needs
-- **Grammar & Spelling Check**: AI-powered text correction and improvement
-- **Intent-Based Templates**: Generate emails for nurture, interview booking, and re-engagement
-- **Smart Merge Fields**: Dynamic content insertion using lead data
-- **Professional Design**: Uses the Ivy color system from `index.css` for consistent theming
-- **Responsive Layout**: Optimized for both desktop and mobile use
+### Core Functionality
+- **Rich Text Editor** - Full WYSIWYG editing with markdown support
+- **AI-Powered Strategy** - Dynamic email suggestions based on ML triage data
+- **Email History** - Track conversation history to prevent duplicate outreach
+- **Drag & Resize** - Movable, resizable modal interface
+- **Multiple View Modes** - Edit, Preview, HTML, and Rich Text modes
+- **Merge Fields** - Dynamic lead data insertion
+- **Grammar Check** - Built-in writing assistance
 
-## AI Integration
+### AI Integration
+- **Ask Ivy** - RAG-powered assistant for lead insights
+- **ML Triage Integration** - Real conversion probability and strategy suggestions
+- **Quick Actions** - Pre-built email templates (Nurture, Interview, Re-engage)
+- **Smart Suggestions** - Context-aware email recommendations
 
-The component is fully integrated with the LangChain backend:
+### User Experience
+- **Professional UI** - Clean, modern interface matching CallConsole design
+- **Keyboard Shortcuts** - Power user efficiency
+- **Auto-save** - Draft preservation
+- **Responsive Design** - Works across different screen sizes
 
-### 1. **Intent-Based Generation**
-- **Nurture**: AI generates nurturing emails based on lead context
-- **Book Interview**: Creates interview scheduling emails
-- **Re-engage**: Generates re-engagement content for cold leads
-- **Custom**: User-defined prompts for specific needs
+## 📁 File Structure
 
-### 2. **User Prompt Interface**
-Users can ask the AI for specific assistance:
-- "Make this more professional"
-- "Add a call to action"
-- "Improve the tone"
-- "Make it more concise"
-- "Add urgency to the message"
+```
+EmailComposer.tsx          # Main component (2,033 lines)
+├── Rich Text Editor        # ContentEditable with formatting
+├── AI Tools Section        # Ask Ivy + Quick Actions
+├── Email History          # Recent activity tracking
+├── Email Strategy         # ML-powered suggestions
+├── Merge Fields           # Dynamic data insertion
+└── Send/Preview Logic     # Email composition flow
+```
 
-### 3. **Grammar & Spelling Check**
-- AI-powered text correction
-- Grammar improvement suggestions
-- Spelling error detection
-- Tone and style enhancements
+## 🎯 Key Components
 
-### 4. **Real-Time AI Status**
-- Loading indicators during AI processing
-- Success/error feedback
-- AI response display
+### 1. Rich Text Editor
+- **ContentEditable** implementation with formatting controls
+- **Markdown Support** - Converts markdown to HTML
+- **Formatting Tools** - Bold, italic, underline, lists, alignment
+- **Live Preview** - Real-time rendering
 
-## Props
-
+### 2. AI Tools Section
 ```typescript
-interface EmailComposerProps {
-  isOpen: boolean;           // Controls modal visibility
-  onClose: () => void;       // Callback when modal closes
-  lead: Lead | null;         // Lead data for personalization
-  onSendEmail?: (emailData: EmailComposerData) => Promise<void>; // Custom send handler
-}
+// Ask Ivy Integration
+const askIvy = async (query: string, lead: Lead) => {
+  const context = {
+    lead: { id, uid, name, email, courseInterest },
+    transcriptWindow: [],
+    selection: '',
+    consentGranted: false
+  };
+  return await ragApi.queryRag(query, context);
+};
 ```
 
-## Lead Interface
+**Quick Actions:**
+- **Nurture** - Generate nurturing email
+- **Interview** - Generate meeting booking email
+- **Re-engage** - Generate re-engagement email
+- **About Lead** - Get lead information
 
+### 3. Email History
+- **Recent Emails** - Last 3 sent emails with metadata
+- **Activity Timeline** - Recent lead activities
+- **Conversation Status** - New vs ongoing conversations
+- **Duplicate Prevention** - Prevents redundant outreach
+
+### 4. Email Strategy (AI-Powered)
+- **Conversion Probability** - ML-based conversion chance
+- **Email Approach** - Personalized strategy recommendations
+- **Follow-up Actions** - Next steps based on lead profile
+- **UK English** - Localized content generation
+
+## 🔧 Technical Implementation
+
+### State Management
 ```typescript
-interface Lead {
-  id: number;
-  uid: string;
-  name: string;
-  email: string;
-  phone: string;
-  courseInterest: string;
-  academicYear: string;
-  campusPreference: string;
-  enquiryType: string;
-  leadSource: string;
-  status: string;
-  statusType: "new" | "contacted" | "qualified" | "nurturing" | "cold";
-  leadScore: number;
-  createdDate: string;
-  lastContact: string;
-  nextAction: string;
-  slaStatus: "urgent" | "warning" | "within_sla" | "met";
-  contactAttempts: number;
-  tags: string[];
-  colorTag?: string;
-  avatar?: string;
-  aiInsights: {
-    conversionProbability: number;
-    bestContactTime: string;
-    recommendedAction: string;
-    urgency: "high" | "medium" | "low";
-  };
+interface EmailComposerData {
+  lead: Lead;
+  subject: string;
+  body: string;
+  htmlBody?: string;
+  aiSuggestions: Array<{
+    type: 'template' | 'content';
+    title: string;
+    description: string;
+    confidence: number;
+    action: string;
+    mlScore?: number;
+    conversionProb?: number;
+    escalate?: boolean;
+  }>;
 }
 ```
 
-## AI Workflow
+### API Integration
+- **Email Logging** - `/crm/emails/log` - Tracks sent emails
+- **Email History** - `/crm/emails/history/{lead_id}` - Fetches conversation history
+- **AI Triage** - `/ai/leads/triage` - Gets ML insights for strategy
+- **RAG Query** - `/rag/query` - Ask Ivy functionality
 
-### 1. **Intent Selection**
-- Choose from predefined intents (nurture, interview, re-engage)
-- AI automatically generates appropriate content
-- Custom prompt option for specific needs
+### Drag & Resize System
+- **Pointer Events API** - Modern drag implementation
+- **Boundary Detection** - Prevents off-screen positioning
+- **Smooth Animations** - 60fps drag performance
+- **Mode Switching** - Handles view mode changes
 
-### 2. **Content Generation**
-- AI analyzes lead data and context
-- Generates personalized subject and body
-- Applies best practices for email composition
+## 🎨 UI/UX Design
 
-### 3. **User Refinement**
-- Edit AI-generated content manually
-- Use custom prompts for specific improvements
-- Grammar and spelling correction
+### Design System
+- **Shadcn/UI Components** - Consistent design language
+- **Brand Colors** - Candy Apple Red (#FF0800), Brighter Ivy Green (#11694A)
+- **Typography** - Consistent font sizing and weights
+- **Spacing** - Harmonious padding and margins
 
-### 4. **Final Review**
-- Preview the complete email
-- Check merge fields and personalization
-- Send or make further adjustments
+### Responsive Behavior
+- **Modal Positioning** - Smart initial placement
+- **Resize Constraints** - Minimum/maximum size limits
+- **Scroll Handling** - Proper overflow management
+- **Mobile Support** - Touch-friendly interactions
 
-## Backend Integration
+## 🔄 Data Flow
 
-The component integrates with these AI endpoints:
+### Email Composition Flow
+1. **Lead Selection** → Load lead data and history
+2. **AI Analysis** → Generate strategy suggestions
+3. **Content Creation** → Rich text editing with merge fields
+4. **Preview & Send** → Final review and delivery
+5. **Logging** → Record email in database
 
-- **`POST /ai/leads/compose/outreach`**: Main email generation endpoint
-- **Intent Support**: nurture, book_interview, reengage, custom, grammar_check
-- **Lead Context**: Uses lead data for personalization
-- **User Prompts**: Custom instructions for AI assistance
-
-## Color System
-
-The component uses the Ivy color system defined in `index.css`:
-
-- **Primary Colors**: Uses `--foreground`, `--background`, `--card` for main elements
-- **Accent Colors**: Uses `--accent`, `--info` for interactive elements and highlights
-- **Status Colors**: Uses `--muted`, `--border` for secondary elements
-- **Semantic Colors**: Uses `--success`, `--warning`, `--destructive` for feedback states
-
-All colors automatically adapt to light/dark themes and maintain accessibility standards.
-
-## Usage Example
-
-```tsx
-import EmailComposer from "@/components/EmailComposer";
-
-function LeadsPage() {
-  const [showEmailComposer, setShowEmailComposer] = useState(false);
-  const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
-
-  const handleEmailSend = async (emailData: EmailComposerData) => {
-    // Custom email sending logic
-    await sendEmail(emailData);
-  };
-
-  return (
-    <div>
-      <button onClick={() => setShowEmailComposer(true)}>
-        Compose Email with AI
-      </button>
-      
-      <EmailComposer
-        isOpen={showEmailComposer}
-        onClose={() => setShowEmailComposer(false)}
-        lead={selectedLead}
-        onSendEmail={handleEmailSend}
-      />
-    </div>
-  );
-}
+### AI Strategy Generation
+```typescript
+const generateEmailSuggestions = async (lead: Lead) => {
+  // 1. Get ML triage insights
+  const triageResponse = await aiLeadsApi.triageLeads([lead.uid], {});
+  
+  // 2. Extract conversion probability
+  const leadInsights = triageResponse.items[0];
+  
+  // 3. Generate contextual suggestions
+  const suggestions = [
+    {
+      title: "Email Approach",
+      description: isHighConversion 
+        ? `Send personalised welcome email for ${lead.courseInterest}`
+        : `Send nurturing email to build engagement`,
+      action: isHighConversion
+        ? "Include application timeline and clear call-to-action"
+        : "Focus on value and gentle progression"
+    }
+  ];
+};
 ```
 
-## AI Features in Detail
+## 🛠️ Usage Examples
 
-### **Intent-Based Generation**
-- **Nurture**: Builds relationships and provides value
-- **Interview**: Converts interest to action
-- **Re-engage**: Reconnects with cold leads
-- **Custom**: User-defined assistance
+### Basic Email Composition
+```typescript
+<EmailComposer
+  isOpen={isEmailOpen}
+  onClose={() => setIsEmailOpen(false)}
+  lead={selectedLead}
+  onSend={handleEmailSend}
+/>
+```
 
-### **User Prompt Examples**
-- "Make this sound more urgent"
-- "Add a professional closing"
-- "Simplify the language"
-- "Include a clear next step"
-- "Make it more conversational"
+### AI-Powered Strategy
+```typescript
+// Ask Ivy for lead insights
+const askIvy = async (query: string, lead: Lead) => {
+  const response = await ragApi.queryRag(query, {
+    lead: { id: lead.id, uid: lead.uid, name: lead.name },
+    transcriptWindow: [],
+    selection: '',
+    consentGranted: false
+  });
+  return response.answer;
+};
+```
 
-### **Grammar & Spelling**
-- Real-time text analysis
-- Context-aware corrections
-- Style and tone improvements
-- Professional language suggestions
+### Email History Integration
+```typescript
+// Load conversation history
+const loadEmailHistory = async (lead: Lead) => {
+  const history = await aiLeadsApi.getEmailHistory(lead.uid, 5);
+  setEmailHistory(history);
+};
+```
 
-## Styling
+## 🔒 Security & Privacy
 
-The component follows the Ivy design system:
+### Data Protection
+- **Environment Variables** - Sensitive data in `.env` files
+- **API Security** - Proper authentication and validation
+- **PII Handling** - Secure lead data management
+- **Email Logging** - Audit trail for compliance
 
-- **Liquid Glass Effect**: Uses `backdrop-blur` and transparent backgrounds
-- **Consistent Spacing**: Follows the 4px grid system
-- **Professional Typography**: Uses the Satoshi font family
-- **Accessible Colors**: High contrast ratios and semantic color usage
-- **Responsive Design**: Adapts to different screen sizes
+### Error Handling
+- **Graceful Degradation** - Fallbacks for API failures
+- **User Feedback** - Clear error messages
+- **Retry Logic** - Automatic retry for transient failures
+- **Logging** - Comprehensive error tracking
 
-## Customization
+## 🚀 Performance
 
-### 1. **Extend AI capabilities** with new intents and prompts
-### 2. **Customize email sending** logic with your email service
-### 3. **Add new AI endpoints** for specialized assistance
-### 4. **Modify merge fields** to include additional lead data
-### 5. **Adjust styling** using CSS custom properties from `index.css`
+### Optimization Strategies
+- **Debounced Queries** - Reduced API calls
+- **Response Caching** - Faster repeated queries
+- **Lazy Loading** - On-demand data fetching
+- **Efficient Rendering** - Optimized React patterns
 
-## Dependencies
+### Memory Management
+- **Cleanup Effects** - Proper component unmounting
+- **Abort Controllers** - Cancel in-flight requests
+- **Cache Limits** - Prevent memory leaks
+- **Event Listeners** - Proper cleanup
 
-- React 18+
-- Lucide React (for icons)
-- shadcn/ui components (Button, Input, Badge)
-- Ivy color system (`index.css`)
-- LangChain backend integration
+## 🧪 Testing
 
-## Browser Support
+### Component Testing
+- **Unit Tests** - Individual function testing
+- **Integration Tests** - API interaction testing
+- **E2E Tests** - Full user workflow testing
+- **Accessibility Tests** - WCAG compliance
 
-- Chrome 90+
-- Firefox 88+
-- Safari 14+
-- Edge 90+
+### Test Coverage
+- **Core Functions** - Email composition logic
+- **AI Integration** - Strategy generation
+- **UI Interactions** - Drag, resize, editing
+- **Error Scenarios** - Failure handling
 
-## Accessibility
+## 📚 Dependencies
 
-- WCAG 2.1 AA compliant
-- Keyboard navigation support
-- Screen reader friendly
-- High contrast mode support
-- Reduced motion support
-- AI status indicators for all users
+### Core Libraries
+- **React** - Component framework
+- **TypeScript** - Type safety
+- **Shadcn/UI** - Component library
+- **Lucide React** - Icon system
+
+### AI/ML Integration
+- **LangChain** - AI orchestration
+- **RAG API** - Knowledge retrieval
+- **ML Pipeline** - Lead scoring and triage
+
+### Utilities
+- **React Textarea Autosize** - Dynamic textarea sizing
+- **Marked** - Markdown parsing
+- **Date-fns** - Date manipulation
+
+## 🔮 Future Enhancements
+
+### Planned Features
+- **Email Templates** - Pre-built template library
+- **A/B Testing** - Email variant testing
+- **Analytics Integration** - Open/click tracking
+- **Advanced AI** - More sophisticated suggestions
+
+### Technical Improvements
+- **Offline Support** - Local draft storage
+- **Real-time Collaboration** - Multi-user editing
+- **Advanced Formatting** - More rich text options
+- **Performance Optimization** - Faster rendering
+
+## 📖 Related Documentation
+
+- [CallConsole Component](./CallConsole/README.md) - Similar modal interface
+- [AI Integration Guide](../../AI_IMPLEMENTATION_GOSPEL.md) - AI system overview
+- [ML Documentation](../../ML_DOCUMENTATION_INDEX.md) - Machine learning setup
+- [API Reference](../../ML_API_REFERENCE.md) - Backend API documentation
+
+## 🤝 Contributing
+
+### Development Guidelines
+- **Code Style** - Follow existing patterns
+- **TypeScript** - Maintain type safety
+- **Testing** - Add tests for new features
+- **Documentation** - Update this README
+
+### Pull Request Process
+1. **Feature Branch** - Create from main
+2. **Implementation** - Follow coding standards
+3. **Testing** - Ensure all tests pass
+4. **Documentation** - Update relevant docs
+5. **Review** - Request team review
+
+---
+
+**Last Updated:** September 2025  
+**Version:** 1.0.0  
+**Maintainer:** Bridge CRM Team

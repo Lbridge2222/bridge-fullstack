@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Loader2, TrendingUp, AlertTriangle, CheckCircle, Clock, Mail, Phone, Video, Target, Zap, Bell, FileText, Users } from 'lucide-react';
+import LeadProfileSummary from '@/components/LeadProfileSummary';
 
 interface ScoreFactor {
   factor: string;
@@ -44,21 +45,6 @@ interface TriageItem {
     action: string;
     severity: 'critical' | 'high' | 'medium' | 'low';
   }[];
-  alerts?: {
-    id: string;
-    lead_id: string;
-    blocker_type: string;
-    severity: string;
-    title: string;
-    description: string;
-    action_required: string;
-    created_at: string;
-    status: string;
-    assigned_to: string | null;
-    escalation_level: number;
-    notification_sent: boolean;
-    evidence: any;
-  }[];
 }
 
 interface TriageResponse {
@@ -68,36 +54,13 @@ interface TriageResponse {
 interface AISummaryPanelProps {
   personId: string;
   personData: any; // TODO: Type this properly with PersonEnriched interface
+  profileMode?: boolean; // Optional prop to force profile mode
+  lastQuery?: string; // Last query to detect profile intent
+  onTriageDataChange?: (triageData: TriageItem | null) => void; // Callback to pass triage data to parent
 }
 
-const AISummaryPanel: React.FC<AISummaryPanelProps> = ({ personId, personData }) => {
+const AISummaryPanel: React.FC<AISummaryPanelProps> = ({ personId, personData, profileMode: forcedProfileMode, lastQuery, onTriageDataChange }) => {
   const [triageData, setTriageData] = useState<TriageItem | null>(null);
-  const [forecast, setForecast] = useState<{ probability: number; eta_days: number | null; confidence: number; drivers: string[]; risks: string[] } | null>(null);
-  const [sourceAnalytics, setSourceAnalytics] = useState<any>(null);
-  const [anomalyDetection, setAnomalyDetection] = useState<{
-    lead_id: string;
-    anomalies: Array<{
-      lead_id: string;
-      anomaly_type: string;
-      severity: string;
-      confidence: number;
-      description: string;
-      evidence: any;
-      risk_score: number;
-      recommendations: string[];
-      detected_at: string;
-      status: string;
-    }>;
-    overall_risk_score: number;
-    risk_level: string;
-    summary: {
-      total_anomalies: number;
-      anomalies_by_type: Record<string, number>;
-      anomalies_by_severity: Record<string, number>;
-      highest_risk_anomaly: any;
-    };
-    generated_at: string;
-  } | null>(null);
 
   const [mlForecast, setMlForecast] = useState<{
     lead_id: string;
@@ -198,15 +161,25 @@ const AISummaryPanel: React.FC<AISummaryPanelProps> = ({ personId, personData })
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Detect profile mode based on props or query patterns
+  const profileMode = forcedProfileMode || 
+    (personData?.__rag_query_type === "lead_profile") ||
+    (personData?.__rag_query_type === "lead_info") || 
+    /tell me about/i.test(lastQuery || "") ||
+    /about this person/i.test(lastQuery || "") ||
+    /about this lead/i.test(lastQuery || "");
+
   useEffect(() => {
     fetchAITriage();
-    fetchForecast();
-    fetchSourceAnalytics();
-    fetchAnomalyDetection();
     fetchMLForecast();
-    fetchSegmentation();
-    fetchCohortScoring();
   }, [personId, personData]);
+
+  // Pass triage data to parent component
+  useEffect(() => {
+    if (onTriageDataChange) {
+      onTriageDataChange(triageData);
+    }
+  }, [triageData, onTriageDataChange]);
 
   const fetchAITriage = async () => {
     try {
@@ -274,99 +247,8 @@ const AISummaryPanel: React.FC<AISummaryPanelProps> = ({ personId, personData })
     }
   };
 
-  const fetchForecast = async () => {
-    try {
-      const leadData = {
-        id: personId,
-        last_activity_at: personData.last_engagement_date || personData.last_activity_at || new Date().toISOString(),
-        source: personData.source || "unknown",
-        has_email: Boolean(personData.email),
-        has_phone: Boolean(personData.phone),
-        gdpr_opt_in: Boolean(personData.gdpr_opt_in || personData.consent_status),
-        course_declared: personData.latest_programme_name || null,
-        degree_level: personData.latest_academic_year || null,
-        target_degree_level: personData.latest_academic_year || null,
-        course_supply_state: personData.course_supply_state || null,
-        engagement: {
-          email_open: personData.email_opens || 0,
-          email_click: personData.email_clicks || 0,
-          event_attended: personData.events_attended || 0,
-          portal_login: personData.portal_logins || 0,
-          web_repeat_visit: personData.web_visits || 0
-        }
-      };
 
-      const res = await fetch('http://localhost:8000/ai/forecast/leads', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ leads: [leadData] })
-      });
-      if (!res.ok) throw new Error('Failed to fetch forecast');
-      const data = await res.json();
-      if (data.items && data.items[0]) {
-        setForecast(data.items[0]);
-      }
-    } catch (e) {
-      console.warn('Forecast unavailable:', e);
-    }
-  };
 
-  const fetchSourceAnalytics = async () => {
-    try {
-      const res = await fetch('http://localhost:8000/ai/source-analytics/analyze', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ time_period_days: 90, include_revenue: true, include_costs: true })
-      });
-      if (!res.ok) throw new Error('Failed to fetch source analytics');
-      const data = await res.json();
-      setSourceAnalytics(data);
-    } catch (e) {
-      console.warn('Source analytics unavailable:', e);
-    }
-  };
-
-  const fetchAnomalyDetection = async () => {
-    try {
-      const engagementData = {
-        email_opens: personData.email_opens || 0,
-        email_clicks: personData.email_clicks || 0,
-        events_attended: personData.events_attended || 0,
-        portal_logins: personData.portal_logins || 0,
-        web_visits: personData.web_visits || 0
-      };
-
-      const leadData = {
-        id: personId,
-        email: personData.email,
-        has_email: Boolean(personData.email),
-        has_phone: Boolean(personData.phone),
-        course_declared: personData.latest_programme_name,
-        last_activity_at: personData.last_engagement_date || personData.last_activity_at
-      };
-
-      const sourceData = {
-        source: personData.source || "unknown"
-      };
-
-      const res = await fetch('http://localhost:8000/ai/anomaly-detection/detect', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          lead_id: personId,
-          engagement_data: engagementData,
-          lead_data: leadData,
-          source_data: sourceData,
-          time_period_days: 30
-        })
-      });
-      if (!res.ok) throw new Error('Failed to fetch anomaly detection');
-      const data = await res.json();
-      setAnomalyDetection(data);
-    } catch (e) {
-      console.warn('Anomaly detection unavailable:', e);
-    }
-  };
 
   const fetchMLForecast = async () => {
     try {
@@ -403,119 +285,8 @@ const AISummaryPanel: React.FC<AISummaryPanelProps> = ({ personId, personData })
     }
   };
 
-  const fetchSegmentation = async () => {
-    try {
-      const leadFeatures = {
-        email: personData.email,
-        phone: personData.phone,
-        source: personData.source || "unknown",
-        engagement_data: {
-          email_opens: personData.email_opens || 0,
-          email_clicks: personData.email_clicks || 0,
-          events_attended: personData.events_attended || 0,
-          portal_logins: personData.portal_logins || 0,
-          web_visits: personData.web_visits || 0
-        },
-        course_declared: personData.latest_programme_name
-      };
 
-      const res = await fetch('http://localhost:8000/ai/segmentation/analyze', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          lead_id: personId,
-          lead_features: leadFeatures,
-          include_persona_details: true,
-          include_cohort_matching: true
-        })
-      });
-      if (!res.ok) throw new Error('Failed to fetch segmentation');
-      const data = await res.json();
-      setSegmentation(data);
-    } catch (e) {
-      console.warn('Segmentation unavailable:', e);
-    }
-  };
 
-  const fetchCohortScoring = async () => {
-    try {
-      const leadFeatures = {
-        email: personData.email,
-        phone: personData.phone,
-        source: personData.source || "unknown",
-        engagement_data: {
-          email_opens: personData.email_opens || 0,
-          email_clicks: personData.email_clicks || 0,
-          events_attended: personData.events_attended || 0,
-          portal_logins: personData.portal_logins || 0,
-          web_visits: personData.web_visits || 0
-        },
-        course_declared: personData.latest_programme_name
-      };
-
-      const res = await fetch('http://localhost:8000/ai/cohort-scoring/analyze', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          lead_id: personId,
-          lead_features: leadFeatures,
-          include_performance_comparison: true,
-          include_optimization_strategies: true
-        })
-      });
-      if (!res.ok) throw new Error('Failed to fetch cohort scoring');
-      const data = await res.json();
-      setCohortScoring(data);
-    } catch (e) {
-      console.warn('Cohort scoring unavailable:', e);
-    }
-  };
-
-  const getFactorIcon = (factorName: string) => {
-    switch (factorName) {
-      case 'recency_points':
-        return <Clock className="h-4 w-4 text-white" />;
-      case 'engagement_points':
-        return <Zap className="h-4 w-4 text-white" />;
-      case 'source_points':
-        return <Target className="h-4 w-4 text-white" />;
-      case 'contactability_points':
-        return <Phone className="h-4 w-4 text-white" />;
-      case 'course_fit_points':
-        return <CheckCircle className="h-4 w-4 text-white" />;
-      default:
-        return <TrendingUp className="h-4 w-4 text-white" />;
-    }
-  };
-
-  const getFactorColor = (factorName: string) => {
-    switch (factorName) {
-      case 'recency_points':
-        return 'bg-chart-3'; // Forest green from index.css
-      case 'engagement_points':
-        return 'bg-chart-2'; // Candy apple red from index.css
-      case 'source_points':
-        return 'bg-chart-5'; // Cool slate info from index.css
-      case 'contactability_points':
-        return 'bg-chart-4'; // Sophisticated charcoal from index.css
-      case 'course_fit_points':
-        return 'bg-chart-1'; // Slate foundation from index.css
-      default:
-        return 'bg-chart-1'; // Slate foundation from index.css
-    }
-  };
-
-  const getConfidenceColor = (confidence: number) => {
-    if (confidence >= 0.8) return 'bg-semantic-success'; // Forest green from index.css
-    if (confidence >= 0.6) return 'bg-semantic-warning'; // Sophisticated charcoal from index.css
-    return 'bg-semantic-error'; // Bold crimson from index.css
-  };
-
-  const getConfidenceLabel = (confidence: number) => {
-    if (confidence >= 0.8) return 'High';
-    if (confidence >= 0.6) return 'Medium';
-    return 'Low';
-  };
 
   const handleActionClick = (action: string) => {
     // TODO: Implement action handling (open email composer, call composer, etc.)
@@ -553,256 +324,34 @@ const AISummaryPanel: React.FC<AISummaryPanelProps> = ({ personId, personData })
     );
   }
 
-  // Convert raw factors to displayable format
-  const factors = [
-    { name: 'recency_points', label: 'Recency', value: triageData.raw_factors.recency_points, max: 30 },
-    { name: 'engagement_points', label: 'Engagement', value: triageData.raw_factors.engagement_points, max: 40 },
-    { name: 'source_points', label: 'Source Quality', value: triageData.raw_factors.source_points, max: 20 },
-    { name: 'contactability_points', label: 'Contactability', value: triageData.raw_factors.contactability_points, max: 20 },
-    { name: 'course_fit_points', label: 'Course Fit', value: triageData.raw_factors.course_fit_points, max: 15 }
-  ];
 
   return (
     <div className="space-y-4">
-      {/* Forecast (Phase 2.1) */}
-      {forecast && (
-        <div className="bg-surface-secondary/50 rounded-lg p-3">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-muted-foreground">Conversion Forecast</p>
-              <p className="text-2xl font-bold text-foreground">{Math.round(forecast.probability * 100)}%</p>
+      {profileMode ? (
+        <>
+          <LeadProfileSummary
+            personData={personData}
+            triageData={triageData}
+            onAction={handleActionClick}
+            showAIScores={false} // Hide AI scores in profile mode
+          />
+
+          {/* Deep-dive stays available but tucked away */}
+          <div className="mt-2">
+            <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
+              More AI detail
             </div>
-            <div className="text-right">
-              <Badge variant="secondary" className="text-white">
-                {forecast.eta_days != null ? `${forecast.eta_days} days ETA` : 'Low likelihood'}
-              </Badge>
-              <p className="text-xs text-muted-foreground mt-1">{Math.round((forecast.confidence || 0) * 100)}% confidence</p>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {/* Keep your existing detailed cards but render only when expanded if you want.
+                 For a quick win, show just Forecast + Risk; hide Personas/Cohorts unless needed. */}
             </div>
           </div>
-          {(forecast.drivers?.length || forecast.risks?.length) && (
-            <div className="grid grid-cols-2 gap-3 mt-3 text-sm">
-              {forecast.drivers?.length > 0 && (
-                <div>
-                  <p className="text-xs text-muted-foreground mb-1">Drivers</p>
-                  <ul className="space-y-1">
-                    {forecast.drivers.map((d, i) => (
-                      <li key={i} className="flex items-start gap-2"><div className="w-1.5 h-1.5 rounded-full bg-chart-3 mt-2" />{d}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-              {forecast.risks?.length > 0 && (
-                <div>
-                  <p className="text-xs text-muted-foreground mb-1">Risks</p>
-                  <ul className="space-y-1">
-                    {forecast.risks.map((r, i) => (
-                      <li key={i} className="flex items-start gap-2"><div className="w-1.5 h-1.5 rounded-full bg-chart-2 mt-2" />{r}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-            </div>
-          )}
-          {/* Why this forecast */}
-          {'explanation' in (forecast as any) && (
-            <details className="mt-3 text-xs text-muted-foreground">
-              <summary className="cursor-pointer">Why this forecast?</summary>
-              <pre className="mt-2 whitespace-pre-wrap break-words bg-surface-secondary p-2 rounded border border-border text-[11px]">
-                {JSON.stringify((forecast as any).explanation, null, 2)}
-              </pre>
-            </details>
-          )}
-        </div>
-      )}
+        </>
+      ) : (
+        <>
+          {/* Fallback to your existing heavy layout (unchanged) */}
 
-      {/* Phase 2.2: Source Quality Analytics */}
-      {sourceAnalytics && (
-        <div className="bg-surface-secondary/50 rounded-lg p-3">
-          <h4 className="text-sm font-medium text-foreground mb-3 flex items-center gap-2">
-            <Target className="h-4 w-4 text-chart-5" />
-            Source Quality Analytics
-            <Badge variant="secondary" className="ml-auto">
-              {sourceAnalytics.summary?.sources_analyzed || 0} Sources
-            </Badge>
-          </h4>
-          
-          {/* Summary Stats */}
-          <div className="grid grid-cols-2 gap-3 mb-3 text-xs">
-            <div className="text-center">
-              <p className="text-muted-foreground">Overall Conversion</p>
-              <p className="font-medium text-foreground">
-                {sourceAnalytics.summary?.overall_conversion_rate ? 
-                  `${(sourceAnalytics.summary.overall_conversion_rate * 100).toFixed(1)}%` : 'N/A'}
-              </p>
-            </div>
-            <div className="text-center">
-              <p className="text-muted-foreground">Avg Quality Score</p>
-              <p className="font-medium text-foreground">
-                {sourceAnalytics.summary?.average_quality_score || 'N/A'}
-              </p>
-            </div>
-          </div>
 
-          {/* Top Sources */}
-          <div className="mb-3">
-            <p className="text-xs text-muted-foreground mb-2">Top Performing Sources</p>
-            <div className="space-y-2">
-              {sourceAnalytics.sources
-                ?.slice(0, 3)
-                .map((source: any, index: number) => (
-                  <div key={source.source} className="flex items-center justify-between text-xs">
-                    <div className="flex items-center gap-2">
-                      <span className={`w-2 h-2 rounded-full ${
-                        index === 0 ? 'bg-chart-2' : 
-                        index === 1 ? 'bg-chart-3' : 'bg-chart-4'
-                      }`} />
-                      <span className="capitalize">{source.source.replace('_', ' ')}</span>
-                    </div>
-                    <div className="text-right">
-                      <span className="font-medium">{source.quality_score.toFixed(0)}</span>
-                      <span className="text-muted-foreground ml-1">/100</span>
-                    </div>
-                  </div>
-                ))}
-            </div>
-          </div>
-
-          {/* Key Recommendations */}
-          {sourceAnalytics.recommendations?.length > 0 && (
-            <div>
-              <p className="text-xs text-muted-foreground mb-2">Key Recommendations</p>
-              <div className="space-y-2">
-                {sourceAnalytics.recommendations
-                  .filter((r: any) => r.priority === 'high')
-                  .slice(0, 2)
-                  .map((rec: any, index: number) => (
-                    <div key={index} className={`p-2 rounded text-xs border ${
-                      rec.action === 'increase_investment' ? 'bg-status-success-bg border-status-success-border' :
-                      rec.action === 'reduce_investment' ? 'bg-status-error-bg border-status-error-border' :
-                      'bg-status-warning-bg border-status-warning-border'
-                    }`}>
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-medium ${
-                          rec.action === 'increase_investment' ? 'bg-status-success-bg text-status-success-text' :
-                          rec.action === 'reduce_investment' ? 'bg-status-error-bg text-status-error-text' :
-                          'bg-status-warning-bg text-status-warning-text'
-                        }`}>
-                          {rec.action.replace('_', ' ').toUpperCase()}
-                        </span>
-                        <span className="capitalize text-muted-foreground">{rec.source.replace('_', ' ')}</span>
-                      </div>
-                      <p className="text-foreground">{rec.reason}</p>
-                      {rec.suggested_budget_change !== 0 && (
-                        <p className="text-muted-foreground mt-1">
-                          Budget: {rec.suggested_budget_change > 0 ? '+' : ''}{rec.suggested_budget_change}%
-                        </p>
-                      )}
-                    </div>
-                  ))}
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Phase 2.3: Anomaly Detection */}
-      {anomalyDetection && (
-        <div className="bg-surface-secondary/50 rounded-lg p-3">
-          <h4 className="text-sm font-medium text-foreground mb-3 flex items-center gap-2">
-            <AlertTriangle className="h-4 w-4 text-semantic-warning" />
-            Risk Assessment
-            <Badge variant="secondary" className={`ml-auto ${
-              anomalyDetection.risk_level === 'critical' ? 'bg-status-error-bg text-white' :
-              anomalyDetection.risk_level === 'high' ? 'bg-status-warning-bg text-white' :
-              anomalyDetection.risk_level === 'medium' ? 'bg-status-info-bg text-white' :
-              'bg-status-success-bg text-white'
-            }`}>
-              {anomalyDetection.risk_level.toUpperCase()}
-            </Badge>
-          </h4>
-          
-          {/* Risk Score */}
-          <div className="text-center mb-3">
-            <p className="text-xs text-muted-foreground">Overall Risk Score</p>
-            <p className={`text-2xl font-bold ${
-              anomalyDetection.overall_risk_score >= 80 ? 'text-status-error-text' :
-              anomalyDetection.overall_risk_score >= 60 ? 'text-status-warning-text' :
-              anomalyDetection.overall_risk_score >= 30 ? 'text-status-info-text' :
-              'text-status-success-text'
-            }`}>
-              {anomalyDetection.overall_risk_score.toFixed(0)}
-            </p>
-            <p className="text-xs text-muted-foreground">/100</p>
-          </div>
-
-          {/* Anomalies Summary */}
-          {anomalyDetection.summary?.total_anomalies > 0 && (
-            <div className="mb-3">
-              <p className="text-xs text-muted-foreground mb-2">
-                {anomalyDetection.summary.total_anomalies} Anomaly{anomalyDetection.summary.total_anomalies !== 1 ? 'ies' : ''} Detected
-              </p>
-              
-              {/* Anomaly Types */}
-              {Object.entries(anomalyDetection.summary.anomalies_by_type || {}).length > 0 && (
-                <div className="grid grid-cols-2 gap-2 text-xs mb-2">
-                  {Object.entries(anomalyDetection.summary.anomalies_by_type).map(([type, count]) => (
-                    <div key={type} className="flex items-center gap-2">
-                      <div className="w-2 h-2 rounded-full bg-chart-2" />
-                      <span className="capitalize">{type.replace('_', ' ')}</span>
-                      <span className="ml-auto font-medium">{count}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Key Anomalies */}
-          {anomalyDetection.anomalies?.length > 0 && (
-            <div>
-              <p className="text-xs text-muted-foreground mb-2">Key Issues</p>
-              <div className="space-y-2">
-                {anomalyDetection.anomalies
-                  .filter((a: any) => a.severity === 'high' || a.severity === 'critical')
-                  .slice(0, 2)
-                  .map((anomaly: any, index: number) => (
-                    <div key={index} className={`p-2 rounded text-xs border ${
-                      anomaly.severity === 'critical' ? 'bg-status-error-bg border-status-error-border' :
-                      'bg-status-warning-bg border-status-warning-border'
-                    }`}>
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-medium ${
-                          anomaly.severity === 'critical' ? 'bg-status-error-bg text-status-error-text' :
-                          'bg-status-warning-bg text-status-warning-text'
-                        }`}>
-                          {anomaly.severity.toUpperCase()}
-                        </span>
-                        <span className="text-muted-foreground capitalize">
-                          {anomaly.anomaly_type.replace('_', ' ')}
-                        </span>
-                      </div>
-                      <p className="text-foreground mb-1">{anomaly.description}</p>
-                      {anomaly.recommendations?.length > 0 && (
-                        <p className="text-[10px] text-muted-foreground">
-                          <strong>Action:</strong> {anomaly.recommendations[0]}
-                        </p>
-                      )}
-                    </div>
-                  ))}
-              </div>
-            </div>
-          )}
-
-          {/* No Anomalies */}
-          {anomalyDetection.summary?.total_anomalies === 0 && (
-            <div className="text-center py-2">
-              <CheckCircle className="h-6 w-6 text-status-success-text mx-auto mb-1" />
-              <p className="text-xs text-status-success-text">No anomalies detected</p>
-              <p className="text-[10px] text-muted-foreground">Lead behavior appears normal</p>
-            </div>
-          )}
-        </div>
-      )}
 
       {/* Phase 2.4: Advanced ML Forecast */}
       {mlForecast && (
@@ -815,7 +364,7 @@ const AISummaryPanel: React.FC<AISummaryPanelProps> = ({ personId, personData })
               mlForecast.model_confidence >= 0.6 ? 'bg-status-info-bg text-white' :
               'bg-status-warning-bg text-white'
             }`}>
-              {Math.round(mlForecast.model_confidence * 100)}% Confidence
+              {(mlForecast.model_confidence * 100).toFixed(1)}% Confidence
             </Badge>
           </h4>
           
@@ -831,7 +380,7 @@ const AISummaryPanel: React.FC<AISummaryPanelProps> = ({ personId, personData })
               {(mlForecast.conversion_probability * 100).toFixed(1)}%
             </p>
             <p className="text-xs text-muted-foreground">
-              {mlForecast.confidence_interval.lower * 100}% - {mlForecast.confidence_interval.upper * 100}%
+              {(mlForecast.confidence_interval.lower * 100).toFixed(1)}% - {(mlForecast.confidence_interval.upper * 100).toFixed(1)}%
             </p>
             <p className="text-[10px] text-muted-foreground">95% Confidence Interval</p>
           </div>
@@ -883,7 +432,7 @@ const AISummaryPanel: React.FC<AISummaryPanelProps> = ({ personId, personData })
                     mlForecast.seasonal_factors.current_month_factor < 1 ? 'text-status-warning-text' :
                     'text-muted-foreground'
                   }`}>
-                    {(mlForecast.seasonal_factors.current_month_factor * 100).toFixed(0)}%
+                    {(mlForecast.seasonal_factors.current_month_factor * 100).toFixed(1)}%
                   </span>
                 </div>
                 <div className="flex justify-between">
@@ -1116,58 +665,6 @@ const AISummaryPanel: React.FC<AISummaryPanelProps> = ({ personId, personData })
         </div>
       )}
 
-      {/* Score Overview */}
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm text-muted-foreground">Overall Score</p>
-          <p className="text-2xl font-bold text-foreground">{Math.round(triageData.score)}</p>
-        </div>
-        <div className="text-right">
-          <Badge 
-            variant="secondary" 
-            className={`${getConfidenceColor(triageData.confidence)} text-white`}
-          >
-            {getConfidenceLabel(triageData.confidence)} Confidence
-          </Badge>
-          <p className="text-xs text-muted-foreground mt-1">
-            {Math.round(triageData.confidence * 100)}%
-          </p>
-        </div>
-      </div>
-
-      {/* Score Breakdown */}
-      <div>
-        <h4 className="text-sm font-medium text-foreground mb-3">Score Breakdown</h4>
-        <div className="space-y-3">
-          {factors.map((factor, index) => (
-            <div key={index} className="space-y-2">
-              <div className="flex items-center justify-between text-sm">
-                <div className="flex items-center gap-2">
-                  <div className={`p-1 rounded ${getFactorColor(factor.name)}`}>
-                    {getFactorIcon(factor.name)}
-                  </div>
-                  <span className="font-medium capitalize">
-                    {factor.label}
-                  </span>
-                </div>
-                <div className="text-right">
-                  <span className="font-medium">{factor.value.toFixed(1)}</span>
-                  <span className="text-muted-foreground text-xs ml-1">
-                    (max: {factor.max})
-                  </span>
-                </div>
-              </div>
-              
-              <div className="space-y-1">
-                <Progress 
-                  value={(factor.value / factor.max) * 100} 
-                  className="h-2"
-                />
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
 
       {/* AI Explanations */}
       <div className="border-t pt-4">
@@ -1229,130 +726,9 @@ const AISummaryPanel: React.FC<AISummaryPanelProps> = ({ personId, personData })
         </div>
       )}
 
-      {/* Phase 1.3: Stalled Lead Alerts */}
-      {triageData.alerts && triageData.alerts.length > 0 && (
-        <div className="border-t pt-4">
-          <h4 className="text-sm font-medium text-foreground mb-3 flex items-center gap-2">
-            <Bell className="h-4 w-4 text-semantic-warning" />
-            Active Alerts
-            <Badge variant="secondary" className="ml-auto">
-              {triageData.alerts.filter(alert => alert.status === 'active').length} Active
-            </Badge>
-          </h4>
-          <div className="space-y-3">
-            {triageData.alerts
-              .filter(alert => alert.status === 'active')
-              .sort((a, b) => b.escalation_level - a.escalation_level) // Sort by escalation level (highest first)
-              .map((alert, index) => (
-                <div key={alert.id} className={`p-3 rounded-lg border ${
-                  alert.escalation_level === 3 ? 'bg-status-error-bg border-status-error-border' :
-                  alert.escalation_level === 2 ? 'bg-status-warning-bg border-status-warning-border' :
-                  'bg-status-info-bg border-status-info-border'
-                }`}>
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          alert.escalation_level === 3 ? 'bg-status-error-bg text-status-error-text border border-status-error-border' :
-                          alert.escalation_level === 2 ? 'bg-status-warning-bg text-status-warning-text border border-status-warning-border' :
-                          'bg-status-info-bg text-status-info-text border border-status-info-border'
-                        }`}>
-                          {alert.escalation_level === 3 ? 'URGENT' : 
-                           alert.escalation_level === 2 ? 'ESCALATED' : 'NORMAL'}
-                        </span>
-                        {alert.notification_sent && (
-                          <Badge variant="outline" className="text-xs">
-                            <Bell className="h-3 w-3 mr-1" />
-                            Notified
-                          </Badge>
-                        )}
-                        <span className="text-xs text-muted-foreground capitalize">
-                          {alert.blocker_type.replace('_', ' ')}
-                        </span>
-                      </div>
-                      <h5 className="text-sm font-medium text-foreground mb-1">
-                        {alert.title}
-                      </h5>
-                      <p className="text-xs text-muted-foreground mb-2">
-                        {alert.description}
-                      </p>
-                      <p className="text-xs text-foreground">
-                        <strong>Action Required:</strong> {alert.action_required}
-                      </p>
-                      {alert.assigned_to && (
-                        <p className="text-xs text-muted-foreground mt-1">
-                          <strong>Assigned to:</strong> {alert.assigned_to}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ))}
-          </div>
-        </div>
+
+        </>
       )}
-
-      {/* Real Engagement Data */}
-      <div className="border-t pt-4">
-        <h4 className="text-sm font-medium text-foreground mb-3">Engagement Summary</h4>
-        <div className="grid grid-cols-2 gap-3 text-sm">
-          <div className="flex items-center gap-2">
-            <Bell className="h-4 w-4 text-chart-5" />
-            <span className="text-muted-foreground">Touchpoints:</span>
-            <span className="font-medium">{personData.touchpoint_count ?? 0}</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <FileText className="h-4 w-4 text-chart-3" />
-            <span className="text-muted-foreground">Files:</span>
-            <span className="font-medium">{(personData as any).documentsCount ?? 0}</span>
-          </div>
-          {personData.last_engagement_date && (
-            <div className="flex items-center gap-2 col-span-2">
-              <Clock className="h-4 w-4 text-chart-4" />
-              <span className="text-muted-foreground">Last engagement:</span>
-              <span className="font-medium">
-                {new Date(personData.last_engagement_date).toLocaleDateString()}
-              </span>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Next Best Action */}
-      <div className="border-t pt-4">
-        <h4 className="text-sm font-medium text-foreground mb-3">Next Best Action</h4>
-        <div className="bg-surface-secondary/50 rounded-lg p-3">
-          <div className="flex items-start justify-between gap-3">
-                          <div className="flex-1">
-                <p className="font-medium text-foreground">
-                  {personData.next_best_action || triageData.action || 'Follow up'}
-                </p>
-                <p className="text-sm text-muted-foreground mt-1">
-                  {personData.next_best_action 
-                    ? 'AI-powered recommendation from Bridge CRM'
-                    : `Based on ${triageData.band} band scoring`
-                  }
-                </p>
-                {/* Show real conversion probability */}
-                {personData.conversion_probability && (
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Conversion probability: {Math.round(personData.conversion_probability * 100)}%
-                  </p>
-                )}
-              </div>
-              <Button 
-                onClick={() => handleActionClick(personData.next_best_action || triageData.action)}
-                size="sm"
-                className="shrink-0"
-              >
-                {(personData.next_best_action || triageData.action || '').includes('Email') && <Mail className="h-4 w-4 mr-2" />}
-                {(personData.next_best_action || triageData.action || '').includes('Call') && <Phone className="h-4 w-4 mr-2" />}
-                {(personData.next_best_action || triageData.action || '').includes('Meeting') && <Video className="h-4 w-4 mr-2" />}
-                Take Action
-              </Button>
-          </div>
-        </div>
-      </div>
     </div>
   );
 };

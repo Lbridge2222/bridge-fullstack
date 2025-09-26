@@ -51,7 +51,7 @@ async def get_embedding(text: str) -> list:
             
             # Generate embedding using Gemini
             result = genai.embed_content(
-                model="models/embedding-001",
+                model="text-embedding-004",
                 content=text,
                 task_type="retrieval_document"
             )

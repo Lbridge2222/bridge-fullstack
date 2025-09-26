@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 import json
 import re
 from app.db.db import fetch, fetchrow, execute
+from app.ai.runtime import normalize_user_text, flash_parse_query, narrate
 
 router = APIRouter(prefix="/ai/natural-language", tags=["natural-language"])
 
@@ -635,16 +636,80 @@ def generate_predictive_insights(results: List[Dict]) -> Dict[str, Any]:
 async def process_natural_language_query(request: NaturalLanguageQuery):
     """Process natural language query and return lead results with advanced analytics"""
     try:
-        # Interpret the natural language query
-        interpretation = interpret_natural_language_query(request.query)
+        # Normalize user input for better parsing
+        normalized = await normalize_user_text(request.query)
         
-        # Execute the query
-        results = await execute_lead_query(
-            interpretation["query_type"],
-            interpretation["parameters"],
-            request.limit or 50
-        )
+        # Parse with enhanced LLM-based intent detection
+        parsed = await flash_parse_query(normalized)
         
+        intent = parsed["intent"]
+        entities = parsed.get("entities") or {}
+        trange = parsed.get("time_range") or {}
+        limit = int(parsed.get("limit") or request.limit or 50)
+
+        # Build time range SQL fragments safely
+        time_clause, time_params = "", []
+        if trange.get("from") and trange.get("to"):
+            time_clause = " AND p.created_at >= %s AND p.created_at < %s "
+            time_params = [trange["from"], trange["to"]]
+        elif trange.get("preset") in ("last_7d","last_14d","last_30d"):
+            days = int(trange["preset"].split("_")[1].replace("d",""))
+            time_clause = " AND p.created_at >= NOW() - (INTERVAL '1 day' * %s) "
+            time_params = [days]
+
+        # Route to SQL with safe time filtering
+        if intent == "high_score_leads":
+            sql = """
+            SELECT p.id, p.first_name, p.last_name, p.email, p.phone, p.lead_score, p.lifecycle_state, p.created_at,
+                   CASE WHEN a.id IS NOT NULL THEN true ELSE false END as has_application
+            FROM people p
+            LEFT JOIN applications a ON a.person_id = p.id
+            WHERE p.lead_score >= 75 AND p.lifecycle_state = 'lead'""" + time_clause + """
+            ORDER BY p.lead_score DESC
+            LIMIT %s
+            """
+            results = await fetch(sql, *time_params, limit)
+        elif intent == "source_based":
+            source = entities.get("source") or "organic"
+            sql = """
+            SELECT p.id, p.first_name, p.last_name, p.email, p.phone, p.lead_score, p.source, p.lifecycle_state, p.created_at,
+                   CASE WHEN a.id IS NOT NULL THEN true ELSE false END as has_application
+            FROM people p
+            LEFT JOIN applications a ON a.person_id = p.id
+            WHERE LOWER(p.source) = LOWER(%s)""" + time_clause + """
+            ORDER BY p.created_at DESC
+            LIMIT %s
+            """
+            results = await fetch(sql, source, *time_params, limit)
+        else:
+            # General search with time filtering
+            sql = """
+            SELECT p.id, p.first_name, p.last_name, p.email, p.phone, p.lead_score, p.lifecycle_state, p.created_at,
+                   CASE WHEN a.id IS NOT NULL THEN true ELSE false END as has_application
+            FROM people p
+            LEFT JOIN applications a ON a.person_id = p.id
+            WHERE p.lifecycle_state = 'lead'""" + time_clause + """
+            ORDER BY p.created_at DESC
+            LIMIT %s
+            """
+            results = await fetch(sql, *time_params, limit)
+
+        # Advanced analytics (re-use existing)
+        analytics = {
+            "trends": analyze_trends(results),
+            "segmentation": analyze_segmentation_performance(results),
+            "predictive": generate_predictive_insights(results)
+        }
+
+        # Narrated summary for UI (short, progressive)
+        facts = {
+            "intent": intent,
+            "result_count": len(results),
+            "time_preset": trange.get("preset"),
+            "top_example": f"{results[0]['first_name']} {results[0]['last_name']}" if results else None
+        }
+        summary = await narrate(mode="lead-search", facts=facts)
+
         # Generate suggestions for follow-up queries
         suggestions = [
             "Show me leads with scores above 80",
@@ -654,30 +719,25 @@ async def process_natural_language_query(request: NaturalLanguageQuery):
             "Leads by source"
         ]
         
-        # Advanced analytics
-        analytics = {
-            "trends": analyze_trends(results),
-            "segmentation": analyze_segmentation_performance(results),
-            "predictive": generate_predictive_insights(results)
-        }
-        
-        # Create response
+        # Create response with enhanced data
         response = QueryResult(
             query=request.query,
-            interpreted_query=interpretation["description"],
+            interpreted_query=intent,
             results=results,
             total_count=len(results),
-            query_type=interpretation["query_type"],
-            confidence=interpretation["confidence"],
+            query_type=intent,
+            confidence=0.85 if intent!="general_search" else 0.6,
             suggestions=suggestions,
             generated_at=datetime.utcnow()
-        )
+        ).dict()
         
-        # Add analytics to response
-        response_dict = response.dict()
-        response_dict["analytics"] = analytics
+        # Add enhanced analytics and summary
+        response["analytics"] = analytics
+        response["summary"] = summary
+        response["normalized_query"] = normalized
+        response["parsed"] = parsed
         
-        return response_dict
+        return response
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to process query: {str(e)}")

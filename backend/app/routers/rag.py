@@ -5,7 +5,7 @@ Provides intelligent query processing with vector search and knowledge base inte
 
 from fastapi import APIRouter, HTTPException, Depends, BackgroundTasks
 from pydantic import BaseModel
-from typing import List, Dict, Optional, Any
+from typing import List, Dict, Optional, Any, Tuple
 from datetime import datetime
 import json
 import uuid
@@ -14,10 +14,710 @@ import logging
 
 from app.db.db import fetch, fetchrow, execute
 from app.ai.natural_language import interpret_natural_language_query, execute_lead_query
+from app.ai.runtime import narrate
+from app.ai.actions import normalise_actions
+from app.ai.privacy_utils import safe_preview
+from app.ai.cache import CACHE, make_key
+from app.ai import AI_TIMEOUT_HELPER_MS, AI_TIMEOUT_MAIN_MS, IVY_ORGANIC_ENABLED
+from app.ai.ui_models import IvyConversationalResponse, MaybeModal
+from app.ai.actions import normalise_actions
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/rag", tags=["rag"])
+
+# ───────────────────────── Helper Functions ─────────────────────────
+
+def build_situation_context(context: Optional[Dict[str, Any]]) -> str:
+    """Build situational hints from context for better AI responses"""
+    if not context: return ""
+    lead = context.get("lead", {}) or {}
+    call = context.get("call", {}) or {}
+    hints = [
+        f"tone={call.get('tone','neutral')}",
+        f"urgency={call.get('urgency','normal')}",
+        f"channel={call.get('channel','phone')}",
+        f"stage={lead.get('status','unknown')}",
+        f"budget_sensitivity={lead.get('budgetSensitivity','unknown')}",
+        f"objection={(call.get('last_objection') or 'none')[:80]}",
+        f"deadline={lead.get('deadline','unknown')}",
+        f"region={lead.get('region','UK')}",
+    ]
+    return "SITUATION HINTS: " + ", ".join(hints) + "\n"
+
+async def log_rag_query(
+    *,
+    query_text: str,
+    query_type: str,
+    context: Dict[str, Any],
+    retrieved_documents: List[Any],
+    response_text: str,
+    session_id: str,
+    lead_id: Optional[str] = None,
+    meta: Optional[Dict[str, Any]] = None,
+) -> None:
+    """PII-safe logging for RAG analytics. Best-effort, never raises.
+
+    Stores only previews and IDs; never raw emails/phones or full free-text bodies.
+    """
+    try:
+        lead_preview = safe_preview((context or {}).get("lead", {})) if context else {}
+        trace = {
+            "session_id": session_id,
+            "lead_id": lead_id,
+            "query_type": query_type,
+            "lead_preview": lead_preview,
+            "retrieved_doc_ids": retrieved_documents[:10],
+            "answer_len": len(response_text or ""),
+            "ts": datetime.utcnow().isoformat() + "Z",
+        }
+        if meta:
+            trace.update(meta)
+        logger.info("RAG trace: %s", trace)
+    except Exception as e:
+        logger.warning("Failed to log RAG trace: %s", e)
+
+def _make_email_json_fallback(context: Dict[str, Any]) -> str:
+    """Minimal subject/body JSON using person context as fallback."""
+    lead = (context or {}).get("lead", {}) or {}
+    name = lead.get("name", "there")
+    course = lead.get("courseInterest") or lead.get("latest_programme_name") or "your course"
+    subject = f"Quick next step for {course}"
+    body = (
+        f"Dear {name},\n\n"
+        f"Great to speak about {course}. Based on what we have so far, the simplest next step is to confirm your entry requirements and timeline."
+        f" If you like, I can send a short checklist or book a quick 1–1.\n\n"
+        f"Best wishes,\nIvy"
+    )
+    import json as _json
+    return _json.dumps({"subject": subject, "body": body})
+
+async def _generate_json_tool_response(query: str, context: Dict[str, Any], knowledge_results: List[Dict[str, Any]]) -> str:
+    """Generate strict JSON for tools (e.g., email composer). Returns a JSON string.
+
+    If generation fails or times out, returns a minimal fallback JSON.
+    """
+    try:
+        from app.ai.safe_llm import LLMCtx
+        # Detect type hint from query: expects {"type":"email"|"note"}
+        _type = None
+        try:
+            hint = json.loads(query) if query.strip().startswith('{') else None
+            if isinstance(hint, dict):
+                _type = (hint.get("type") or "").strip().lower()
+        except Exception:
+            _type = None
+
+        sys = (
+            "Return ONLY valid JSON. For type 'email' return {\"subject\": string, \"body\": string}. "
+            "For type 'note' return {\"subject\": string, \"body\": string} suitable for a CRM note.")
+        # Build a compact guidance snapshot
+        lead = (context or {}).get("lead", {}) or {}
+        facts = {
+            "name": lead.get("name"),
+            "course": lead.get("courseInterest") or lead.get("latest_programme_name"),
+            "status": lead.get("status") or lead.get("statusType"),
+        }
+        kb_titles = [r.get("title") for r in (knowledge_results or [])[:3] if r.get("title")]
+        human = (
+            f"Tool type: {_type or 'email'}\n"
+            f"Tool request: {query}\n\n"
+            f"Person: {facts}\n"
+            f"Top sources: {kb_titles}"
+        )
+        llm = LLMCtx(temperature=0.2, timeout_ms=AI_TIMEOUT_HELPER_MS)
+        out = await llm.ainvoke([("system", sys), ("human", human)])
+        text = (out or "").strip()
+        # Ensure it's valid JSON; if not, fallback
+        import json as _json
+        # Validate and coerce keys to strings
+        data = _json.loads(text)
+        if isinstance(data, dict):
+            # Ensure all keys are strings (defensive for odd SDK updates)
+            data = {str(k): v for k, v in data.items()}
+            text = _json.dumps(data)
+        return text
+    except Exception:
+        return _make_email_json_fallback(context)
+
+def maybe_anonymise(content: str, anonymise: bool = False) -> str:
+    """Selective anonymisation using privacy_utils.anonymise_body preserving [S#] lines."""
+    if not anonymise:
+        return content
+    from app.ai.privacy_utils import anonymise_body
+    return anonymise_body(content, True)
+
+
+def _unsafe_topics_present(q: str) -> bool:
+    """Check if risky topics are present in query"""
+    # only allow these if *already* in the user query
+    risky = {"islam","islamic","jihad","palestine","israel","russia","ukraine"}
+    import re
+    wl = set(re.findall(r"[a-z]+", q.lower()))
+    return any(t in wl for t in risky)
+
+async def multi_query_expansions(q: str, ctx: Optional[Dict[str,Any]] = None) -> List[str]:
+    """Generate multiple query variations for better retrieval with drift protection"""
+    name = _extract_person_name(q, ctx)
+    risky_in_user = _unsafe_topics_present(q)
+
+    # If asking about a specific person, pin expansions to that intent.
+    if name:
+        base = [
+            q,
+            f"Details about {name} relevant to admissions and course interest",
+            f"What to ask and say when speaking with {name} now",
+            f"Next steps for {name} based on status and timeline"
+        ]
+        return base
+
+    # Otherwise, use LLM expansions but post-filter out risky drift
+    try:
+        from app.ai import ACTIVE_MODEL, OPENAI_API_KEY, OPENAI_MODEL, GEMINI_API_KEY, GEMINI_MODEL
+        from app.ai.safe_llm import LLMCtx
+        llm = LLMCtx(temperature=0.2)
+
+        prompt = (
+          "Rewrite the UK admissions/helpdesk question into 3 semantically different "
+          "search queries (≤12 words each). Keep topic and entities the same. "
+          "Do NOT introduce new subjects or religions not present in the question.\n\nQ: " + q
+        )
+        out = await llm.ainvoke(prompt)
+        cand = [l.strip("•- ").strip() for l in (out or "").splitlines() if l.strip()]
+        keep = []
+        for c in cand:
+            # block risky subjects unless already in user query
+            if not risky_in_user and _unsafe_topics_present(c):
+                continue
+            keep.append(c)
+        uniq = [q]
+        for c in keep:
+            if c and c.lower() not in [x.lower() for x in uniq]:
+                uniq.append(c)
+        return uniq[:4] if len(uniq)>1 else [q]
+    except Exception:
+        return [q]
+
+def _cos_sim(a: List[float], b: List[float]) -> float:
+    """Calculate cosine similarity between two vectors"""
+    import math
+    dot = sum(x*y for x,y in zip(a,b))
+    na = math.sqrt(sum(x*x for x in a)) or 1e-9
+    nb = math.sqrt(sum(x*x for x in b)) or 1e-9
+    return dot/(na*nb)
+
+def _canon_title(t: str) -> str:
+    """Canonicalize title for deduplication."""
+    import re
+    t = (t or "").lower()
+    t = re.sub(r"\s+", " ", t)
+    return re.sub(r"[^\w\s]", "", t).strip()
+
+def _overlap(a: str, b: str) -> float:
+    """Calculate overlap ratio between two text snippets."""
+    import difflib
+    return difflib.SequenceMatcher(None, a[:180], b[:180]).ratio()
+
+def dedupe_passages(results: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """Deduplicate results by passage content hash with title canonicalization and snippet overlap."""
+    import hashlib
+    seen_hashes = set()
+    out = []
+    
+    for r in results:
+        content = str(r.get("content", ""))
+        title = _canon_title(r.get("title", ""))
+        
+        # Create hash from canonicalized title + content
+        key = hashlib.sha1((title + content[:200]).encode("utf-8")).hexdigest()
+        
+        if key not in seen_hashes:
+            # Check for snippet overlap with already selected results
+            content_snippet = content[:180]
+            has_overlap = False
+            for existing in out:
+                existing_snippet = str(existing.get("content", ""))[:180]
+                if _overlap(content_snippet, existing_snippet) > 0.6:
+                    has_overlap = True
+                    break
+            
+            if not has_overlap:
+                out.append(r)
+                seen_hashes.add(key)
+    
+    return out
+
+def mmr_select(query_vec: List[float], candidates: List[Dict[str,Any]], k: int = 5, lambda_=0.7) -> List[Dict[str,Any]]:
+    """Maximal Marginal Relevance selection with light category diversity and dedupe by title/id."""
+    # First dedupe by passage content
+    candidates = dedupe_passages(candidates)
+    
+    # Deduplicate by id then by normalized title
+    seen_ids = set()
+    seen_titles = set()
+    uniq: List[Dict[str, Any]] = []
+    for c in candidates:
+        cid = c.get("id")
+        title = str(c.get("title", "")).strip().lower()
+        if cid in seen_ids or (title and title in seen_titles):
+            continue
+        seen_ids.add(cid)
+        if title:
+            seen_titles.add(title)
+        uniq.append(c)
+
+    selected: List[Dict[str, Any]] = []
+    while uniq and len(selected) < k:
+        best, best_score = None, -1e9
+        for c in uniq:
+            rel = float(c.get("similarity_score", c.get("rank_score", 0.5)))
+            div = 0.0
+            if selected:
+                # Penalize same category to encourage diversity (>2 docs from same category)
+                cat = (c.get("category") or "").lower()
+                same_cat = sum(1 for s in selected if (s.get("category") or "").lower() == cat and cat)
+                cat_penalty = 0.15 * max(0, same_cat - 1)  # Penalty kicks in after 2 docs
+                # Also use score dispersion for general diversity
+                disp = max(abs(rel - float(s.get("similarity_score", s.get("rank_score", 0.5)))) for s in selected)
+                div = disp + cat_penalty
+            score = lambda_ * rel - (1 - lambda_) * div
+            if score > best_score:
+                best = c; best_score = score
+        selected.append(best)
+        uniq.remove(best)
+    return selected
+
+def make_sources_block(results: List[Dict[str,Any]], limit: int = 4) -> str:
+    """Format knowledge results as source blocks with citations"""
+    from textwrap import shorten
+    lines = []
+    for i, r in enumerate(results[:limit], 1):
+        title = r.get("title","Untitled")
+        cat = r.get("category") or ""
+        dt = r.get("document_type") or ""
+        excerpt = shorten(r.get("content","").strip(), 800, placeholder="…")
+        lines.append(f"[S{i}] {title} — {cat}/{dt}\n{excerpt}")
+    return "\n\n".join(lines)
+
+def adaptive_confidence(top_scores: List[float]) -> float:
+    """Calculate adaptive confidence based on retrieval quality"""
+    if not top_scores: return 0.5
+    s1 = top_scores[0]
+    mean3 = sum(top_scores[:3]) / min(len(top_scores),3)
+    if s1 >= 0.72: return 0.92
+    if mean3 >= 0.62: return 0.85
+    if mean3 >= 0.52: return 0.75
+    return 0.6
+
+import re
+
+def is_profile_query(q: str) -> bool:
+    ql = q.lower().strip()
+    pats = [r"\btell me about\b", r"\bwho is\b", r"\bprofile\b", r"\bwhat do we know\b", r"\bsummar(y|ise)\b"]
+    return any(re.search(p, ql) for p in pats)
+
+def _mentions_this_person(ql: str) -> bool:
+    return ("this person" in ql) or ("this specific person" in ql) or ("this lead" in ql)
+
+def _extract_person_name(query: str, ctx: Optional[Dict[str,Any]]) -> Optional[str]:
+    """Extract person name from query or context"""
+    # Try to get from context first
+    if ctx and ctx.get("lead") and ctx["lead"].get("name"):
+        return ctx["lead"]["name"]
+    
+    # Simple extraction from query (look for "tell me about [name]")
+    import re
+    match = re.search(r"\b(?:about|is)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)\b", query)
+    if match:
+        return match.group(1)
+    
+    return None
+
+def classify_suggestions_intent(query: str) -> str:
+    """Classify query intent for suggestions modal"""
+    ql = query.lower().strip()
+    
+    # Intent routing based on patterns
+    if any(pattern in ql for pattern in ["tell me about", "what do we know", "who is"]):
+        return "lead_profile"
+    elif any(pattern in ql for pattern in ["likelihood", "probability", "convert", "chance"]):
+        return "conversion_forecast"
+    elif any(pattern in ql for pattern in ["attend", "book"]) and any(pattern in ql for pattern in ["1-1", "one to one", "meeting", "call"]):
+        return "attendance_willingness"
+    elif any(pattern in ql for pattern in ["next best action", "what should i do", "nba"]):
+        return "next_best_action"
+    elif any(pattern in ql for pattern in ["risk", "red flag", "stall", "concern"]):
+        return "risk_check"
+    elif any(pattern in ql for pattern in ["source", "where did they come from", "lead quality"]):
+        return "source_quality"
+    else:
+        return "general_help"
+
+async def classify_intent(query: str, ctx: Optional[Dict[str,Any]] = None) -> str:
+    """Classify query intent using LLM with person context awareness"""
+    ql = query.lower()
+    
+    # NEW: if it's a profile-y phrasing AND we can extract a name, treat as profile
+    if is_profile_query(query) and _extract_person_name(query, ctx):
+        return "lead_profile"
+    
+    # prefer context if we actually have a lead or "this (specific) person"
+    if (ctx or {}).get("lead") or _mentions_this_person(ql):
+        if is_profile_query(query):    # <<< already present
+            return "lead_profile"
+        if any(k in ql for k in ["objection","concern"]): return "objection_handling"
+        if any(k in ql for k in ["summary","summarise","recap"]): return "call_summary"
+        return "lead_info"
+    
+    # Otherwise use LLM classification
+    try:
+        from app.ai import ACTIVE_MODEL, OPENAI_API_KEY, OPENAI_MODEL, GEMINI_API_KEY, GEMINI_MODEL
+        from app.ai.safe_llm import LLMCtx
+        llm = LLMCtx(temperature=0)
+        sys = "Return ONLY JSON: {\"type\": one of [\"sales_strategy\",\"course_info\",\"lead_info\",\"objection_handling\",\"call_summary\",\"general_query\"]}"
+        human = f"Classify this UK HE admissions assistant query: {query}"
+        out = await llm.ainvoke([("system", sys), ("human", human)])
+        import json as _json
+        import re
+        
+        # Extract JSON from response (some providers prepend prose)
+        content = out.strip()
+        json_match = re.search(r'\{[\s\S]*?"type"[\s\S]*?\}', content)
+        try:
+            if json_match:
+                return _json.loads(json_match.group()).get("type", "general_query")
+            else:
+                return _json.loads(content).get("type", "general_query")
+        except _json.JSONDecodeError:
+            # If JSON parsing fails, fall back to keyword matching
+            pass
+    except Exception:
+        # Conservative fallback
+        if any(k in ql for k in ["sell","sales","strategy","approach"]): return "sales_strategy"
+        if any(k in ql for k in ["course","programme","curriculum"]): return "course_info"
+        if any(k in ql for k in ["lead","this person","student"]): return "lead_info"
+        if any(k in ql for k in ["objection","concern","problem"]): return "objection_handling"
+        if any(k in ql for k in ["summary","summarise","recap","wrap up"]): return "call_summary"
+        return "general_query"
+
+
+def _num(x):
+    try:
+        return float(x)
+    except Exception:
+        return None
+
+def make_person_source(ctx: Optional[Dict[str,Any]]) -> Optional[Dict[str,Any]]:
+    """Create synthetic person source from context.lead for grounding"""
+    lead = (ctx or {}).get("lead") or {}
+    if not lead: 
+        logger.info(f"No lead data in context: {ctx}")
+        return None
+    
+    logger.info(f"Creating person source (preview): {safe_preview(lead)}")
+    
+    ai = lead.get("aiInsights") or (ctx or {}).get("ai") or {}
+    conv = _num(ai.get("conversionProbability"))
+    eta  = ai.get("etaDays") or ai.get("eta_days")
+    nba  = ai.get("recommendedAction") or ai.get("callStrategy") or lead.get("nextAction")
+    
+    # Ensure conversionProbability is numeric in ai object for downstream use
+    if conv is not None:
+        try:
+            conv = max(0.0, min(1.0, float(conv)))
+            ai["conversionProbability"] = conv
+        except Exception:
+            ai.pop("conversionProbability", None)
+
+    lines = []
+    add = lambda k,v: lines.append(f"{k}: {v}") if v not in (None,"","N/A") else None
+    add("Name", lead.get("name"))
+    add("Email", lead.get("email"))
+    add("Phone", lead.get("phone"))
+    add("Status", lead.get("status") or lead.get("statusType"))
+    add("Course Interest", lead.get("courseInterest") or lead.get("latest_programme_name"))
+    add("Next Action", lead.get("nextAction") or nba)
+    add("Follow-up", lead.get("followUpDate"))
+    if conv is not None: add("Conversion Probability", f"{conv:.2f}")
+    if eta is not None:  add("ETA (days)", eta)
+
+    content = "\n".join(lines) or "No enriched fields available."
+    return {
+        "id": "person_ctx",
+        "title": "Person Context (Live Lead)",
+        "content": content,
+        "document_type": "context",
+        "category": "lead",
+        "similarity_score": 1.0,
+        "rank_score": 1.0
+    }
+
+async def generate_person_answer(query: str, knowledge_results: List[Dict[str,Any]], context: Optional[Dict[str,Any]]) -> str:
+    """Generate person-focused answer for lead_info queries"""
+    # If it's clearly a profile-y question, delegate to the profile generator
+    if is_profile_query(query):
+        return await generate_person_profile(query, context)
+    
+    try:
+        # Conversational mode: use organic narrator for 1–2 paragraphs
+        if IVY_ORGANIC_ENABLED:
+            facts = {}
+            lead = (context or {}).get("lead", {})
+            if lead:
+                facts.update({
+                    "person": lead.get("name"),
+                    "course": lead.get("courseInterest") or lead.get("latest_programme_name"),
+                    "status": lead.get("status") or lead.get("statusType"),
+                    "touchpoints": lead.get("touchpoint_count"),
+                    "last_activity": lead.get("last_engagement_date"),
+                })
+            # Include top source titles lightly
+            if knowledge_results:
+                facts["kb_titles"] = [r.get("title") for r in knowledge_results[:3]]
+            return await narrate("conversational", facts)
+
+        # Fallback legacy structure when organic disabled
+        from app.ai import ACTIVE_MODEL, GEMINI_API_KEY, GEMINI_MODEL, OPENAI_API_KEY, OPENAI_MODEL
+        from app.ai.safe_llm import LLMCtx
+        llm = LLMCtx(temperature=0.3, timeout_ms=AI_TIMEOUT_MAIN_MS)
+        situation_context = build_situation_context(context)
+        person_src = make_person_source(context)
+        kb_for_prompt = ([person_src] if person_src else []) + knowledge_results
+        sources_block = make_sources_block(kb_for_prompt)
+        SYSTEM = "You are Ivy. British English. Be concise and actionable."
+        HUMAN = f"""Query: {query}
+
+{situation_context}Sources:
+{sources_block}
+"""
+        return await llm.ainvoke([("system", SYSTEM), ("human", HUMAN)])
+    except Exception as e:
+        logger.error(f"Person-focused answer generation failed: {e}")
+        return generate_fallback_lead_answer(query, knowledge_results, context)
+
+def generate_fallback_lead_answer(query: str, knowledge_results: List[Dict[str,Any]], context: Optional[Dict[str,Any]]) -> str:
+    """Fallback person-focused answer when AI is unavailable"""
+    lead = (context or {}).get("lead", {})
+    lead_name = lead.get("name", "this person")
+    
+    response = f"**What You Know about {lead_name}:**\n\n"
+    
+    # Show key person data
+    if lead.get("email"):
+        response += f"• **Contact**: {lead.get('email')}"
+        if lead.get("phone"):
+            response += f" | {lead.get('phone')}"
+        response += "\n"
+    
+    if lead.get("courseInterest"):
+        response += f"• **Course Interest**: {lead.get('courseInterest')}\n"
+    
+    if lead.get("statusType"):
+        response += f"• **Status**: {lead.get('statusType')}\n"
+    
+    if lead.get("nextAction"):
+        response += f"• **Next Action**: {lead.get('nextAction')}\n"
+    
+    if lead.get("aiInsights", {}).get("conversionProbability"):
+        prob = lead.get("aiInsights", {}).get("conversionProbability")
+        if isinstance(prob, (int, float)):
+            response += f"• **Conversion Probability**: {int(prob * 100)}%\n"
+    
+    response += "\n**Ask:**\n"
+    if not lead.get("courseInterest"):
+        response += f"• 'Hi {lead_name}, which course are you interested in?'\n"
+    if not lead.get("statusType"):
+        response += f"• 'What stage are you at in your application process?'\n"
+    response += f"• 'What questions do you have about the course or application?'\n"
+    
+    response += "\n**Say:**\n"
+    response += f"• 'Hi {lead_name}, I can see you're interested in applying'\n"
+    response += f"• 'Let me help you with the next steps in your application'\n"
+    
+    response += "\n**Next Steps:**\n"
+    if lead.get("nextAction"):
+        response += f"• {lead.get('nextAction')}\n"
+    else:
+        response += f"• Schedule follow-up call with {lead_name}\n"
+    response += "• Send relevant course information\n"
+    
+    return response
+
+from datetime import datetime, timezone
+
+def _ago(iso: Optional[str]) -> Optional[str]:
+    if not iso: return None
+    try:
+        dt = datetime.fromisoformat(iso.replace("Z","+00:00"))
+    except Exception:
+        return None
+    delta = datetime.now(timezone.utc) - (dt if dt.tzinfo else dt.replace(tzinfo=timezone.utc))
+    d = delta.days
+    return f"{d}d ago" if d >= 0 else None
+
+def _line(k, v): return f"• {k}: {v}" if v not in (None, "", "N/A") else None
+
+def _normalise_cta(obj: dict) -> dict:
+    """Normalize CTA actions to FE-known actions"""
+    known = {"open_call_console","open_email_composer","open_meeting_scheduler","view_profile"}
+    if not isinstance(obj, dict): return {"label":"Open Call Console","action":"open_call_console"}
+    label = obj.get("label") or "Open Call Console"
+    action = obj.get("action") or "open_call_console"
+    action_l = action.lower().strip().replace("-", "_")
+    if action_l not in known:
+        action_l = "view_profile" if "profile" in label.lower() else "open_call_console"
+    return {"label": label, "action": action_l}
+
+def _get_last_email_summary(lead: dict) -> Optional[str]:
+    """Get last email summary with subject and timing"""
+    # This would typically come from activities/communications table
+    last_email = lead.get("last_email") or lead.get("lastEmail")
+    if not last_email:
+        return None
+    
+    if isinstance(last_email, dict):
+        subject = last_email.get("subject", "No subject")
+        sent_at = _ago(last_email.get("sent_at") or last_email.get("created_at"))
+        return f"{sent_at} - \"{subject[:30]}{'...' if len(subject) > 30 else ''}\""
+    
+    return str(last_email)
+
+def _get_email_count(lead: dict) -> Optional[str]:
+    """Get email count summary"""
+    sent = lead.get("emails_sent", 0) or lead.get("emailCount", 0)
+    received = lead.get("emails_received", 0) or lead.get("emailsReceived", 0)
+    
+    if sent == 0 and received == 0:
+        return None
+    
+    return f"{sent} sent, {received} received"
+
+def _get_last_call_summary(lead: dict) -> Optional[str]:
+    """Get last call summary with duration and engagement"""
+    last_call = lead.get("last_call") or lead.get("lastCall")
+    if not last_call:
+        return None
+    
+    if isinstance(last_call, dict):
+        duration = last_call.get("duration_minutes", 0)
+        engagement = last_call.get("engagement_level", "unknown")
+        called_at = _ago(last_call.get("called_at") or last_call.get("created_at"))
+        
+        duration_str = f"{duration} min" if duration > 0 else "unknown duration"
+        engagement_str = f"({engagement})" if engagement != "unknown" else ""
+        
+        return f"{called_at} - {duration_str} {engagement_str}".strip()
+    
+    return str(last_call)
+
+def _get_call_count(lead: dict) -> Optional[str]:
+    """Get call count summary"""
+    total_calls = lead.get("calls_total", 0) or lead.get("callCount", 0)
+    total_duration = lead.get("calls_duration_hours", 0) or lead.get("callDurationHours", 0)
+    
+    if total_calls == 0:
+        return None
+    
+    duration_str = f", {total_duration:.1f}h total" if total_duration > 0 else ""
+    return f"{total_calls} total{duration_str}"
+
+def _get_response_rate(lead: dict) -> Optional[str]:
+    """Get response rate percentage"""
+    response_rate = lead.get("response_rate") or lead.get("responseRate")
+    if response_rate is None:
+        return None
+    
+    try:
+        rate = float(response_rate)
+        return f"{int(rate * 100)}%"
+    except:
+        return str(response_rate)
+
+async def generate_person_profile(query: str, context: Optional[Dict[str,Any]]) -> str:
+    """Generate a narrated lead profile from facts (LLM styles it)."""
+    # Early guard for untracked personal questions
+    ql = (query or "").lower()
+    personal_untracked = ["dog","cat","pet","married","boyfriend","girlfriend","religion","politics"]
+    if any(w in ql for w in personal_untracked):
+        return ("**What You Know**\n• We don't record personal details like pets or relationships.\n"
+                "**Ask**\n• What would help you decide about MA Music Performance?\n"
+                "**Say**\n• Happy to focus on course fit, entry requirements and next steps.\n"
+                "**Next Steps**\n• Share course overview and book a 1-1 if useful.")
+    
+    lead = (context or {}).get("lead") or {}
+    ai   = lead.get("aiInsights") or (context or {}).get("ai") or {}
+
+    name = lead.get("name") or _extract_person_name(query, context) or "This person"
+
+    # Build a compact, objective payload
+    facts = {
+        "name": name,
+        "contact": {
+            "email": lead.get("email"),
+            "phone": lead.get("phone"),
+            "owner": lead.get("owner") or lead.get("agent"),
+            "source": lead.get("source"),
+        },
+        "academic": {
+            "course": lead.get("courseInterest") or lead.get("latest_programme_name"),
+            "campus": lead.get("campusPreference"),
+            "academic_year": lead.get("academicYear") or lead.get("latest_academic_year"),
+            "eligibility": lead.get("applicantType") or lead.get("country"),
+        },
+        "funnel": {
+            "status": lead.get("status") or lead.get("statusType"),
+            "lead_score": lead.get("leadScore"),
+            "next_best_action": lead.get("nextAction") or ai.get("recommendedAction") or ai.get("callStrategy"),
+            "follow_up": lead.get("followUpDate"),
+            "conversion_probability": ai.get("conversionProbability"),
+            "eta_days": ai.get("etaDays") or ai.get("eta_days"),
+        },
+        "activity": {
+            "last_activity": _ago(lead.get("lastActivity") or lead.get("last_engagement_date")),
+            "created": _ago(lead.get("createdAt") or lead.get("create_date")),
+            "in_stage_since": _ago(lead.get("stageEnteredAt") or lead.get("statusEnteredAt")),
+        },
+        "conversation": {
+            "last_email": _get_last_email_summary(lead),
+            "email_count": _get_email_count(lead),
+            "last_call": _get_last_call_summary(lead),
+            "call_count": _get_call_count(lead),
+            "response_rate": _get_response_rate(lead),
+        },
+        "situation": build_situation_context(context),
+        "chips": [c for c in [
+            ("Low engagement" if not _get_email_count(lead) and not _get_call_count(lead) else None),
+            ("No consent" if not lead.get("gdpr_opt_in") else None),
+            (f"{ai.get('conversionProbability'):.0%} prob" if isinstance(ai.get('conversionProbability'), (int,float)) else None),
+        ] if c]
+    }
+
+    # Conversational gate: return 1–2 paragraphs if organic is enabled
+    if IVY_ORGANIC_ENABLED:
+        simple_facts = {
+            "person": facts.get("name"),
+            "course": facts.get("academic", {}).get("course"),
+            "status": facts.get("funnel", {}).get("status"),
+            "touchpoints": facts.get("conversation", {}).get("email_count"),
+            "last_activity": facts.get("activity", {}).get("last_activity"),
+        }
+        return await narrate("conversational", simple_facts)
+
+    # Legacy: structured narrative (kept for modal/legacy flows)
+    name_disp = facts.get("name", "This person")
+    response_parts = [f"Here's what I know about {name_disp}:"]
+    if facts.get("academic", {}).get("course"):
+        response_parts.append(f"Course: {facts['academic']['course']}")
+    if facts.get("funnel", {}).get("status"):
+        response_parts.append(f"Status: {facts['funnel']['status']}")
+    return "\n".join(response_parts)
+
+def add_gap_if_needed(text: str, knowledge_results: List[Dict[str,Any]], min_supported: float = 0.52) -> str:
+    """Add gap notice when knowledge coverage is insufficient"""
+    top = float(knowledge_results[0]["similarity_score"]) if knowledge_results else 0.0
+    if top < min_supported:
+        return text + "\n\n**Gap:** I can't find a specific policy/document covering this in your knowledge base. The closest source above may not fully answer the question."
+    return text
 
 # Pydantic models
 class RagQuery(BaseModel):
@@ -27,6 +727,17 @@ class RagQuery(BaseModel):
     categories: Optional[List[str]] = None
     limit: int = 5
     similarity_threshold: float = 0.5
+    json_mode: bool = False  # when True, expect JSON-only answer for specific tools
+
+class SuggestionsQuery(BaseModel):
+    query: str
+    lead: Dict[str, Any]
+    triage: Optional[Dict[str, Any]] = None
+    forecast: Optional[Dict[str, Any]] = None
+    mlForecast: Optional[Dict[str, Any]] = None
+    anomalies: Optional[Dict[str, Any]] = None
+    segmentation: Optional[Dict[str, Any]] = None
+    cohort: Optional[Dict[str, Any]] = None
 
 class RagResponse(BaseModel):
     answer: str
@@ -35,6 +746,20 @@ class RagResponse(BaseModel):
     confidence: float
     generated_at: datetime
     session_id: Optional[str] = None
+
+class SuggestionsResponse(BaseModel):
+    modal_title: str
+    intent: str
+    summary_bullets: List[str]
+    key_metrics: Dict[str, Optional[float]]
+    predictions: Dict[str, Any]
+    next_best_action: Dict[str, str]
+    ask: List[str]
+    say: List[str]
+    gaps: List[str]
+    confidence: float
+    ui: Dict[str, Any]
+    explanations: Dict[str, Any]
 
 class KnowledgeDocument(BaseModel):
     id: str
@@ -47,18 +772,294 @@ class KnowledgeDocument(BaseModel):
 
 class EmbeddingRequest(BaseModel):
     text: str
-    model: str = "text-embedding-ada-002"
+    model: str = "text-embedding-004"
 
 class EmbeddingResponse(BaseModel):
     embedding: List[float]
     model: str
     usage: Dict[str, int]
 
+# Suggestions generation functions
+async def generate_suggestions_response(request: SuggestionsQuery) -> Dict[str, Any]:
+    """Generate structured AI Suggestions Modal response using LLM"""
+    
+    intent = classify_suggestions_intent(request.query)
+    lead_name = request.lead.get("name", "this lead")
+    
+    # Build the system prompt for Ivy
+    system_prompt = """You are Ivy, an admissions copilot for UK HE.
+Your ONLY job is to return a single JSON object that powers a compact AI Suggestions Modal.
+
+Return ONLY valid JSON in this exact format:
+{
+  "modal_title": "string",
+  "intent": "lead_profile | conversion_forecast | attendance_willingness | next_best_action | risk_check | source_quality | general_help",
+  "summary_bullets": ["• …", "• …"],
+  "key_metrics": {
+    "conversion_probability_pct": null,
+    "eta_days": null,
+    "risk_score": null,
+    "engagement_points": null
+  },
+  "predictions": {
+    "conversion": {
+      "probability": null,
+      "eta_days": null,
+      "confidence": null,
+      "source": "triage|forecast|mlForecast"
+    },
+    "attendance_1to1": {
+      "label": "likely | unlikely | unknown",
+      "score": null,
+      "rationale": "string (≤120 chars)"
+    }
+  },
+  "next_best_action": { "label": "string", "reason": "string (≤140 chars)" },
+  "ask": ["Question 1?", "Question 2?"],
+  "say": ["Exact phrasing 1.", "Exact phrasing 2."],
+  "gaps": ["missing engagement data"],
+  "confidence": 0.0,
+  "ui": {
+    "primary_cta": { "label": "Book 1-1", "action": "open_meeting_scheduler" },
+    "secondary_cta": { "label": "Send follow-up email", "action": "open_email_composer" },
+    "chips": ["Low readiness", "Easily contactable"]
+  },
+  "explanations": {
+    "used_fields": ["triage.score","forecast.probability"],
+    "reasoning": "1 sentence on how you combined signals."
+  }
+}
+
+Rules:
+- Use only provided input fields
+- Max 2-3 bullets in summary_bullets
+- Max 6 bullets total across all sections
+- British English
+- Keep concise (≤420 chars total excluding numbers)
+- If data missing, add to gaps[] and lower confidence"""
+
+    # Build the human prompt with all available data
+    human_prompt = f"""Query: "{request.query}"
+Intent: {intent}
+
+Lead data:
+{_format_lead_data(request.lead)}
+
+Triage data:
+{_format_triage_data(request.triage) if request.triage else "Not available"}
+
+Forecast data:
+{_format_forecast_data(request.forecast) if request.forecast else "Not available"}
+
+ML Forecast data:
+{_format_ml_forecast_data(request.mlForecast) if request.mlForecast else "Not available"}
+
+Anomalies data:
+{_format_anomalies_data(request.anomalies) if request.anomalies else "Not available"}
+
+Generate the suggestions modal JSON for {lead_name}."""
+
+    try:
+        # Import LangChain components following the Gospel pattern
+        from app.ai import ACTIVE_MODEL, GEMINI_API_KEY, GEMINI_MODEL, OPENAI_API_KEY, OPENAI_MODEL
+        
+        # Initialize LLM using safe wrapper
+        from app.ai.safe_llm import LLMCtx
+        llm = LLMCtx(temperature=0.1)
+
+        # Generate response
+        response = await llm.ainvoke([("system", system_prompt), ("human", human_prompt)])
+        
+        # Parse JSON response
+        import json
+        import re
+        
+        content = response.strip()
+        # Extract JSON from response
+        json_match = re.search(r'\{.*\}', content, re.DOTALL)
+        if json_match:
+            result = json.loads(json_match.group())
+            
+            # Ensure intent matches classification
+            result["intent"] = intent
+            
+            # Apply clamping to prevent overflow
+            from app.ai.post import clamp_list
+            result["summary_bullets"] = clamp_list(result.get("summary_bullets", []), 3, 120)
+            result["ask"] = clamp_list(result.get("ask", []), 2, 120)
+            result["say"] = clamp_list(result.get("say", []), 2, 120)
+            result["gaps"] = clamp_list(result.get("gaps", []), 3, 100)
+            
+            return result
+        else:
+            raise ValueError("No valid JSON found in response")
+            
+    except Exception as e:
+        logger.error(f"Suggestions generation failed: {e}")
+        # Return fallback response
+        return _generate_fallback_suggestions(request, intent)
+
+def _format_lead_data(lead: Dict[str, Any]) -> str:
+    """Format lead data for prompt"""
+    fields = []
+    for key, value in lead.items():
+        if value is not None and value != "":
+            fields.append(f"  {key}: {value}")
+    return "\n".join(fields) if fields else "  No lead data available"
+
+def _format_triage_data(triage: Dict[str, Any]) -> str:
+    """Format triage data for prompt"""
+    if not triage:
+        return "Not available"
+    
+    lines = []
+    if "score" in triage:
+        lines.append(f"  score: {triage['score']}")
+    if "band" in triage:
+        lines.append(f"  band: {triage['band']}")
+    if "confidence" in triage:
+        lines.append(f"  confidence: {triage['confidence']}")
+    if "action" in triage:
+        lines.append(f"  action: {triage['action']}")
+    if "reasons" in triage and triage["reasons"]:
+        lines.append(f"  reasons: {triage['reasons'][:3]}")  # First 3 reasons
+    
+    return "\n".join(lines) if lines else "Not available"
+
+def _format_forecast_data(forecast: Dict[str, Any]) -> str:
+    """Format forecast data for prompt"""
+    if not forecast:
+        return "Not available"
+    
+    lines = []
+    if "probability" in forecast:
+        lines.append(f"  probability: {forecast['probability']}")
+    if "eta_days" in forecast:
+        lines.append(f"  eta_days: {forecast['eta_days']}")
+    if "confidence" in forecast:
+        lines.append(f"  confidence: {forecast['confidence']}")
+    if "drivers" in forecast and forecast["drivers"]:
+        lines.append(f"  drivers: {forecast['drivers'][:3]}")  # First 3 drivers
+    
+    return "\n".join(lines) if lines else "Not available"
+
+def _format_ml_forecast_data(ml_forecast: Dict[str, Any]) -> str:
+    """Format ML forecast data for prompt"""
+    if not ml_forecast:
+        return "Not available"
+    
+    lines = []
+    if "conversion_probability" in ml_forecast:
+        lines.append(f"  conversion_probability: {ml_forecast['conversion_probability']}")
+    if "eta_days" in ml_forecast:
+        lines.append(f"  eta_days: {ml_forecast['eta_days']}")
+    if "model_confidence" in ml_forecast:
+        lines.append(f"  model_confidence: {ml_forecast['model_confidence']}")
+    
+    return "\n".join(lines) if lines else "Not available"
+
+def _format_anomalies_data(anomalies: Dict[str, Any]) -> str:
+    """Format anomalies data for prompt"""
+    if not anomalies:
+        return "Not available"
+    
+    lines = []
+    if "overall_risk_score" in anomalies:
+        lines.append(f"  overall_risk_score: {anomalies['overall_risk_score']}")
+    if "risk_level" in anomalies:
+        lines.append(f"  risk_level: {anomalies['risk_level']}")
+    
+    return "\n".join(lines) if lines else "Not available"
+
+def _generate_fallback_suggestions(request: SuggestionsQuery, intent: str) -> Dict[str, Any]:
+    """Generate fallback suggestions when LLM fails"""
+    lead_name = request.lead.get("name", "this lead")
+    lead = request.lead
+    
+    # Try to get triage and forecast data from context
+    triage = getattr(request, 'triage', {}) or {}
+    forecast = getattr(request, 'forecast', {}) or getattr(request, 'mlForecast', {}) or {}
+    
+    # Extract available data
+    prob = forecast.get("probability") or triage.get("score") or lead.get("leadScore")
+    eta = forecast.get("eta_days") or forecast.get("etaDays")
+    risk = triage.get("risk_score") or lead.get("riskScore")
+    engagement = lead.get("touchpoint_count", 0)
+    
+    # Determine next best action based on available data
+    if prob and prob > 0.5:
+        next_action = "Book 1-1 call"
+        next_reason = "High conversion probability"
+    elif engagement > 3:
+        next_action = "Send follow-up email"
+        next_reason = "Good engagement level"
+    else:
+        next_action = "Send info pack"
+        next_reason = "Initial engagement needed"
+    
+    # Build summary bullets based on available data
+    summary_bullets = []
+    if prob:
+        summary_bullets.append(f"• Conversion probability: {int(prob * 100)}%")
+    if eta:
+        summary_bullets.append(f"• Expected conversion in {eta} days")
+    if engagement:
+        summary_bullets.append(f"• {engagement} touchpoints recorded")
+    if not summary_bullets:
+        summary_bullets = ["• AI analysis temporarily unavailable", "• Using basic lead data"]
+    
+    return {
+        "modal_title": f"AI Suggestions — {lead_name}",
+        "intent": intent,
+        "summary_bullets": summary_bullets,
+        "key_metrics": {
+            "conversion_probability_pct": int(prob * 100) if prob else None,
+            "eta_days": eta,
+            "risk_score": risk,
+            "engagement_points": engagement
+        },
+        "predictions": {
+            "conversion": {
+                "probability": prob,
+                "eta_days": eta,
+                "confidence": 0.4 if prob else None,
+                "source": "fallback"
+            },
+            "attendance_1to1": {
+                "label": "likely" if (prob and prob > 0.5) else "unknown",
+                "score": prob,
+                "rationale": "Based on available signals" if prob else "Insufficient data for prediction"
+            }
+        },
+        "next_best_action": {
+            "label": next_action,
+            "reason": next_reason
+        },
+        "ask": ["What's their main interest?", "When are they available?"],
+        "say": ["Thanks for your interest", "Let's schedule a chat"],
+        "gaps": ["AI analysis unavailable"] if not prob else [],
+        "confidence": 0.4 if prob else 0.3,
+        "ui": {
+            "primary_cta": {"label": next_action, "action": "open_call_console" if "call" in next_action.lower() else "open_email_composer"},
+            "secondary_cta": {"label": "View profile", "action": "view_profile"},
+            "chips": ["Fallback mode"] if not prob else []
+        },
+        "explanations": {
+            "used_fields": ["lead.nextAction", "triage.score", "forecast.probability"] if prob else ["lead.nextAction"],
+            "reasoning": "Fallback response with available data" if prob else "Fallback response due to AI service unavailability."
+        }
+    }
+
 # Real embedding service using Gemini API
-async def get_embedding(text: str, model: str = "models/embedding-001") -> List[float]:
+async def get_embedding(text: str, model: str = "text-embedding-004") -> List[float]:
     """Generate real embedding using Gemini API"""
     try:
         from app.ai import GEMINI_API_KEY
+        # Cache check
+        ck = make_key("emb", {"t": text, "m": model})
+        cached = CACHE.get(ck)
+        if cached is not None:
+            return cached
         
         if not GEMINI_API_KEY:
             logger.warning("Gemini API key not available, falling back to mock embedding")
@@ -69,14 +1070,21 @@ async def get_embedding(text: str, model: str = "models/embedding-001") -> List[
         # Configure Gemini
         genai.configure(api_key=GEMINI_API_KEY)
         
-        # Generate embedding using Gemini
-        result = genai.embed_content(
-            model=model,
-            content=text,
-            task_type="retrieval_document"
-        )
+        # Generate embedding using Gemini in a thread executor to avoid blocking
+        def _embed_sync(text, model):
+            clean_model = model.replace("models/", "") if isinstance(model, str) else "text-embedding-004"
+            return genai.embed_content(
+                model=clean_model,
+                content=text,
+                task_type="retrieval_document"
+            )
+        
+        loop = asyncio.get_running_loop()
+        result = await loop.run_in_executor(None, _embed_sync, text, model)
         
         logger.info(f"✅ Generated real Gemini embedding for text: '{text[:50]}...' using {model}")
+        # Cache embeddings by (text, model)
+        CACHE.set(ck, result['embedding'])
         return result['embedding']
         
     except Exception as e:
@@ -99,6 +1107,23 @@ async def get_mock_embedding(text: str) -> List[float]:
     logger.warning(f"⚠️ Using mock embedding for text: '{text[:50]}...'")
     return embedding
 
+@router.post("/suggestions", response_model=SuggestionsResponse)
+async def generate_suggestions_endpoint(request: SuggestionsQuery):
+    """Generate AI Suggestions Modal response for lead queries"""
+    try:
+        logger.info(f"Generating suggestions for query: '{request.query[:50]}...'")
+        
+        # Generate the structured response
+        suggestions = await generate_suggestions_response(request)
+        
+        logger.info(f"Successfully generated suggestions with intent: {suggestions.get('intent')}")
+        
+        return suggestions
+        
+    except Exception as e:
+        logger.error(f"Suggestions generation failed: {e}")
+        raise HTTPException(status_code=500, detail=f"Suggestions generation failed: {str(e)}")
+
 @router.post("/query", response_model=RagResponse)
 async def query_rag(request: RagQuery):
     """
@@ -107,31 +1132,66 @@ async def query_rag(request: RagQuery):
     try:
         session_id = str(uuid.uuid4())
         
-        # Step 1: Expand query for better agent usage patterns
+        # Step 1: Expand and bias the query
         expanded_query = expand_query_for_agent_usage(request.query)
-        
-        # Step 2: Generate embedding for the expanded query
-        query_embedding = await get_embedding(expanded_query)
-        
-        # Step 3: Perform hybrid search on knowledge base
+        lead = (request.context or {}).get("lead") or {}
+        bias_terms = " ".join([str(lead.get("courseInterest","")), str(lead.get("campusPreference",""))]).strip()
+        biased_query = f"{expanded_query} {bias_terms}" if bias_terms else expanded_query
+
         # Ensure document_types and categories are lists, not dicts
         document_types = request.document_types
         categories = request.categories
-        
-        # Convert dict to list if needed (frontend might send dict instead of list)
         if isinstance(document_types, dict):
             document_types = list(document_types.values()) if document_types else None
         if isinstance(categories, dict):
             categories = list(categories.values()) if categories else None
-        
-        knowledge_results = await hybrid_search(
-            query_text=expanded_query,  # Use expanded query
-            query_embedding=query_embedding,
+
+        # Step 2: Initial search
+        all_results = []
+        initial_emb = await get_embedding(biased_query)
+        initial_results, search_cache_hit = await hybrid_search(
+            query_text=biased_query,
+            query_embedding=initial_emb,
             document_types=document_types,
             categories=categories,
-            limit_count=request.limit,
-            similarity_threshold=request.similarity_threshold
+            limit_count=max(request.limit*3, 12),
+            similarity_threshold=max(0.0, request.similarity_threshold - 0.05),
         )
+        all_results.extend(initial_results)
+
+        strong_count = sum(1 for r in initial_results if float(r.get("similarity_score", 0.0)) >= request.similarity_threshold)
+        threshold_needed = max(3, request.limit // 2)
+
+        # Step 3: At most one expansion if weak evidence; cache expansions by (session_id, query)
+        expansions_used = [biased_query]
+        if strong_count < threshold_needed:
+            cache_key = make_key("exp", {"sid": session_id, "q": biased_query})
+            cached = CACHE.get(cache_key)
+            if cached:
+                extra = cached
+            else:
+                extra = await multi_query_expansions(biased_query, request.context)
+                extra = [q for q in extra if q.strip().lower() != biased_query.strip().lower()]
+                CACHE.set(cache_key, extra[:2])
+            for qx in extra[:1]:
+                q_emb = await get_embedding(qx)
+                rs, _hit = await hybrid_search(
+                    query_text=qx,
+                    query_embedding=q_emb,
+                    document_types=document_types,
+                    categories=categories,
+                    limit_count=max(request.limit*3, 12),
+                    similarity_threshold=max(0.0, request.similarity_threshold - 0.05),
+                )
+                all_results.extend(rs)
+                expansions_used.append(qx)
+        logger.info(f"Expansions used: {expansions_used}")
+        
+        # Step 4: Use MMR to select diverse top results (with dedupe)
+        knowledge_results = mmr_select(query_vec=[0.0], candidates=all_results, k=request.limit)
+        
+        # Calculate adaptive confidence based on retrieval quality
+        score_peek = sorted([float(r.get("similarity_score", 0.5)) for r in knowledge_results], reverse=True)
         
         logger.info(f"Knowledge search for '{request.query}' found {len(knowledge_results)} results")
         
@@ -148,14 +1208,21 @@ async def query_rag(request: RagQuery):
             except Exception as e:
                 logger.warning(f"Lead query failed: {e}")
         
-        # Step 5: Generate intelligent response
+        # Step 5: Classify intent and generate intelligent response
+        detected_type = await classify_intent(request.query, request.context)
+        logger.info(f"Detected intent: {detected_type}")
+        
         logger.info(f"Generating response with knowledge_results={len(knowledge_results)}, lead_results={len(lead_results) if lead_results else 0}")
         answer, query_type, confidence = await generate_rag_response(
             query=request.query,
             knowledge_results=knowledge_results,
             lead_results=lead_results,
-            context=request.context
+            context=request.context,
+            detected_type=detected_type
         )
+        
+        # Apply adaptive confidence based on retrieval quality
+        confidence = max(confidence, adaptive_confidence(score_peek))
         logger.info(f"Generated response: query_type={query_type}, confidence={confidence}")
         
         # Step 5: Prepare sources
@@ -177,11 +1244,29 @@ async def query_rag(request: RagQuery):
             retrieved_documents=[r["id"] for r in knowledge_results],
             response_text=answer,
             session_id=session_id,
-            lead_id=request.context.get("lead", {}).get("uid") if request.context else None
+            lead_id=request.context.get("lead", {}).get("uid") if request.context else None,
+            meta={
+                "steps": ["expand_bias", "search", "mmr", "classify", "answer"],
+                "expansions_used": len(expansions_used) > 1,
+                "kb_top_score": float(score_peek[0]) if score_peek else None,
+                "cache_hits": {"search": bool(search_cache_hit)},
+            }
         )
         
-        # Sanitize response to remove specific university names
-        sanitized_answer = sanitize_response_content(answer)
+        # Sanitize response and enforce non-empty answer
+        if request.json_mode:
+            sanitized_answer = await _generate_json_tool_response(request.query, request.context or {}, knowledge_results)
+        else:
+            sanitized_answer = (answer or "").strip()
+            if not sanitized_answer:
+                person = ((request.context or {}).get("lead") or {}).get("name") or "this lead"
+                sanitized_answer = f"I don't have a confident answer yet about {person}. I can summarise what we know so far or check relevant guidance."
+            sanitized_answer = maybe_anonymise(sanitized_answer, (request.context or {}).get("anonymise", False))
+        
+        # Only add gap if no person source exists and retrieval was weak
+        person_src = make_person_source(request.context)
+        if not person_src:
+            sanitized_answer = add_gap_if_needed(sanitized_answer, knowledge_results)
         
         return RagResponse(
             answer=sanitized_answer,
@@ -196,44 +1281,6 @@ async def query_rag(request: RagQuery):
         logger.error(f"RAG query failed: {e}")
         raise HTTPException(status_code=500, detail=f"RAG query failed: {str(e)}")
 
-def sanitize_response_content(content: str) -> str:
-    """Remove specific university names from responses to maintain neutrality"""
-    import re
-    
-    # List of university names to replace with generic terms
-    university_replacements = {
-        r'\bUniversity of Bristol\b': 'universities',
-        r'\bUniversity of Dundee\b': 'universities', 
-        r'\bUCL\b': 'universities',
-        r'\bUniversity of Stirling\b': 'universities',
-        r'\bKing\'s College London\b': 'universities',
-        r'\bKCL\b': 'universities',
-        r'\bUniversity of Manchester\b': 'universities',
-        r'\bLSE\b': 'universities',
-        r'\bLondon School of Economics\b': 'universities',
-        r'\bManchester University\b': 'universities',
-        r'\bBristol\b': 'universities',
-        r'\bDundee\b': 'universities',
-        r'\bStirling\b': 'universities',
-        r'\bManchester\b': 'universities',
-        r'\bUniversity of Sheffield\b': 'universities',
-        r'\bSheffield\b': 'universities',
-        r'\bQueen Mary University of London\b': 'universities',
-        r'\bQMUL\b': 'universities',
-        r'\bUniversity of Derby\b': 'universities',
-        r'\bDerby\b': 'universities',
-        r'\bNewman University\b': 'universities',
-        r'\bBirmingham Newman University\b': 'universities',
-        r'\bNewman\b': 'universities',
-        r'\bBrunel University\b': 'universities',
-        r'\bBrunel\b': 'universities'
-    }
-    
-    sanitized_content = content
-    for pattern, replacement in university_replacements.items():
-        sanitized_content = re.sub(pattern, replacement, sanitized_content, flags=re.IGNORECASE)
-    
-    return sanitized_content
 
 def extract_search_keywords(query: str) -> str:
     """Extract meaningful keywords from natural language query for better search"""
@@ -328,10 +1375,23 @@ async def hybrid_search(
     categories: Optional[List[str]] = None,
     limit_count: int = 5,
     similarity_threshold: float = 0.5
-) -> List[Dict[str, Any]]:
+) -> Tuple[List[Dict[str, Any]], bool]:
     """Perform hybrid vector + text search on knowledge documents with query expansion"""
     
     try:
+        # Short TTL cache for full hybrid search results (120s)
+        cache_key = make_key("hyb", {
+            "qt": query_text,
+            "has_emb": bool(query_embedding),
+            "dt": document_types,
+            "cat": categories,
+            "lim": limit_count,
+            "thr": round(similarity_threshold, 3)
+        })
+        cached = CACHE.get(cache_key)
+        if cached is not None:
+            logger.info("Hybrid search cache hit")
+            return cached, True
         # Expand query for better agent usage patterns
         expanded_query = expand_query_for_agent_usage(query_text)
         
@@ -339,7 +1399,7 @@ async def hybrid_search(
         if query_embedding:
             logger.info(f"Using vector similarity search for: '{query_text[:50]}...'")
             
-            # Convert embedding to PostgreSQL vector format
+            # Convert embedding to PostgreSQL vector format for this DB (expects square brackets)
             embedding_str = "[" + ",".join(map(str, query_embedding)) + "]"
             
             # Use the hybrid_search function from the database
@@ -360,8 +1420,8 @@ async def hybrid_search(
             results = await fetch(query, 
                 expanded_query,              # query_text (expanded)
                 embedding_str,                # query_embedding
-                document_types,               # document_types
-                categories,                   # categories
+                document_types if document_types and len(document_types) > 0 else None,  # document_types
+                categories if categories and len(categories) > 0 else None,              # categories
                 limit_count,                  # limit_count
                 similarity_threshold          # similarity_threshold
             )
@@ -374,17 +1434,21 @@ async def hybrid_search(
                 logger.info(f"Total documents with embeddings: {debug_results[0]['count']}")
             else:
                 logger.info(f"Top result: {results[0]['title']} (similarity: {results[0]['similarity_score']:.3f})")
-            return results
+            CACHE.set(cache_key, results)
+            return results, False
         
         else:
             # Fallback to text search if no embeddings
             logger.info(f"Falling back to text search for: '{query_text[:50]}...'")
-            return await text_search(expanded_query, document_types, categories, limit_count)
+            results = await text_search(expanded_query, document_types, categories, limit_count)
+            CACHE.set(cache_key, results)
+            return results, False
             
     except Exception as e:
         logger.error(f"Hybrid search failed: {e}")
         # Fallback to text search
-        return await text_search(expanded_query, document_types, categories, limit_count)
+        results = await text_search(expanded_query, document_types, categories, limit_count)
+        return results, False
 
 async def text_search(
     query_text: str,
@@ -427,13 +1491,9 @@ async def text_search(
     keywords_list = search_keywords.split()
     
     # Build dynamic query with OR conditions for each keyword
-    title_conditions = []
-    content_conditions = []
     where_conditions = []
     
     for keyword in keywords_list:
-        title_conditions.append(f"title ILIKE %s")
-        content_conditions.append(f"content ILIKE %s")
         where_conditions.append(f"title ILIKE %s")
         where_conditions.append(f"content ILIKE %s")
     
@@ -472,13 +1532,13 @@ async def text_search(
     for keyword in keywords_list:
         params.extend([f'%{keyword}%', f'%{keyword}%'])  # title and content for each keyword
     
-    # Add document type filter if specified
-    if document_types:
+    # Add document type filter if specified (avoid empty arrays)
+    if document_types and len(document_types) > 0:
         query += " AND document_type = ANY(%s)"
         params.append(document_types)
     
-    # Add category filter if specified
-    if categories:
+    # Add category filter if specified (avoid empty arrays)
+    if categories and len(categories) > 0:
         query += " AND category = ANY(%s)"
         params.append(categories)
     
@@ -486,8 +1546,7 @@ async def text_search(
     params.append(limit_count)
     
     try:
-        logger.info(f"Executing hybrid search for: '{query_text}' -> keywords: '{search_keywords}' with params: {params}")
-        logger.info(f"SQL Query: {query}")
+        logger.info(f"Executing hybrid search for: '{query_text}' -> keywords: '{search_keywords}'")
         results = await fetch(query, *params)
         logger.info(f"Hybrid search found {len(results)} raw results")
         
@@ -515,34 +1574,52 @@ async def generate_rag_response(
     query: str,
     knowledge_results: List[Dict[str, Any]],
     lead_results: Optional[List[Dict[str, Any]]],
-    context: Optional[Dict[str, Any]]
+    context: Optional[Dict[str, Any]],
+    detected_type: Optional[str] = None
 ) -> tuple[str, str, float]:
     """Generate intelligent response based on search results and context"""
     
-    query_lower = query.lower()
-    
-    # Enhanced query type detection for sales strategy
-    if any(keyword in query_lower for keyword in ['sell', 'sales', 'strategy', 'approach', 'best to sell', 'how to sell', 'guide', 'help apply', 'support', 'advise']):
-        query_type = "sales_strategy"
-        confidence = 0.9
-    elif any(keyword in query_lower for keyword in ['course', 'program', 'curriculum']):
-        query_type = "course_info"
-        confidence = 0.9
-    elif any(keyword in query_lower for keyword in ['lead', 'about this lead', 'this person']):
-        query_type = "lead_info"
-        confidence = 0.9
-    elif any(keyword in query_lower for keyword in ['objection', 'concern', 'problem']):
-        query_type = "objection_handling"
-        confidence = 0.9
-    elif any(keyword in query_lower for keyword in ['summary', 'summarize', 'recap']):
-        query_type = "call_summary"
-        confidence = 0.8
+    # Use detected_type if provided, otherwise fall back to keyword detection
+    if detected_type:
+        query_type = detected_type
+        confidence = 0.9  # High confidence for LLM-detected intent
     else:
-        query_type = "general_query"
-        confidence = 0.7
+        query_lower = query.lower()
+        
+        # Enhanced query type detection for sales strategy
+        if any(keyword in query_lower for keyword in ['sell', 'sales', 'strategy', 'approach', 'best to sell', 'how to sell', 'guide', 'help apply', 'support', 'advise']):
+            query_type = "sales_strategy"
+            confidence = 0.9
+        elif any(keyword in query_lower for keyword in ['course', 'programme', 'curriculum']):
+            query_type = "course_info"
+            confidence = 0.9
+        elif any(keyword in query_lower for keyword in ['lead', 'about this lead', 'this person']):
+            query_type = "lead_info"
+            confidence = 0.9
+        elif any(keyword in query_lower for keyword in ['objection', 'concern', 'problem']):
+            query_type = "objection_handling"
+            confidence = 0.9
+        elif any(keyword in query_lower for keyword in ['summary', 'summarize', 'recap']):
+            query_type = "call_summary"
+            confidence = 0.8
+        else:
+            query_type = "general_query"
+            confidence = 0.7
     
-    # Generate contextual answer with enhanced sales strategy logic
-    if query_type == "sales_strategy" and context and context.get("lead"):
+    # Belt-and-braces: if it's clearly a profile-y question, force profile
+    if is_profile_query(query):
+        query_type = "lead_profile"
+    
+    # Generate contextual answer with enhanced logic
+    if query_type == "lead_profile":
+        # Do NOT bring policy KB in here unless a course is present
+        answer = await generate_person_profile(query, context)
+        return answer, query_type, 0.9
+    elif query_type == "lead_info":
+        # Use person-focused synthesis for lead queries
+        answer = await generate_person_answer(query, knowledge_results, context)
+        confidence = max(confidence, 0.88)
+    elif query_type == "sales_strategy" and context and context.get("lead"):
         # Special handling for personalised sales strategy
         answer = await generate_personalised_sales_strategy(query, knowledge_results, context)
         confidence = 0.9
@@ -551,11 +1628,12 @@ async def generate_rag_response(
         answer = await generate_knowledge_based_answer(query, knowledge_results, context)
         confidence = max(confidence, 0.8)
     elif lead_results:
-        # Use lead data results
-        answer = await generate_lead_based_answer(query, lead_results, context)
+        # Use lead data results - simplified fallback
+        answer = f"Based on the lead data, I can help with: {query}. Please provide more specific details about what you'd like to know."
+        confidence = 0.6
     else:
         # Fallback response
-        answer = generate_fallback_answer(query, context)
+        answer = f"I understand you're asking about: {query}. I'd be happy to help, but I need more context. Could you provide additional details?"
         confidence = 0.5
     
     return answer, query_type, confidence
@@ -571,27 +1649,14 @@ async def generate_personalised_sales_strategy(
         # Import LangChain components following the Gospel pattern
         from app.ai import ACTIVE_MODEL, GEMINI_API_KEY, GEMINI_MODEL, OPENAI_API_KEY, OPENAI_MODEL
         
-        # Initialize LLM following Gospel pattern
-        if ACTIVE_MODEL == "openai" and OPENAI_API_KEY:
-            from langchain_openai import ChatOpenAI
-            llm = ChatOpenAI(model=OPENAI_MODEL, temperature=0.4, api_key=OPENAI_API_KEY)
-            logger.info(f"🤖 Using OpenAI for sales strategy: {OPENAI_MODEL}")
-        elif ACTIVE_MODEL == "gemini" and GEMINI_API_KEY:
-            from langchain_google_genai import ChatGoogleGenerativeAI
-            llm = ChatGoogleGenerativeAI(
-                model=GEMINI_MODEL,
-                temperature=0.4,
-                google_api_key=GEMINI_API_KEY
-            )
-            logger.info(f"🤖 Using Gemini for sales strategy: {GEMINI_MODEL}")
-        else:
-            logger.warning(f"No valid AI model available for sales strategy. Active: {ACTIVE_MODEL}")
-            return generate_fallback_sales_strategy(query, knowledge_results, context)
+        # Initialize LLM using safe wrapper
+        from app.ai.safe_llm import LLMCtx
+        llm = LLMCtx(temperature=0.4)
         
         # Extract lead information
         lead = context.get("lead", {})
         lead_name = lead.get("name", "this prospect")
-        course_interest = lead.get("courseInterest", "their chosen program")
+        course_interest = lead.get("courseInterest", "their chosen programme")
         lead_score = lead.get("leadScore", "N/A")
         status = lead.get("status", "N/A")
         
@@ -602,9 +1667,7 @@ async def generate_personalised_sales_strategy(
                 knowledge_context += f"**{result['title']}:**\n{result['content'][:500]}...\n\n"
         
         # Create AI prompt for personalised sales strategy
-        from langchain_core.prompts import ChatPromptTemplate
-        
-        prompt = ChatPromptTemplate.from_messages([
+        messages = [
             ("system", """You are Ivy, an AI admissions advisor for Bridge CRM. You're helping an admissions agent who is currently on a phone call with a prospective student.
 
 Your role:
@@ -623,7 +1686,7 @@ Guidelines:
 - Focus on academic success and career outcomes, not price
 - Emphasize UCAS deadlines, application strategy, and educational value
 - Provide specific next steps for application process"""),
-            ("human", """The agent is currently on a phone call with {lead_name} and needs immediate guidance.
+            ("human", f"""The agent is currently on a phone call with {lead_name} and needs immediate guidance.
 
 Student Information:
 - Name: {lead_name}
@@ -643,19 +1706,9 @@ Give the agent specific things to say and ask during this call:
 4. **Application Concerns** - Likely academic or process concerns and guidance
 5. **UCAS Timeline** - Specific actions and deadlines for application process
 6. **Talking Points** - Key messages about educational value and career outcomes""")
-        ])
+        ]
         
-        chain = prompt | llm
-        response = await chain.ainvoke({
-            "lead_name": lead_name,
-            "course_interest": course_interest,
-            "lead_score": lead_score,
-            "status": status,
-            "query": query,
-            "knowledge_context": knowledge_context
-        })
-        
-        return response.content
+        return await llm.ainvoke(messages)
         
     except Exception as e:
         logger.error(f"AI-powered sales strategy generation failed: {e}")
@@ -714,624 +1767,33 @@ async def generate_knowledge_based_answer(
     knowledge_results: List[Dict[str, Any]],
     context: Optional[Dict[str, Any]]
 ) -> str:
-    """Generate AI-powered answer based on knowledge base results using LangChain + Gemini"""
+    """Generate AI-powered answer using narrator for progressive language"""
     
     if not knowledge_results:
         return "I couldn't find relevant information in the knowledge base. Please try rephrasing your question."
     
     try:
-        # Import LangChain components following the Gospel pattern
-        from app.ai import ACTIVE_MODEL, GEMINI_API_KEY, GEMINI_MODEL, OPENAI_API_KEY, OPENAI_MODEL
-        
-        # Initialize LLM following Gospel pattern
-        if ACTIVE_MODEL == "openai" and OPENAI_API_KEY:
-            from langchain_openai import ChatOpenAI
-            llm = ChatOpenAI(model=OPENAI_MODEL, temperature=0.4, api_key=OPENAI_API_KEY)
-            logger.info(f"🤖 Using OpenAI for RAG response: {OPENAI_MODEL}")
-        elif ACTIVE_MODEL == "gemini" and GEMINI_API_KEY:
-            from langchain_google_genai import ChatGoogleGenerativeAI
-            llm = ChatGoogleGenerativeAI(
-                model=GEMINI_MODEL,
-                temperature=0.4,
-                google_api_key=GEMINI_API_KEY
-            )
-            logger.info(f"🤖 Using Gemini for RAG response: {GEMINI_MODEL}")
-        else:
-            logger.warning(f"No valid AI model available for RAG. Active: {ACTIVE_MODEL}")
-            return generate_fallback_knowledge_answer(query, knowledge_results, context)
-        
-        # Build context from knowledge results
-        knowledge_context = ""
-        for i, result in enumerate(knowledge_results[:3]):  # Use top 3 results
-            knowledge_context += f"**Source {i+1}: {result['title']}**\n{result['content']}\n\n"
-        
-        # Extract lead context if available
-        lead_context = ""
-        if context:
-            lead_info = context.get("lead", {})
-            if lead_info:
-                lead_context = f"Lead Context:\n- Name: {lead_info.get('name', 'N/A')}\n- Course Interest: {lead_info.get('courseInterest', 'N/A')}\n- Status: {lead_info.get('status', 'N/A')}\n\n"
-        
-        # Create AI prompt
-        from langchain_core.prompts import ChatPromptTemplate
-        
-        prompt = ChatPromptTemplate.from_messages([
-            ("system", """You are Ivy, an AI assistant for Bridge CRM. You're helping an admissions agent during a live phone call.
-
-RESPONSE STYLE: Helpful, detailed, but concise. Be the agent's thinking partner.
-
-FORMAT:
-**What You Know:**
-• Key detail about the lead/course/situation
-• Relevant context from knowledge base
-• Important background information
-
-**Ask:**
-• **Ask:** "Specific question to ask the student"
-• **Ask:** "Follow-up question to dig deeper"
-• **Ask:** "Qualifying question about their situation"
-
-**Say:**
-• **Say:** "Exact words to use when explaining"
-• **Say:** "How to respond to their concerns"
-• **Say:** "What to tell them about the course/process"
-
-**Next Steps:**
-• Immediate action to take
-• What to do after this call
-• Follow-up to schedule
-
-RULES:
-- Maximum 200 words
-- Be helpful and contextual, not just generic
-- Reference specific details from the knowledge base
-- Give the agent confidence and context
-- Make it feel like you're their experienced colleague
-- Use British English spelling (organise, realise, analyse, etc.)"""),
-            ("human", """Query: {query}
-
-{lead_context}Knowledge Base Sources:
-{knowledge_context}
-
-Give me helpful, detailed advice for this live call.""")
-        ])
-        
-        # Generate AI response
-        chain = prompt | llm
-        response = chain.invoke({
+        # Build facts for narrator
+        facts = {
             "query": query,
-            "lead_context": lead_context,
-            "knowledge_context": knowledge_context
-        })
+            "person": (context or {}).get("lead", {}).get("name"),
+            "key_points": [r.get("title") for r in knowledge_results[:3]],
+            "citations": [{"title": r["title"], "score": r.get("similarity_score")} for r in knowledge_results[:4]],
+            "weak_evidence": (not knowledge_results) or (knowledge_results and float(knowledge_results[0].get("similarity_score",0)) < 0.52)
+        }
         
-        return response.content
+        # Use narrator for progressive language
+        text = await narrate("rag-answer", facts)
+        # Standardise weak-evidence gap message
+        text = add_gap_if_needed(text, knowledge_results)
+        return text
         
     except Exception as e:
         logger.error(f"AI-powered RAG response failed: {e}")
-        logger.info("Falling back to rule-based response")
-        return generate_fallback_knowledge_answer(query, knowledge_results, context)
+        return "I couldn't process that query right now. Please try again."
 
-def generate_fallback_knowledge_answer(
-    query: str,
-    knowledge_results: List[Dict[str, Any]],
-    context: Optional[Dict[str, Any]]
-) -> str:
-    """Enhanced fallback rule-based answer using knowledge base content"""
-    
-    # Extract lead context if available
-    lead_name = context.get("lead", {}).get("name") if context else None
-    lead_course = context.get("lead", {}).get("courseInterest") if context else None
-    lead_score = context.get("lead", {}).get("leadScore", 0) if context else 0
-    
-    # Determine query type and provide targeted response
-    query_lower = query.lower()
-    
-    if "ucas" in query_lower or "application" in query_lower:
-        return generate_ucas_fallback_response(knowledge_results, lead_name, lead_course)
-    elif "course" in query_lower or "program" in query_lower:
-        return generate_course_fallback_response(knowledge_results, lead_name, lead_course)
-    elif "objection" in query_lower or "concern" in query_lower:
-        return generate_objection_fallback_response(knowledge_results, lead_name, lead_course)
-    elif "lead" in query_lower or "student" in query_lower:
-        return generate_lead_fallback_response(knowledge_results, lead_name, lead_course, lead_score)
-    elif "call" in query_lower or "summary" in query_lower:
-        return generate_call_fallback_response(knowledge_results, lead_name, lead_course)
-    else:
-        return generate_general_fallback_response(knowledge_results, lead_name, lead_course)
 
-def generate_ucas_fallback_response(knowledge_results, lead_name, lead_course):
-    """Generate UCAS-specific fallback response"""
-    response = "**UCAS Application Support**\n\n"
-    
-    response += "**What You Know:**\n"
-    response += "• UCAS manages all UK university applications\n"
-    response += "• Key deadlines vary by course type\n"
-    response += "• Personal statement is crucial (4000 characters)\n\n"
-    
-    response += "**Ask:**\n"
-    response += "• **Ask:** 'What's your target start date?'\n"
-    response += "• **Ask:** 'Have you started your UCAS application yet?'\n"
-    response += "• **Ask:** 'Do you have a UCAS ID already?'\n\n"
-    
-    response += "**Say:**\n"
-    response += "• **Say:** 'I can walk you through the UCAS process step-by-step'\n"
-    response += "• **Say:** 'The personal statement is your chance to stand out'\n\n"
-    
-    response += "**Key Deadlines:**\n"
-    response += "• 15 Jan: Equal consideration deadline\n"
-    response += "• 30 Jun: Final deadline\n"
-    response += "• 15 Oct: Oxbridge/Medicine deadline\n"
-    response += "• 21 Sep: UCAS Clearing closes\n\n"
-    
-    response += "**Next Steps:**\n"
-    response += "• Get their UCAS ID if they have one\n"
-    response += "• Schedule personal statement review\n"
-    response += "• Send UCAS application guide\n"
-    response += "• Book campus visit or virtual tour\n"
-    
-    if lead_course:
-        response += f"\n**For {lead_course}:**\n"
-        response += "• **Ask:** 'What's your current qualification level?'\n"
-        response += "• **Say:** 'Let me check the specific entry requirements for this course'\n"
-    return response
-
-def generate_course_fallback_response(knowledge_results, lead_name, lead_course):
-    """Generate course-specific fallback response"""
-    response = "**Course Information**\n\n"
-    
-    response += "**What You Know:**\n"
-    response += "• Most undergraduate courses are 3-4 years\n"
-    response += "• Entry requirements vary by course and institution\n"
-    response += "• Course structure includes lectures, seminars, and assessments\n\n"
-    
-    response += "**Ask:**\n"
-    response += "• **Ask:** 'What specific aspect of this course interests you most?'\n"
-    response += "• **Ask:** 'What's your current qualification level?'\n"
-    response += "• **Ask:** 'What career path are you considering?'\n\n"
-    
-    response += "**Say:**\n"
-    response += "• **Say:** 'Let me give you the key details about this course'\n"
-    response += "• **Say:** 'I can send you detailed course information'\n\n"
-    
-    response += "**Next Steps:**\n"
-    response += "• Get their current qualifications\n"
-    response += "• Send course prospectus\n"
-    response += "• Schedule campus visit\n"
-    
-    if not lead_course:
-        response += "\n**Our Course Portfolio:**\n"
-        response += "• Ask: 'What subject area interests you most?'\n"
-        response += "• Say: 'We offer degrees, certificates, and professional qualifications'\n"
-        response += "• Offer: 'I can send you our full course guide'\n"
-    
-    return response
-
-def generate_objection_fallback_response(knowledge_results, lead_name, lead_course):
-    """Generate objection handling fallback response"""
-    response = "**Objection Handling**\n\n"
-    
-    response += "**What You Know:**\n"
-    response += "• Common objections: cost, time commitment, doubts, competition\n"
-    response += "• Acknowledge concerns before addressing them\n"
-    response += "• Listen actively and ask clarifying questions\n\n"
-    
-    response += "**Ask:**\n"
-    response += "• **Ask:** 'What specifically worries you about this?'\n"
-    response += "• **Ask:** 'Have you had this concern with other institutions?'\n"
-    response += "• **Ask:** 'What would help you feel more confident?'\n\n"
-    
-    response += "**Say:**\n"
-    response += "• **Say:** 'I understand your concern - that's completely normal'\n"
-    response += "• **Say:** 'Let me address that directly for you'\n"
-    response += "• **Say:** 'Many students had the same worry, here's how we solved it'\n\n"
-    
-    response += "**Common Objections & Responses:**\n"
-    response += "• Cost: 'Let's discuss flexible payment options'\n"
-    response += "• Time: 'What's your ideal timeline?'\n"
-    response += "• Doubt: 'What specifically concerns you?'\n"
-    response += "• Competition: 'What makes us different is...'\n\n"
-    
-    response += "**Next Steps:**\n"
-    response += "• Listen to their specific concern\n"
-    response += "• Ask clarifying questions\n"
-    response += "• Provide relevant information\n"
-    response += "• Confirm they're satisfied\n"
-    
-    return response
-
-def generate_lead_fallback_response(knowledge_results, lead_name, lead_course, lead_score):
-    """Generate lead analysis fallback response"""
-    response = f"**Call Coaching for {lead_name}**\n\n"
-    
-    response += "**What You Know:**\n"
-    response += f"• Lead Score: {lead_score}/100 ({'High priority' if lead_score >= 70 else 'Medium priority'})\n"
-    response += f"• Course Interest: {lead_course or 'Not specified'}\n"
-    response += f"• Status: {'Qualified lead' if lead_score >= 70 else 'Needs qualification'}\n\n"
-    
-    response += "**Ask:**\n"
-    response += "• **Ask:** 'Thanks for calling, what can I help you with today?'\n"
-    response += "• **Ask:** 'What's your main goal with this program?'\n"
-    response += "• **Ask:** 'What's your current situation?'\n\n"
-    
-    response += "**Say:**\n"
-    if lead_score >= 70:
-        response += "• **Say:** 'You're exactly the type of student we're looking for'\n"
-        response += "• **Say:** 'Let me tell you about the key benefits of this program'\n"
-    else:
-        response += "• **Say:** 'I'd love to learn more about your goals'\n"
-        response += "• **Say:** 'Let me help you explore your options'\n"
-    
-    if lead_course:
-        response += f"\n**For {lead_course}:**\n"
-        response += "• **Ask:** 'What interests you most about this course?'\n"
-        response += "• **Ask:** 'What's your career goal?'\n"
-        response += "• **Say:** 'This course aligns perfectly with your goals'\n"
-    
-    response += "\n**Next Steps:**\n"
-    if lead_score >= 70:
-        response += "• Focus on conversion and scheduling next steps\n"
-        response += "• Address any concerns quickly\n"
-        response += "• Book campus visit or virtual tour\n"
-    else:
-        response += "• Ask qualifying questions to build interest\n"
-        response += "• Send relevant information to nurture\n"
-        response += "• Schedule follow-up call\n"
-    
-    return response
-
-def generate_call_fallback_response(knowledge_results, lead_name, lead_course):
-    """Generate call summary fallback response"""
-    response = "**Call Summary & Next Steps**\n\n"
-    
-    response += "**What You Know:**\n"
-    response += "• Call is wrapping up - time to confirm next steps\n"
-    response += "• Student has shown interest and engaged in conversation\n"
-    response += "• Need to maintain momentum with immediate follow-up\n\n"
-    
-    response += "**Ask:**\n"
-    response += "• **Ask:** 'Let me confirm what we've discussed today'\n"
-    response += "• **Ask:** 'What's your next step?'\n"
-    response += "• **Ask:** 'What's the best time to call you back?'\n\n"
-    
-    response += "**Say:**\n"
-    response += "• **Say:** 'I'll send you a summary email with everything we discussed'\n"
-    response += "• **Say:** 'I'll include the course information you requested'\n"
-    response += "• **Say:** 'Thank you for your time and interest'\n\n"
-    
-    response += "**Before You Hang Up:**\n"
-    response += "• Confirm their email address\n"
-    response += "• Get best time for follow-up call\n"
-    response += "• Set expectation for email arrival\n\n"
-    
-    response += "**Next Steps:**\n"
-    response += "• Send follow-up email within 1 hour\n"
-    response += "• Schedule next call in 2-3 days\n"
-    response += "• Send application materials if requested\n"
-    
-    if lead_course:
-        response += f"\n**For {lead_course}:**\n"
-        response += "• Confirm they meet entry requirements\n"
-        response += "• Send course-specific information\n"
-        response += "• Schedule campus visit or virtual tour\n"
-    
-    return response
-
-def generate_general_fallback_response(knowledge_results, lead_name, lead_course):
-    """Generate general fallback response"""
-    response = "**General Support**\n\n"
-    
-    response += "**What You Know:**\n"
-    response += "• Student has reached out but needs clarification\n"
-    response += "• Need to understand their specific needs\n"
-    response += "• Opportunity to provide helpful guidance\n\n"
-    
-    response += "**Ask:**\n"
-    response += "• **Ask:** 'How can I help you today?'\n"
-    response += "• **Ask:** 'What questions do you have?'\n"
-    response += "• **Ask:** 'What brought you to us today?'\n\n"
-    
-    response += "**Say:**\n"
-    response += "• **Say:** 'I'm here to answer any questions you have'\n"
-    response += "• **Say:** 'I can put you in touch with the right person'\n"
-    response += "• **Say:** 'Let me help you find what you're looking for'\n\n"
-    
-    response += "**Next Steps:**\n"
-    response += "• Clarify what they need help with\n"
-    response += "• Provide relevant information\n"
-    response += "• Schedule follow-up if needed\n"
-    response += "• Connect them with appropriate department\n"
-    
-    return response
-
-async def generate_lead_based_answer(
-    query: str,
-    lead_results: List[Dict[str, Any]],
-    context: Optional[Dict[str, Any]]
-) -> str:
-    """Generate AI-powered answer based on lead data results using LangChain + Gemini"""
-    
-    if not lead_results:
-        return "No lead data found matching your query."
-    
-    try:
-        # Import LangChain components following the Gospel pattern
-        from app.ai import ACTIVE_MODEL, GEMINI_API_KEY, GEMINI_MODEL, OPENAI_API_KEY, OPENAI_MODEL
-        
-        # Initialize LLM following Gospel pattern
-        if ACTIVE_MODEL == "openai" and OPENAI_API_KEY:
-            from langchain_openai import ChatOpenAI
-            llm = ChatOpenAI(model=OPENAI_MODEL, temperature=0.4, api_key=OPENAI_API_KEY)
-            logger.info(f"🤖 Using OpenAI for lead analysis: {OPENAI_MODEL}")
-        elif ACTIVE_MODEL == "gemini" and GEMINI_API_KEY:
-            from langchain_google_genai import ChatGoogleGenerativeAI
-            llm = ChatGoogleGenerativeAI(
-                model=GEMINI_MODEL,
-                temperature=0.4,
-                google_api_key=GEMINI_API_KEY
-            )
-            logger.info(f"🤖 Using Gemini for lead analysis: {GEMINI_MODEL}")
-        else:
-            logger.warning(f"No valid AI model available for lead analysis. Active: {ACTIVE_MODEL}")
-            return generate_fallback_lead_answer(query, lead_results, context)
-        
-        # Build lead data context
-        leads_context = ""
-        for i, lead in enumerate(lead_results[:5], 1):
-            leads_context += f"Lead {i}:\n"
-            leads_context += f"- Name: {lead.get('first_name', '')} {lead.get('last_name', '')}\n"
-            leads_context += f"- Score: {lead.get('lead_score', 'N/A')}\n"
-            leads_context += f"- Status: {lead.get('status', 'N/A')}\n"
-            leads_context += f"- Course: {lead.get('course_interest', 'N/A')}\n\n"
-        
-        # Extract context if available
-        call_context = ""
-        if context:
-            call_context = f"Call Context:\n- Current Lead: {context.get('lead', {}).get('name', 'N/A')}\n- Call Status: {context.get('callState', 'N/A')}\n\n"
-        
-        # Create AI prompt for lead analysis
-        from langchain_core.prompts import ChatPromptTemplate
-        
-        prompt = ChatPromptTemplate.from_messages([
-            ("system", """You are Ivy, an AI assistant for Bridge CRM. You help admissions teams analyse leads and provide actionable insights.
-
-Your role:
-- Analyze lead data and provide meaningful insights
-- Identify patterns and opportunities
-- Suggest specific next steps for lead engagement
-- Prioritize leads based on conversion potential
-- Provide practical, actionable recommendations
-
-Guidelines:
-- Focus on actionable insights, not just data summary
-- Highlight high-potential leads
-- Suggest specific engagement strategies
-- Be concise but comprehensive
-- Maintain a professional, helpful tone"""),
-            ("human", """Query: {query}
-
-{call_context}Lead Data:
-{leads_context}
-
-Please analyse these leads and provide actionable insights and recommendations for the admissions team.""")
-        ])
-        
-        # Generate AI response
-        chain = prompt | llm
-        response = chain.invoke({
-            "query": query,
-            "call_context": call_context,
-            "leads_context": leads_context
-        })
-        
-        return response.content
-        
-    except Exception as e:
-        logger.error(f"AI-powered lead analysis failed: {e}")
-        logger.info("Falling back to rule-based lead analysis")
-        return generate_fallback_lead_answer(query, lead_results, context)
-
-def generate_fallback_lead_answer(
-    query: str,
-    lead_results: List[Dict[str, Any]],
-    context: Optional[Dict[str, Any]]
-) -> str:
-    """Fallback rule-based answer when AI is unavailable"""
-    
-    total_count = len(lead_results)
-    
-    answer = f"**Lead Search Results**\n\n"
-    answer += f"Found {total_count} leads matching your query.\n\n"
-    
-    # Show top results
-    answer += "**Top Results:**\n"
-    for i, lead in enumerate(lead_results[:5], 1):
-        answer += f"{i}. {lead.get('first_name', '')} {lead.get('last_name', '')} "
-        answer += f"(Score: {lead.get('lead_score', 'N/A')})\n"
-    
-    # Add insights
-    if total_count > 0:
-        avg_score = sum(lead.get('lead_score', 0) for lead in lead_results) / total_count
-        answer += f"\n**Key Insights:**\n"
-        answer += f"• Average lead score: {avg_score:.1f}\n"
-        answer += f"• Total leads: {total_count}\n"
-    
-    return answer
-
-def generate_fallback_answer(query: str, context: Optional[Dict[str, Any]]) -> str:
-    """Generate fallback answer when no specific results found"""
-    
-    lead_name = context.get("lead", {}).get("name") if context else None
-    
-    if lead_name:
-        return f"I'm here to help with questions about {lead_name} or our programs. Could you please be more specific about what information you're looking for?"
-    else:
-        return "I'm here to help with questions about our programs, courses, or lead information. Could you please provide more details about what you'd like to know?"
-
-async def log_rag_query(
-    query_text: str,
-    query_type: str,
-    context: Dict[str, Any],
-    retrieved_documents: List[str],
-    response_text: str,
-    session_id: str,
-    lead_id: Optional[str] = None
-):
-    """Log RAG query for analytics and improvement"""
-    
-    try:
-        await execute("""
-            INSERT INTO rag_query_history (
-                query_text, query_type, context, retrieved_documents,
-                response_text, session_id, lead_id
-            ) VALUES (%s, %s, %s, %s, %s, %s, %s)
-        """, 
-        query_text, 
-        query_type, 
-        json.dumps(context) if context else None, 
-        retrieved_documents if retrieved_documents else None,  # Pass as list directly for PostgreSQL array
-        response_text, 
-        session_id, 
-        lead_id)
-    except Exception as e:
-        logger.error(f"Failed to log RAG query: {e}")
-
-@router.get("/documents", response_model=List[KnowledgeDocument])
-async def get_knowledge_documents(
-    document_type: Optional[str] = None,
-    category: Optional[str] = None,
-    limit: int = 20
-):
-    """Get knowledge base documents"""
-    
-    query = """
-    SELECT id, title, content, document_type, category, tags
-    FROM knowledge_documents
-    WHERE is_active = TRUE
-    """
-    
-    params = []
-    if document_type:
-        query += " AND document_type = %s"
-        params.append(document_type)
-    
-    if category:
-        query += " AND category = %s"
-        params.append(category)
-    
-    query += " ORDER BY created_at DESC LIMIT %s"
-    params.append(limit)
-    
-    try:
-        results = await fetch(query, *params)
-        
-        return [
-            KnowledgeDocument(
-                id=str(result["id"]),
-                title=result["title"],
-                content=result["content"],
-                document_type=result["document_type"],
-                category=result["category"],
-                tags=result["tags"] or []
-            )
-            for result in results
-        ]
-        
-    except Exception as e:
-        logger.error(f"Failed to get knowledge documents: {e}")
-        raise HTTPException(status_code=500, detail="Failed to retrieve knowledge documents")
-
-@router.post("/documents")
-async def create_knowledge_document(
-    title: str,
-    content: str,
-    document_type: str,
-    category: Optional[str] = None,
-    tags: Optional[List[str]] = None,
-    background_tasks: BackgroundTasks = None
-):
-    """Create a new knowledge document with automatic embedding generation"""
-    
-    try:
-        # Generate embedding for the content
-        embedding = await get_embedding(content)
-        embedding_str = "[" + ",".join(map(str, embedding)) + "]"
-        
-        # Insert document
-        result = await execute("""
-            INSERT INTO knowledge_documents (
-                title, content, document_type, category, tags, embedding
-            ) VALUES (%s, %s, %s, %s, %s, %s)
-            RETURNING id
-        """, (
-            title, content, document_type, category, 
-            tags or [], embedding_str
-        ))
-        
-        document_id = result[0]["id"]
-        
-        return {
-            "id": str(document_id),
-            "message": "Knowledge document created successfully",
-            "embedding_generated": True
-        }
-        
-    except Exception as e:
-        logger.error(f"Failed to create knowledge document: {e}")
-        raise HTTPException(status_code=500, detail="Failed to create knowledge document")
-
-@router.get("/analytics")
-async def get_rag_analytics(days: int = 30):
-    """Get RAG system analytics"""
-    
-    try:
-        # Query analytics
-        analytics = await fetch("""
-            SELECT 
-                query_type,
-                COUNT(*) as query_count,
-                AVG(user_feedback) as avg_feedback,
-                COUNT(CASE WHEN user_feedback IS NOT NULL THEN 1 END) as feedback_count
-            FROM rag_query_history
-            WHERE created_at >= NOW() - INTERVAL '%s days'
-            GROUP BY query_type
-            ORDER BY query_count DESC
-        """, days)
-        
-        # Popular queries
-        popular_queries = await fetch("""
-            SELECT 
-                query_text,
-                COUNT(*) as frequency
-            FROM rag_query_history
-            WHERE created_at >= NOW() - INTERVAL '%s days'
-            GROUP BY query_text
-            ORDER BY frequency DESC
-            LIMIT 10
-        """, days)
-        
-        return {
-            "analytics": [
-                {
-                    "query_type": row["query_type"],
-                    "query_count": row["query_count"],
-                    "avg_feedback": float(row["avg_feedback"]) if row["avg_feedback"] else None,
-                    "feedback_count": row["feedback_count"]
-                }
-                for row in analytics
-            ],
-            "popular_queries": [
-                {
-                    "query": row["query_text"],
-                    "frequency": row["frequency"]
-                }
-                for row in popular_queries
-            ],
-            "period_days": days
-        }
-        
-    except Exception as e:
-        logger.error(f"Failed to get RAG analytics: {e}")
-        raise HTTPException(status_code=500, detail="Failed to retrieve analytics")
+# Old fallback functions removed - now using narrator
 
 @router.post("/feedback")
 async def submit_feedback(
@@ -1341,11 +1803,13 @@ async def submit_feedback(
     """Submit feedback for a RAG query"""
     
     try:
+        # Clamp 1..5
+        clamped = max(1, min(5, int(rating)))
         await execute("""
             UPDATE rag_query_history
             SET user_feedback = %s
             WHERE session_id = %s
-        """, rating, session_id)
+        """, clamped, session_id)
         
         return {"message": "Feedback submitted successfully"}
         

@@ -12,21 +12,21 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-def sigmoid(x: float, steepness: float = 2.0, center: float = 0.5) -> float:
+def sigmoid(x: float, steepness: float = 2.0, centre: float = 0.5) -> float:
     """
     Sigmoid function for probability calibration.
     
     Args:
         x: Input value (typically raw probability)
         steepness: Controls the steepness of the curve (default: 2.0)
-        center: Center point of the sigmoid (default: 0.5)
+        centre: Centre point of the sigmoid (default: 0.5)
         
     Returns:
         Calibrated probability in [0, 1] range
     """
     try:
         # Apply sigmoid transformation
-        z = steepness * (x - center)
+        z = steepness * (x - centre)
         calibrated = 1.0 / (1.0 + np.exp(-z))
         
         # Ensure bounds
@@ -57,8 +57,8 @@ def calibrate_probability(raw_prob: float, method: str = "sigmoid", **kwargs) ->
     
     if method == "sigmoid":
         steepness = kwargs.get("steepness", 2.0)
-        center = kwargs.get("center", 0.5)
-        return sigmoid(raw_prob, steepness, center)
+        centre = kwargs.get("centre", 0.5)
+        return sigmoid(raw_prob, steepness, centre)
     
     elif method == "linear":
         # Simple linear scaling to spread probabilities

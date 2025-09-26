@@ -99,6 +99,8 @@ async def get_person_enriched(person_id: str):
                    last_name,
                    email,
                    phone,
+                   date_of_birth,
+                   nationality,
                    lifecycle_state,
                    lead_score,
                    conversion_probability,
@@ -118,11 +120,19 @@ async def get_person_enriched(person_id: str):
                 enriched.get("phone"),
                 live_row.get("phone"),
             )
+            logger.info(
+                "GET /people/%s/enriched reconcile date_of_birth: mv=%s live=%s",
+                person_id,
+                enriched.get("date_of_birth"),
+                live_row.get("date_of_birth"),
+            )
             for key in [
                 "first_name",
                 "last_name",
                 "email",
                 "phone",
+                "date_of_birth",
+                "nationality",
                 "lifecycle_state",
                 "lead_score",
                 "conversion_probability",
@@ -376,6 +386,22 @@ async def update_person(person_id: str, update: PersonUpdate):
             params.append(update.phone)
             param_count += 1
             
+        if update.date_of_birth is not None:
+            update_fields.append(f"date_of_birth = %s")
+            params.append(update.date_of_birth)
+            logger.info(f"🔧 DEBUG: Adding date_of_birth = {update.date_of_birth} to update query")
+            param_count += 1
+            
+        if update.nationality is not None:
+            update_fields.append(f"nationality = %s")
+            params.append(update.nationality)
+            param_count += 1
+            
+        if update.programme is not None:
+            update_fields.append(f"programme = %s")
+            params.append(update.programme)
+            param_count += 1
+            
         if update.lifecycle_state is not None:
             update_fields.append(f"lifecycle_state = %s")
             params.append(update.lifecycle_state)
@@ -391,17 +417,47 @@ async def update_person(person_id: str, update: PersonUpdate):
             UPDATE people 
             SET {', '.join(update_fields)}
             WHERE id::text = %s
-            RETURNING id::text, first_name, last_name, email, phone, lifecycle_state, updated_at
         """
         params.append(person_id)
 
-        # Use fetch to get RETURNING rows
-        rows = await fetch(sql, *params)
+        logger.info(f"🔧 DEBUG: Executing SQL: {sql}")
+        logger.info(f"🔧 DEBUG: With params: {params}")
+
+        # Use execute for UPDATE and then fetch the updated row
+        await execute(sql, *params)
+        
+        # Fetch the updated row to return it
+        fetch_sql = """
+            SELECT id::text, first_name, last_name, email, phone, date_of_birth, nationality, lifecycle_state, updated_at
+            FROM people 
+            WHERE id::text = %s
+        """
+        rows = await fetch(fetch_sql, person_id)
 
         if not rows:
             raise HTTPException(status_code=404, detail="Person not found")
 
         logger.info("PATCH /people/%s success fields=%s", person_id, ', '.join([f.split('=')[0].strip() for f in update_fields]))
+        logger.info(f"🔧 DEBUG: Database returned: {rows[0]}")
+        
+        # Verify the update by querying the database again
+        logger.info("🔧 DEBUG: Verifying update by querying database again...")
+        verify_sql = "SELECT id, first_name, last_name, date_of_birth, phone, updated_at FROM people WHERE id::text = %s"
+        verify_rows = await fetch(verify_sql, person_id)
+        if verify_rows:
+            logger.info(f"🔧 DEBUG: Verification query returned: {verify_rows[0]}")
+        else:
+            logger.error("🔧 DEBUG: Verification query returned no rows!")
+        
+        # Test a direct update to see if it works
+        logger.info("🔧 DEBUG: Testing direct update...")
+        test_sql = "UPDATE people SET date_of_birth = %s WHERE id::text = %s RETURNING date_of_birth"
+        test_rows = await fetch(test_sql, "1989-09-25", person_id)
+        if test_rows:
+            logger.info(f"🔧 DEBUG: Direct update test returned: {test_rows[0]}")
+        else:
+            logger.error("🔧 DEBUG: Direct update test failed!")
+        
         return {
             "message": "Person updated successfully",
             "person": rows[0]

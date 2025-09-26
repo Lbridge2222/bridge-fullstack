@@ -100,36 +100,6 @@ class Blocker(BaseModel):
     action: str  # How to resolve it
     evidence: Dict[str, Any]  # Supporting data
 
-# New Phase 1.3: Alert System Models
-class Alert(BaseModel):
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    lead_id: str
-    blocker_type: str
-    severity: str
-    title: str
-    description: str
-    action_required: str
-    created_at: str = Field(default_factory=lambda: dt.datetime.now(dt.timezone.utc).isoformat())
-    status: str = "active"  # "active" | "acknowledged" | "resolved"
-    assigned_to: Optional[str] = None
-    escalation_level: int = 1  # 1=normal, 2=escalated, 3=urgent
-    notification_sent: bool = False
-    evidence: Dict[str, Any] = Field(default_factory=dict)
-
-class AlertRequest(BaseModel):
-    lead_id: str
-    lead_name: str
-    lead_email: Optional[str] = None
-    lead_phone: Optional[str] = None
-    blockers: List[Blocker]
-    triage_score: float
-    triage_band: str
-
-class AlertResponse(BaseModel):
-    alerts_created: List[Alert]
-    alerts_escalated: List[Alert]
-    notifications_sent: int
-    next_actions: List[str]
 
 class TriageItem(BaseModel):
     leadId: str
@@ -140,7 +110,6 @@ class TriageItem(BaseModel):
     reasons: List[str]
     raw_factors: Dict[str, Any]
     blockers: List[Blocker] = Field(default_factory=list)  # New field for blockers
-    alerts: List[Alert] = Field(default_factory=list)  # New field for alerts
 
 class TriageResponse(BaseModel):
     items: List[TriageItem]
@@ -351,94 +320,6 @@ def detect_all_blockers(lead: Lead, days_since_activity: Optional[int]) -> List[
 # Phase 1.3: Alert Generation & Escalation
 # ---------------------------------------------------
 
-def generate_alert_title(blocker: Blocker, lead_name: str) -> str:
-    """Generate a clear, actionable alert title"""
-    severity_emoji = {
-        "critical": "🚨",
-        "high": "⚠️",
-        "medium": "📋",
-        "low": "ℹ️"
-    }
-
-    action_map = {
-        "data_completeness": "Data Missing",
-        "engagement_stall": "Engagement Stalled",
-        "source_quality": "Source Quality Issue",
-        "course_capacity": "Course Capacity Issue"
-    }
-
-    action = action_map.get(blocker.type, blocker.type.replace("_", " ").title())
-    return f"{severity_emoji.get(blocker.severity, 'ℹ️')} {action}: {lead_name}"
-
-def determine_escalation_level(blocker: Blocker, triage_score: float) -> int:
-    """Determine escalation level based on blocker severity and lead score"""
-    base_level = {
-        "critical": 3,
-        "high": 2,
-        "medium": 1,
-        "low": 1
-    }.get(blocker.severity, 1)
-
-    # Boost escalation for high-value leads with critical blockers
-    if blocker.severity == "critical" and triage_score >= 70:
-        return 3  # Urgent escalation
-    elif blocker.severity == "high" and triage_score >= 80:
-        return 2  # Escalated
-
-    return base_level
-
-def should_send_notification(blocker: Blocker, triage_score: float) -> bool:
-    """Determine if notification should be sent based on severity and score"""
-    # Always notify for critical blockers
-    if blocker.severity == "critical":
-        return True
-
-    # Notify for high severity with good lead score (high potential)
-    if blocker.severity == "high" and triage_score >= 60:
-        return True
-
-    # Notify for medium severity with very high lead score (high value)
-    if blocker.severity == "medium" and triage_score >= 80:
-        return True
-
-    return False
-
-def generate_alerts_from_blockers(
-    lead_id: str,
-    lead_name: str,
-    lead_email: Optional[str],
-    lead_phone: Optional[str],
-    blockers: List[Blocker],
-    triage_score: float,
-    triage_band: str
-) -> List[Alert]:
-    """Generate alerts from detected blockers"""
-    alerts = []
-
-    for blocker in blockers:
-        # Create alert
-        alert = Alert(
-            lead_id=lead_id,
-            blocker_type=blocker.type,
-            severity=blocker.severity,
-            title=generate_alert_title(blocker, lead_name),
-            description=blocker.description,
-            action_required=blocker.action,
-            escalation_level=determine_escalation_level(blocker, triage_score),
-            notification_sent=should_send_notification(blocker, triage_score),
-            evidence={
-                "blocker_evidence": blocker.evidence,
-                "triage_score": triage_score,
-                "triage_band": triage_band,
-                "lead_contact": {
-                    "email": lead_email,
-                    "phone": lead_phone
-                }
-            }
-        )
-        alerts.append(alert)
-
-    return alerts
 
 def get_next_actions(blockers: List[Blocker], triage_score: float) -> List[str]:
     """Generate prioritized next actions based on blockers and score"""
@@ -515,78 +396,25 @@ def llm_explain(items: List[Dict[str, Any]]) -> List[str]:
     items: [{'leadId': '123', 'raw_factors': {...}, 'score': 78.2, 'band': 'warm'}]
     returns: list of reason strings for each item (concise bullet sentences)
     """
-    if ACTIVE_MODEL == "none":
-        # Safe fallback: no AI models available
-        return [
-            "Ranked using engagement, recency, source quality, contactability, and course fit. No AI models available."
-            for _ in items
-        ]
-
     try:
-        # Prepare LLM based on available model (following gospel implementation)
-        if ACTIVE_MODEL == "openai" and OPENAI_API_KEY:
-            from langchain_openai import ChatOpenAI
-            llm = ChatOpenAI(model=OPENAI_MODEL, temperature=0.2, api_key=OPENAI_API_KEY)
-            print(f"🤖 Explaining scores with OpenAI: {OPENAI_MODEL}")
-        elif ACTIVE_MODEL == "gemini" and GEMINI_API_KEY:
-            from langchain_google_genai import ChatGoogleGenerativeAI
-            llm = ChatGoogleGenerativeAI(
-                model=GEMINI_MODEL,
-                temperature=0.2,
-                google_api_key=GEMINI_API_KEY
-            )
-            print(f"🤖 Explaining scores with Gemini: {GEMINI_MODEL}")
-        else:
-            raise Exception(f"No valid AI model available. Active: {ACTIVE_MODEL}")
-
-        # Use LangChain schema for structured output
-        from langchain_core.prompts import ChatPromptTemplate
-        from langchain.schema import HumanMessage
+        from app.ai.runtime import narrate_triage_bullets
+        import asyncio
         
-        # Prompt: concise, structured, no hallucinations
-        prompt = (
-            "You are explaining lead scores to admissions staff. "
-            "Given raw factor values, write 2 short bullet reasons focusing on the strongest positive drivers. "
-            "If there is a negative driver (e.g., oversubscribed course or low recency), include it briefly. "
-            "Be concrete and avoid jargon.\n\n"
-            "Examples of factors: engagement_points, recency_points, source_points, contactability_points, course_fit_points.\n\n"
-            "Respond as plain text with two bullet lines (starting with '- ').\n"
-        )
-        payload_text = "\n\n".join(
-            [
-                f"Lead {it['leadId']} | score={it['score']:.1f}, band={it['band']}, factors={it['raw_factors']}"
-                for it in items
-            ]
-        )
-        msg = HumanMessage(content=prompt + payload_text)
-        out = llm([msg])
-        # Simple split into blocks per lead (LLM returns one text; keep robust fallback)
-        text = out.content.strip()
-        # If the LLM returns more bullets than needed, just attach the same two to all leads
-        reasons = [line.strip() for line in text.splitlines() if line.strip().startswith("- ")]
-        if not reasons:
-            return ["Scored on engagement, recency, source, contactability, course fit."] * len(items)
-
-        # Group bullets into pairs
-        grouped: List[List[str]] = []
-        chunk: List[str] = []
-        for r in reasons:
-            chunk.append(r[2:].strip())
-            if len(chunk) == 2:
-                grouped.append(chunk)
-                chunk = []
-        # Pad if needed
-        while len(grouped) < len(items):
-            grouped.append(["Scored using core factors.", "No additional issues detected."])
-        return ["; ".join(g) for g in grouped[: len(items)]]
-        
-    except Exception as e:
-        print(f"⚠️  AI explanation failed: {e}, using fallback")
-        # Fallback to rule-based explanations
-        return [
-            "Ranked using engagement, recency, source quality, contactability, and course fit. AI explanation unavailable."
-            for _ in items
-        ]
+        outs = []
+        for it in items:
+            facts = {
+                "score": round(it["score"],1),
+                "band": it["band"],
+                "drivers_hint": it["raw_factors"],
+                "blockers": [b.type for b in it.get("blockers", [])]
+            }
+            text = asyncio.run(narrate_triage_bullets(facts))
+            # normalise to 1 line string
+            lines = [ln.strip("- ").strip() for ln in text.splitlines() if ln.strip().startswith("-")]
+            outs.append("; ".join(lines[:2]) if lines else "Scored on engagement/recency; check blockers.")
+        return outs
+    except Exception:
+        return ["Ranked by engagement, recency, source, contactability, course fit."] * len(items)
 
 # ---------------------------------------------------
 # API endpoint
@@ -623,17 +451,6 @@ def triage_leads(req: TriageRequest) -> TriageResponse:
     reasons_list = llm_explain(provisional)
     items: List[TriageItem] = []
     for it, reason in zip(provisional, reasons_list):
-        # Generate alerts from blockers for this lead
-        alerts = generate_alerts_from_blockers(
-            lead_id=it["leadId"],
-            lead_name=f"Lead {it['leadId']}",  # We'll need to get actual names from the database
-            lead_email=None,  # We'll need to get actual emails from the database
-            lead_phone=None,  # We'll need to get actual phones from the database
-            blockers=it["blockers"],
-            triage_score=it["score"],
-            triage_band=it["band"]
-        )
-        
         items.append(TriageItem(
             leadId=it["leadId"],
             score=round(it["score"], 1),
@@ -642,8 +459,7 @@ def triage_leads(req: TriageRequest) -> TriageResponse:
             confidence=round(it["confidence"], 2),
             reasons=[reason],
             raw_factors=it["raw_factors"],
-            blockers=it["blockers"],
-            alerts=alerts
+            blockers=it["blockers"]
         ))
     return TriageResponse(items=items)
 

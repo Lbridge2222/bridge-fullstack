@@ -5,13 +5,14 @@ Uses the dedicated 'calls' table for proper call tracking.
 
 from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
-from typing import Optional, List
+from typing import Optional, List, Dict, Any
 from datetime import datetime, date
 import uuid
 import json
 
 from app.db.database import fetch, execute
 from app.core.settings import get_settings
+from app.ai.prompt_kits.calls import build_call_script
 
 router = APIRouter(prefix="/calls", tags=["calls"])
 settings = get_settings()
@@ -247,3 +248,17 @@ async def get_recent_calls(limit: int = 10):
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to get recent calls: {e}")
+
+# Call script generation endpoint
+class CallScriptRequest(BaseModel):
+    lead: Dict[str, Any]
+    tone: Optional[str] = "friendly"
+
+@router.post("/script")
+async def generate_call_script_endpoint(request: CallScriptRequest):
+    """Generate structured call script for a lead"""
+    try:
+        script = await build_call_script(request.lead, request.tone)
+        return {"script": script}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to generate call script: {str(e)}")

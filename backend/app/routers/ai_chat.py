@@ -94,7 +94,7 @@ async def chat_with_gemini(request: ChatRequest):
         """
         
         # Call Gemini
-        model = genai.GenerativeModel('gemini-1.5-flash')
+        model = genai.GenerativeModel('gemini-2.0-flash')
         response = model.generate_content(prompt)
         
         # Parse Gemini response (assuming it returns JSON)
@@ -190,7 +190,7 @@ async def generate_call_script(request: ScriptRequest):
         """
         
         # Call Gemini
-        model = genai.GenerativeModel('gemini-1.5-flash')
+        model = genai.GenerativeModel('gemini-2.0-flash')
         response = model.generate_content(prompt)
         
         # Clean up the response
@@ -215,7 +215,7 @@ async def generate_call_script(request: ScriptRequest):
             script=script,
             confidence=confidence,
             metadata={
-                "model_used": "gemini-1.5-flash",
+                "model_used": "gemini-2.0-flash",
                 "data_completeness": data_completeness,
                 "script_length": len(script.split()),
                 "guardrails_applied": list(guardrails.keys()) if guardrails else []

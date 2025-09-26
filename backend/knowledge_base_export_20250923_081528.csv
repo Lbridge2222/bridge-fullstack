@@ -1,0 +1,431 @@
+id,title,content,document_type,category,tags,metadata,created_at,updated_at,is_active
+f76e79fe-49b6-4ddb-8d1c-1992792096eb,Re-Engagement Playbook — Recovering Silent Applicants,"**Context**
+Many applicants disengage after initial contact — they go silent after an offer, or fail to book an interview. A structured re-engagement playbook can recover a significant percentage of these cases.
+
+**Framework — Multi-Channel Re-Engagement**
+- **Email**: Short, empathetic reminder with clear CTA (""Book your interview in 2 clicks"").
+- **SMS**: Immediate, time-sensitive nudge (""Hi Alex, interview slots close Friday — reply YES to confirm"").
+- **Phone**: Personal, supportive call (""We just wanted to check if there's anything stopping you from completing your application"").
+
+**Scripts**
+- Email: ""We noticed you haven't booked your interview yet. Spaces are limited — click below to secure your preferred time.""
+- SMS: ""Hi [Name], your offer deadline is approaching. Reply YES to book or we'll call to help.""
+- Phone: ""We're here to support you — is there a barrier we can remove?""
+
+**Pitfalls**
+- Nagging tone (""Why haven't you responded yet?"").
+- Multi-channel bombardment in one day (causes annoyance).
+- Lack of new value in re-engagement messages (must add info: deadline, scholarship, support offer).
+
+**Next Steps**
+- Automate re-engagement sequences in CRM (trigger after 7–10 days no response).
+- Train staff to use empathetic language.
+- Track re-engagement conversion rate separately from first-contact conversion.",objection_handling,Comms,re_engagement|email|sms|phone|non_responder,"{""source_urls"": [""https://www.campaignmonitor.com/resources/guides/reengagement-emails/""]}",2025-09-23T07:09:19.480836+00:00,2025-09-23T07:10:42.130421+00:00,True
+4458f633-7494-4577-811d-1b8b016ec64e,Email Nurture Cadence — Aligning Outreach with the UCAS Cycle,"**Context**
+Email remains the backbone of admissions communication. Done well, it guides applicants smoothly from lead → application → enrolment. Done poorly, it clutters inboxes and disengages prospects.
+
+**Framework — 4 Stages**
+1. **Early Engagement (Summer–Sept)**: Subject taster content, ""how to apply"" guides.
+2. **Application Prep (Sept–Jan)**: Deadlines, personal statement tips, interview invites.
+3. **Offer Conversion (Jan–May)**: Conditional/unconditional offer explanation, financial planning, accommodation.
+4. **Pre-Enrolment (May–Sept)**: Welcome, onboarding checklists, enrolment reminders.
+
+**Best Practices**
+- One clear CTA per email.
+- Subject lines <50 characters, personalised (""Anna — your interview invite is here"").
+- Use urgency ethically (""equal consideration deadline this week"").
+- Re-send unopened emails with new subject lines after 48 hours.
+
+**Common Pitfalls**
+- Sending the same message to all — lack of segmentation.
+- Overloading with multiple CTAs.
+- Ignoring GDPR (must have explicit opt-in and unsubscribe option).
+
+**Next Steps**
+- Map email cadences to UCAS dates in your CRM.
+- Test subject lines and monitor open/click (aim 35–45%).
+- Segment comms by course, applicant type, and stage.",best_practice,Comms,email|nurture|ucas_cycle|cadence|conversion,"{""source_urls"": [""https://www.ucas.com"", ""https://blog.hubspot.com/marketing/email-marketing-best-practices""]}",2025-09-23T07:09:19.443060+00:00,2025-09-23T07:10:39.647178+00:00,True
+d6b30d7e-4354-4a9d-ae7b-e5f5dc6495a0,"Handling Cost Objections — Framing Higher Education as Value, Not Expense","**Context**
+Cost is the number one objection in HE admissions. Tuition fees, accommodation, and living costs can feel overwhelming. The task is to reframe higher education as an investment with lifetime returns.
+
+**Framework**
+- Acknowledge: ""Yes, it is expensive, and it's important to talk about that openly.""
+- Reframe: ""Let's look at what this degree delivers in terms of outcomes and opportunities.""
+- Quantify: Show average earnings uplift by subject (IFS/LEO). Break tuition into monthly equivalent, compare to potential career gains.
+- Support: Point to bursaries, scholarships, part-time work options.
+
+**Scripts**
+- ""A three-year degree might cost £27,750 in tuition. Broken down, that's less than £800 a month over three years — many graduates recoup that in less than one year of post-degree salary uplift.""
+- ""Independent data shows nursing graduates earn £X within 6 months. That's a clear ROI.""
+- ""There are scholarships and bursaries that can reduce your personal contribution.""
+
+**Pitfalls**
+- Minimising the applicant's concern (""don't worry about the money"") — it undermines trust.
+- Using abstract ROI numbers with no personal link.
+- Talking finance without also showing career pathways.
+
+**Next Steps**
+- Train advisors with subject-by-subject ROI data from IFS/Discover Uni.
+- Provide calculators that show cost vs. earnings uplift.
+- Integrate scholarship/bursary info directly into CRM call/email templates.",objection_handling,Sales Methodology,cost|value|finance|roi|HE,"{""source_urls"": [""https://ifs.org.uk"", ""https://discoveruni.gov.uk""]}",2025-09-23T07:09:19.403841+00:00,2025-09-23T07:10:37.275913+00:00,True
+0ed60f48-af16-4b7e-86bc-7ccb6a631180,Consultative Selling in Admissions — Discovery Questions that Uncover Value,"**Context**
+Consultative selling is about listening first, speaking second. In admissions, it means uncovering what truly matters to an applicant: career goals, family expectations, finances, location, subject passion. By understanding pain points and motivators, you frame the degree as a tailored solution.
+
+**Discovery Framework**
+- Start broad: ""What's motivating you to consider higher education now?""
+- Narrow: ""Which matters more: subject interest, employability, or flexibility?""
+- Probe: ""What would success look like five years after graduation?""
+- Confirm: ""So your priority is employability in STEM, even if it means relocating — is that right?""
+
+**Scripts**
+- ""Tell me what excites you most about your chosen subject.""
+- ""What worries you most about starting university?""
+- ""How would your family describe the ideal outcome for you?""
+
+**Common Pitfalls**
+- Asking closed questions too early.
+- Talking over answers instead of listening.
+- Collecting data but not feeding it back (""you said…"").
+
+**Next Steps**
+- Train staff to record discovery answers into CRM.
+- Use applicant responses to tailor subsequent emails (if they prioritise career outcomes, send alumni success stories).
+- Review objection handling libraries to ensure common concerns map back to discovery themes.",best_practice,Sales Methodology,consultative|discovery|HE|value|framework,"{""source_urls"": [""https://hbr.org/1990/05/the-consultative-sales-approach""]}",2025-09-23T07:09:19.365327+00:00,2025-09-23T07:10:34.910846+00:00,True
+56ed9463-2855-45bd-b53a-47960e3f1f95,"Challenger Sales in HE Admissions — Teach, Tailor, Take Control","**Context**
+The Challenger Sale is one of the most influential sales methodologies globally. While developed for B2B, its principles map cleanly onto HE admissions: applicants face high stakes, multiple influencers (parents, teachers), and complex decision factors (finance, location, career outcomes).
+
+**Framework**
+- **Teach**: Offer a surprising, data-backed insight. In HE this often means showing applicants graduate outcomes data (IFS, LEO, Discover Uni) that reframes their understanding of ROI.
+- **Tailor**: Connect the insight to their personal goals. E.g. an applicant wants to study law; you show comparative salary and employment rates between providers and course types.
+- **Take Control**: Drive next steps with confidence. Set interview dates, explain UCAS deadlines, and position urgency not as pressure but as fairness (""the earlier you apply, the more choice you keep open"").
+
+**Scripts**
+- Teach: ""Most applicants assume all degrees in economics have the same outcomes. In reality, data shows Russell Group universities deliver significantly different career trajectories within 6 months of graduation.""
+- Tailor: ""You've told me your dream is to work in public policy. Let me show you alumni case studies from political science programmes and their job roles.""
+- Take Control: ""UCAS equal consideration closes in January — let's secure your interview this week so you're well positioned.""
+
+**Pitfalls**
+- Over-teaching (information dump with no personal link).
+- Tailoring only on superficial aspects (location, social life).
+- Taking control as pressure (""sign today or lose out"") rather than professional guidance.
+
+**Next Steps**
+- Train advisors to prep one ""teaching insight"" per call/email, backed by real data.
+- Embed a Challenger checklist in CRM call notes.
+- Review success rates monthly to refine teaching insights.",best_practice,Sales Methodology,challenger|value_based|sales|HE|framework,"{""source_urls"": [""https://www.gartner.com/en/sales/topics/challenger-sale""]}",2025-09-23T07:09:19.324318+00:00,2025-09-23T07:10:32.549372+00:00,True
+c0831f7e-9d98-4704-8aaa-75967b947ad2,"Office for Students — OfS ""Fit for the Future"" Review 2024 Recommendations","**What You Know:**
+- The 2024 independent ""Fit for the Future"" review (led by Sir David Behan) suggested the OfS should focus on fewer strategic objectives: financial sustainability, quality outcomes, protecting public money.
+- Recommends improved metrics/data, predictive indicators, better assessment of teaching & outcomes. Also called for clearer regulation of private benefits, staff/student experience etc.
+
+**Ask:**
+- **Ask:** 'Does your prospective university publish data on graduate outcomes as part of its regulatory reporting?'
+- **Ask:** 'Have you seen provider's financial sustainability info or risk reports?'
+
+**Say:**
+- **Say:** 'The sector is shifting towards more accountability — what students get, outcomes & sustainability are becoming part of selection criteria in how institutions are evaluated.'
+- **Say:** 'These changes may also influence how competitive admissions become and what providers emphasise.'
+
+**Next Steps:**
+- Find the provider's latest outcome data (graduate earnings, retention, satisfaction).
+- If possible, see their financial statements or OfS register details about financial risk / conditions.",policy,Regulatory Reviews,ofs|fit_for_the_future|financial_sustainability|outcomes|data_reporting,"{""source_urls"": [""https://www.lordslibrary.parliament.uk/future-of-the-university-sector-report-from-universities-uk/""]}",2025-09-23T07:09:19.285042+00:00,2025-09-23T07:10:30.154824+00:00,True
+9a93ff56-47bc-48a4-9dfd-e1c225464a32,"Scholarships, Bursaries & Costs Transparency","**What You Know:**
+- Universities' Admissions Policy includes a comprehensive section on scholarships & bursaries available for both undergraduate & postgraduate applicants. It also lists course-related additional costs.
+- The policy states expected costs will be published on course pages; changes will be reflected online as soon as possible.
+
+**Ask:**
+- **Ask:** 'Have you checked the scholarships page for your course, and whether the listed amounts apply to your student type (home/international)?'
+- **Ask:** 'Did you review additional course costs (travel, materials, field trips) so you can budget accurately?'
+
+**Say:**
+- **Say:** 'Transparent costs + scholarship detail tells you how much support is available and what extra expenses to expect.'
+- **Say:** 'If the information isn't clear, ask the admissions office — better to know ahead.'
+
+**Next Steps:**
+- Visit the university's scholarships & bursaries page.
+- Make a list of non-tuition extra costs.
+- Compare support packages across your shortlist.",course_info,Financial Support & Costs,scholarships|bursaries|additional_costs|transparency,"{""source_urls"": [""https://www.brunel.ac.uk/documents/Policies/admissions-policy-and-procedure-april-2024.pdf""]}",2025-09-23T07:09:19.245316+00:00,2025-09-23T07:10:27.658576+00:00,True
+f989db2a-e5ea-449a-b532-e11d60c5ffaa,OfS Review: Registration Tests for Financial Stability & Quality,"**What You Know:**
+- OfS announced in Dec 2024 a pause on accepting new applications for registration / degree awarding powers / university title; reopened from 28 August 2025 with updated evidence requirements.
+- New evidence thresholds introduced to assess financial sustainability of providers.
+
+**Ask:**
+- **Ask:** 'Is the provider you're considering recently registered or applying under new rules, and are they publicly stable financially?'
+- **Ask:** 'Have you seen any statements from the provider about compliance with the new registration test evidence?'
+
+**Say:**
+- **Say:** 'These financial tests are increasingly part of what the regulator looks for — it's not just academic quality but also institutional sustainability.'
+- **Say:** 'Checking this can give you confidence that your chosen institution will fulfil its teaching / support promises.'
+
+**Next Steps:**
+- Review OfS register entries to check for provider's registration date, conditions.
+- If possible, see financial transparency statements or reports from that provider.",policy,Regulatory Updates,ofs|financial_sustainability|registration_test,"{""source_urls"": [""https://www.officeforstudents.org.uk/news-blog-and-events/press-and-media/ofs-announces-reforms-to-its-registration-tests-to-protect-students-and-public-money/""]}",2025-09-23T07:09:19.206241+00:00,2025-09-23T07:10:25.240541+00:00,True
+874007a8-26b5-4b63-9dfa-65605f9b65b1,Admissions Policy & Best Practice,"**What You Know:**
+- Universities' Admissions Policy aims to reflect sector-best practice (QAA, SPA, UCAS, OfS), equality & diversity, data protection, consumer rights etc.
+- The policy covers all levels of study (UG, PG, etc.), except where noted otherwise.
+
+**Ask:**
+- **Ask:** 'Are you applying UG or PG? Do you need equivalency or recognition of overseas qualifications?'
+- **Ask:** 'Do you know if the university permits non-standard entry or discretion based on experience?'
+
+**Say:**
+- **Say:** 'Universities aim to be inclusive; check whether your credentials align and whether you can use supplementary evidence if needed.'
+- **Say:** 'Sometimes smaller universities give more flexibility but still expect you to meet baseline criteria.'
+
+**Next Steps:**
+- Review the university's policy for your level/subject.
+- If using non-standard or overseas qualifications, contact admissions to check equivalency rules.",best_practice,University Policy,inclusivity|non_standard_entry|experience|diversity,"{""source_urls"": [""https://www.newman.ac.uk/wp-content/uploads/sites/10/2024/11/Admissions-Policy-2024-PDF-363KB.pdf""]}",2025-09-23T07:09:19.167061+00:00,2025-09-23T07:10:22.847541+00:00,True
+ac2ad29b-f59c-4049-92de-6ffdf007ebfb,"Admissions — Modes, International & PGT/PG Research","**What You Know:**
+- Universities' admissions policy covers full-time/part-time, on-campus, online/blended, international, HE-in-FE, PGT/PG research & partnerships.
+- It includes rules for different modes of delivery and different applicant origins.
+
+**Ask:**
+- **Ask:** 'Which mode are you applying under (FT, PT, online, HE-in-FE)?'
+- **Ask:** 'Are you international or domestic? Applying research or taught?'
+
+**Say:**
+- **Say:** 'Admittance rules can vary by mode and origin; what holds for a full-time UK student may differ for international or online routes.'
+- **Say:** 'Be sure to check the version of the policy that applies to your specific case.'
+
+**Next Steps:**
+- Pull the policy section relevant to your applicant's mode / origin.
+- Note what evidence / fees / documents are required depending on route.",best_practice,Admissions Process,modes|online|international|PT|partnerships,"{""source_urls"": [""https://www.derby.ac.uk/services/admissions/policies/admission-policy/""]}",2025-09-23T07:09:19.128537+00:00,2025-09-23T07:10:20.472249+00:00,True
+94432a87-2aac-4308-8d24-259d1aaada5f,OfS Regulatory Framework — Equality of Access & Participation Plans,"**What You Know:**
+- Providers must produce Access & Participation Plans (APPs) — required by OfS — to demonstrate how they improve opportunity for under-represented students.
+- Equality of Opportunity Risk Register also launched to highlight what risks providers see in access/outcomes.
+
+**Ask:**
+- **Ask:** 'Does your university publish an APP, and is it up-to-date?'
+- **Ask:** 'Do they reference their risk register or mitigation plans for access/outcome inequalities?'
+
+**Say:**
+- **Say:** 'You can often find helpful data in the APPs (e.g. school type, postcode, ethnicity outcomes) which can help you assess which universities are likely to be supportive.'
+- **Say:** 'If a university has strong access/outcome mitigation, that's a positive signal.'
+
+**Next Steps:**
+- Pull APP documents for your shortlist. Extract the targets and measures.
+- Compare where universities are doing more or less in terms of support for under-represented groups.",policy,Access & Participation,APPs|OfS|equality|access|outcomes,"{""source_urls"": [""https://researchbriefings.files.parliament.uk/documents/CBP-9195/CBP-9195.pdf""]}",2025-09-23T07:09:19.089361+00:00,2025-09-23T07:10:18.068471+00:00,True
+ff92a5a5-85b0-4f6e-8fad-b909716d2954,Admissions Policy Alignment & Good Practice,"**What You Know:**
+- Universities commit to a fair, efficient, professional admissions service. They comply with legislation/regulation/regulatory requirements and align with UUK/GuildHE Fair Admissions Code.
+- They publish clear information about courses, entry requirements, and seek to be transparent.
+
+**Ask:**
+- **Ask:** 'Have you checked whether the university's course page is up-to-date for the course you want?'
+- **Ask:** 'Do you know what their policy says about subject combinations, retakes, or non-standard qualifications?'
+
+**Say:**
+- **Say:** 'Universities try to follow good sector practice; their alignment with Fair Admissions Code is a positive sign.'
+- **Say:** 'We'll double check the specific entry criteria on their site so there are no surprises.'
+
+**Next Steps:**
+- Visit the university's online admissions policy, verify requirements for your subject.
+- If you're using non-standard qualifications or retakes, double check acceptability.",best_practice,University Policy,transparency|entry_requirements|retakes|nonstandard_quals|good_practice,"{""source_urls"": [""https://www.qmul.ac.uk/media/arcs/policyzone/Admissions-Policy-2025-26.pdf""]}",2025-09-23T07:09:19.049296+00:00,2025-09-23T07:10:15.633679+00:00,True
+c182f169-9f25-4c63-9ac4-df13beb593c4,Admissions Appeals & Complaints Policy,"**What You Know:**
+- Universities' policy covers how applicants can appeal or complain about admission decisions. Informal resolution encouraged first; formal appeals via documented procedure.
+- Also includes policies on applicant data, financial matters, and transparency of decision process.
+
+**Ask:**
+- **Ask:** 'Do you feel your case might meet grounds for appeal or complaint (e.g. process error, unclear criteria, discrimination)?'
+- **Ask:** 'Have you saved all correspondence, offer letters, decision emails?'
+
+**Say:**
+- **Say:** 'You have the right to ask for reasons and to appeal if you believe the process was unfair.'
+- **Say:** 'It helps to document your case clearly: what was promised, what happened, differences.'
+
+**Next Steps:**
+- Retrieve the university's appeals and complaints forms / policy PDF.
+- If needed, draft your appeal/complaint referencing specific policy sections.",policy,Appeals & Complaints,appeals|complaints|transparency|process|university_policy,"{""source_urls"": [""https://www.sheffield.ac.uk/study/policies/admissions""]}",2025-09-23T07:09:19.011036+00:00,2025-09-23T07:10:13.258960+00:00,True
+eaca7940-634c-4140-8b25-286613eec185,Russell Group — Contextual Admissions & Transparency Pledge,"**What You Know:**
+- Russell Group universities have committed to using more **consistent language** in their contextual admissions policies to make them easier for applicants to compare.
+- Also committed to supporting care-experienced & estranged students with bursaries, accommodation support etc.
+
+**Ask:**
+- **Ask:** 'Is your selected university part of the Russell Group, and do they list their contextual admissions criteria clearly?'
+- **Ask:** 'Are you care-experienced or estranged, or have schooling or postcode circumstances we should reference?'
+
+**Say:**
+- **Say:** 'Universities are making more public how they adjust offers based on background—this may help in your case.'
+- **Say:** 'We'll compare contextual admissions policies side-by-side so you can see which ones are more / less generous.'
+
+**Next Steps:**
+- Map out the contextual admissions variations for your shortlist.
+- Collect and prepare any evidence (school performance, socio-economic background) that could support contextual consideration.",best_practice,Access & Participation,contextual_admissions|transparency|Russell_Group|care_leavers|bursaries,"{""source_urls"": [""https://www.timeshighereducation.com/news/russell-group-aims-transparency-contextual-admissions"", ""https://www.russellgroup.ac.uk/policy/policy-briefings/building-opportunity-all""]}",2025-09-23T07:09:18.971026+00:00,2025-09-23T07:10:10.853678+00:00,True
+724d03d9-fe17-4496-bfff-e9f5f0e057ba,OfS Registration Conditions Update — Student Fairness & Governance,"**What You Know:**
+- As of 28 August 2025, OfS introduces new initial condition **C5 (treating students fairly)**, replacing previous conditions C1 and C3. Institutions applying for registration must publish student-facing documents including a student protection plan.
+- New conditions E7, E8, E9 (governance) replace earlier governance conditions.
+
+**Ask:**
+- **Ask:** 'Is your prospective institution registered under the new OfS conditions, or are they operating under older conditions?'
+- **Ask:** 'Have you checked that their student protection plan is published and what it contains?'
+
+**Say:**
+- **Say:** 'These registration changes mean universities must be more transparent about how they treat students, especially around protection and fairness.'
+- **Say:** 'We'll pull up their published student protection docs to see what rights you have.'
+
+**Next Steps:**
+- Check the university's entry in the OfS register (after 28 Aug 2025) to see applicable registration conditions.
+- Review their student protection plan, in particular how complaints are handled and what protections are specified.",policy,Regulatory Updates,ofs|registration|governance|student_fairness|student_protection_plan,"{""source_urls"": [""https://www.officeforstudents.org.uk/news-blog-and-events/press-and-media/ofs-announces-reforms-to-its-registration-tests-to-protect-students-and-public-money/""]}",2025-09-23T07:09:18.932059+00:00,2025-09-23T07:10:08.441647+00:00,True
+034052ed-8063-4e88-8128-a3544db3c380,Subject Combinations & Retakes Policy,"**What You Know:**
+- Universities consider applications on an individual basis, including subject combinations, retakes, academic record. Meeting the entry requirement doesn't guarantee an offer due to competition.
+- They receive many more applications than places so grade, experience, contextual material all matter.
+
+**Ask:**
+- **Ask:** 'Do you need to retake anything, and have you checked acceptability of retakes for your course?'
+- **Ask:** 'Is your current subject combination aligned with the prerequisites listed in the course descriptions?'
+
+**Say:**
+- **Say:** 'Even if you hit the grades, competition means not all qualified students receive offers.'
+- **Say:** 'It's better to aim above the minimum, especially at highly selective institutions.'
+
+**Next Steps:**
+- Check subject combinations required.
+- Assess whether retake policy is acceptable.
+- Gather extra achievements (if needed) to strengthen application.",best_practice,Admissions Selection,competition|subject_requirements|retakes|selectivity,"{""source_urls"": [""https://www.lse.ac.uk/study-at-lse/Undergraduate/Prospective-Students/How-to-Apply/Admissions-Information""]}",2025-09-23T07:09:18.892315+00:00,2025-09-23T07:10:06.012188+00:00,True
+b9fc8577-3b9a-43eb-b061-959bd3e01439,Deferred Entry & International Admissions Process,"**What You Know:**
+- Many subject areas allow applications that want to defer by one year, but you must check course-by-course.
+- There is an international admissions process; educational advisers in some countries recognised to help with prep.
+
+**Ask:**
+- **Ask:** 'Do you want to defer, and have you confirmed if your course allows that?'
+- **Ask:** 'Are you applying from abroad, and will using an overseas adviser help your application?'
+
+**Say:**
+- **Say:** 'Deferred entry is often possible but has to be confirmed per course/university.'
+- **Say:** 'International recommenders/advisers may ease submission, but still check all requirement documents.'
+
+**Next Steps:**
+- Check course-specific deferral policy.
+- Use recognized educational adviser if needed.
+- Ensure all international supporting documents are aligned.",best_practice,International Admissions,deferred_entry|international|admissions_process|overseas_advisers,"{""source_urls"": [""https://www.manchester.ac.uk/study/international/admissions/undergraduate-application-process/""]}",2025-09-23T07:09:18.854051+00:00,2025-09-23T07:10:03.608654+00:00,True
+8257e459-9a7f-4f8b-8fd6-4674d9c1155b,Deferral & Military Service Exception,"**What You Know:**
+- Universities allow deferral in certain circumstances, including military service. Two academic years deferral usually only if completing compulsory service exceeding 12 months. For Medicine & Dentistry, only one year permitted even for military service.
+
+**Ask:**
+- **Ask:** 'Is your deferral request because of military service or other commitments?'
+- **Ask:** 'Do you know whether the course is medicine/dentistry (which may have stricter deferral limits)?'
+
+**Say:**
+- **Say:** 'Be prepared to provide evidence of your service/travel or reason for deferral.'
+- **Say:** 'Make your request through the university's official channels.'
+
+**Next Steps:**
+- Gather documents proving service period.
+- Submit deferral request via official channels.
+- Understand deadlines and whether approval is automatic or exceptional.",policy,Deferral Policy,deferral|military_service|exceptions|offer_conditions,"{""source_urls"": [""https://www.kcl.ac.uk/study/undergraduate/how-to-apply/policies-and-guidance""]}",2025-09-23T07:09:18.813844+00:00,2025-09-23T07:10:01.229719+00:00,True
+bbade069-573c-4d7d-9005-36491d896238,CAS & Fee Deposit & Visa Policy,"**What You Know:**
+- Universities require tuition fee deposit for international students who need visa & CAS.
+- Fee status will not be re-assessed after registration, except in exceptional circumstances. Applicants must complete fee status assessment form and upload supporting evidence.
+- Applicants under age 18 needing student visa must submit guardian consent letter.
+
+**Ask:**
+- **Ask:** 'Will you need a visa, and are you under 18 so that you might need guardian consent?'
+- **Ask:** 'Do you have your fee deposit and proof of ability to pay arranged?'
+
+**Say:**
+- **Say:** 'Not paying the required deposit may delay your CAS / visa issuance.'
+- **Say:** 'Fee status usually remains fixed once registers, so get it correct early.'
+
+**Next Steps:**
+- Complete and upload form for fee status.
+- Pay deposit if required.
+- Prepare guardian consent letter if under 18.
+- Track CAS issuance timelines.",best_practice,International Admissions,CAS|visa|fee_deposit|guardian_consent|fee_status,"{""source_urls"": [""https://www.stir.ac.uk/study/important-information-for-applicants/admissions-policy/""]}",2025-09-23T07:09:18.775033+00:00,2025-09-23T07:09:58.846143+00:00,True
+7850319f-0275-4b5b-8343-5bf5ee64e8ca,OfS Fair Admissions & Use of Contextual Data,"**What You Know:**
+- OfS (Office for Students) emphasises that admissions should maintain fairness & equal opportunity; contextual data (e.g. socioeconomic status, school performance) is part of policy discussions.
+- OfS launched reviews to assess predicted grades, unconditional offers, personal statements.
+
+**Ask:**
+- **Ask:** 'Could your predicted grades or background benefit from contextual consideration?'
+- **Ask:** 'Do you know how your chosen universities treat unconditional offers or predicted grades?'
+
+**Say:**
+- **Say:** 'Admissions policies are under review — universities may become more transparent about how personal statements, predictions and context are used.'
+- **Say:** 'We'll help you frame information (grades, background) in your application to present the strongest case.'
+
+**Next Steps:**
+- Check whether your universities explicitly say they use contextual factors in their admissions policy.
+- Collect evidence that supports your context.",best_practice,Admissions Policy,ofs|contextual_admissions|predicted_grades|personal_statements|fairness,"{""source_urls"": [""https://www.officeforstudents.org.uk/annual-review-2020/fair-admissions-and-recruitment/"", ""https://www.officeforstudents.org.uk/news-blog-and-events/press-and-media/admissions-review-to-ensure-a-system-which-works-for-all-students/""]}",2025-09-23T07:09:18.722814+00:00,2025-09-23T07:09:56.460352+00:00,True
+65e7ce8d-9565-4c1e-bf90-01b111c21538,International Applicants Guidance — Fee Status & ATAS,"**What You Know:**
+- Universities determine fee status based on UCAS application info; if more info needed, they issue a questionnaire and ask for supporting documentation.
+- Some programmes require ATAS (Academic Technology Approval Scheme) clearance if in sensitive subjects (Biochemical Engineering, Physics etc.) for non-UK/EU nationals.
+
+**Ask:**
+- **Ask:** 'Are you applying to a programme that requires ATAS?'
+- **Ask:** 'Are you ready to supply overseas qualification transcripts, English language test etc?'
+
+**Say:**
+- **Say:** 'International applicants often need additional steps (e.g. ATAS, CAS) — these can add time, so plan early.'
+- **Say:** 'Fee status is sometimes conditional on evidence beyond your application form.'
+
+**Next Steps:**
+- Check whether your course requires ATAS; if yes, begin clearance process.
+- Ensure supporting documents are ready (transcripts, English proficiency).
+- Respond to fee status questionnaire promptly if issued.",policy,International Admissions,ATAS|international|fee_status|transcripts|English_language,"{""source_urls"": [""https://www.ucl.ac.uk/prospective-students/undergraduate/how-apply/guidance-international-applicants""]}",2025-09-23T07:09:18.683035+00:00,2025-09-23T07:09:54.003901+00:00,True
+1660f50d-f476-4825-addd-a0a3d6206f3a,Deferral & Contextual Admissions Guidelines,"**What You Know:**
+- Universities allow deferral to next available intake for many courses; some (medicine, dentistry, education) only in exceptional cases.
+- 'Conditions of Offer' must be met by the stated deadline.
+- Contextual admissions are used: universities review applications considering circumstances outside applicant's control that may have affected potential.
+
+**Ask:**
+- **Ask:** 'Is there something in your educational context (school, socioeconomic, disruptions) that we should flag?'
+- **Ask:** 'Do you know which parts of your course might have stricter deferral policy?'
+
+**Say:**
+- **Say:** 'Meeting the offer conditions is mandatory for deferral or for securing your place.'
+- **Say:** 'We'll ensure your context is clearly articulated in the application, if allowed.'
+
+**Next Steps:**
+- Identify whether your course is one of the exceptions.
+- Collect any contextual evidence.
+- Submit deferral request if needed, meeting declared deadlines.",best_practice,Admissions Process,deferral|exceptions|contextual_admission|offer_conditions,"{""source_urls"": [""https://www.dundee.ac.uk/corporate-information/student-recruitment-admissions-policy""]}",2025-09-23T07:09:18.644586+00:00,2025-09-23T07:09:51.548546+00:00,True
+d1b9a8da-bd38-48c8-88c6-287a93b575c8,Fee Status Assessment & Review Process,"**What You Know:**
+- Universities determine fee status using applicant's immigration status and residential history. If unclear, candidate must fill a fee status questionnaire and supply evidence.
+- For deferred entry, fee status is based on circumstances in the year of applying; changes before start may require reassessment.
+
+**Ask:**
+- **Ask:** 'Do you know your immigration/residence status as required for fee status?'
+- **Ask:** 'If asked, are you ready to supply evidence (e.g. residence, documents) quickly?'
+
+**Say:**
+- **Say:** 'Fee status can affect whether you're charged 'home' vs 'overseas' fees — it's important we get that right before accepting an offer.'
+- **Say:** 'If you think the fee status is wrong, you can ask for a review (via questionnaire).'
+
+**Next Steps:**
+- Complete the fee status questionnaire if required.
+- Keep all supporting documents ready.
+- Make sure to notify university of any change in circumstances.",policy,Fee Status,fee_status|home_fees|overseas|review|evidence,"{""source_urls"": [""https://www.bristol.ac.uk/study/fee-status/""]}",2025-09-23T07:09:18.604084+00:00,2025-09-23T07:09:49.089500+00:00,True
+a02cdc7a-b8d3-41b5-ac29-f4b4686f9152,UCAS Deferred Entry — Process & Conditions,"**What You Know:**
+- Deferred entry means applying now, but starting the course a year later. Most universities allow deferral by one year; it's up to the provider to agree.
+- Even with deferral, offer conditions (e.g. grade requirements) must still be met in the year of application.
+
+**Ask:**
+- **Ask:** 'Is your reason for deferral pre-planned (e.g. work, travel) or something that might arise later?'
+- **Ask:** 'Have you checked whether your chosen university/course accepts deferral?'
+
+**Say:**
+- **Say:** 'Deferral does not change the conditions of your offer.'
+- **Say:** 'Make the deferral request based on your university's official policy.'
+
+**Next Steps:**
+- Identify whether each of your universities allows deferral for the specific course.
+- Prepare the deferral request early; understand the paperwork and deadlines.",best_practice,Admissions Process,deferred_entry|deferral|offer_conditions|preparation,"{""source_urls"": [""https://www.ucas.com/applying/applying-to-university/dates-and-deadlines-for-uni-applications/deferred-entry""]}",2025-09-23T07:09:18.562813+00:00,2025-09-23T07:09:46.630018+00:00,True
+734a91aa-4cd7-4cce-aca0-8fb08aba0e9e,Fair Admissions Code of Practice — UUK/GuildHE (2024),"**What You Know:**
+- The UUK/GuildHE Fair Admissions Code of Practice (2024) sets out shared principles for HE providers to ensure admissions are fair, transparent, and in the interest of applicants.
+- Covers home undergraduate students primarily, but encourages applying to international/postgraduate admissions too.
+- Key areas: clear entry criteria, transparency on selection, contextual admissions.
+
+**Ask:**
+- **Ask:** 'Have you looked at how your predicted grades and background might be contextualised under this code?'
+- **Ask:** 'Do you know whether your chosen universities sign up to this code?'
+
+**Say:**
+- **Say:** 'Universities should be able to explain how they assess applications — what counts, what doesn't.'
+- **Say:** 'We'll check whether your courses/universities follow the Fair Admissions Code; that may affect how offers are decided.'
+
+**Next Steps:**
+- Pull up each university's admissions policy page; see whether they reference UUK/GuildHE fair admissions.
+- If available, check whether there are contextual admissions adjustments (postcode, school performance, etc.) for your candidates.",policy,Admissions Policy,fair_admissions|transparency|uuk|guildhe|contextual_admissions,"{""source_urls"": [""https://www.universitiesuk.ac.uk/sites/default/files/field/downloads/2022-03/uuk-guildhe-admissions-code-of-practice.pdf""]}",2025-09-23T07:09:18.485028+00:00,2025-09-23T07:09:44.204470+00:00,True
+90a0fd99-8182-4e58-a42d-e17578495bb1,Computer Science Course Overview,"Our Computer Science program is a comprehensive 12-month intensive course designed to prepare students for careers in software development. The curriculum covers modern programming languages, data structures, algorithms, web development, mobile development, and software engineering best practices. Students work on real-world projects and build a professional portfolio. The program includes career support, job placement assistance, and access to our network of 200+ industry partners. Graduates have a 95% job placement rate with an average salary increase of 40%.",course_info,Computer Science,programming|software development|career outcomes|job placement,{},2025-09-19T06:56:58.423941+00:00,2025-09-23T07:09:29.384362+00:00,True
+43a546e8-5819-42a0-b2d8-4f10faf6e9c0,Cost Objection Handling Strategy,"When prospects raise concerns about cost, follow this proven objection handling framework: 1) Acknowledge the concern: ""I understand that investment in education is a significant decision."" 2) Reframe the value: ""Let me share how we calculate ROI on this investment."" 3) Provide evidence: Share success stories of graduates who increased their income by 40% on average. 4) Offer solutions: Discuss flexible payment plans, scholarships, and financing options. 5) Create urgency: ""The next cohort starts in 8 weeks, and we have limited spots available."" Always end with a question to maintain engagement.",objection_handling,Pricing,cost objection|pricing|ROI|payment plans,{},2025-09-19T06:56:58.423941+00:00,2025-09-23T07:09:34.590463+00:00,True
+b9186ffb-ce2a-4824-87a7-152aa5a933ce,Follow-up Best Practices,"Effective follow-up strategy: 1) Initial contact within 24 hours of lead generation. 2) Personalized email with relevant course information. 3) Phone call within 48 hours to answer questions and assess fit. 4) Portfolio review scheduling for qualified leads. 5) Weekly touchpoints with valuable content (success stories, industry insights). 6) Application deadline reminders with urgency. 7) Post-application support and next steps guidance. Track all interactions and adjust approach based on lead response and engagement level.",best_practice,Follow-up,follow-up|nurturing|communication|engagement,{},2025-09-19T06:56:58.423941+00:00,2025-09-23T07:09:41.819255+00:00,True
+f6817757-ff3a-417c-9b68-800191d6da5a,Lead Qualification Criteria,High-quality leads typically demonstrate: 1) Clear career goals and motivation for career change. 2) Previous experience or strong interest in technology. 3) Commitment to full-time intensive learning. 4) Financial readiness or financing plan. 5) Geographic proximity to campus or remote learning capability. 6) Realistic timeline expectations. 7) Strong communication skills and professional demeanor. Score leads on each criterion (1-10) and prioritize those with total scores above 70.,best_practice,Lead Qualification,qualification|scoring|criteria|assessment,{},2025-09-19T06:56:58.423941+00:00,2025-09-23T07:09:39.374920+00:00,True
+6e3a832c-5423-43c7-b35c-14b10a66aafc,Portfolio Review Process,Portfolio reviews are conducted within 48 hours of lead qualification. The process includes: 1) Initial assessment of 3-5 projects demonstrating technical skills. 2) Technical interview covering problem-solving and coding abilities. 3) Feedback session with actionable recommendations. 4) Pathway discussion based on skill level and career goals. 5) Next steps planning including application timeline and preparation requirements. This process helps us understand the candidate's technical foundation and provides personalized guidance for their learning journey.,best_practice,Admissions,portfolio|technical interview|assessment|admissions,{},2025-09-19T06:56:58.423941+00:00,2025-09-23T07:09:36.993222+00:00,True

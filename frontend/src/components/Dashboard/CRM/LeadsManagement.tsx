@@ -1870,7 +1870,7 @@ const LeadsManagementPage: React.FC = () => {
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
                   <button
-                    className="text-sm font-semibold text-foreground truncate hover:text-red-600 text-left transition-colors"
+                    className="text-sm font-semibold text-foreground truncate hover:text-primary text-left transition-colors"
                     onClick={(e) => {
                       e.stopPropagation();
                       lead.uid && navigate(`/directory/${lead.uid}`);

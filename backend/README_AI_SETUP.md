@@ -65,7 +65,7 @@ OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-3.5-turbo")
 
 # Gemini Configuration  
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-1.5-flash")
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.0-flash")
 
 # Fallback Logic
 def get_available_models() -> list[str]:
@@ -368,7 +368,7 @@ OPENAI_MODEL=gpt-3.5-turbo
 
 # Gemini (recommended - free tier)
 GEMINI_API_KEY=your_gemini_key_here
-GEMINI_MODEL=gemini-1.5-flash
+GEMINI_MODEL=gemini-2.0-flash
 
 # CORS
 CORS_ORIGINS=["http://localhost:3000", "http://127.0.0.1:3000"]

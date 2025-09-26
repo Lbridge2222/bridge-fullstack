@@ -1,0 +1,90 @@
+name: Nightly AI Evaluation
+
+on:
+  schedule:
+    - cron: '0 2 * * *'  # Run at 2 AM UTC daily
+  workflow_dispatch:  # Allow manual trigger
+
+jobs:
+  eval:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.12'
+        
+    - name: Install dependencies
+      run: |
+        cd backend
+        pip install -r requirements.txt
+        pip install aiohttp
+        
+    - name: Start backend server
+      run: |
+        cd backend
+        export GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}
+        export AI_MODEL_PROVIDER=gemini
+        export IVY_ORGANIC_ENABLED=true
+        export IVY_MODAL_HEURISTICS=true
+        python -m uvicorn app.main:app --port 8000 &
+        sleep 10  # Wait for server to start
+        
+    - name: Run evaluation
+      run: |
+        cd scripts
+        python eval_nightly.py
+        exit_code=$?
+        
+        # Upload results as artifact
+        if [ -f eval_reports/*.json ]; then
+          echo "Uploading evaluation results..."
+          # Results will be available in the Actions tab
+        fi
+        
+        exit $exit_code
+        
+    - name: Upload evaluation results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: eval-results-${{ github.run_number }}
+        path: scripts/eval_reports/
+        
+    - name: Comment on PR (if applicable)
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const fs = require('fs');
+          const path = 'scripts/eval_reports/';
+          const files = fs.readdirSync(path);
+          
+          if (files.length > 0) {
+            const latestFile = files.sort().pop();
+            const results = JSON.parse(fs.readFileSync(path + latestFile, 'utf8'));
+            
+            const comment = `## 🤖 Nightly AI Evaluation Results
+            
+            **Success Rate**: ${(results.summary.success_rate * 100).toFixed(1)}% (${results.summary.successful}/${results.summary.total_cases})
+            
+            **Performance**:
+            - Avg Latency: ${results.performance.avg_latency_ms.toFixed(0)}ms
+            - P95 Latency: ${results.performance.p95_latency_ms}ms (budget: ${results.performance.p95_budget_ms}ms)
+            - P99 Latency: ${results.performance.p99_latency_ms}ms (budget: ${results.performance.p99_budget_ms}ms)
+            
+            **Status**: ${results.summary.success_rate >= 0.8 ? '✅ PASSED' : '❌ FAILED'}
+            
+            [View full results](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})`;
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+          }
