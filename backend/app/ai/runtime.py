@@ -6,6 +6,7 @@ from app.ai.cache import CACHE, make_key
 from app.ai.safe_llm import LLMCtx
 from app.ai import AI_TIMEOUT_MAIN_MS, AI_TIMEOUT_HELPER_MS, IVY_ORGANIC_ENABLED
 from app.ai.short_memory import get_condensed_context
+from app.ai.text_sanitiser import cleanse_conversational, scrub_contact_info
 from app.ai.prompts import SYSTEM_PARSER_JSON, SYSTEM_NARRATOR, SYSTEM_TRIAGE_EXPLAIN, IVY_ORGANIC_SYSTEM_PROMPT
 from app.ai.ivy_conversation_config import build_sampling_args
 
@@ -48,6 +49,14 @@ async def flash_parse_query(text: str) -> Dict[str, Any]:
 
 async def narrate(mode: str, facts: Dict[str,Any]) -> str:
     """Generate progressive language from facts; never invent numbers."""
+    
+    # Check for personal/off-topic questions and return safe response
+    query = facts.get("query", "").lower()
+    if any(w in query for w in ["dog", "cat", "pet", "married", "boyfriend", "girlfriend", "religion", "politics"]):
+        return cleanse_conversational(
+            "We don't record personal details like that. Let's focus on the course fit, entry requirements, and the next sensible step."
+        )
+    
     if not AI_NARRATOR_ENABLED:  # deterministic fallback
         lines = ["**What You Know**"]
         for k,v in facts.items():
@@ -82,8 +91,10 @@ async def narrate(mode: str, facts: Dict[str,Any]) -> str:
         text = await llm.ainvoke(messages)
         from app.ai.post import clamp_lines
         clamped_text = clamp_lines(text, 10, 800)
-        CACHE.set(k, clamped_text)
-        return clamped_text
+        # Apply conversational sanitizer for clean, natural responses
+        clean_text = cleanse_conversational(clamped_text)
+        CACHE.set(k, clean_text)
+        return clean_text
     except Exception as e:
         logger.error("LLM call failed: %s", e)
         # Fallback to a short paragraph without rigid sections

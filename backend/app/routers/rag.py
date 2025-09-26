@@ -367,6 +367,9 @@ async def classify_intent(query: str, ctx: Optional[Dict[str,Any]] = None) -> st
             return "lead_profile"
         if any(k in ql for k in ["objection","concern"]): return "objection_handling"
         if any(k in ql for k in ["summary","summarise","recap"]): return "call_summary"
+        # Check for admissions decision queries
+        if re.search(r"\b(offer|make)\s+(them\s+)?(an?\s+)?offer\b", ql) or "offer a place" in ql:
+            return "admissions_decision"
         return "lead_info"
     
     # Otherwise use LLM classification
@@ -454,6 +457,16 @@ def make_person_source(ctx: Optional[Dict[str,Any]]) -> Optional[Dict[str,Any]]:
 
 async def generate_person_answer(query: str, knowledge_results: List[Dict[str,Any]], context: Optional[Dict[str,Any]]) -> str:
     """Generate person-focused answer for lead_info queries"""
+    
+    # Early guard for untracked personal questions
+    ql = (query or "").lower()
+    personal_untracked = ["dog","cat","pet","married","boyfriend","girlfriend","religion","politics"]
+    if any(w in ql for w in personal_untracked):
+        from app.ai.text_sanitiser import cleanse_conversational
+        return cleanse_conversational(
+            "We don't record personal details like that. Let's focus on the course fit, entry requirements, and the next sensible step."
+        )
+    
     # If it's clearly a profile-y question, delegate to the profile generator
     if is_profile_query(query):
         return await generate_person_profile(query, context)
@@ -639,10 +652,10 @@ async def generate_person_profile(query: str, context: Optional[Dict[str,Any]]) 
     ql = (query or "").lower()
     personal_untracked = ["dog","cat","pet","married","boyfriend","girlfriend","religion","politics"]
     if any(w in ql for w in personal_untracked):
-        return ("**What You Know**\n• We don't record personal details like pets or relationships.\n"
-                "**Ask**\n• What would help you decide about MA Music Performance?\n"
-                "**Say**\n• Happy to focus on course fit, entry requirements and next steps.\n"
-                "**Next Steps**\n• Share course overview and book a 1-1 if useful.")
+        from app.ai.text_sanitiser import cleanse_conversational
+        return cleanse_conversational(
+            "We don't record personal details like that. Let's focus on the course fit, entry requirements, and the next sensible step."
+        )
     
     lead = (context or {}).get("lead") or {}
     ai   = lead.get("aiInsights") or (context or {}).get("ai") or {}
@@ -701,7 +714,10 @@ async def generate_person_profile(query: str, context: Optional[Dict[str,Any]]) 
             "touchpoints": facts.get("conversation", {}).get("email_count"),
             "last_activity": facts.get("activity", {}).get("last_activity"),
         }
-        return await narrate("conversational", simple_facts)
+        text = await narrate("conversational", simple_facts)
+        # Scrub contact info unless query is about contact
+        from app.ai.text_sanitiser import scrub_contact_info
+        return scrub_contact_info(text, query)
 
     # Legacy: structured narrative (kept for modal/legacy flows)
     name_disp = facts.get("name", "This person")
@@ -1132,6 +1148,18 @@ async def query_rag(request: RagQuery):
     try:
         session_id = str(uuid.uuid4())
         
+        # Short-circuit for JSON tool requests to avoid spurious RAG work
+        if request.json_mode:
+            sanitized_answer = await _generate_json_tool_response(request.query, request.context or {}, [])
+            return RagResponse(
+                answer=sanitized_answer, 
+                sources=[], 
+                query_type="tool_json", 
+                confidence=0.95,
+                generated_at=datetime.utcnow(), 
+                session_id=session_id
+            )
+        
         # Step 1: Expand and bias the query
         expanded_query = expand_query_for_agent_usage(request.query)
         lead = (request.context or {}).get("lead") or {}
@@ -1429,9 +1457,12 @@ async def hybrid_search(
             logger.info(f"Vector search found {len(results)} results")
             if len(results) == 0:
                 logger.warning(f"No results found for query: '{query_text[:50]}...' with threshold {similarity_threshold}")
-                # Debug: check if we can find any documents at all
-                debug_results = await fetch("SELECT COUNT(*) as count FROM active_knowledge_documents WHERE embedding IS NOT NULL")
-                logger.info(f"Total documents with embeddings: {debug_results[0]['count']}")
+                # Debug: check if we can find any documents at all (skip if embedding column doesn't exist)
+                try:
+                    debug_results = await fetch("SELECT COUNT(*) as count FROM active_knowledge_documents WHERE embedding IS NOT NULL")
+                    logger.info(f"Total documents with embeddings: {debug_results[0]['count']}")
+                except Exception:
+                    pass  # Don't spam logs if embedding column doesn't exist
             else:
                 logger.info(f"Top result: {results[0]['title']} (similarity: {results[0]['similarity_score']:.3f})")
             CACHE.set(cache_key, results)
@@ -1615,6 +1646,13 @@ async def generate_rag_response(
         # Do NOT bring policy KB in here unless a course is present
         answer = await generate_person_profile(query, context)
         return answer, query_type, 0.9
+    elif query_type == "admissions_decision":
+        # Handle admissions decision queries safely
+        from app.ai.text_sanitiser import cleanse_conversational
+        answer = cleanse_conversational(
+            "I can't make admission decisions here. Check eligibility against entry requirements and any APEL guidance, then log a recommendation for an admissions tutor to review."
+        )
+        confidence = 0.9
     elif query_type == "lead_info":
         # Use person-focused synthesis for lead queries
         answer = await generate_person_answer(query, knowledge_results, context)

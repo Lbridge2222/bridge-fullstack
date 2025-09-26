@@ -231,6 +231,11 @@ async def route_query_v2(request: RouterRequest):
         # Add tracing headers for easy debugging (skip for now to avoid errors)
         # TODO: Add headers support to response models
         
+        # Final style enforcement for conversational responses
+        if response.kind == "conversational":
+            from app.ai.text_sanitiser import cleanse_conversational
+            response.answer_markdown = cleanse_conversational(response.answer_markdown or "")
+        
         return response
         
     except Exception as e:

@@ -245,6 +245,15 @@ class AIRouter:
     async def _handle_lead_info(self, query: str, context: Dict[str, Any], intent: str, confidence: float, meta: Dict[str, Any]) -> RouterResponse:
         """Handle lead information requests with intelligent LLM-powered responses"""
         try:
+            # Early guard for untracked personal questions
+            ql = (query or "").lower()
+            personal_untracked = ["dog","cat","pet","married","boyfriend","girlfriend","religion","politics"]
+            if any(w in ql for w in personal_untracked):
+                from app.ai.text_sanitiser import cleanse_conversational
+                return self._ok(intent, 0.9, cleanse_conversational(
+                    "We don't record personal details like that. Let's focus on the course fit, entry requirements, and the next sensible step."
+                ))
+            
             lead = context.get("lead", {})
             if not lead:
                 return self._ok(intent, 0.5, "I don't have any lead information to work with right now.",
