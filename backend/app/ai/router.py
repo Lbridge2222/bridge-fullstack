@@ -136,9 +136,16 @@ def classify_intent_regex(query: str, context: Dict[str, Any]) -> Tuple[Optional
                         continue  # Skip schedule if call/phone mentioned
                     if re.search(r"\bemail\b", query_lower):
                         continue  # Skip schedule if email mentioned
+                if intent == "analytics":
+                    if re.search(r"\b(offer|make)\s+(them\s+)?(an?\s+)?offer\b", query_lower) or "offer a place" in query_lower:
+                        continue  # Skip analytics if admissions decision mentioned
                 
                 confidence = 0.9 if intent in ["update_property", "schedule"] else 0.85
                 return intent, confidence, {"via": "regex"}
+    
+    # Check for admissions decision queries (after other patterns to avoid conflicts)
+    if re.search(r"\b(offer|make).*place\b", query_lower) or "offer a place" in query_lower:
+        return "admissions_decision", 0.9, {"via": "regex"}
     
     return None, 0.0, {"via": "regex"}
 
@@ -185,6 +192,16 @@ class AIRouter:
     
     async def route(self, query: str, context: Dict[str, Any]) -> RouterResponse:
         """Main routing function - always returns a response"""
+        
+        # Early guard for untracked personal questions
+        ql = (query or "").lower()
+        personal_untracked = ["dog","cat","pet","married","boyfriend","girlfriend","religion","politics"]
+        if any(w in ql for w in personal_untracked):
+            from app.ai.text_sanitiser import cleanse_conversational
+            return self._ok("personal_untracked", 0.9, cleanse_conversational(
+                "We don't record personal details like that. Let's focus on the course fit, entry requirements, and the next sensible step."
+            ))
+        
         intent, confidence, meta = await self.classify(query, context)
         
         # Route to appropriate handler
@@ -203,6 +220,7 @@ class AIRouter:
             "anomaly_detection": self._handle_anomaly_detection,
             "nlq_lead_query": self._handle_nlq_lead_query,
             "analytics": self._handle_analytics,
+            "admissions_decision": self._handle_admissions_decision,
             "course_info": self._handle_course_info,
             "policy_info": self._handle_policy_info,
             "general_help": self._handle_general_help,
@@ -335,6 +353,18 @@ class AIRouter:
         except Exception as e:
             return self._ok(intent, 0.7, f"Lead information temporarily unavailable: {str(e)}",
                           telemetry={"routed_to": ["llm"], "error": str(e)})
+    
+    async def _handle_admissions_decision(self, query: str, context: Dict[str, Any], intent: str, confidence: float, meta: Dict[str, Any]) -> RouterResponse:
+        """Handle admissions decision queries safely"""
+        try:
+            from app.ai.text_sanitiser import cleanse_conversational
+            answer = cleanse_conversational(
+                "I can't make admission decisions here. Check eligibility against entry requirements and any APEL guidance, then log a recommendation for an admissions tutor to review."
+            )
+            return self._ok(intent, 0.9, answer, telemetry={"routed_to": ["admissions_decision"]})
+        except Exception as e:
+            return self._ok(intent, 0.7, f"Admissions guidance temporarily unavailable: {str(e)}",
+                          telemetry={"routed_to": ["admissions_decision"], "error": str(e)})
     
     async def _handle_nba(self, query: str, context: Dict[str, Any], intent: str, confidence: float, meta: Dict[str, Any]) -> RouterResponse:
         """Handle next best action requests using suggestions API"""

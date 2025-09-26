@@ -381,7 +381,6 @@ async def classify_intent(query: str, ctx: Optional[Dict[str,Any]] = None) -> st
         human = f"Classify this UK HE admissions assistant query: {query}"
         out = await llm.ainvoke([("system", sys), ("human", human)])
         import json as _json
-        import re
         
         # Extract JSON from response (some providers prepend prose)
         content = out.strip()
