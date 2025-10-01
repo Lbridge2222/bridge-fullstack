@@ -1,0 +1,180 @@
+{
+  "summary": {
+    "timestamp": "20250928_225248",
+    "total_tests": 5,
+    "successful_tests": 5,
+    "content_passed_tests": 5,
+    "success_rate": "100.0%",
+    "content_quality_rate": "100.0%",
+    "avg_latency_ms": 1756,
+    "p95_latency_ms": 2766
+  },
+  "content_issues_breakdown": {},
+  "subsystem_breakdown": {
+    "objection_handling": {
+      "total": 5,
+      "success": 5,
+      "content_passed": 5
+    }
+  },
+  "subsystem_rule_failures": {
+    "objection_handling": {}
+  },
+  "detailed_results": [
+    {
+      "test_id": "objection_handling_1",
+      "subsystem": "objection_handling",
+      "category": "objections",
+      "prompt": "isla is thinking of going to a competitor university",
+      "context": {
+        "lead": {
+          "name": "Isla Mitchell",
+          "courseInterest": "MA Music Performance"
+        }
+      },
+      "latency_ms": 2766,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "\"Hi Isla Mitchell, let's discuss isla mitchell is considering attending a competitor university, which presents a risk to her enrolment in the ma music performance program.\"\n\nKey discussion points:\n\u2022 To address this, proactive engagement is recommended\n\u2022 *Highlight Unique Program Aspects:** Emphasise the specific benefits of the MA Music Performance program that the competitor may not offer, such as specialised faculty, unique performance opportunities, or state-of-the-art facilities\n\u2022 What specific aspects of MA Music Performance interest you most?\n\u2022 Have you had any practical experience in this field?\n\nNext Steps:\n\u2022 Send Isla Mitchell detailed information about MA Music Performance\n\u2022 Schedule a 1-1 call to discuss their career goals",
+      "answer_length": 744,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "Open Call Console",
+          "action": "open_call_console"
+        }
+      ],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [],
+      "content_passed": true,
+      "timestamp": "2025-09-28T22:52:34.718149"
+    },
+    {
+      "test_id": "objection_handling_2",
+      "subsystem": "objection_handling",
+      "category": "objections",
+      "prompt": "can isla afford to come to university?",
+      "context": {
+        "lead": {
+          "name": "Isla Mitchell",
+          "courseInterest": "MA Music Performance"
+        }
+      },
+      "latency_ms": 1393,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "\"Hi Isla Mitchell, let's discuss regarding isla mitchell and her interest in the ma music performance course: to determine isla's affordability, it is necessary to review her financial resources and funding options.\"\n\nKey discussion points:\n\u2022 *Financial Assessment:** Isla should complete a detailed budget outlining her income, savings, and potential expenses\n\u2022 *Scholarship and Bursary Research:** Isla should research and apply for relevant scholarships and bursaries offered by the university or external organizations\n\u2022 *Student Loan Application:** Isla should investigate the availability of student loans and the application process\n\u2022 What specific aspects of MA Music Performance interest you most?\n\nNext Steps:\n\u2022 Send Isla Mitchell detailed information about MA Music Performance\n\u2022 Schedule a 1-1 call to discuss their career goals",
+      "answer_length": 840,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "Open Call Console",
+          "action": "open_call_console"
+        }
+      ],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [],
+      "content_passed": true,
+      "timestamp": "2025-09-28T22:52:37.613488"
+    },
+    {
+      "test_id": "objection_handling_3",
+      "subsystem": "objection_handling",
+      "category": "objections",
+      "prompt": "isla mum thinks a creative degree is not worthwhile, what can we say to fix this?",
+      "context": {
+        "lead": {
+          "name": "Isla Mitchell",
+          "courseInterest": "MA Music Performance"
+        }
+      },
+      "latency_ms": 2569,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "\"Hi Isla Mitchell, let's discuss to address isla's mother's concerns about the value of a creative degree, focus on demonstrating the potential career pathways and skill development associated with an ma in music performance.\"\n\nKey discussion points:\n\u2022 Here's how to approach the situation: * Highlight Career Prospects: Emphasize that a Music Performance degree equips graduates for diverse careers, including performance, teaching, composition, music direction, arts administration, and more\n\u2022 Providing statistics on employment rates for music graduates or showcasing successful alumni in these fields can be effective\n\u2022 Focus on Transferable Skills: Explain that music study develops valuable transferable skills applicable across various sectors\n\u2022 What specific aspects of MA Music Performance interest you most?\n\nNext Steps:\n\u2022 Send Isla Mitchell detailed information about MA Music Performance\n\u2022 Schedule a 1-1 call to discuss their career goals",
+      "answer_length": 951,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "Open Call Console",
+          "action": "open_call_console"
+        }
+      ],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [],
+      "content_passed": true,
+      "timestamp": "2025-09-28T22:52:41.684075"
+    },
+    {
+      "test_id": "objection_handling_4",
+      "subsystem": "objection_handling",
+      "category": "objections",
+      "prompt": "ryan is concerned about the cost of the course",
+      "context": {
+        "lead": {
+          "name": "Ryan O'Brien",
+          "courseInterest": "MA Music Performance"
+        }
+      },
+      "latency_ms": 1104,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "\"Hi Ryan O'Brien, let's discuss ryan o'brien is interested in the ma music performance course and has expressed concerns about the cost.\"\n\nKey discussion points:\n\u2022 Provide Ryan with detailed information regarding tuition fees, payment plans, and available financial aid options, including scholarships and bursaries relevant to the MA Music Performance program\n\u2022 Offer to connect Ryan with a financial advisor at the institution who can provide personalized guidance based on Ryan\u2019s financial situation\n\u2022 Share information about the potential return on investment of the MA Music Performance degree, highlighting career opportunities and salary expectations for graduates\n\u2022 What specific aspects of MA Music Performance interest you most?\n\nNext Steps:\n\u2022 Send Ryan O'Brien detailed information about MA Music Performance\n\u2022 Schedule a 1-1 call to discuss their career goals",
+      "answer_length": 871,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "Open Call Console",
+          "action": "open_call_console"
+        }
+      ],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [],
+      "content_passed": true,
+      "timestamp": "2025-09-28T22:52:44.290469"
+    },
+    {
+      "test_id": "objection_handling_5",
+      "subsystem": "objection_handling",
+      "category": "objections",
+      "prompt": "they think it's too expensive compared to other universities",
+      "context": {
+        "lead": {
+          "name": "Ryan O'Brien",
+          "courseInterest": "MA Music Performance"
+        }
+      },
+      "latency_ms": 948,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "\"Hi Ryan O'Brien, let's discuss ryan o'brien is interested in the ma music performance course and believes it is too expensive compared to other universities.\"\n\nKey discussion points:\n\u2022 Next steps: Provide Ryan with a detailed breakdown of the course fees, available funding options (scholarships, grants, payment plans), and the value proposition of the MA Music Performance course at [University Name], including unique resources, faculty expertise, and career support\n\u2022 Compare the long-term value rather than just the upfront cost\n\u2022 What specific aspects of MA Music Performance interest you most?\n\u2022 Have you had any practical experience in this field?\n\nNext Steps:\n\u2022 Send Ryan O'Brien detailed information about MA Music Performance\n\u2022 Schedule a 1-1 call to discuss their career goals",
+      "answer_length": 789,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "Open Call Console",
+          "action": "open_call_console"
+        }
+      ],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [],
+      "content_passed": true,
+      "timestamp": "2025-09-28T22:52:46.740622"
+    }
+  ]
+}

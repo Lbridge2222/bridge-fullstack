@@ -11,7 +11,7 @@ from typing import Dict, Iterable, List
 import re
 
 
-def safe_preview(data: Dict, keys: Iterable[str] = ("name", "status", "courseInterest", "leadScore")) -> Dict:
+def safe_preview(data: Dict, keys: Iterable[str] = ("name", "status", "courseInterest", "leadScore", "email", "phone", "source", "touchpoint_count", "last_engagement_date", "latest_academic_year", "conversion_probability", "ai_insights", "triage_score", "forecast", "gdpr_opt_in", "application_status", "enrollment_status")) -> Dict:
     """Return a minimal, PII-safe preview of a lead-like dict.
 
     - Filters to a small allowlist of fields

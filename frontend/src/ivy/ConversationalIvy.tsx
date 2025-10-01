@@ -4,6 +4,7 @@
  */
 
 import React, { useState, useRef, useEffect } from 'react';
+import ReactMarkdown from 'react-markdown';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -60,11 +61,21 @@ export const ConversationalIvy: React.FC<ConversationalIvyProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [isStreaming, setIsStreaming] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    // Use timeout to ensure DOM has updated
+    setTimeout(() => {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+      
+      // Also try scrolling the ScrollArea container
+      const scrollContainer = scrollAreaRef.current?.querySelector('[data-radix-scroll-area-viewport]');
+      if (scrollContainer) {
+        scrollContainer.scrollTop = scrollContainer.scrollHeight;
+      }
+    }, 100);
   }, [messages]);
 
   // Focus input when expanded
@@ -144,7 +155,7 @@ export const ConversationalIvy: React.FC<ConversationalIvyProps> = ({
               recommendedAction: context.personData?.next_best_action || 'Follow up'
             }
           },
-          transcriptWindow: messages.slice(-5).map(m => ({ role: m.type, content: m.content })),
+          transcriptWindow: messages.slice(-5).map(m => `${m.type}: ${m.content}`),
           consentGranted: true
         };
         
@@ -179,12 +190,29 @@ export const ConversationalIvy: React.FC<ConversationalIvyProps> = ({
     });
   };
 
-  const formatMessageContent = (content: string) => {
-    // Simple markdown-like formatting
-    return content
-      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-      .replace(/\*(.*?)\*/g, '<em>$1</em>')
-      .replace(/\n/g, '<br/>');
+  const MarkdownContent: React.FC<{ content: string }> = ({ content }) => {
+    return (
+      <div className="prose prose-sm prose-invert max-w-none">
+        <ReactMarkdown
+          components={{
+            // Custom styling for better readability in the dark theme
+            h1: ({ children }) => <h1 className="text-lg font-bold text-white mb-3 mt-4">{children}</h1>,
+            h2: ({ children }) => <h2 className="text-base font-semibold text-white mb-2 mt-3">{children}</h2>,
+            h3: ({ children }) => <h3 className="text-sm font-medium text-white mb-2 mt-2">{children}</h3>,
+            p: ({ children }) => <p className="mb-3 text-white/90 leading-relaxed">{children}</p>,
+            ul: ({ children }) => <ul className="list-disc list-outside ml-4 mb-3 space-y-1.5 text-white/90">{children}</ul>,
+            ol: ({ children }) => <ol className="list-decimal list-outside ml-4 mb-3 space-y-1.5 text-white/90">{children}</ol>,
+            li: ({ children }) => <li className="text-sm leading-relaxed pl-1">{children}</li>,
+            strong: ({ children }) => <strong className="font-semibold text-white">{children}</strong>,
+            em: ({ children }) => <em className="italic text-white/80">{children}</em>,
+            code: ({ children }) => <code className="bg-white/10 px-1 py-0.5 rounded text-xs font-mono text-white/90">{children}</code>,
+            blockquote: ({ children }) => <blockquote className="border-l-2 border-white/30 pl-3 my-2 italic text-white/80">{children}</blockquote>,
+          }}
+        >
+          {content}
+        </ReactMarkdown>
+      </div>
+    );
   };
 
   const getActionIcon = (action: IvyCommand) => {
@@ -224,7 +252,7 @@ export const ConversationalIvy: React.FC<ConversationalIvyProps> = ({
         {/* Chat Area */}
         {isExpanded && (
           <div className="flex flex-col h-96">
-            <ScrollArea className="flex-1 p-4">
+            <ScrollArea ref={scrollAreaRef} className="flex-1 p-4">
               <div className="space-y-4">
                 {messages.length === 0 && (
                   <div className="text-center text-white/70 py-8">
@@ -243,30 +271,23 @@ export const ConversationalIvy: React.FC<ConversationalIvyProps> = ({
                         ? 'bg-white/10 text-white/80 text-xs'
                         : 'bg-white/10 text-white'
                     }`}>
-                      <div 
-                        className="text-sm"
-                        dangerouslySetInnerHTML={{ 
-                          __html: formatMessageContent(message.content) 
-                        }}
-                      />
+                      <MarkdownContent content={message.content} />
                       
+                      {/* Action Buttons */}
                       {message.actions && message.actions.length > 0 && (
-                        <div className="mt-3 space-y-2">
-                          <div className="text-xs text-white/70 mb-2">Quick Actions:</div>
-                          <div className="flex flex-wrap gap-2">
-                            {message.actions.map((action) => (
-                              <Button
-                                key={action.id}
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleActionClick(action)}
-                                className="text-xs border-white/30 text-white hover:bg-white/20"
-                              >
-                                {getActionIcon(action)}
-                                <span className="ml-1">{action.label}</span>
-                              </Button>
-                            ))}
-                          </div>
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          {message.actions.map((action, idx) => (
+                            <Button
+                              key={idx}
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleActionClick(action)}
+                              className="bg-white/10 hover:bg-white/20 border-white/30 text-white text-xs"
+                            >
+                              {getActionIcon(action)}
+                              <span className="ml-1">{action.label}</span>
+                            </Button>
+                          ))}
                         </div>
                       )}
                       

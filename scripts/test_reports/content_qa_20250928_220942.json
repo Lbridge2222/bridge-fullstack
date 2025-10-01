@@ -1,0 +1,405 @@
+{
+  "summary": {
+    "timestamp": "20250928_220942",
+    "total_tests": 8,
+    "successful_tests": 8,
+    "content_passed_tests": 6,
+    "success_rate": "100.0%",
+    "content_quality_rate": "75.0%",
+    "avg_latency_ms": 1741,
+    "p95_latency_ms": 3308
+  },
+  "content_issues_breakdown": {
+    "apel_relevant": 2,
+    "course_tie_in": 2,
+    "apel_definition_strict": 1,
+    "full_prose": 1
+  },
+  "subsystem_breakdown": {
+    "apel_semantic_tests": {
+      "total": 8,
+      "success": 8,
+      "content_passed": 6
+    }
+  },
+  "subsystem_rule_failures": {
+    "apel_semantic_tests": {
+      "apel_relevant": 2,
+      "course_tie_in": 2,
+      "apel_definition_strict": 1,
+      "full_prose": 1
+    }
+  },
+  "detailed_results": [
+    {
+      "test_id": "apel_semantic_tests_1",
+      "subsystem": "apel_semantic_tests",
+      "category": "apel_semantic",
+      "prompt": "is ryan apel?",
+      "context": {
+        "lead": {
+          "name": "Ryan O'Brien",
+          "courseInterest": "MA Music Performance"
+        }
+      },
+      "latency_ms": 1403,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "For Ryan O'Brien, Based on the provided documentation, it is stated that universities consider applications on an individual basis. This includes the applicant's academic record. To determine if Ryan's APEL qualifications are suitable for the MA Music Performance course, he should contact the admissions team directly.\n\nAccreditation of Prior Experiential Learning (APEL) allows applicants' prior work/experience to be credited towards a degree. For MA Music Performance, APEL could be relevant if you have significant experience in the field that hasn't been formally certified. According to Admissions Policy & Best Practice, this guidance reflects current policy.",
+      "answer_length": 667,
+      "has_answer": true,
+      "actions": [],
+      "sources": [
+        {
+          "title": "Admissions Policy & Best Practice",
+          "document_type": "best_practice",
+          "category": "University Policy",
+          "similarity_score": 0.587942315791888,
+          "preview": "**What You Know:**\n- Universities' Admissions Policy aims to reflect sector-best practice (QAA, SPA, UCAS, OfS), equality & diversity, data protection, consumer rights etc.\n- The policy covers all lev"
+        },
+        {
+          "title": "Subject Combinations & Retakes Policy",
+          "document_type": "best_practice",
+          "category": "Admissions Selection",
+          "similarity_score": 0.567975644108549,
+          "preview": "**What You Know:**\n- Universities consider applications on an individual basis, including subject combinations, retakes, academic record. Meeting the entry requirement doesn't guarantee an offer due t"
+        },
+        {
+          "title": "Admissions Policy Alignment & Good Practice",
+          "document_type": "best_practice",
+          "category": "University Policy",
+          "similarity_score": 0.55928972781315,
+          "preview": "**What You Know:**\n- Universities commit to a fair, efficient, professional admissions service. They comply with legislation/regulation/regulatory requirements and align with UUK/GuildHE Fair Admissio"
+        }
+      ],
+      "sources_count": 3,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [],
+      "content_passed": true,
+      "timestamp": "2025-09-28T22:09:18.293874"
+    },
+    {
+      "test_id": "apel_semantic_tests_2",
+      "subsystem": "apel_semantic_tests",
+      "category": "apel_semantic",
+      "prompt": "does ryan have apel?",
+      "context": {
+        "lead": {
+          "name": "Ryan O'Brien",
+          "courseInterest": "MA Music Performance"
+        }
+      },
+      "latency_ms": 1366,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "Based on the information available, there is no specific mention of whether Ryan O'Brien possesses APEL (Accreditation of Prior Experiential Learning) qualifications. The provided documents relate to general admissions policies and best practices. Further investigation into Ryan's application or direct communication with him would be necessary to determine if he has APEL qualifications.\n\nAccreditation of Prior Experiential Learning (APEL) allows applicants' prior work/experience to be credited towards a degree. For MA Music Performance, APEL could be relevant if you have significant experience in the field that hasn't been formally certified. According to Admissions Policy & Best Practice, this guidance reflects current policy.",
+      "answer_length": 737,
+      "has_answer": true,
+      "actions": [],
+      "sources": [
+        {
+          "title": "Admissions Policy & Best Practice",
+          "document_type": "best_practice",
+          "category": "University Policy",
+          "similarity_score": 0.606563569717713,
+          "preview": "**What You Know:**\n- Universities' Admissions Policy aims to reflect sector-best practice (QAA, SPA, UCAS, OfS), equality & diversity, data protection, consumer rights etc.\n- The policy covers all lev"
+        },
+        {
+          "title": "Subject Combinations & Retakes Policy",
+          "document_type": "best_practice",
+          "category": "Admissions Selection",
+          "similarity_score": 0.581853099732351,
+          "preview": "**What You Know:**\n- Universities consider applications on an individual basis, including subject combinations, retakes, academic record. Meeting the entry requirement doesn't guarantee an offer due t"
+        },
+        {
+          "title": "Admissions Policy Alignment & Good Practice",
+          "document_type": "best_practice",
+          "category": "University Policy",
+          "similarity_score": 0.581346613141184,
+          "preview": "**What You Know:**\n- Universities commit to a fair, efficient, professional admissions service. They comply with legislation/regulation/regulatory requirements and align with UUK/GuildHE Fair Admissio"
+        }
+      ],
+      "sources_count": 3,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [],
+      "content_passed": true,
+      "timestamp": "2025-09-28T22:09:21.161948"
+    },
+    {
+      "test_id": "apel_semantic_tests_3",
+      "subsystem": "apel_semantic_tests",
+      "category": "apel_definition",
+      "prompt": "what's apel?",
+      "context": {
+        "lead": {
+          "name": "Ryan O'Brien",
+          "courseInterest": "MA Music Performance"
+        }
+      },
+      "latency_ms": 1978,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "Based on the provided documents, it appears you are asking about APEL (Accreditation of Prior Experiential Learning) qualifications. The documents highlight that the university aims to reflect sector-best practice in its admissions policy, considering applications on an individual basis. While the provided documents don't explicitly define APEL, the context suggests that the university may consider prior experiential learning as part of the admissions process for Ryan O'Brien's MA Music Performance application. Next steps:\n* Check the specific entry requirements for the MA Music Performance program to see if APEL is explicitly mentioned. * Contact the admissions office directly to inquire whether Ryan's prior experiential learning can be considered for admission to the program.\n\nAccreditation of Prior Experiential Learning (APEL) allows applicants' prior work/experience to be credited towards a degree. For MA Music Performance, APEL could be relevant if you have significant experience in the field that hasn't been formally certified. According to Admissions Policy & Best Practice, this guidance reflects current policy.",
+      "answer_length": 1136,
+      "has_answer": true,
+      "actions": [],
+      "sources": [
+        {
+          "title": "Admissions Policy & Best Practice",
+          "document_type": "best_practice",
+          "category": "University Policy",
+          "similarity_score": 0.696566817329352,
+          "preview": "**What You Know:**\n- Universities' Admissions Policy aims to reflect sector-best practice (QAA, SPA, UCAS, OfS), equality & diversity, data protection, consumer rights etc.\n- The policy covers all lev"
+        },
+        {
+          "title": "Admissions Policy Alignment & Good Practice",
+          "document_type": "best_practice",
+          "category": "University Policy",
+          "similarity_score": 0.664254276950974,
+          "preview": "**What You Know:**\n- Universities commit to a fair, efficient, professional admissions service. They comply with legislation/regulation/regulatory requirements and align with UUK/GuildHE Fair Admissio"
+        },
+        {
+          "title": "Subject Combinations & Retakes Policy",
+          "document_type": "best_practice",
+          "category": "Admissions Selection",
+          "similarity_score": 0.663506432195966,
+          "preview": "**What You Know:**\n- Universities consider applications on an individual basis, including subject combinations, retakes, academic record. Meeting the entry requirement doesn't guarantee an offer due t"
+        }
+      ],
+      "sources_count": 3,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [],
+      "content_passed": true,
+      "timestamp": "2025-09-28T22:09:24.640985"
+    },
+    {
+      "test_id": "apel_semantic_tests_4",
+      "subsystem": "apel_semantic_tests",
+      "category": "apel_definition",
+      "prompt": "tell me about apel",
+      "context": {},
+      "latency_ms": 1468,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "I need a person's name to provide information about APEL (Accreditation of Prior Experiential Learning) qualifications, their course interests, status, and engagement level.\n\nAccreditation of Prior Experiential Learning (APEL) allows applicants' prior work/experience to be credited towards a degree. For MA Music Performance, APEL could be relevant if you have significant experience in the field that hasn't been formally certified. According to Admissions Policy & Best Practice, this guidance reflects current policy.",
+      "answer_length": 521,
+      "has_answer": true,
+      "actions": [],
+      "sources": [
+        {
+          "title": "Admissions Policy & Best Practice",
+          "document_type": "best_practice",
+          "category": "University Policy",
+          "similarity_score": 0.693444996675819,
+          "preview": "**What You Know:**\n- Universities' Admissions Policy aims to reflect sector-best practice (QAA, SPA, UCAS, OfS), equality & diversity, data protection, consumer rights etc.\n- The policy covers all lev"
+        },
+        {
+          "title": "Admissions Policy Alignment & Good Practice",
+          "document_type": "best_practice",
+          "category": "University Policy",
+          "similarity_score": 0.671989230068562,
+          "preview": "**What You Know:**\n- Universities commit to a fair, efficient, professional admissions service. They comply with legislation/regulation/regulatory requirements and align with UUK/GuildHE Fair Admissio"
+        },
+        {
+          "title": "Subject Combinations & Retakes Policy",
+          "document_type": "best_practice",
+          "category": "Admissions Selection",
+          "similarity_score": 0.670647884473983,
+          "preview": "**What You Know:**\n- Universities consider applications on an individual basis, including subject combinations, retakes, academic record. Meeting the entry requirement doesn't guarantee an offer due t"
+        }
+      ],
+      "sources_count": 3,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [],
+      "content_passed": true,
+      "timestamp": "2025-09-28T22:09:27.611497"
+    },
+    {
+      "test_id": "apel_semantic_tests_5",
+      "subsystem": "apel_semantic_tests",
+      "category": "apel_semantic",
+      "prompt": "ryan and apel",
+      "context": {
+        "lead": {
+          "name": "Ryan O'Brien",
+          "courseInterest": "MA Music Performance"
+        }
+      },
+      "latency_ms": 1466,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "For Ryan O'Brien, Ryan is interested in the MA Music Performance program. Based on university policies, the admissions team considers applications individually, taking into account prior academic records. Meeting entry requirements doesn't guarantee an offer due to competition. The university aims for a fair and professional admissions service, aligning with best practices and regulations. Next steps: Ryan should prepare all relevant documentation regarding his prior academic record for submission with his application.\n\nAccreditation of Prior Experiential Learning (APEL) allows applicants' prior work/experience to be credited towards a degree. For MA Music Performance, APEL could be relevant if you have significant experience in the field that hasn't been formally certified. According to Admissions Policy & Best Practice, this guidance reflects current policy.",
+      "answer_length": 872,
+      "has_answer": true,
+      "actions": [],
+      "sources": [
+        {
+          "title": "Admissions Policy & Best Practice",
+          "document_type": "best_practice",
+          "category": "University Policy",
+          "similarity_score": 0.635676791801901,
+          "preview": "**What You Know:**\n- Universities' Admissions Policy aims to reflect sector-best practice (QAA, SPA, UCAS, OfS), equality & diversity, data protection, consumer rights etc.\n- The policy covers all lev"
+        },
+        {
+          "title": "Subject Combinations & Retakes Policy",
+          "document_type": "best_practice",
+          "category": "Admissions Selection",
+          "similarity_score": 0.610177256415071,
+          "preview": "**What You Know:**\n- Universities consider applications on an individual basis, including subject combinations, retakes, academic record. Meeting the entry requirement doesn't guarantee an offer due t"
+        },
+        {
+          "title": "Admissions Policy Alignment & Good Practice",
+          "document_type": "best_practice",
+          "category": "University Policy",
+          "similarity_score": 0.607550466595942,
+          "preview": "**What You Know:**\n- Universities commit to a fair, efficient, professional admissions service. They comply with legislation/regulation/regulatory requirements and align with UUK/GuildHE Fair Admissio"
+        }
+      ],
+      "sources_count": 3,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [],
+      "content_passed": true,
+      "timestamp": "2025-09-28T22:09:30.579861"
+    },
+    {
+      "test_id": "apel_semantic_tests_6",
+      "subsystem": "apel_semantic_tests",
+      "category": "apel_semantic",
+      "prompt": "is ryan an APEL applicant?",
+      "context": {
+        "lead": {
+          "name": "Ryan O'Brien",
+          "courseInterest": "MA Music Performance"
+        }
+      },
+      "latency_ms": 1265,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "Based on the provided information, the university's Admissions Policy considers applications on an individual basis. For Ryan O'Brien, who is interested in the MA Music Performance course, it would be prudent to check the specific course requirements to ascertain whether APEL qualifications are considered.\n\nAccreditation of Prior Experiential Learning (APEL) allows applicants' prior work/experience to be credited towards a degree. For MA Music Performance, APEL could be relevant if you have significant experience in the field that hasn't been formally certified. According to Admissions Policy & Best Practice, this guidance reflects current policy.",
+      "answer_length": 655,
+      "has_answer": true,
+      "actions": [],
+      "sources": [
+        {
+          "title": "Admissions Policy & Best Practice",
+          "document_type": "best_practice",
+          "category": "University Policy",
+          "similarity_score": 0.658950539612799,
+          "preview": "**What You Know:**\n- Universities' Admissions Policy aims to reflect sector-best practice (QAA, SPA, UCAS, OfS), equality & diversity, data protection, consumer rights etc.\n- The policy covers all lev"
+        },
+        {
+          "title": "Subject Combinations & Retakes Policy",
+          "document_type": "best_practice",
+          "category": "Admissions Selection",
+          "similarity_score": 0.629734193961394,
+          "preview": "**What You Know:**\n- Universities consider applications on an individual basis, including subject combinations, retakes, academic record. Meeting the entry requirement doesn't guarantee an offer due t"
+        },
+        {
+          "title": "Deferred Entry & International Admissions Process",
+          "document_type": "best_practice",
+          "category": "International Admissions",
+          "similarity_score": 0.623951489868922,
+          "preview": "**What You Know:**\n- Many subject areas allow applications that want to defer by one year, but you must check course-by-course.\n- There is an international admissions process; educational advisers in "
+        }
+      ],
+      "sources_count": 3,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [],
+      "content_passed": true,
+      "timestamp": "2025-09-28T22:09:33.346970"
+    },
+    {
+      "test_id": "apel_semantic_tests_7",
+      "subsystem": "apel_semantic_tests",
+      "category": "apel_semantic",
+      "prompt": "if ryan has 8 years' pro experience, could APEL reduce his credits?",
+      "context": {
+        "lead": {
+          "name": "Ryan O'Brien",
+          "courseInterest": "MA Music Performance"
+        }
+      },
+      "latency_ms": 1675,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "Based on Ryan O'Brien's eight years of professional experience, it is possible that APEL (Accreditation of Prior Experiential Learning) qualifications could reduce the credits.... Universities assess applications individually, and professional experience can be a factor in this assessment. Ryan should inquire directly with the admissions department regarding the university's specific APEL policies and how his experience aligns with the program's learning outcomes.\n\nAccreditation of Prior Experiential Learning (APEL) allows applicants' prior work/experience to be credited towards a degree.\n\nThis guidance is specifically relevant for Ryan O'Brien's interest in MA Music Performance. According to Admissions Policy & Best Practice, this guidance reflects current policy.",
+      "answer_length": 775,
+      "has_answer": true,
+      "actions": [],
+      "sources": [
+        {
+          "title": "Admissions Policy & Best Practice",
+          "document_type": "best_practice",
+          "category": "University Policy",
+          "similarity_score": 0.657792978555102,
+          "preview": "**What You Know:**\n- Universities' Admissions Policy aims to reflect sector-best practice (QAA, SPA, UCAS, OfS), equality & diversity, data protection, consumer rights etc.\n- The policy covers all lev"
+        },
+        {
+          "title": "Subject Combinations & Retakes Policy",
+          "document_type": "best_practice",
+          "category": "Admissions Selection",
+          "similarity_score": 0.640353152163178,
+          "preview": "**What You Know:**\n- Universities consider applications on an individual basis, including subject combinations, retakes, academic record. Meeting the entry requirement doesn't guarantee an offer due t"
+        },
+        {
+          "title": "Deferred Entry & International Admissions Process",
+          "document_type": "best_practice",
+          "category": "International Admissions",
+          "similarity_score": 0.62112365830606,
+          "preview": "**What You Know:**\n- Many subject areas allow applications that want to defer by one year, but you must check course-by-course.\n- There is an international admissions process; educational advisers in "
+        }
+      ],
+      "sources_count": 3,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [
+        "apel_relevant: APEL not relevant to MA Music Performance course",
+        "course_tie_in: Missing tie-in to course: MA Music Performance"
+      ],
+      "content_passed": false,
+      "timestamp": "2025-09-28T22:09:36.523078"
+    },
+    {
+      "test_id": "apel_semantic_tests_8",
+      "subsystem": "apel_semantic_tests",
+      "category": "apel_semantic",
+      "prompt": "what should i tell ryan about APEL next steps?",
+      "context": {
+        "lead": {
+          "name": "Ryan O'Brien",
+          "courseInterest": "MA Music Performance"
+        }
+      },
+      "latency_ms": 3308,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "For Ryan O'Brien: \u2022 Ryan interested in MA Music Performance\n\nNext Steps:\n\u2022 Schedule a call with Ryan O'Brien to discuss MA Music Performance\n\u2022 Send personalized information about MA Music Performance to Ryan O'Brien\n\u2022 Follow up on Ryan O'Brien's specific questions or concerns",
+      "answer_length": 276,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "Book 1-1",
+          "action": "open_meeting_scheduler"
+        }
+      ],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [
+        "apel_definition_strict: Must spell out 'Accreditation of Prior Experiential Learning (APEL)'",
+        "apel_relevant: APEL not relevant to MA Music Performance course",
+        "course_tie_in: Missing tie-in to course: MA Music Performance",
+        "full_prose: Needs more substantial prose content"
+      ],
+      "content_passed": false,
+      "timestamp": "2025-09-28T22:09:41.333085"
+    }
+  ]
+}

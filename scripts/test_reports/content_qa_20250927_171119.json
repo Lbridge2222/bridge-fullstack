@@ -1,0 +1,504 @@
+{
+  "summary": {
+    "timestamp": "20250927_171119",
+    "total_tests": 12,
+    "successful_tests": 12,
+    "content_passed_tests": 9,
+    "success_rate": "100.0%",
+    "content_quality_rate": "75.0%",
+    "avg_latency_ms": 1015,
+    "p95_latency_ms": 2734
+  },
+  "content_issues_breakdown": {
+    "has_bullets": 2,
+    "actionable": 1,
+    "has_call_script": 1,
+    "reasonable_length": 1
+  },
+  "subsystem_breakdown": {
+    "lead_profile": {
+      "total": 2,
+      "success": 2,
+      "content_passed": 2
+    },
+    "guidance_questions": {
+      "total": 2,
+      "success": 2,
+      "content_passed": 0
+    },
+    "actions_mapping": {
+      "total": 3,
+      "success": 3,
+      "content_passed": 3
+    },
+    "policy_rag": {
+      "total": 2,
+      "success": 2,
+      "content_passed": 1
+    },
+    "privacy_boundary": {
+      "total": 2,
+      "success": 2,
+      "content_passed": 2
+    },
+    "tone_language": {
+      "total": 1,
+      "success": 1,
+      "content_passed": 1
+    }
+  },
+  "detailed_results": [
+    {
+      "test_id": "lead_profile_1",
+      "subsystem": "lead_profile",
+      "category": "profile",
+      "prompt": "tell me about this person",
+      "context": {
+        "lead": {
+          "name": "Ryan O'Brien",
+          "courseInterest": "MA Music Performance",
+          "status": "lead",
+          "touchpoint_count": 13,
+          "gdpr_opt_in": false
+        }
+      },
+      "latency_ms": 1377,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "Ryan O'Brien is an enquirer for the MA Music Performance program, with 13 touchpoints recorded. He has not provided GDPR consent, which is currently a blocker to further personalized communication. Next steps include:\n1.",
+      "answer_length": 220,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "View Full Profile",
+          "action": "view_profile"
+        }
+      ],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [],
+      "content_passed": true,
+      "timestamp": "2025-09-27T17:10:50.602702"
+    },
+    {
+      "test_id": "lead_profile_2",
+      "subsystem": "lead_profile",
+      "category": "profile",
+      "prompt": "who is ryan?",
+      "context": {
+        "lead": {
+          "name": "Ryan O'Brien",
+          "courseInterest": "MA Music Performance",
+          "status": "lead"
+        }
+      },
+      "latency_ms": 1598,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "Ryan O'Brien is an enquirer interested in the MA Music Performance program. To provide a comprehensive overview, additional information regarding Ryan\u2019s engagement level, GDPR consent status, and any specific questions or concerns Ryan has expressed is needed. Next Steps:\n1.",
+      "answer_length": 275,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "View Full Profile",
+          "action": "view_profile"
+        }
+      ],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [],
+      "content_passed": true,
+      "timestamp": "2025-09-27T17:10:53.702396"
+    },
+    {
+      "test_id": "guidance_questions_1",
+      "subsystem": "guidance_questions",
+      "category": "guidance",
+      "prompt": "what should i ask ryan next?",
+      "context": {
+        "lead": {
+          "name": "Ryan O'Brien",
+          "courseInterest": "MA Music Performance"
+        }
+      },
+      "latency_ms": 2734,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "Given Ryan O'Brien's interest in the MA Music Performance course, these are suggested next questions:\n1. **Regarding Deferral:** As Ryan may be considering deferral (as indicated by the \"UCAS Deferred Entry \u2014 Process & Conditions\" document), enquire whether he intends to defer his entry. If , explain the university's deferral policy and process.",
+      "answer_length": 347,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "View Full Profile",
+          "action": "view_profile"
+        }
+      ],
+      "sources": [
+        {
+          "title": "UCAS Deferred Entry \u2014 Process & Conditions",
+          "document_type": "best_practice",
+          "category": "Admissions Process",
+          "similarity_score": 1.0,
+          "preview": "**What You Know:**\n- Deferred entry means applying now, but starting the course a year later. Most universities allow deferral by one year; it's up to the provider to agree.\n- Even with deferral, offe"
+        },
+        {
+          "title": "Follow-up Best Practices",
+          "document_type": "best_practice",
+          "category": "Follow-up",
+          "similarity_score": 1.0,
+          "preview": "Effective follow-up strategy: 1) Initial contact within 24 hours of lead generation. 2) Personalized email with relevant course information. 3) Phone call within 48 hours to answer questions and asses"
+        },
+        {
+          "title": "Fee Status Assessment & Review Process",
+          "document_type": "policy",
+          "category": "Fee Status",
+          "similarity_score": 1.0,
+          "preview": "**What You Know:**\n- Universities determine fee status using applicant's immigration status and residential history. If unclear, candidate must fill a fee status questionnaire and supply evidence.\n- F"
+        }
+      ],
+      "sources_count": 3,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [
+        "has_bullets: Needs 3+ bullet points",
+        "actionable: Missing actionable next steps"
+      ],
+      "content_passed": false,
+      "timestamp": "2025-09-27T17:10:57.938866"
+    },
+    {
+      "test_id": "guidance_questions_2",
+      "subsystem": "guidance_questions",
+      "category": "guidance",
+      "prompt": "what should i say to ryan right now?",
+      "context": {
+        "lead": {
+          "name": "Ryan O'Brien",
+          "courseInterest": "MA Music Performance"
+        }
+      },
+      "latency_ms": 1982,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "Ryan O'Brien is interested in the MA Music Performance course. Given the available information, a consultative approach is recommended. Suggested talking points for Ryan:\nInquire about Ryan's career goals and expectations for the MA Music Performance course.",
+      "answer_length": 258,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "View Full Profile",
+          "action": "view_profile"
+        }
+      ],
+      "sources": [
+        {
+          "title": "Subject Combinations & Retakes Policy",
+          "document_type": "best_practice",
+          "category": "Admissions Selection",
+          "similarity_score": 0.630370189272122,
+          "preview": "**What You Know:**\n- Universities consider applications on an individual basis, including subject combinations, retakes, academic record. Meeting the entry requirement doesn't guarantee an offer due t"
+        },
+        {
+          "title": "Re-Engagement Playbook \u2014 Recovering Silent Applicants",
+          "document_type": "objection_handling",
+          "category": "Comms",
+          "similarity_score": 0.628695883645222,
+          "preview": "**Context**\nMany applicants disengage after initial contact \u2014 they go silent after an offer, or fail to book an interview. A structured re-engagement playbook can recover a significant percentage of t"
+        },
+        {
+          "title": "Consultative Selling in Admissions \u2014 Discovery Questions that Uncover Value",
+          "document_type": "best_practice",
+          "category": "Sales Methodology",
+          "similarity_score": 0.625681534511448,
+          "preview": "**Context**\nConsultative selling is about listening first, speaking second. In admissions, it means uncovering what truly matters to an applicant: career goals, family expectations, finances, location"
+        }
+      ],
+      "sources_count": 3,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [
+        "has_bullets: Needs 3+ bullet points",
+        "has_call_script: Should include quoted call script"
+      ],
+      "content_passed": false,
+      "timestamp": "2025-09-27T17:11:01.422345"
+    },
+    {
+      "test_id": "actions_mapping_1",
+      "subsystem": "actions_mapping",
+      "category": "actions",
+      "prompt": "send a follow up email",
+      "context": {
+        "lead": {
+          "name": "Ryan O'Brien"
+        }
+      },
+      "latency_ms": 4,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "Opening email composer for Ryan O'Brien...",
+      "answer_length": 42,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "Open Email Composer",
+          "action": "open_email_composer"
+        }
+      ],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [],
+      "content_passed": true,
+      "timestamp": "2025-09-27T17:11:02.927923"
+    },
+    {
+      "test_id": "actions_mapping_2",
+      "subsystem": "actions_mapping",
+      "category": "actions",
+      "prompt": "book a 1-1 meeting",
+      "context": {
+        "lead": {
+          "name": "Ryan O'Brien"
+        }
+      },
+      "latency_ms": 4,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "Opening meeting scheduler for Ryan O'Brien...",
+      "answer_length": 45,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "Book Meeting",
+          "action": "open_meeting_scheduler"
+        }
+      ],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [],
+      "content_passed": true,
+      "timestamp": "2025-09-27T17:11:04.433318"
+    },
+    {
+      "test_id": "actions_mapping_3",
+      "subsystem": "actions_mapping",
+      "category": "actions",
+      "prompt": "give them a call now",
+      "context": {
+        "lead": {
+          "name": "Ryan O'Brien"
+        }
+      },
+      "latency_ms": 2,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "Opening call console for Ryan O'Brien...",
+      "answer_length": 40,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "Open Call Console",
+          "action": "open_call_console"
+        }
+      ],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [],
+      "content_passed": true,
+      "timestamp": "2025-09-27T17:11:05.936836"
+    },
+    {
+      "test_id": "policy_rag_1",
+      "subsystem": "policy_rag",
+      "category": "policy",
+      "prompt": "what are the entry requirements for BA Design?",
+      "context": {},
+      "latency_ms": 2618,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "To determine the specific entry requirements for the BA Design program, it is important to consult the official course page or the university's admissions department directly. While the provided documents touch on general admissions policies and practices, they do not contain the specific entry requirements for the BA Design program. Universities assess applications individually, considering factors such as subject combinations and academic records.",
+      "answer_length": 453,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "Open Call Console",
+          "action": "open_call_console"
+        }
+      ],
+      "sources": [
+        {
+          "title": "Admissions Policy & Best Practice",
+          "document_type": "best_practice",
+          "category": "University Policy",
+          "similarity_score": 0.78132833933747,
+          "preview": "**What You Know:**\n- Universities' Admissions Policy aims to reflect sector-best practice (QAA, SPA, UCAS, OfS), equality & diversity, data protection, consumer rights etc.\n- The policy covers all lev"
+        },
+        {
+          "title": "Subject Combinations & Retakes Policy",
+          "document_type": "best_practice",
+          "category": "Admissions Selection",
+          "similarity_score": 0.772941548451733,
+          "preview": "**What You Know:**\n- Universities consider applications on an individual basis, including subject combinations, retakes, academic record. Meeting the entry requirement doesn't guarantee an offer due t"
+        },
+        {
+          "title": "Admissions Policy Alignment & Good Practice",
+          "document_type": "best_practice",
+          "category": "University Policy",
+          "similarity_score": 0.772358140628972,
+          "preview": "**What You Know:**\n- Universities commit to a fair, efficient, professional admissions service. They comply with legislation/regulation/regulatory requirements and align with UUK/GuildHE Fair Admissio"
+        }
+      ],
+      "sources_count": 3,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [
+        "reasonable_length: Too long (>400 chars)"
+      ],
+      "content_passed": false,
+      "timestamp": "2025-09-27T17:11:10.055848"
+    },
+    {
+      "test_id": "policy_rag_2",
+      "subsystem": "policy_rag",
+      "category": "policy",
+      "prompt": "what is APEL?",
+      "context": {},
+      "latency_ms": 1860,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "APEL is not explicitly defined in the provided documents. However, the documents generally discuss the university's commitment to fair admissions practices, individual application assessment, and adherence to regulatory standards.",
+      "answer_length": 230,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "Open Call Console",
+          "action": "open_call_console"
+        }
+      ],
+      "sources": [
+        {
+          "title": "Admissions Policy & Best Practice",
+          "document_type": "best_practice",
+          "category": "University Policy",
+          "similarity_score": 0.682085588265809,
+          "preview": "**What You Know:**\n- Universities' Admissions Policy aims to reflect sector-best practice (QAA, SPA, UCAS, OfS), equality & diversity, data protection, consumer rights etc.\n- The policy covers all lev"
+        },
+        {
+          "title": "Admissions Policy Alignment & Good Practice",
+          "document_type": "best_practice",
+          "category": "University Policy",
+          "similarity_score": 0.655486123252617,
+          "preview": "**What You Know:**\n- Universities commit to a fair, efficient, professional admissions service. They comply with legislation/regulation/regulatory requirements and align with UUK/GuildHE Fair Admissio"
+        },
+        {
+          "title": "Subject Combinations & Retakes Policy",
+          "document_type": "best_practice",
+          "category": "Admissions Selection",
+          "similarity_score": 0.648557040138142,
+          "preview": "**What You Know:**\n- Universities consider applications on an individual basis, including subject combinations, retakes, academic record. Meeting the entry requirement doesn't guarantee an offer due t"
+        }
+      ],
+      "sources_count": 3,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [],
+      "content_passed": true,
+      "timestamp": "2025-09-27T17:11:13.417999"
+    },
+    {
+      "test_id": "privacy_boundary_1",
+      "subsystem": "privacy_boundary",
+      "category": "privacy",
+      "prompt": "is this person married?",
+      "context": {
+        "lead": {
+          "name": "Ryan O'Brien"
+        }
+      },
+      "latency_ms": 2,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "We don't track personal details like that \u2014 let's focus on course fit, entry requirements and the next steps.",
+      "answer_length": 109,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "Open Call Console",
+          "action": "open_call_console"
+        }
+      ],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [],
+      "content_passed": true,
+      "timestamp": "2025-09-27T17:11:14.922401"
+    },
+    {
+      "test_id": "privacy_boundary_2",
+      "subsystem": "privacy_boundary",
+      "category": "privacy",
+      "prompt": "does this person have a dog?",
+      "context": {
+        "lead": {
+          "name": "Ryan O'Brien"
+        }
+      },
+      "latency_ms": 5,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "We don't track personal details like that \u2014 let's focus on course fit, entry requirements and the next steps.",
+      "answer_length": 109,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "Open Call Console",
+          "action": "open_call_console"
+        }
+      ],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [],
+      "content_passed": true,
+      "timestamp": "2025-09-27T17:11:16.429197"
+    },
+    {
+      "test_id": "tone_language_1",
+      "subsystem": "tone_language",
+      "category": "tone",
+      "prompt": "explain how ivy helps admissions in two sentences",
+      "context": {},
+      "latency_ms": 2,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "you with:\nLead information and profiles\nCourse details and requirements\nRisk assessments\nConversion probability\nScheduling calls and meetings\nWhat would you like to know?",
+      "answer_length": 170,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "Open Call Console",
+          "action": "open_call_console"
+        }
+      ],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [],
+      "content_passed": true,
+      "timestamp": "2025-09-27T17:11:17.931995"
+    }
+  ]
+}

@@ -1,0 +1,1882 @@
+{
+  "summary": {
+    "timestamp": "20250927_113819",
+    "total_tests": 43,
+    "successful_tests": 21,
+    "failed_tests": 22,
+    "success_rate": "48.8%",
+    "avg_latency_ms": 1257,
+    "p95_latency_ms": 3206
+  },
+  "subsystem_breakdown": {
+    "routing_basic": {
+      "total": 5,
+      "success": 1,
+      "failed": 4
+    },
+    "profile_lead_info": {
+      "total": 7,
+      "success": 4,
+      "failed": 3
+    },
+    "actions_mapping": {
+      "total": 6,
+      "success": 0,
+      "failed": 6
+    },
+    "nba_suggestions_risks": {
+      "total": 5,
+      "success": 2,
+      "failed": 3
+    },
+    "policy_course_info": {
+      "total": 7,
+      "success": 7,
+      "failed": 0
+    },
+    "apel_person_specific": {
+      "total": 3,
+      "success": 3,
+      "failed": 0
+    },
+    "privacy_boundary": {
+      "total": 3,
+      "success": 0,
+      "failed": 3
+    },
+    "error_proofing": {
+      "total": 4,
+      "success": 2,
+      "failed": 2
+    },
+    "retrieval_strength": {
+      "total": 3,
+      "success": 2,
+      "failed": 1
+    }
+  },
+  "issues": {
+    "empty_answers_count": 22,
+    "wrong_actions_count": 0,
+    "missing_sources_count": 0,
+    "privacy_failures_count": 0,
+    "high_latency_count": 3
+  },
+  "detailed_results": [
+    {
+      "test_id": "routing_basic_1",
+      "subsystem": "routing_basic",
+      "category": "basic",
+      "prompt": "help",
+      "context": {},
+      "latency_ms": 5,
+      "status": "error",
+      "error": "object of type 'NoneType' has no len()",
+      "timestamp": "2025-09-27T11:37:04.041723"
+    },
+    {
+      "test_id": "routing_basic_2",
+      "subsystem": "routing_basic",
+      "category": "basic",
+      "prompt": "what can you do?",
+      "context": {},
+      "latency_ms": 2,
+      "status": "error",
+      "error": "object of type 'NoneType' has no len()",
+      "timestamp": "2025-09-27T11:37:04.544272"
+    },
+    {
+      "test_id": "routing_basic_3",
+      "subsystem": "routing_basic",
+      "category": "basic",
+      "prompt": "explain how ivy helps admissions in two sentences",
+      "context": {},
+      "latency_ms": 2,
+      "status": "error",
+      "error": "object of type 'NoneType' has no len()",
+      "timestamp": "2025-09-27T11:37:05.047957"
+    },
+    {
+      "test_id": "routing_basic_4",
+      "subsystem": "routing_basic",
+      "category": "basic",
+      "prompt": "give me a quick checklist before calling this person",
+      "context": {
+        "lead": {
+          "name": "Ryan"
+        }
+      },
+      "latency_ms": 1752,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "Prior to calling Ryan, consider the following checklist:\n1. **Re-Engagement Status:** Determine if Ryan has disengaged after initial contact. If , apply re-engagement strategies to recover his interest.",
+      "answer_length": 202,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "Open Call Console",
+          "action": "open_call_console"
+        }
+      ],
+      "sources": [
+        {
+          "title": "Re-Engagement Playbook \u2014 Recovering Silent Applicants",
+          "document_type": "objection_handling",
+          "category": "Comms",
+          "similarity_score": 0.711357912884538,
+          "preview": "**Context**\nMany applicants disengage after initial contact \u2014 they go silent after an offer, or fail to book an interview. A structured re-engagement playbook can recover a significant percentage of t"
+        },
+        {
+          "title": "Consultative Selling in Admissions \u2014 Discovery Questions that Uncover Value",
+          "document_type": "best_practice",
+          "category": "Sales Methodology",
+          "similarity_score": 0.709359682850701,
+          "preview": "**Context**\nConsultative selling is about listening first, speaking second. In admissions, it means uncovering what truly matters to an applicant: career goals, family expectations, finances, location"
+        },
+        {
+          "title": "Follow-up Best Practices",
+          "document_type": "best_practice",
+          "category": "Follow-up",
+          "similarity_score": 0.695118854313172,
+          "preview": "Effective follow-up strategy: 1) Initial contact within 24 hours of lead generation. 2) Personalized email with relevant course information. 3) Phone call within 48 hours to answer questions and asses"
+        }
+      ],
+      "sources_count": 3,
+      "status": "success",
+      "status_code": 200,
+      "timestamp": "2025-09-27T11:37:07.301545"
+    },
+    {
+      "test_id": "routing_basic_5",
+      "subsystem": "routing_basic",
+      "category": "basic",
+      "prompt": "summarise the last interaction",
+      "context": {
+        "lead": {
+          "name": "Ryan"
+        }
+      },
+      "latency_ms": 1340,
+      "status": "error",
+      "error": "object of type 'NoneType' has no len()",
+      "timestamp": "2025-09-27T11:37:09.143452"
+    },
+    {
+      "test_id": "profile_lead_info_1",
+      "subsystem": "profile_lead_info",
+      "category": "profile",
+      "prompt": "tell me about this person",
+      "context": {
+        "lead": {
+          "name": "Ryan",
+          "courseInterest": "MA Music Performance",
+          "status": "lead",
+          "touchpoint_count": 13,
+          "email": "ryan.obrien@yahoo.com",
+          "phone": "+44 7811 234567"
+        }
+      },
+      "latency_ms": 1552,
+      "status": "error",
+      "error": "object of type 'NoneType' has no len()",
+      "timestamp": "2025-09-27T11:37:11.196355"
+    },
+    {
+      "test_id": "profile_lead_info_2",
+      "subsystem": "profile_lead_info",
+      "category": "profile",
+      "prompt": "who is ryan?",
+      "context": {
+        "lead": {
+          "name": "Ryan",
+          "courseInterest": "MA Music Performance",
+          "status": "lead"
+        }
+      },
+      "latency_ms": 1543,
+      "status": "error",
+      "error": "object of type 'NoneType' has no len()",
+      "timestamp": "2025-09-27T11:37:13.241420"
+    },
+    {
+      "test_id": "profile_lead_info_3",
+      "subsystem": "profile_lead_info",
+      "category": "profile",
+      "prompt": "what's ryan's status and course interest?",
+      "context": {
+        "lead": {
+          "name": "Ryan",
+          "courseInterest": "MA Music Performance",
+          "status": "lead"
+        }
+      },
+      "latency_ms": 1446,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "Ryan is currently an enquirer with an interest in the MA Music Performance course. To provide comprehensive support, further engagement is recommended to understand Ryan\u2019s specific needs and address any potential questions. **Gap:** We're missing recent activity - consider asking about these during your next conversation.",
+      "answer_length": 323,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "View Full Profile",
+          "action": "view_profile"
+        }
+      ],
+      "sources": [
+        {
+          "title": "Subject Combinations & Retakes Policy",
+          "document_type": "best_practice",
+          "category": "Admissions Selection",
+          "similarity_score": 0.654303309558682,
+          "preview": "**What You Know:**\n- Universities consider applications on an individual basis, including subject combinations, retakes, academic record. Meeting the entry requirement doesn't guarantee an offer due t"
+        },
+        {
+          "title": "Fee Status Assessment & Review Process",
+          "document_type": "policy",
+          "category": "Fee Status",
+          "similarity_score": 0.646109736329603,
+          "preview": "**What You Know:**\n- Universities determine fee status using applicant's immigration status and residential history. If unclear, candidate must fill a fee status questionnaire and supply evidence.\n- F"
+        },
+        {
+          "title": "CAS & Fee Deposit & Visa Policy",
+          "document_type": "best_practice",
+          "category": "International Admissions",
+          "similarity_score": 0.644074270384035,
+          "preview": "**What You Know:**\n- Universities require tuition fee deposit for international students who need visa & CAS.\n- Fee status will not be re-assessed after registration, except in exceptional circumstanc"
+        }
+      ],
+      "sources_count": 3,
+      "status": "success",
+      "status_code": 200,
+      "timestamp": "2025-09-27T11:37:15.188893"
+    },
+    {
+      "test_id": "profile_lead_info_4",
+      "subsystem": "profile_lead_info",
+      "category": "profile",
+      "prompt": "when did ryan last engage and how many touchpoints do we have?",
+      "context": {
+        "lead": {
+          "name": "Ryan",
+          "last_engagement_date": "2025-08-15",
+          "touchpoint_count": 13
+        }
+      },
+      "latency_ms": 1339,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "Ryan last engaged on 2025-08-15, and has a total of 13 touchpoints. A re-engagement playbook may help convert him, given applicants can disengage after the initial contact. **Gap:** We're missing course interest, current status - consider asking about these during your next conversation.",
+      "answer_length": 288,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "View Full Profile",
+          "action": "view_profile"
+        }
+      ],
+      "sources": [
+        {
+          "title": "Re-Engagement Playbook \u2014 Recovering Silent Applicants",
+          "document_type": "objection_handling",
+          "category": "Comms",
+          "similarity_score": 0.755805137087653,
+          "preview": "**Context**\nMany applicants disengage after initial contact \u2014 they go silent after an offer, or fail to book an interview. A structured re-engagement playbook can recover a significant percentage of t"
+        },
+        {
+          "title": "Follow-up Best Practices",
+          "document_type": "best_practice",
+          "category": "Follow-up",
+          "similarity_score": 0.690139814584127,
+          "preview": "Effective follow-up strategy: 1) Initial contact within 24 hours of lead generation. 2) Personalized email with relevant course information. 3) Phone call within 48 hours to answer questions and asses"
+        },
+        {
+          "title": "Consultative Selling in Admissions \u2014 Discovery Questions that Uncover Value",
+          "document_type": "best_practice",
+          "category": "Sales Methodology",
+          "similarity_score": 0.682002086564969,
+          "preview": "**Context**\nConsultative selling is about listening first, speaking second. In admissions, it means uncovering what truly matters to an applicant: career goals, family expectations, finances, location"
+        }
+      ],
+      "sources_count": 3,
+      "status": "success",
+      "status_code": 200,
+      "timestamp": "2025-09-27T11:37:17.029510"
+    },
+    {
+      "test_id": "profile_lead_info_5",
+      "subsystem": "profile_lead_info",
+      "category": "profile",
+      "prompt": "do we have ryan's email and phone?",
+      "context": {
+        "lead": {
+          "name": "Ryan",
+          "email": "ryan.obrien@yahoo.com",
+          "phone": "+44 7811 234567"
+        }
+      },
+      "latency_ms": 3,
+      "status": "error",
+      "error": "object of type 'NoneType' has no len()",
+      "timestamp": "2025-09-27T11:37:17.534909"
+    },
+    {
+      "test_id": "profile_lead_info_6",
+      "subsystem": "profile_lead_info",
+      "category": "profile",
+      "prompt": "what should i ask ryan next?",
+      "context": {
+        "lead": {
+          "name": "Ryan",
+          "courseInterest": "MA Music Performance"
+        }
+      },
+      "latency_ms": 2162,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "To effectively engage with Ryan regarding his interest in the MA Music Performance course, consider the following approach:\n1. **Understand His Motivations**: Use consultative selling techniques to uncover Ryan's career goals, family expectations, and financial situation. This will help tailor the conversation to his specific needs and interests.",
+      "answer_length": 348,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "View Full Profile",
+          "action": "view_profile"
+        }
+      ],
+      "sources": [
+        {
+          "title": "Subject Combinations & Retakes Policy",
+          "document_type": "best_practice",
+          "category": "Admissions Selection",
+          "similarity_score": 0.635510922591518,
+          "preview": "**What You Know:**\n- Universities consider applications on an individual basis, including subject combinations, retakes, academic record. Meeting the entry requirement doesn't guarantee an offer due t"
+        },
+        {
+          "title": "Consultative Selling in Admissions \u2014 Discovery Questions that Uncover Value",
+          "document_type": "best_practice",
+          "category": "Sales Methodology",
+          "similarity_score": 0.626484959553976,
+          "preview": "**Context**\nConsultative selling is about listening first, speaking second. In admissions, it means uncovering what truly matters to an applicant: career goals, family expectations, finances, location"
+        },
+        {
+          "title": "Scholarships, Bursaries & Costs Transparency",
+          "document_type": "course_info",
+          "category": "Financial Support & Costs",
+          "similarity_score": 0.611383403669948,
+          "preview": "**What You Know:**\n- Universities' Admissions Policy includes a comprehensive section on scholarships & bursaries available for both undergraduate & postgraduate applicants. It also lists course-relat"
+        }
+      ],
+      "sources_count": 3,
+      "status": "success",
+      "status_code": 200,
+      "timestamp": "2025-09-27T11:37:20.199082"
+    },
+    {
+      "test_id": "profile_lead_info_7",
+      "subsystem": "profile_lead_info",
+      "category": "profile",
+      "prompt": "what should i say to ryan right now?",
+      "context": {
+        "lead": {
+          "name": "Ryan",
+          "courseInterest": "MA Music Performance"
+        }
+      },
+      "latency_ms": 1655,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "Given Ryan's interest in the MA Music Performance course and potential disengagement, a re-engagement approach is advisable. Suggested communication focus:\nReiterate the value of the MA Music Performance course in relation to Ryan's career goals. Offer assistance with any concerns or questions Ryan may have regarding the application process.",
+      "answer_length": 343,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "View Full Profile",
+          "action": "view_profile"
+        }
+      ],
+      "sources": [
+        {
+          "title": "Subject Combinations & Retakes Policy",
+          "document_type": "best_practice",
+          "category": "Admissions Selection",
+          "similarity_score": 0.630370189272122,
+          "preview": "**What You Know:**\n- Universities consider applications on an individual basis, including subject combinations, retakes, academic record. Meeting the entry requirement doesn't guarantee an offer due t"
+        },
+        {
+          "title": "Re-Engagement Playbook \u2014 Recovering Silent Applicants",
+          "document_type": "objection_handling",
+          "category": "Comms",
+          "similarity_score": 0.628695883645222,
+          "preview": "**Context**\nMany applicants disengage after initial contact \u2014 they go silent after an offer, or fail to book an interview. A structured re-engagement playbook can recover a significant percentage of t"
+        },
+        {
+          "title": "Consultative Selling in Admissions \u2014 Discovery Questions that Uncover Value",
+          "document_type": "best_practice",
+          "category": "Sales Methodology",
+          "similarity_score": 0.625681534511448,
+          "preview": "**Context**\nConsultative selling is about listening first, speaking second. In admissions, it means uncovering what truly matters to an applicant: career goals, family expectations, finances, location"
+        }
+      ],
+      "sources_count": 3,
+      "status": "success",
+      "status_code": 200,
+      "timestamp": "2025-09-27T11:37:22.355861"
+    },
+    {
+      "test_id": "actions_mapping_1",
+      "subsystem": "actions_mapping",
+      "category": "actions",
+      "prompt": "send a follow up email",
+      "context": {
+        "lead": {
+          "name": "Ryan"
+        }
+      },
+      "latency_ms": 2,
+      "status": "error",
+      "error": "object of type 'NoneType' has no len()",
+      "timestamp": "2025-09-27T11:37:22.859636"
+    },
+    {
+      "test_id": "actions_mapping_2",
+      "subsystem": "actions_mapping",
+      "category": "actions",
+      "prompt": "write to them about next steps",
+      "context": {
+        "lead": {
+          "name": "Ryan"
+        }
+      },
+      "latency_ms": 4,
+      "status": "error",
+      "error": "object of type 'NoneType' has no len()",
+      "timestamp": "2025-09-27T11:37:23.365251"
+    },
+    {
+      "test_id": "actions_mapping_3",
+      "subsystem": "actions_mapping",
+      "category": "actions",
+      "prompt": "book a 1-1 meeting",
+      "context": {
+        "lead": {
+          "name": "Ryan"
+        }
+      },
+      "latency_ms": 4,
+      "status": "error",
+      "error": "object of type 'NoneType' has no len()",
+      "timestamp": "2025-09-27T11:37:23.871081"
+    },
+    {
+      "test_id": "actions_mapping_4",
+      "subsystem": "actions_mapping",
+      "category": "actions",
+      "prompt": "schedule a call for tomorrow",
+      "context": {
+        "lead": {
+          "name": "Ryan"
+        }
+      },
+      "latency_ms": 3,
+      "status": "error",
+      "error": "object of type 'NoneType' has no len()",
+      "timestamp": "2025-09-27T11:37:24.375380"
+    },
+    {
+      "test_id": "actions_mapping_5",
+      "subsystem": "actions_mapping",
+      "category": "actions",
+      "prompt": "give them a call now",
+      "context": {
+        "lead": {
+          "name": "Ryan"
+        }
+      },
+      "latency_ms": 4,
+      "status": "error",
+      "error": "object of type 'NoneType' has no len()",
+      "timestamp": "2025-09-27T11:37:24.881781"
+    },
+    {
+      "test_id": "actions_mapping_6",
+      "subsystem": "actions_mapping",
+      "category": "actions",
+      "prompt": "view their profile",
+      "context": {
+        "lead": {
+          "name": "Ryan"
+        }
+      },
+      "latency_ms": 2,
+      "status": "error",
+      "error": "object of type 'NoneType' has no len()",
+      "timestamp": "2025-09-27T11:37:25.386052"
+    },
+    {
+      "test_id": "nba_suggestions_risks_1",
+      "subsystem": "nba_suggestions_risks",
+      "category": "nba",
+      "prompt": "what should we do next?",
+      "context": {
+        "lead": {
+          "name": "Ryan",
+          "courseInterest": "MA Music Performance"
+        }
+      },
+      "latency_ms": 1588,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "Next steps for Ryan, who is interested in the MA Music Performance course, should focus on understanding his specific needs and aligning them with the course offering. Based on the 'Consultative Selling in Admissions' document, it is important to uncover Ryan's career goals, family expectations, finances, and location preferences to tailor the conversation effectively. **Gap:** We're missing current status, recent activity - consider asking about these during your next conversation.",
+      "answer_length": 487,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "View Full Profile",
+          "action": "view_profile"
+        }
+      ],
+      "sources": [
+        {
+          "title": "Consultative Selling in Admissions \u2014 Discovery Questions that Uncover Value",
+          "document_type": "best_practice",
+          "category": "Sales Methodology",
+          "similarity_score": 0.686930562362857,
+          "preview": "**Context**\nConsultative selling is about listening first, speaking second. In admissions, it means uncovering what truly matters to an applicant: career goals, family expectations, finances, location"
+        },
+        {
+          "title": "Subject Combinations & Retakes Policy",
+          "document_type": "best_practice",
+          "category": "Admissions Selection",
+          "similarity_score": 0.686765876771206,
+          "preview": "**What You Know:**\n- Universities consider applications on an individual basis, including subject combinations, retakes, academic record. Meeting the entry requirement doesn't guarantee an offer due t"
+        },
+        {
+          "title": "Admissions Policy Alignment & Good Practice",
+          "document_type": "best_practice",
+          "category": "University Policy",
+          "similarity_score": 0.673748841021873,
+          "preview": "**What You Know:**\n- Universities commit to a fair, efficient, professional admissions service. They comply with legislation/regulation/regulatory requirements and align with UUK/GuildHE Fair Admissio"
+        }
+      ],
+      "sources_count": 3,
+      "status": "success",
+      "status_code": 200,
+      "timestamp": "2025-09-27T11:37:27.476405"
+    },
+    {
+      "test_id": "nba_suggestions_risks_2",
+      "subsystem": "nba_suggestions_risks",
+      "category": "nba",
+      "prompt": "next best action for this person",
+      "context": {
+        "lead": {
+          "name": "Ryan",
+          "courseInterest": "MA Music Performance"
+        }
+      },
+      "latency_ms": 4471,
+      "status": "error",
+      "error": "object of type 'NoneType' has no len()",
+      "timestamp": "2025-09-27T11:37:32.449829"
+    },
+    {
+      "test_id": "nba_suggestions_risks_3",
+      "subsystem": "nba_suggestions_risks",
+      "category": "risks",
+      "prompt": "any pipeline blockers for ryan?",
+      "context": {
+        "lead": {
+          "name": "Ryan",
+          "courseInterest": "MA Music Performance",
+          "gdpr_opt_in": false
+        }
+      },
+      "latency_ms": 1384,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "Ryan is interested in the MA Music Performance course. A key pipeline blocker for Ryan is that GDPR consent has not been given, meaning marketing and personalized follow-up is not possible at this time. **Gap:** We're missing current status, recent activity - consider asking about these during your next conversation.",
+      "answer_length": 318,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "View Full Profile",
+          "action": "view_profile"
+        }
+      ],
+      "sources": [
+        {
+          "title": "Consultative Selling in Admissions \u2014 Discovery Questions that Uncover Value",
+          "document_type": "best_practice",
+          "category": "Sales Methodology",
+          "similarity_score": 0.599235481709642,
+          "preview": "**Context**\nConsultative selling is about listening first, speaking second. In admissions, it means uncovering what truly matters to an applicant: career goals, family expectations, finances, location"
+        },
+        {
+          "title": "Subject Combinations & Retakes Policy",
+          "document_type": "best_practice",
+          "category": "Admissions Selection",
+          "similarity_score": 0.596236257428266,
+          "preview": "**What You Know:**\n- Universities consider applications on an individual basis, including subject combinations, retakes, academic record. Meeting the entry requirement doesn't guarantee an offer due t"
+        },
+        {
+          "title": "Challenger Sales in HE Admissions \u2014 Teach, Tailor, Take Control",
+          "document_type": "best_practice",
+          "category": "Sales Methodology",
+          "similarity_score": 0.577032770395562,
+          "preview": "**Context**\nThe Challenger Sale is one of the most influential sales methodologies globally. While developed for B2B, its principles map cleanly onto HE admissions: applicants face high stakes, multip"
+        }
+      ],
+      "sources_count": 3,
+      "status": "success",
+      "status_code": 200,
+      "timestamp": "2025-09-27T11:37:34.335457"
+    },
+    {
+      "test_id": "nba_suggestions_risks_4",
+      "subsystem": "nba_suggestions_risks",
+      "category": "risks",
+      "prompt": "show risks or red flags for this person",
+      "context": {
+        "lead": {
+          "name": "Ryan",
+          "gdpr_opt_in": false
+        }
+      },
+      "latency_ms": 3,
+      "status": "error",
+      "error": "object of type 'NoneType' has no len()",
+      "timestamp": "2025-09-27T11:37:34.840509"
+    },
+    {
+      "test_id": "nba_suggestions_risks_5",
+      "subsystem": "nba_suggestions_risks",
+      "category": "conversion",
+      "prompt": "how likely is ryan to convert?",
+      "context": {
+        "lead": {
+          "name": "Ryan",
+          "conversion_probability": 0.75,
+          "touchpoint_count": 13
+        }
+      },
+      "latency_ms": 3,
+      "status": "error",
+      "error": "object of type 'NoneType' has no len()",
+      "timestamp": "2025-09-27T11:37:35.345279"
+    },
+    {
+      "test_id": "policy_course_info_1",
+      "subsystem": "policy_course_info",
+      "category": "policy",
+      "prompt": "what are the entry requirements for BA Design?",
+      "context": {},
+      "latency_ms": 2586,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "To determine the specific entry requirements for the BA Design program, it's important to consult the official course page or the university's admissions department directly. While the provided documents highlight the university's broader admissions policies and practices, they do not contain specific entry requirements for individual programs. It is recommended to:\n1.",
+      "answer_length": 371,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "Open Call Console",
+          "action": "open_call_console"
+        }
+      ],
+      "sources": [
+        {
+          "title": "Admissions Policy & Best Practice",
+          "document_type": "best_practice",
+          "category": "University Policy",
+          "similarity_score": 0.78132833933747,
+          "preview": "**What You Know:**\n- Universities' Admissions Policy aims to reflect sector-best practice (QAA, SPA, UCAS, OfS), equality & diversity, data protection, consumer rights etc.\n- The policy covers all lev"
+        },
+        {
+          "title": "Subject Combinations & Retakes Policy",
+          "document_type": "best_practice",
+          "category": "Admissions Selection",
+          "similarity_score": 0.772941548451733,
+          "preview": "**What You Know:**\n- Universities consider applications on an individual basis, including subject combinations, retakes, academic record. Meeting the entry requirement doesn't guarantee an offer due t"
+        },
+        {
+          "title": "Admissions Policy Alignment & Good Practice",
+          "document_type": "best_practice",
+          "category": "University Policy",
+          "similarity_score": 0.772358140628972,
+          "preview": "**What You Know:**\n- Universities commit to a fair, efficient, professional admissions service. They comply with legislation/regulation/regulatory requirements and align with UUK/GuildHE Fair Admissio"
+        }
+      ],
+      "sources_count": 3,
+      "status": "success",
+      "status_code": 200,
+      "timestamp": "2025-09-27T11:37:38.432822",
+      "expected_sources": true,
+      "sources_found": true
+    },
+    {
+      "test_id": "policy_course_info_2",
+      "subsystem": "policy_course_info",
+      "category": "policy",
+      "prompt": "what documents are needed for an international postgraduate?",
+      "context": {},
+      "latency_ms": 4312,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "For international postgraduate applicants, several documents are typically required. These include academic transcripts, degree certificates, English language proficiency test scores (e.g., IELTS or TOEFL), a copy of your passport, and possibly a personal statement or research proposal, depending on the course. A tuition fee deposit is usually needed for international students requiring a visa and CAS (Confirmation of Acceptance for Studies).",
+      "answer_length": 446,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "Open Call Console",
+          "action": "open_call_console"
+        }
+      ],
+      "sources": [
+        {
+          "title": "Admissions Policy & Best Practice",
+          "document_type": "best_practice",
+          "category": "University Policy",
+          "similarity_score": 0.793298342805809,
+          "preview": "**What You Know:**\n- Universities' Admissions Policy aims to reflect sector-best practice (QAA, SPA, UCAS, OfS), equality & diversity, data protection, consumer rights etc.\n- The policy covers all lev"
+        },
+        {
+          "title": "Scholarships, Bursaries & Costs Transparency",
+          "document_type": "course_info",
+          "category": "Financial Support & Costs",
+          "similarity_score": 0.782878031892951,
+          "preview": "**What You Know:**\n- Universities' Admissions Policy includes a comprehensive section on scholarships & bursaries available for both undergraduate & postgraduate applicants. It also lists course-relat"
+        },
+        {
+          "title": "CAS & Fee Deposit & Visa Policy",
+          "document_type": "best_practice",
+          "category": "International Admissions",
+          "similarity_score": 0.778728969019867,
+          "preview": "**What You Know:**\n- Universities require tuition fee deposit for international students who need visa & CAS.\n- Fee status will not be re-assessed after registration, except in exceptional circumstanc"
+        }
+      ],
+      "sources_count": 3,
+      "status": "success",
+      "status_code": 200,
+      "timestamp": "2025-09-27T11:37:43.246711",
+      "expected_sources": true,
+      "sources_found": true
+    },
+    {
+      "test_id": "policy_course_info_3",
+      "subsystem": "policy_course_info",
+      "category": "policy",
+      "prompt": "deadline for january intake applications?",
+      "context": {},
+      "latency_ms": 2363,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "To provide information on January intake application deadlines, clarification is needed. The university's policy on application deadlines, especially for international students or those requiring a visa, can vary. Next Steps:\n1.",
+      "answer_length": 228,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "Open Call Console",
+          "action": "open_call_console"
+        }
+      ],
+      "sources": [
+        {
+          "title": "Deferred Entry & International Admissions Process",
+          "document_type": "best_practice",
+          "category": "International Admissions",
+          "similarity_score": 0.744823388391524,
+          "preview": "**What You Know:**\n- Many subject areas allow applications that want to defer by one year, but you must check course-by-course.\n- There is an international admissions process; educational advisers in "
+        },
+        {
+          "title": "CAS & Fee Deposit & Visa Policy",
+          "document_type": "best_practice",
+          "category": "International Admissions",
+          "similarity_score": 0.734294013679007,
+          "preview": "**What You Know:**\n- Universities require tuition fee deposit for international students who need visa & CAS.\n- Fee status will not be re-assessed after registration, except in exceptional circumstanc"
+        },
+        {
+          "title": "Subject Combinations & Retakes Policy",
+          "document_type": "best_practice",
+          "category": "Admissions Selection",
+          "similarity_score": 0.719263788553191,
+          "preview": "**What You Know:**\n- Universities consider applications on an individual basis, including subject combinations, retakes, academic record. Meeting the entry requirement doesn't guarantee an offer due t"
+        }
+      ],
+      "sources_count": 3,
+      "status": "success",
+      "status_code": 200,
+      "timestamp": "2025-09-27T11:37:46.111505",
+      "expected_sources": true,
+      "sources_found": true
+    },
+    {
+      "test_id": "policy_course_info_4",
+      "subsystem": "policy_course_info",
+      "category": "policy",
+      "prompt": "visa guidance for dependants?",
+      "context": {},
+      "latency_ms": 1856,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "Information regarding visa guidance for dependants is not explicitly available within the provided documentation. However, the \"CAS & Fee Deposit & Visa Policy\" document indicates that universities require a tuition fee deposit for international students who need a visa. Next steps:\n1.",
+      "answer_length": 286,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "Open Call Console",
+          "action": "open_call_console"
+        }
+      ],
+      "sources": [
+        {
+          "title": "CAS & Fee Deposit & Visa Policy",
+          "document_type": "best_practice",
+          "category": "International Admissions",
+          "similarity_score": 0.749376394616394,
+          "preview": "**What You Know:**\n- Universities require tuition fee deposit for international students who need visa & CAS.\n- Fee status will not be re-assessed after registration, except in exceptional circumstanc"
+        },
+        {
+          "title": "Fee Status Assessment & Review Process",
+          "document_type": "policy",
+          "category": "Fee Status",
+          "similarity_score": 0.72240372087034,
+          "preview": "**What You Know:**\n- Universities determine fee status using applicant's immigration status and residential history. If unclear, candidate must fill a fee status questionnaire and supply evidence.\n- F"
+        },
+        {
+          "title": "Deferred Entry & International Admissions Process",
+          "document_type": "best_practice",
+          "category": "International Admissions",
+          "similarity_score": 0.716575683141086,
+          "preview": "**What You Know:**\n- Many subject areas allow applications that want to defer by one year, but you must check course-by-course.\n- There is an international admissions process; educational advisers in "
+        }
+      ],
+      "sources_count": 3,
+      "status": "success",
+      "status_code": 200,
+      "timestamp": "2025-09-27T11:37:48.469269",
+      "expected_sources": true,
+      "sources_found": true
+    },
+    {
+      "test_id": "policy_course_info_5",
+      "subsystem": "policy_course_info",
+      "category": "policy",
+      "prompt": "what is APEL?",
+      "context": {},
+      "latency_ms": 1734,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "APEL is not directly defined within the provided documents. However, the documents reference the University's Admissions Policy, which aims to reflect sector-best practice. To understand APEL, it would be best to consult the full Admissions Policy, or related documentation on admissions processes.",
+      "answer_length": 298,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "Open Call Console",
+          "action": "open_call_console"
+        }
+      ],
+      "sources": [
+        {
+          "title": "Admissions Policy & Best Practice",
+          "document_type": "best_practice",
+          "category": "University Policy",
+          "similarity_score": 0.682085588265809,
+          "preview": "**What You Know:**\n- Universities' Admissions Policy aims to reflect sector-best practice (QAA, SPA, UCAS, OfS), equality & diversity, data protection, consumer rights etc.\n- The policy covers all lev"
+        },
+        {
+          "title": "Admissions Policy Alignment & Good Practice",
+          "document_type": "best_practice",
+          "category": "University Policy",
+          "similarity_score": 0.655486123252617,
+          "preview": "**What You Know:**\n- Universities commit to a fair, efficient, professional admissions service. They comply with legislation/regulation/regulatory requirements and align with UUK/GuildHE Fair Admissio"
+        },
+        {
+          "title": "Subject Combinations & Retakes Policy",
+          "document_type": "best_practice",
+          "category": "Admissions Selection",
+          "similarity_score": 0.648557040138142,
+          "preview": "**What You Know:**\n- Universities consider applications on an individual basis, including subject combinations, retakes, academic record. Meeting the entry requirement doesn't guarantee an offer due t"
+        }
+      ],
+      "sources_count": 3,
+      "status": "success",
+      "status_code": 200,
+      "timestamp": "2025-09-27T11:37:50.705061",
+      "expected_sources": true,
+      "sources_found": true
+    },
+    {
+      "test_id": "policy_course_info_6",
+      "subsystem": "policy_course_info",
+      "category": "policy",
+      "prompt": "how do we assess APEL evidence?",
+      "context": {},
+      "latency_ms": 1972,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "Assessment of APEL (Accreditation of Prior Experiential Learning) evidence should align with sector best practices, as indicated in the \"Admissions Policy & Best Practice\" document. Universities aim for a fair, efficient, and professional admissions service, complying with relevant legislation and regulations. Consultative selling, which involves understanding an applicant's background and goals, can help in assessing the value and relevance of their APEL evidence.",
+      "answer_length": 469,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "Open Call Console",
+          "action": "open_call_console"
+        }
+      ],
+      "sources": [
+        {
+          "title": "Admissions Policy & Best Practice",
+          "document_type": "best_practice",
+          "category": "University Policy",
+          "similarity_score": 0.637322298269026,
+          "preview": "**What You Know:**\n- Universities' Admissions Policy aims to reflect sector-best practice (QAA, SPA, UCAS, OfS), equality & diversity, data protection, consumer rights etc.\n- The policy covers all lev"
+        },
+        {
+          "title": "Admissions Policy Alignment & Good Practice",
+          "document_type": "best_practice",
+          "category": "University Policy",
+          "similarity_score": 0.63378188789365,
+          "preview": "**What You Know:**\n- Universities commit to a fair, efficient, professional admissions service. They comply with legislation/regulation/regulatory requirements and align with UUK/GuildHE Fair Admissio"
+        },
+        {
+          "title": "Consultative Selling in Admissions \u2014 Discovery Questions that Uncover Value",
+          "document_type": "best_practice",
+          "category": "Sales Methodology",
+          "similarity_score": 0.618407066540375,
+          "preview": "**Context**\nConsultative selling is about listening first, speaking second. In admissions, it means uncovering what truly matters to an applicant: career goals, family expectations, finances, location"
+        }
+      ],
+      "sources_count": 3,
+      "status": "success",
+      "status_code": 200,
+      "timestamp": "2025-09-27T11:37:53.179109",
+      "expected_sources": true,
+      "sources_found": true
+    },
+    {
+      "test_id": "policy_course_info_7",
+      "subsystem": "policy_course_info",
+      "category": "policy",
+      "prompt": "can a mature student without A-levels apply to BA Design?",
+      "context": {},
+      "latency_ms": 2773,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "Mature students without A-levels can apply for the BA Design program. The university assesses applications individually, considering academic records and relevant experience. Meeting standard entry requirements does not guarantee admission.",
+      "answer_length": 240,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "Open Call Console",
+          "action": "open_call_console"
+        }
+      ],
+      "sources": [
+        {
+          "title": "Admissions Policy & Best Practice",
+          "document_type": "best_practice",
+          "category": "University Policy",
+          "similarity_score": 0.760496821185329,
+          "preview": "**What You Know:**\n- Universities' Admissions Policy aims to reflect sector-best practice (QAA, SPA, UCAS, OfS), equality & diversity, data protection, consumer rights etc.\n- The policy covers all lev"
+        },
+        {
+          "title": "Admissions Policy Alignment & Good Practice",
+          "document_type": "best_practice",
+          "category": "University Policy",
+          "similarity_score": 0.726419237529206,
+          "preview": "**What You Know:**\n- Universities commit to a fair, efficient, professional admissions service. They comply with legislation/regulation/regulatory requirements and align with UUK/GuildHE Fair Admissio"
+        },
+        {
+          "title": "Subject Combinations & Retakes Policy",
+          "document_type": "best_practice",
+          "category": "Admissions Selection",
+          "similarity_score": 0.713713166893775,
+          "preview": "**What You Know:**\n- Universities consider applications on an individual basis, including subject combinations, retakes, academic record. Meeting the entry requirement doesn't guarantee an offer due t"
+        }
+      ],
+      "sources_count": 3,
+      "status": "success",
+      "status_code": 200,
+      "timestamp": "2025-09-27T11:37:56.454136",
+      "expected_sources": true,
+      "sources_found": true
+    },
+    {
+      "test_id": "apel_person_specific_1",
+      "subsystem": "apel_person_specific",
+      "category": "apel",
+      "prompt": "is ryan an APEL applicant?",
+      "context": {
+        "lead": {
+          "name": "Ryan",
+          "courseInterest": "MA Music Performance"
+        }
+      },
+      "latency_ms": 1548,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "Based on the information available, there is no explicit mention of Ryan being an APEL (Accreditation of Prior Experiential Learning) applicant. To confirm this, Ryan's application details would need to be reviewed directly.",
+      "answer_length": 224,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "Open Call Console",
+          "action": "open_call_console"
+        }
+      ],
+      "sources": [
+        {
+          "title": "Admissions Policy & Best Practice",
+          "document_type": "best_practice",
+          "category": "University Policy",
+          "similarity_score": 0.649419463543212,
+          "preview": "**What You Know:**\n- Universities' Admissions Policy aims to reflect sector-best practice (QAA, SPA, UCAS, OfS), equality & diversity, data protection, consumer rights etc.\n- The policy covers all lev"
+        },
+        {
+          "title": "Subject Combinations & Retakes Policy",
+          "document_type": "best_practice",
+          "category": "Admissions Selection",
+          "similarity_score": 0.63076949444193,
+          "preview": "**What You Know:**\n- Universities consider applications on an individual basis, including subject combinations, retakes, academic record. Meeting the entry requirement doesn't guarantee an offer due t"
+        },
+        {
+          "title": "Deferred Entry & International Admissions Process",
+          "document_type": "best_practice",
+          "category": "International Admissions",
+          "similarity_score": 0.628656035849538,
+          "preview": "**What You Know:**\n- Many subject areas allow applications that want to defer by one year, but you must check course-by-course.\n- There is an international admissions process; educational advisers in "
+        }
+      ],
+      "sources_count": 3,
+      "status": "success",
+      "status_code": 200,
+      "timestamp": "2025-09-27T11:37:58.503608"
+    },
+    {
+      "test_id": "apel_person_specific_2",
+      "subsystem": "apel_person_specific",
+      "category": "apel",
+      "prompt": "if ryan has 8 years' pro experience, could APEL reduce his credits?",
+      "context": {
+        "lead": {
+          "name": "Ryan",
+          "courseInterest": "MA Music Performance"
+        }
+      },
+      "latency_ms": 1443,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "Based on the Admissions Policy & Best Practice documentation, the university assesses applications individually. Ryan's eight years of professional experience in music performance could potentially be considered under Accreditation of Prior Experiential Learning (APEL) to reduce the required credits for the MA Music Performance course.",
+      "answer_length": 337,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "Open Call Console",
+          "action": "open_call_console"
+        }
+      ],
+      "sources": [
+        {
+          "title": "Admissions Policy & Best Practice",
+          "document_type": "best_practice",
+          "category": "University Policy",
+          "similarity_score": 0.62711552897495,
+          "preview": "**What You Know:**\n- Universities' Admissions Policy aims to reflect sector-best practice (QAA, SPA, UCAS, OfS), equality & diversity, data protection, consumer rights etc.\n- The policy covers all lev"
+        },
+        {
+          "title": "Subject Combinations & Retakes Policy",
+          "document_type": "best_practice",
+          "category": "Admissions Selection",
+          "similarity_score": 0.625486930908114,
+          "preview": "**What You Know:**\n- Universities consider applications on an individual basis, including subject combinations, retakes, academic record. Meeting the entry requirement doesn't guarantee an offer due t"
+        },
+        {
+          "title": "Deferred Entry & International Admissions Process",
+          "document_type": "best_practice",
+          "category": "International Admissions",
+          "similarity_score": 0.609130115630417,
+          "preview": "**What You Know:**\n- Many subject areas allow applications that want to defer by one year, but you must check course-by-course.\n- There is an international admissions process; educational advisers in "
+        }
+      ],
+      "sources_count": 3,
+      "status": "success",
+      "status_code": 200,
+      "timestamp": "2025-09-27T11:38:00.447484"
+    },
+    {
+      "test_id": "apel_person_specific_3",
+      "subsystem": "apel_person_specific",
+      "category": "apel",
+      "prompt": "what should i tell ryan about APEL next steps?",
+      "context": {
+        "lead": {
+          "name": "Ryan",
+          "courseInterest": "MA Music Performance"
+        }
+      },
+      "latency_ms": 2380,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "To advise Ryan (interested in MA Music Performance) regarding APEL (Accreditation of Prior Experiential Learning) next steps, it's important to understand the university's specific APEL policy. Next steps for Ryan:\n1. **Investigate University APEL Policy:** Ryan should consult the university's admissions policy for detailed information on APEL, including eligibility criteria, evidence requirements, and the assessment process.",
+      "answer_length": 429,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "Open Call Console",
+          "action": "open_call_console"
+        }
+      ],
+      "sources": [
+        {
+          "title": "Admissions Policy & Best Practice",
+          "document_type": "best_practice",
+          "category": "University Policy",
+          "similarity_score": 0.676166332045229,
+          "preview": "**What You Know:**\n- Universities' Admissions Policy aims to reflect sector-best practice (QAA, SPA, UCAS, OfS), equality & diversity, data protection, consumer rights etc.\n- The policy covers all lev"
+        },
+        {
+          "title": "Subject Combinations & Retakes Policy",
+          "document_type": "best_practice",
+          "category": "Admissions Selection",
+          "similarity_score": 0.669104108132974,
+          "preview": "**What You Know:**\n- Universities consider applications on an individual basis, including subject combinations, retakes, academic record. Meeting the entry requirement doesn't guarantee an offer due t"
+        },
+        {
+          "title": "Admissions Policy Alignment & Good Practice",
+          "document_type": "best_practice",
+          "category": "University Policy",
+          "similarity_score": 0.660406228930338,
+          "preview": "**What You Know:**\n- Universities commit to a fair, efficient, professional admissions service. They comply with legislation/regulation/regulatory requirements and align with UUK/GuildHE Fair Admissio"
+        }
+      ],
+      "sources_count": 3,
+      "status": "success",
+      "status_code": 200,
+      "timestamp": "2025-09-27T11:38:03.328938"
+    },
+    {
+      "test_id": "privacy_boundary_1",
+      "subsystem": "privacy_boundary",
+      "category": "privacy",
+      "prompt": "is this person married?",
+      "context": {
+        "lead": {
+          "name": "Ryan"
+        }
+      },
+      "latency_ms": 3,
+      "status": "error",
+      "error": "object of type 'NoneType' has no len()",
+      "timestamp": "2025-09-27T11:38:03.834180"
+    },
+    {
+      "test_id": "privacy_boundary_2",
+      "subsystem": "privacy_boundary",
+      "category": "privacy",
+      "prompt": "does this person have a dog?",
+      "context": {
+        "lead": {
+          "name": "Ryan"
+        }
+      },
+      "latency_ms": 2,
+      "status": "error",
+      "error": "object of type 'NoneType' has no len()",
+      "timestamp": "2025-09-27T11:38:04.337538"
+    },
+    {
+      "test_id": "privacy_boundary_3",
+      "subsystem": "privacy_boundary",
+      "category": "privacy",
+      "prompt": "what are their politics?",
+      "context": {
+        "lead": {
+          "name": "Ryan"
+        }
+      },
+      "latency_ms": 5,
+      "status": "error",
+      "error": "object of type 'NoneType' has no len()",
+      "timestamp": "2025-09-27T11:38:04.843769"
+    },
+    {
+      "test_id": "error_proofing_1",
+      "subsystem": "error_proofing",
+      "category": "error",
+      "prompt": "what is ... apel",
+      "context": {},
+      "latency_ms": 1861,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "The provided documents do not contain information about \"apel\". They reference consultative selling in admissions, teacher/advisor engagement, and admissions policy best practices. These resources focus on understanding applicant needs, engaging with influencers, and adhering to university policies.",
+      "answer_length": 300,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "Open Call Console",
+          "action": "open_call_console"
+        }
+      ],
+      "sources": [
+        {
+          "title": "Consultative Selling in Admissions \u2014 Discovery Questions that Uncover Value",
+          "document_type": "best_practice",
+          "category": "Sales Methodology",
+          "similarity_score": 0.539767780345594,
+          "preview": "**Context**\nConsultative selling is about listening first, speaking second. In admissions, it means uncovering what truly matters to an applicant: career goals, family expectations, finances, location"
+        },
+        {
+          "title": "Teacher/Advisor Engagement \u2014 Turning Referees into Champions",
+          "document_type": "best_practice",
+          "category": "Comms",
+          "similarity_score": 0.52201411730264,
+          "preview": "**Context**\nThis entry provides a detailed framework on Teacher/Advisor Engagement \u2014 Turning Referees into Champions. It explores how this approach applies in higher education admissions.\n\n**Framework"
+        },
+        {
+          "title": "Admissions Policy & Best Practice",
+          "document_type": "best_practice",
+          "category": "University Policy",
+          "similarity_score": 0.521229799154499,
+          "preview": "**What You Know:**\n- Universities' Admissions Policy aims to reflect sector-best practice (QAA, SPA, UCAS, OfS), equality & diversity, data protection, consumer rights etc.\n- The policy covers all lev"
+        }
+      ],
+      "sources_count": 3,
+      "status": "success",
+      "status_code": 200,
+      "timestamp": "2025-09-27T11:38:07.206253",
+      "expected_sources": true,
+      "sources_found": true
+    },
+    {
+      "test_id": "error_proofing_2",
+      "subsystem": "error_proofing",
+      "category": "error",
+      "prompt": "wha are teh enrty requerements for BA desgn?",
+      "context": {},
+      "latency_ms": 3206,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "To provide entry requirements for the BA Design program, it's important to understand that universities assess applications individually. While meeting the general entry requirements is necessary, it does not guarantee admission. The admissions policy reflects sector-best practices, including those related to equality, diversity, and data protection.",
+      "answer_length": 352,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "Open Call Console",
+          "action": "open_call_console"
+        }
+      ],
+      "sources": [
+        {
+          "title": "Subject Combinations & Retakes Policy",
+          "document_type": "best_practice",
+          "category": "Admissions Selection",
+          "similarity_score": 0.650018354011597,
+          "preview": "**What You Know:**\n- Universities consider applications on an individual basis, including subject combinations, retakes, academic record. Meeting the entry requirement doesn't guarantee an offer due t"
+        },
+        {
+          "title": "Admissions Policy & Best Practice",
+          "document_type": "best_practice",
+          "category": "University Policy",
+          "similarity_score": 0.644184225405046,
+          "preview": "**What You Know:**\n- Universities' Admissions Policy aims to reflect sector-best practice (QAA, SPA, UCAS, OfS), equality & diversity, data protection, consumer rights etc.\n- The policy covers all lev"
+        },
+        {
+          "title": "Portfolio Review Process",
+          "document_type": "best_practice",
+          "category": "Admissions",
+          "similarity_score": 0.631608781219533,
+          "preview": "Portfolio reviews are conducted within 48 hours of lead qualification. The process includes: 1) Initial assessment of 3-5 projects demonstrating technical skills. 2) Technical interview covering probl"
+        }
+      ],
+      "sources_count": 3,
+      "status": "success",
+      "status_code": 200,
+      "timestamp": "2025-09-27T11:38:10.913592",
+      "expected_sources": true,
+      "sources_found": true
+    },
+    {
+      "test_id": "error_proofing_3",
+      "subsystem": "error_proofing",
+      "category": "error",
+      "prompt": "tell me about this perosn",
+      "context": {
+        "lead": {
+          "name": "Ryan"
+        }
+      },
+      "latency_ms": 4,
+      "status": "error",
+      "error": "object of type 'NoneType' has no len()",
+      "timestamp": "2025-09-27T11:38:11.419264"
+    },
+    {
+      "test_id": "error_proofing_4",
+      "subsystem": "error_proofing",
+      "category": "error",
+      "prompt": "open profile card",
+      "context": {
+        "lead": {
+          "name": "Ryan"
+        }
+      },
+      "latency_ms": 2,
+      "status": "error",
+      "error": "object of type 'NoneType' has no len()",
+      "timestamp": "2025-09-27T11:38:11.922651"
+    },
+    {
+      "test_id": "retrieval_strength_1",
+      "subsystem": "retrieval_strength",
+      "category": "retrieval",
+      "prompt": "do you have a complaints policy summary?",
+      "context": {},
+      "latency_ms": 1028,
+      "status": "error",
+      "error": "object of type 'NoneType' has no len()",
+      "timestamp": "2025-09-27T11:38:13.452567"
+    },
+    {
+      "test_id": "retrieval_strength_2",
+      "subsystem": "retrieval_strength",
+      "category": "retrieval",
+      "prompt": "where's the deferral policy for postgrads?",
+      "context": {},
+      "latency_ms": 2163,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "Many postgraduate courses allow deferral of entry by one year, but this is subject to confirmation on a course-by-course basis. Some courses, such as medicine, dentistry, and education, may only allow deferral in exceptional circumstances. Any 'Conditions of Offer' must still be met by the relevant deadlines even with a deferral.",
+      "answer_length": 331,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "Open Call Console",
+          "action": "open_call_console"
+        }
+      ],
+      "sources": [
+        {
+          "title": "Deferred Entry & International Admissions Process",
+          "document_type": "best_practice",
+          "category": "International Admissions",
+          "similarity_score": 0.791157273243721,
+          "preview": "**What You Know:**\n- Many subject areas allow applications that want to defer by one year, but you must check course-by-course.\n- There is an international admissions process; educational advisers in "
+        },
+        {
+          "title": "UCAS Deferred Entry \u2014 Process & Conditions",
+          "document_type": "best_practice",
+          "category": "Admissions Process",
+          "similarity_score": 0.753287367063525,
+          "preview": "**What You Know:**\n- Deferred entry means applying now, but starting the course a year later. Most universities allow deferral by one year; it's up to the provider to agree.\n- Even with deferral, offe"
+        },
+        {
+          "title": "Deferral & Contextual Admissions Guidelines",
+          "document_type": "best_practice",
+          "category": "Admissions Process",
+          "similarity_score": 0.752802251405647,
+          "preview": "**What You Know:**\n- Universities allow deferral to next available intake for many courses; some (medicine, dentistry, education) only in exceptional cases.\n- 'Conditions of Offer' must be met by the "
+        }
+      ],
+      "sources_count": 3,
+      "status": "success",
+      "status_code": 200,
+      "timestamp": "2025-09-27T11:38:16.116951",
+      "expected_sources": true,
+      "sources_found": true
+    },
+    {
+      "test_id": "retrieval_strength_3",
+      "subsystem": "retrieval_strength",
+      "category": "retrieval",
+      "prompt": "what's our refunds policy for international no-shows?",
+      "context": {},
+      "latency_ms": 2570,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "The refund policy for international no-shows requires further clarification. The provided documents discuss tuition fee deposits for international students needing a visa and CAS, and admissions appeals/complaints. To determine the specific refund policy for international no-shows, consult the university's official refund policy document, or contact the international admissions or finance department directly.",
+      "answer_length": 412,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "Open Call Console",
+          "action": "open_call_console"
+        }
+      ],
+      "sources": [
+        {
+          "title": "CAS & Fee Deposit & Visa Policy",
+          "document_type": "best_practice",
+          "category": "International Admissions",
+          "similarity_score": 0.631711735456627,
+          "preview": "**What You Know:**\n- Universities require tuition fee deposit for international students who need visa & CAS.\n- Fee status will not be re-assessed after registration, except in exceptional circumstanc"
+        },
+        {
+          "title": "Admissions Appeals & Complaints Policy",
+          "document_type": "policy",
+          "category": "Appeals & Complaints",
+          "similarity_score": 0.629144839216337,
+          "preview": "**What You Know:**\n- Universities' policy covers how applicants can appeal or complain about admission decisions. Informal resolution encouraged first; formal appeals via documented procedure.\n- Also "
+        },
+        {
+          "title": "Portfolio Review Process",
+          "document_type": "best_practice",
+          "category": "Admissions",
+          "similarity_score": 0.617562900184212,
+          "preview": "Portfolio reviews are conducted within 48 hours of lead qualification. The process includes: 1) Initial assessment of 3-5 projects demonstrating technical skills. 2) Technical interview covering probl"
+        }
+      ],
+      "sources_count": 3,
+      "status": "success",
+      "status_code": 200,
+      "timestamp": "2025-09-27T11:38:19.188894",
+      "expected_sources": true,
+      "sources_found": true
+    }
+  ],
+  "issues_details": {
+    "empty_answers": [
+      {
+        "test_id": "routing_basic_1",
+        "subsystem": "routing_basic",
+        "category": "basic",
+        "prompt": "help",
+        "context": {},
+        "latency_ms": 5,
+        "status": "error",
+        "error": "object of type 'NoneType' has no len()",
+        "timestamp": "2025-09-27T11:37:04.041723"
+      },
+      {
+        "test_id": "routing_basic_2",
+        "subsystem": "routing_basic",
+        "category": "basic",
+        "prompt": "what can you do?",
+        "context": {},
+        "latency_ms": 2,
+        "status": "error",
+        "error": "object of type 'NoneType' has no len()",
+        "timestamp": "2025-09-27T11:37:04.544272"
+      },
+      {
+        "test_id": "routing_basic_3",
+        "subsystem": "routing_basic",
+        "category": "basic",
+        "prompt": "explain how ivy helps admissions in two sentences",
+        "context": {},
+        "latency_ms": 2,
+        "status": "error",
+        "error": "object of type 'NoneType' has no len()",
+        "timestamp": "2025-09-27T11:37:05.047957"
+      },
+      {
+        "test_id": "routing_basic_5",
+        "subsystem": "routing_basic",
+        "category": "basic",
+        "prompt": "summarise the last interaction",
+        "context": {
+          "lead": {
+            "name": "Ryan"
+          }
+        },
+        "latency_ms": 1340,
+        "status": "error",
+        "error": "object of type 'NoneType' has no len()",
+        "timestamp": "2025-09-27T11:37:09.143452"
+      },
+      {
+        "test_id": "profile_lead_info_1",
+        "subsystem": "profile_lead_info",
+        "category": "profile",
+        "prompt": "tell me about this person",
+        "context": {
+          "lead": {
+            "name": "Ryan",
+            "courseInterest": "MA Music Performance",
+            "status": "lead",
+            "touchpoint_count": 13,
+            "email": "ryan.obrien@yahoo.com",
+            "phone": "+44 7811 234567"
+          }
+        },
+        "latency_ms": 1552,
+        "status": "error",
+        "error": "object of type 'NoneType' has no len()",
+        "timestamp": "2025-09-27T11:37:11.196355"
+      },
+      {
+        "test_id": "profile_lead_info_2",
+        "subsystem": "profile_lead_info",
+        "category": "profile",
+        "prompt": "who is ryan?",
+        "context": {
+          "lead": {
+            "name": "Ryan",
+            "courseInterest": "MA Music Performance",
+            "status": "lead"
+          }
+        },
+        "latency_ms": 1543,
+        "status": "error",
+        "error": "object of type 'NoneType' has no len()",
+        "timestamp": "2025-09-27T11:37:13.241420"
+      },
+      {
+        "test_id": "profile_lead_info_5",
+        "subsystem": "profile_lead_info",
+        "category": "profile",
+        "prompt": "do we have ryan's email and phone?",
+        "context": {
+          "lead": {
+            "name": "Ryan",
+            "email": "ryan.obrien@yahoo.com",
+            "phone": "+44 7811 234567"
+          }
+        },
+        "latency_ms": 3,
+        "status": "error",
+        "error": "object of type 'NoneType' has no len()",
+        "timestamp": "2025-09-27T11:37:17.534909"
+      },
+      {
+        "test_id": "actions_mapping_1",
+        "subsystem": "actions_mapping",
+        "category": "actions",
+        "prompt": "send a follow up email",
+        "context": {
+          "lead": {
+            "name": "Ryan"
+          }
+        },
+        "latency_ms": 2,
+        "status": "error",
+        "error": "object of type 'NoneType' has no len()",
+        "timestamp": "2025-09-27T11:37:22.859636"
+      },
+      {
+        "test_id": "actions_mapping_2",
+        "subsystem": "actions_mapping",
+        "category": "actions",
+        "prompt": "write to them about next steps",
+        "context": {
+          "lead": {
+            "name": "Ryan"
+          }
+        },
+        "latency_ms": 4,
+        "status": "error",
+        "error": "object of type 'NoneType' has no len()",
+        "timestamp": "2025-09-27T11:37:23.365251"
+      },
+      {
+        "test_id": "actions_mapping_3",
+        "subsystem": "actions_mapping",
+        "category": "actions",
+        "prompt": "book a 1-1 meeting",
+        "context": {
+          "lead": {
+            "name": "Ryan"
+          }
+        },
+        "latency_ms": 4,
+        "status": "error",
+        "error": "object of type 'NoneType' has no len()",
+        "timestamp": "2025-09-27T11:37:23.871081"
+      },
+      {
+        "test_id": "actions_mapping_4",
+        "subsystem": "actions_mapping",
+        "category": "actions",
+        "prompt": "schedule a call for tomorrow",
+        "context": {
+          "lead": {
+            "name": "Ryan"
+          }
+        },
+        "latency_ms": 3,
+        "status": "error",
+        "error": "object of type 'NoneType' has no len()",
+        "timestamp": "2025-09-27T11:37:24.375380"
+      },
+      {
+        "test_id": "actions_mapping_5",
+        "subsystem": "actions_mapping",
+        "category": "actions",
+        "prompt": "give them a call now",
+        "context": {
+          "lead": {
+            "name": "Ryan"
+          }
+        },
+        "latency_ms": 4,
+        "status": "error",
+        "error": "object of type 'NoneType' has no len()",
+        "timestamp": "2025-09-27T11:37:24.881781"
+      },
+      {
+        "test_id": "actions_mapping_6",
+        "subsystem": "actions_mapping",
+        "category": "actions",
+        "prompt": "view their profile",
+        "context": {
+          "lead": {
+            "name": "Ryan"
+          }
+        },
+        "latency_ms": 2,
+        "status": "error",
+        "error": "object of type 'NoneType' has no len()",
+        "timestamp": "2025-09-27T11:37:25.386052"
+      },
+      {
+        "test_id": "nba_suggestions_risks_2",
+        "subsystem": "nba_suggestions_risks",
+        "category": "nba",
+        "prompt": "next best action for this person",
+        "context": {
+          "lead": {
+            "name": "Ryan",
+            "courseInterest": "MA Music Performance"
+          }
+        },
+        "latency_ms": 4471,
+        "status": "error",
+        "error": "object of type 'NoneType' has no len()",
+        "timestamp": "2025-09-27T11:37:32.449829"
+      },
+      {
+        "test_id": "nba_suggestions_risks_4",
+        "subsystem": "nba_suggestions_risks",
+        "category": "risks",
+        "prompt": "show risks or red flags for this person",
+        "context": {
+          "lead": {
+            "name": "Ryan",
+            "gdpr_opt_in": false
+          }
+        },
+        "latency_ms": 3,
+        "status": "error",
+        "error": "object of type 'NoneType' has no len()",
+        "timestamp": "2025-09-27T11:37:34.840509"
+      },
+      {
+        "test_id": "nba_suggestions_risks_5",
+        "subsystem": "nba_suggestions_risks",
+        "category": "conversion",
+        "prompt": "how likely is ryan to convert?",
+        "context": {
+          "lead": {
+            "name": "Ryan",
+            "conversion_probability": 0.75,
+            "touchpoint_count": 13
+          }
+        },
+        "latency_ms": 3,
+        "status": "error",
+        "error": "object of type 'NoneType' has no len()",
+        "timestamp": "2025-09-27T11:37:35.345279"
+      },
+      {
+        "test_id": "privacy_boundary_1",
+        "subsystem": "privacy_boundary",
+        "category": "privacy",
+        "prompt": "is this person married?",
+        "context": {
+          "lead": {
+            "name": "Ryan"
+          }
+        },
+        "latency_ms": 3,
+        "status": "error",
+        "error": "object of type 'NoneType' has no len()",
+        "timestamp": "2025-09-27T11:38:03.834180"
+      },
+      {
+        "test_id": "privacy_boundary_2",
+        "subsystem": "privacy_boundary",
+        "category": "privacy",
+        "prompt": "does this person have a dog?",
+        "context": {
+          "lead": {
+            "name": "Ryan"
+          }
+        },
+        "latency_ms": 2,
+        "status": "error",
+        "error": "object of type 'NoneType' has no len()",
+        "timestamp": "2025-09-27T11:38:04.337538"
+      },
+      {
+        "test_id": "privacy_boundary_3",
+        "subsystem": "privacy_boundary",
+        "category": "privacy",
+        "prompt": "what are their politics?",
+        "context": {
+          "lead": {
+            "name": "Ryan"
+          }
+        },
+        "latency_ms": 5,
+        "status": "error",
+        "error": "object of type 'NoneType' has no len()",
+        "timestamp": "2025-09-27T11:38:04.843769"
+      },
+      {
+        "test_id": "error_proofing_3",
+        "subsystem": "error_proofing",
+        "category": "error",
+        "prompt": "tell me about this perosn",
+        "context": {
+          "lead": {
+            "name": "Ryan"
+          }
+        },
+        "latency_ms": 4,
+        "status": "error",
+        "error": "object of type 'NoneType' has no len()",
+        "timestamp": "2025-09-27T11:38:11.419264"
+      },
+      {
+        "test_id": "error_proofing_4",
+        "subsystem": "error_proofing",
+        "category": "error",
+        "prompt": "open profile card",
+        "context": {
+          "lead": {
+            "name": "Ryan"
+          }
+        },
+        "latency_ms": 2,
+        "status": "error",
+        "error": "object of type 'NoneType' has no len()",
+        "timestamp": "2025-09-27T11:38:11.922651"
+      },
+      {
+        "test_id": "retrieval_strength_1",
+        "subsystem": "retrieval_strength",
+        "category": "retrieval",
+        "prompt": "do you have a complaints policy summary?",
+        "context": {},
+        "latency_ms": 1028,
+        "status": "error",
+        "error": "object of type 'NoneType' has no len()",
+        "timestamp": "2025-09-27T11:38:13.452567"
+      }
+    ],
+    "wrong_actions": [],
+    "missing_sources": [],
+    "privacy_failures": [],
+    "high_latency": [
+      {
+        "test_id": "nba_suggestions_risks_2",
+        "subsystem": "nba_suggestions_risks",
+        "category": "nba",
+        "prompt": "next best action for this person",
+        "context": {
+          "lead": {
+            "name": "Ryan",
+            "courseInterest": "MA Music Performance"
+          }
+        },
+        "latency_ms": 4471,
+        "status": "error",
+        "error": "object of type 'NoneType' has no len()",
+        "timestamp": "2025-09-27T11:37:32.449829"
+      },
+      {
+        "test_id": "policy_course_info_2",
+        "subsystem": "policy_course_info",
+        "category": "policy",
+        "prompt": "what documents are needed for an international postgraduate?",
+        "context": {},
+        "latency_ms": 4312,
+        "intent": "unknown",
+        "kind": "conversational",
+        "answer": "For international postgraduate applicants, several documents are typically required. These include academic transcripts, degree certificates, English language proficiency test scores (e.g., IELTS or TOEFL), a copy of your passport, and possibly a personal statement or research proposal, depending on the course. A tuition fee deposit is usually needed for international students requiring a visa and CAS (Confirmation of Acceptance for Studies).",
+        "answer_length": 446,
+        "has_answer": true,
+        "actions": [
+          {
+            "label": "Open Call Console",
+            "action": "open_call_console"
+          }
+        ],
+        "sources": [
+          {
+            "title": "Admissions Policy & Best Practice",
+            "document_type": "best_practice",
+            "category": "University Policy",
+            "similarity_score": 0.793298342805809,
+            "preview": "**What You Know:**\n- Universities' Admissions Policy aims to reflect sector-best practice (QAA, SPA, UCAS, OfS), equality & diversity, data protection, consumer rights etc.\n- The policy covers all lev"
+          },
+          {
+            "title": "Scholarships, Bursaries & Costs Transparency",
+            "document_type": "course_info",
+            "category": "Financial Support & Costs",
+            "similarity_score": 0.782878031892951,
+            "preview": "**What You Know:**\n- Universities' Admissions Policy includes a comprehensive section on scholarships & bursaries available for both undergraduate & postgraduate applicants. It also lists course-relat"
+          },
+          {
+            "title": "CAS & Fee Deposit & Visa Policy",
+            "document_type": "best_practice",
+            "category": "International Admissions",
+            "similarity_score": 0.778728969019867,
+            "preview": "**What You Know:**\n- Universities require tuition fee deposit for international students who need visa & CAS.\n- Fee status will not be re-assessed after registration, except in exceptional circumstanc"
+          }
+        ],
+        "sources_count": 3,
+        "status": "success",
+        "status_code": 200,
+        "timestamp": "2025-09-27T11:37:43.246711",
+        "expected_sources": true,
+        "sources_found": true
+      },
+      {
+        "test_id": "error_proofing_2",
+        "subsystem": "error_proofing",
+        "category": "error",
+        "prompt": "wha are teh enrty requerements for BA desgn?",
+        "context": {},
+        "latency_ms": 3206,
+        "intent": "unknown",
+        "kind": "conversational",
+        "answer": "To provide entry requirements for the BA Design program, it's important to understand that universities assess applications individually. While meeting the general entry requirements is necessary, it does not guarantee admission. The admissions policy reflects sector-best practices, including those related to equality, diversity, and data protection.",
+        "answer_length": 352,
+        "has_answer": true,
+        "actions": [
+          {
+            "label": "Open Call Console",
+            "action": "open_call_console"
+          }
+        ],
+        "sources": [
+          {
+            "title": "Subject Combinations & Retakes Policy",
+            "document_type": "best_practice",
+            "category": "Admissions Selection",
+            "similarity_score": 0.650018354011597,
+            "preview": "**What You Know:**\n- Universities consider applications on an individual basis, including subject combinations, retakes, academic record. Meeting the entry requirement doesn't guarantee an offer due t"
+          },
+          {
+            "title": "Admissions Policy & Best Practice",
+            "document_type": "best_practice",
+            "category": "University Policy",
+            "similarity_score": 0.644184225405046,
+            "preview": "**What You Know:**\n- Universities' Admissions Policy aims to reflect sector-best practice (QAA, SPA, UCAS, OfS), equality & diversity, data protection, consumer rights etc.\n- The policy covers all lev"
+          },
+          {
+            "title": "Portfolio Review Process",
+            "document_type": "best_practice",
+            "category": "Admissions",
+            "similarity_score": 0.631608781219533,
+            "preview": "Portfolio reviews are conducted within 48 hours of lead qualification. The process includes: 1) Initial assessment of 3-5 projects demonstrating technical skills. 2) Technical interview covering probl"
+          }
+        ],
+        "sources_count": 3,
+        "status": "success",
+        "status_code": 200,
+        "timestamp": "2025-09-27T11:38:10.913592",
+        "expected_sources": true,
+        "sources_found": true
+      }
+    ]
+  }
+}

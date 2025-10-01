@@ -89,10 +89,22 @@ export const InlineIvyInput: React.FC<Props> = ({
   const [isResizing, setIsResizing] = React.useState(false);
   const [showSuggestionsModal, setShowSuggestionsModal] = React.useState(false);
   const [suggestionsData, setSuggestionsData] = React.useState<any>(null);
+  const chatScrollRef = React.useRef<HTMLDivElement>(null);
   const list = React.useMemo(() => filterCommands(commands, q, context), [commands, q, context]);
 
+  // Auto-scroll chat to bottom when messages change
+  React.useEffect(() => {
+    if (chatScrollRef.current) {
+      requestAnimationFrame(() => {
+        if (chatScrollRef.current) {
+          chatScrollRef.current.scrollTop = chatScrollRef.current.scrollHeight;
+        }
+      });
+    }
+  }, [chatMessages]);
+
   // Debounced RAG query
-  const ragQueryTimeoutRef = React.useRef<number | undefined>(undefined);
+  const ragQueryTimeoutRef = React.useRef<NodeJS.Timeout | undefined>(undefined);
   
   // Resize handler for chat area
   const handleMouseDown = React.useCallback((e: React.MouseEvent) => {
@@ -243,7 +255,7 @@ export const InlineIvyInput: React.FC<Props> = ({
     
     setIsQuerying(true);
     try {
-      // Build router context
+      // Build router context with ML triage data
       const routerContext = {
         lead: {
           id: context.personData.id || 0,
@@ -263,8 +275,13 @@ export const InlineIvyInput: React.FC<Props> = ({
           last_engagement_date: context.personData.last_engagement_date,
           touchpoint_count: context.personData.touchpoint_count || 0,
           gdpr_opt_in: context.personData.gdpr_opt_in || false,
-          consent_status: context.personData.consent_status
-        }
+          consent_status: context.personData.consent_status,
+          // Include ML forecast data from triage
+          aiInsights: context.triageData || context.personData.aiInsights
+        },
+        // Pass full ML forecast data at context level (this has the real conversion_probability!)
+        mlForecast: context.mlForecast,
+        triage: context.triageData
       };
       
       const response: IvyRouterV2Response = await aiRouterApi.routerV2({
@@ -279,17 +296,12 @@ export const InlineIvyInput: React.FC<Props> = ({
         const modal = (response as any).modal || { type: 'suggestions', payload: null };
         setSuggestionsData(modal.payload || null);
         setShowSuggestionsModal(true);
-        // Surface any actions as quick links under the assistant note
+        // Dispatch actions to open modals/consoles
         const acts: UIAction[] = (response as any).actions || [];
         if (acts.length > 0) {
-          const links = acts.map(a => `- [${a.label}](action:${a.action})`).join('\n');
-          const assistantMessage = {
-            id: (Date.now() + 2).toString(),
-            type: 'assistant' as const,
-            content: `Options:\n${links}`,
-            timestamp: new Date()
-          };
-          setChatMessages(prev => [...prev, assistantMessage]);
+          acts.forEach(action => {
+            dispatchUIAction(action, commands, context);
+          });
         }
         return;
       }
@@ -305,16 +317,14 @@ export const InlineIvyInput: React.FC<Props> = ({
       };
       const next: typeof chatMessages = [assistantMessage];
 
+      // Dispatch actions to open modals/consoles
       const acts: UIAction[] = (conv.actions || []) as UIAction[];
       if (acts.length > 0) {
-        const links = acts.map(a => `- [${a.label}](action:${a.action})`).join('\n');
-        next.push({
-          id: (Date.now() + 2).toString(),
-          type: 'assistant' as const,
-          content: `Actions:\n${links}`,
-          timestamp: new Date()
+        acts.forEach(action => {
+          dispatchUIAction(action, commands, context);
         });
       }
+      
       setChatMessages(prev => [...prev, ...next]);
       setRagResponse(answer);
       
@@ -362,9 +372,14 @@ export const InlineIvyInput: React.FC<Props> = ({
       if (processedQuery.type === 'command' && processedQuery.command) {
         // Store detected field information for inline editing
         if (processedQuery.detectedField) {
+          console.log('🔍 DEBUG: InlineIvyInput - detectedField found:', processedQuery.detectedField);
+          console.log('🔍 DEBUG: InlineIvyInput - detectedValue:', processedQuery.detectedValue);
           setDetectedField(processedQuery.detectedField);
           setDetectedValue(processedQuery.detectedValue || null);
+          console.log('🔍 DEBUG: InlineIvyInput - calling onFieldDetected callback');
           onFieldDetected?.(processedQuery.detectedField, processedQuery.detectedValue);
+        } else {
+          console.log('🔍 DEBUG: InlineIvyInput - no detectedField in processedQuery');
         }
         
         // Execute direct command and close dropdown
@@ -826,6 +841,7 @@ export const InlineIvyInput: React.FC<Props> = ({
             <div className="text-xs font-medium text-muted-foreground mb-2">Conversation Log</div>
           </div>
           <div 
+            ref={chatScrollRef}
             className="overflow-y-auto px-3 pb-3" 
             style={{ height: `${chatHeight}px` }}
           >
@@ -845,6 +861,15 @@ export const InlineIvyInput: React.FC<Props> = ({
                   <div className="mt-1 prose prose-sm max-w-none">
                     <ReactMarkdown 
                       components={{
+                    // Better paragraph and list spacing
+                    p: ({ children }) => <p className="mb-3 leading-relaxed">{children}</p>,
+                    ul: ({ children }) => <ul className="list-disc list-outside ml-4 mb-3 space-y-1.5">{children}</ul>,
+                    ol: ({ children }) => <ol className="list-decimal list-outside ml-4 mb-3 space-y-1.5">{children}</ol>,
+                    li: ({ children }) => <li className="leading-relaxed pl-1">{children}</li>,
+                    h1: ({ children }) => <h1 className="text-lg font-bold mb-3 mt-4">{children}</h1>,
+                    h2: ({ children }) => <h2 className="text-base font-semibold mb-2 mt-3">{children}</h2>,
+                    h3: ({ children }) => <h3 className="text-sm font-medium mb-2 mt-2">{children}</h3>,
+                    blockquote: ({ children }) => <blockquote className="border-l-2 border-muted pl-3 my-2 italic">{children}</blockquote>,
                     a: ({ href, children, ...props }) => {
                       if (href === 'ai-analysis') {
                             return (

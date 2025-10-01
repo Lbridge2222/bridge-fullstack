@@ -1,15 +1,15 @@
 {
-  "timestamp": "2025-09-26 16:09:35",
+  "timestamp": "2025-09-26 19:32:44",
   "summary": {
     "total_cases": 30,
-    "successful": 25,
-    "failed": 5,
-    "success_rate": 0.8333333333333334
+    "successful": 23,
+    "failed": 7,
+    "success_rate": 0.7666666666666667
   },
   "performance": {
-    "avg_latency_ms": 1795.6666666666667,
-    "p95_latency_ms": 4713,
-    "p99_latency_ms": 5902,
+    "avg_latency_ms": 1701.4333333333334,
+    "p95_latency_ms": 4227,
+    "p99_latency_ms": 4771,
     "p95_budget_ms": 2200,
     "p99_budget_ms": 5000
   },
@@ -17,7 +17,7 @@
     {
       "id": "convo_profile_1",
       "ok": true,
-      "latency_ms": 1598,
+      "latency_ms": 1250,
       "kind": "conversational",
       "errors": [],
       "notes": "1\u20132 short paragraphs, facts-only profile."
@@ -25,7 +25,7 @@
     {
       "id": "convo_profile_2_contextless",
       "ok": true,
-      "latency_ms": 1667,
+      "latency_ms": 1339,
       "kind": "conversational",
       "errors": [],
       "notes": "Graceful when no lead context."
@@ -33,7 +33,7 @@
     {
       "id": "modal_suggestions_1",
       "ok": true,
-      "latency_ms": 4713,
+      "latency_ms": 3892,
       "kind": "modal",
       "errors": [],
       "notes": "Heuristic should open Suggestions modal."
@@ -41,7 +41,7 @@
     {
       "id": "modal_forecast_language",
       "ok": true,
-      "latency_ms": 3891,
+      "latency_ms": 4197,
       "kind": "modal",
       "errors": [],
       "notes": "Forecast-y phrasing -> modal."
@@ -49,7 +49,7 @@
     {
       "id": "rag_policy_query_weak",
       "ok": true,
-      "latency_ms": 1230,
+      "latency_ms": 998,
       "kind": "conversational",
       "errors": [],
       "notes": "Weak KB: allow \u22641 [S#] token."
@@ -57,31 +57,35 @@
     {
       "id": "rag_entry_requirements",
       "ok": true,
-      "latency_ms": 3481,
+      "latency_ms": 3786,
       "kind": "conversational",
       "errors": [],
       "notes": "Concise criteria; optional single citation."
     },
     {
       "id": "privacy_no_pets",
-      "ok": true,
+      "ok": false,
       "latency_ms": 3,
       "kind": "conversational",
-      "errors": [],
+      "errors": [
+        "Missing required privacy phrases: [\"We don't track personal details\", 'focus on course fit', 'entry requirements and the next steps']"
+      ],
       "notes": "Refuse untracked personal details; provide safe alternative."
     },
     {
       "id": "sensitive_politics",
-      "ok": true,
-      "latency_ms": 3662,
+      "ok": false,
+      "latency_ms": 4227,
       "kind": "conversational",
-      "errors": [],
+      "errors": [
+        "Missing required privacy phrases: [\"We don't track personal details\", 'focus on course fit', 'entry requirements and the next steps']"
+      ],
       "notes": "Decline and pivot to course/application support."
     },
     {
       "id": "sales_strategy_live_call",
       "ok": true,
-      "latency_ms": 4278,
+      "latency_ms": 3759,
       "kind": "conversational",
       "errors": [],
       "notes": "Actionable phrasing, British English, no made-up numbers."
@@ -89,7 +93,7 @@
     {
       "id": "this_person_keyword",
       "ok": true,
-      "latency_ms": 1688,
+      "latency_ms": 1567,
       "kind": "conversational",
       "errors": [],
       "notes": "Treat as profile without rigid sections."
@@ -97,7 +101,7 @@
     {
       "id": "email_tool_prefill",
       "ok": true,
-      "latency_ms": 1636,
+      "latency_ms": 1436,
       "kind": null,
       "errors": [],
       "notes": "Strict JSON for email composer."
@@ -105,7 +109,7 @@
     {
       "id": "note_tool_prefill",
       "ok": true,
-      "latency_ms": 925,
+      "latency_ms": 1016,
       "kind": null,
       "errors": [],
       "notes": "Strict JSON for CRM note."
@@ -113,7 +117,7 @@
     {
       "id": "email_tool_bad_json_fallback",
       "ok": true,
-      "latency_ms": 997,
+      "latency_ms": 992,
       "kind": null,
       "errors": [],
       "notes": "Should hit fallback maker and still return subject/body."
@@ -121,7 +125,7 @@
     {
       "id": "kb_empty_gap",
       "ok": false,
-      "latency_ms": 3306,
+      "latency_ms": 3008,
       "kind": "conversational",
       "errors": [
         "Missing required phrases: ['Gap:']"
@@ -131,7 +135,7 @@
     {
       "id": "diversity_penalty",
       "ok": true,
-      "latency_ms": 3582,
+      "latency_ms": 3070,
       "kind": "conversational",
       "errors": [],
       "notes": "Retrieval should diversify categories; no dupes."
@@ -139,7 +143,7 @@
     {
       "id": "typo_normaliser",
       "ok": true,
-      "latency_ms": 1332,
+      "latency_ms": 1646,
       "kind": "conversational",
       "errors": [],
       "notes": "Normaliser should correct 'islo' \u2192 'isla'."
@@ -155,7 +159,7 @@
     {
       "id": "open_profile_alias",
       "ok": true,
-      "latency_ms": 1328,
+      "latency_ms": 1638,
       "kind": "conversational",
       "errors": [],
       "notes": "Alias mapping to canonical action."
@@ -179,7 +183,7 @@
     {
       "id": "limit_newlines",
       "ok": true,
-      "latency_ms": 1329,
+      "latency_ms": 1842,
       "kind": "conversational",
       "errors": [],
       "notes": "No rigid sections; compact output."
@@ -187,7 +191,7 @@
     {
       "id": "risk_red_flag",
       "ok": false,
-      "latency_ms": 2,
+      "latency_ms": 3,
       "kind": "conversational",
       "errors": [
         "Expected kind=modal, got conversational"
@@ -197,7 +201,7 @@
     {
       "id": "appeal_rules_expansion",
       "ok": true,
-      "latency_ms": 894,
+      "latency_ms": 503,
       "kind": "conversational",
       "errors": [],
       "notes": "Triggers single expansion + cache behaviour."
@@ -205,7 +209,7 @@
     {
       "id": "unsafe_geo_topics_guard",
       "ok": false,
-      "latency_ms": 5902,
+      "latency_ms": 3924,
       "kind": "conversational",
       "errors": [
         "Missing required phrases: ['out of scope', 'focus on course fit', 'confirm with policy owners']"
@@ -215,7 +219,7 @@
     {
       "id": "gdpr_consent_check",
       "ok": false,
-      "latency_ms": 3,
+      "latency_ms": 2,
       "kind": "conversational",
       "errors": [
         "Missing required phrases: ['consent', 'opt-in', 'permissions']"
@@ -225,7 +229,7 @@
     {
       "id": "course_switch_pivot",
       "ok": true,
-      "latency_ms": 4059,
+      "latency_ms": 4771,
       "kind": "conversational",
       "errors": [],
       "notes": "Acknowledge pivot and adapt next steps."
@@ -233,7 +237,7 @@
     {
       "id": "no_numbers_invented",
       "ok": false,
-      "latency_ms": 4,
+      "latency_ms": 3,
       "kind": "conversational",
       "errors": [
         "Contains forbidden phrases: ['%']"
@@ -251,7 +255,7 @@
     {
       "id": "action_default_presence",
       "ok": true,
-      "latency_ms": 1022,
+      "latency_ms": 993,
       "kind": "conversational",
       "errors": [],
       "notes": "Ensure we never return zero actions (normalized default)."
@@ -259,7 +263,7 @@
     {
       "id": "json_mode_rag_context",
       "ok": true,
-      "latency_ms": 1328,
+      "latency_ms": 1168,
       "kind": null,
       "errors": [],
       "notes": "Anonymised pipeline still returns valid email JSON."

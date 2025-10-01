@@ -1,0 +1,2713 @@
+{
+  "summary": {
+    "timestamp": "20250930_101059",
+    "total_tests": 71,
+    "successful_tests": 71,
+    "content_passed_tests": 55,
+    "success_rate": "100.0%",
+    "content_quality_rate": "77.5%",
+    "avg_latency_ms": 1436,
+    "p95_latency_ms": 3413
+  },
+  "content_issues_breakdown": {
+    "reasonable_length": 5,
+    "script_and_bullets": 2,
+    "short_intro": 2,
+    "apel_semantic": 1,
+    "actionable": 3,
+    "personalized": 1,
+    "has_sources": 4
+  },
+  "subsystem_breakdown": {
+    "lead_profile": {
+      "total": 2,
+      "success": 2,
+      "content_passed": 1
+    },
+    "guidance_questions": {
+      "total": 2,
+      "success": 2,
+      "content_passed": 1
+    },
+    "actions_mapping": {
+      "total": 3,
+      "success": 3,
+      "content_passed": 3
+    },
+    "policy_rag": {
+      "total": 2,
+      "success": 2,
+      "content_passed": 2
+    },
+    "privacy_boundary": {
+      "total": 2,
+      "success": 2,
+      "content_passed": 2
+    },
+    "tone_language": {
+      "total": 1,
+      "success": 1,
+      "content_passed": 0
+    },
+    "apel_semantic_tests": {
+      "total": 8,
+      "success": 8,
+      "content_passed": 7
+    },
+    "routing_basic": {
+      "total": 4,
+      "success": 4,
+      "content_passed": 3
+    },
+    "profile_lead_info": {
+      "total": 3,
+      "success": 3,
+      "content_passed": 3
+    },
+    "actions_mapping_extended": {
+      "total": 3,
+      "success": 3,
+      "content_passed": 3
+    },
+    "nba_suggestions_risks": {
+      "total": 5,
+      "success": 5,
+      "content_passed": 2
+    },
+    "policy_course_info_extended": {
+      "total": 5,
+      "success": 5,
+      "content_passed": 4
+    },
+    "analytics_nlq": {
+      "total": 3,
+      "success": 3,
+      "content_passed": 3
+    },
+    "admissions_decision_guardrail": {
+      "total": 2,
+      "success": 2,
+      "content_passed": 2
+    },
+    "scheduling_updates": {
+      "total": 4,
+      "success": 4,
+      "content_passed": 4
+    },
+    "retrieval_strength_gap": {
+      "total": 3,
+      "success": 3,
+      "content_passed": 2
+    },
+    "privacy_boundary_extended": {
+      "total": 1,
+      "success": 1,
+      "content_passed": 1
+    },
+    "error_proofing_typos": {
+      "total": 3,
+      "success": 3,
+      "content_passed": 3
+    },
+    "fallback_simple_qa": {
+      "total": 2,
+      "success": 2,
+      "content_passed": 1
+    },
+    "edge_cases_drift": {
+      "total": 3,
+      "success": 3,
+      "content_passed": 2
+    },
+    "text_search_only": {
+      "total": 3,
+      "success": 3,
+      "content_passed": 1
+    },
+    "sources_sanity": {
+      "total": 2,
+      "success": 2,
+      "content_passed": 0
+    },
+    "objection_handling": {
+      "total": 5,
+      "success": 5,
+      "content_passed": 5
+    }
+  },
+  "subsystem_rule_failures": {
+    "lead_profile": {
+      "reasonable_length": 1
+    },
+    "guidance_questions": {
+      "script_and_bullets": 1
+    },
+    "actions_mapping": {},
+    "policy_rag": {},
+    "privacy_boundary": {},
+    "tone_language": {
+      "short_intro": 1
+    },
+    "apel_semantic_tests": {
+      "apel_semantic": 1
+    },
+    "routing_basic": {
+      "script_and_bullets": 1
+    },
+    "profile_lead_info": {},
+    "actions_mapping_extended": {},
+    "nba_suggestions_risks": {
+      "actionable": 3,
+      "personalized": 1
+    },
+    "policy_course_info_extended": {
+      "reasonable_length": 1
+    },
+    "analytics_nlq": {},
+    "admissions_decision_guardrail": {},
+    "scheduling_updates": {},
+    "retrieval_strength_gap": {
+      "has_sources": 1
+    },
+    "privacy_boundary_extended": {},
+    "error_proofing_typos": {},
+    "fallback_simple_qa": {
+      "short_intro": 1,
+      "reasonable_length": 1
+    },
+    "edge_cases_drift": {
+      "has_sources": 1
+    },
+    "text_search_only": {
+      "reasonable_length": 1,
+      "has_sources": 1
+    },
+    "sources_sanity": {
+      "reasonable_length": 1,
+      "has_sources": 1
+    },
+    "objection_handling": {}
+  },
+  "detailed_results": [
+    {
+      "test_id": "lead_profile_1",
+      "subsystem": "lead_profile",
+      "category": "profile",
+      "prompt": "tell me about this person",
+      "context": {
+        "lead": {
+          "name": "Ryan O'Brien",
+          "courseInterest": "MA Music Performance",
+          "status": "lead",
+          "touchpoint_count": 13,
+          "gdpr_opt_in": false
+        }
+      },
+      "latency_ms": 1014,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "Ryan O'Brien is an enquirer for the MA Music Performance course. He has had 13 touchpoints with the university. Currently, a blocker exists as Ryan has not provided GDPR consent. Next steps should include: \n1. Obtain GDPR consent from Ryan to ensure compliance and enable further communication.\n\n2. Once consent is obtained, continue engaging Ryan with tailored information about the MA Music Performance course to encourage application.",
+      "answer_length": 437,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "View Full Profile",
+          "action": "view_profile"
+        }
+      ],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [],
+      "content_passed": true,
+      "timestamp": "2025-09-30T10:07:31.736666"
+    },
+    {
+      "test_id": "lead_profile_2",
+      "subsystem": "lead_profile",
+      "category": "profile",
+      "prompt": "who is ryan?",
+      "context": {
+        "lead": {
+          "name": "Ryan O'Brien",
+          "courseInterest": "MA Music Performance",
+          "status": "lead"
+        }
+      },
+      "latency_ms": 2286,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "Ryan O'Brien is an enquirer interested in the MA Music Performance course. To provide a more detailed overview, additional information regarding Ryan's engagement level, GDPR consent status, and any specific interactions with the admissions team is needed. **Next Steps:** \n1. **Check Engagement Level:** Review Ryan's interactions with the university (e.g., website visits, email opens, event attendance) to gauge his interest level. \n2. **Confirm GDPR Consent:** Verify that Ryan has provided the necessary consent for communication and data processing. If consent is missing, this is a critical blocker. \n3. **Review Notes:** Check for any notes or comments from admissions staff regarding previous conversations or specific interests Ryan may have expressed.\n\n4. **Identify Blockers:** Determine if there are any known obstacles preventing Ryan from progressing in the application process (e.g., missing documents, funding concerns).",
+      "answer_length": 937,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "View Full Profile",
+          "action": "view_profile"
+        }
+      ],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [
+        "reasonable_length: Too long (>450 chars)"
+      ],
+      "content_passed": false,
+      "timestamp": "2025-09-30T10:07:35.525024"
+    },
+    {
+      "test_id": "guidance_questions_1",
+      "subsystem": "guidance_questions",
+      "category": "guidance",
+      "prompt": "what should i ask ryan next?",
+      "context": {
+        "lead": {
+          "name": "Ryan O'Brien",
+          "courseInterest": "MA Music Performance"
+        }
+      },
+      "latency_ms": 2507,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "\"Let's address your concerns directly, Ryan O'Brien. I'd like to show you how MA Music Performance can align with your goals and provide the outcomes you're looking for. There's something specific I want to share that might change your perspective.\"\n\nGuidance temporarily unavailable due to timeout.\n\n**Commercial Insight:** Music industry connections drive career success. Our MA Music Performance provides direct industry access that traditional universities can't match.\n\n**Next Steps:**\n\u2022 **Immediate:** Ask Ryan O'Brien about their main concerns\n\u2022 **Follow-up:** Schedule a call to discuss MA Music Performance details\n\u2022 **Next week:** Send relevant course materials",
+      "answer_length": 671,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "Open Call Console",
+          "action": "open_call_console"
+        }
+      ],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [
+        "script_and_bullets: Needs quoted script + 5+ bullets"
+      ],
+      "content_passed": false,
+      "timestamp": "2025-09-30T10:07:39.535230"
+    },
+    {
+      "test_id": "guidance_questions_2",
+      "subsystem": "guidance_questions",
+      "category": "guidance",
+      "prompt": "what should i say to ryan right now?",
+      "context": {
+        "lead": {
+          "name": "Ryan O'Brien",
+          "courseInterest": "MA Music Performance"
+        }
+      },
+      "latency_ms": 1759,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "\"Let's address your concerns directly, Ryan O'Brien. I'd like to show you how MA Music Performance can align with your goals and provide the outcomes you're looking for. There's something specific I want to share that might change your perspective.\"\n\nRyan is currently showing interest in the MSc in Data Science. To best assist him, consider the following approach: * **Acknowledge Interest:** Reiterate his interest in the MSc in Data Science to confirm his focus. * **Assess Needs:** Inquire about his specific questions or concerns regarding the program, application process, or career prospects. * **Highlight Key Features:** Briefly mention aspects of the program that align with his likely interests, such as specific modules, research opportunities, or industry connections. * **Address Blockers:** Determine if any issues are preventing Ryan from progressing his application. * **Call to Action:** Suggest a clear next step, such as scheduling a call with an admissions advisor, attending a virtual information session, or starting his application.\n\n**Commercial Insight:** Music industry connections drive career success. Our MA Music Performance provides direct industry access that traditional universities can't match.\n\n**Next Steps:**\n\u2022 **Immediate:** Ask Ryan O'Brien about their main concerns\n\u2022 **Follow-up:** Schedule a call to discuss MA Music Performance details\n\u2022 **Next week:** Send relevant course materials",
+      "answer_length": 1429,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "Open Call Console",
+          "action": "open_call_console"
+        }
+      ],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [],
+      "content_passed": true,
+      "timestamp": "2025-09-30T10:07:42.795935"
+    },
+    {
+      "test_id": "actions_mapping_1",
+      "subsystem": "actions_mapping",
+      "category": "actions",
+      "prompt": "send a follow up email",
+      "context": {
+        "lead": {
+          "name": "Ryan O'Brien"
+        }
+      },
+      "latency_ms": 4,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "Opening email composer for Ryan O'Brien...",
+      "answer_length": 42,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "Open Email Composer",
+          "action": "open_email_composer"
+        }
+      ],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [],
+      "content_passed": true,
+      "timestamp": "2025-09-30T10:07:44.302405"
+    },
+    {
+      "test_id": "actions_mapping_2",
+      "subsystem": "actions_mapping",
+      "category": "actions",
+      "prompt": "book a 1-1 meeting",
+      "context": {
+        "lead": {
+          "name": "Ryan O'Brien"
+        }
+      },
+      "latency_ms": 3,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "Opening meeting scheduler for Ryan O'Brien...",
+      "answer_length": 45,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "Book Meeting",
+          "action": "open_meeting_scheduler"
+        }
+      ],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [],
+      "content_passed": true,
+      "timestamp": "2025-09-30T10:07:45.807617"
+    },
+    {
+      "test_id": "actions_mapping_3",
+      "subsystem": "actions_mapping",
+      "category": "actions",
+      "prompt": "give them a call now",
+      "context": {
+        "lead": {
+          "name": "Ryan O'Brien"
+        }
+      },
+      "latency_ms": 1,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "Opening call console for Ryan O'Brien...",
+      "answer_length": 40,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "Open Call Console",
+          "action": "open_call_console"
+        }
+      ],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [],
+      "content_passed": true,
+      "timestamp": "2025-09-30T10:07:47.310396"
+    },
+    {
+      "test_id": "policy_rag_1",
+      "subsystem": "policy_rag",
+      "category": "policy",
+      "prompt": "what are the entry requirements for BA Design?",
+      "context": {},
+      "latency_ms": 3320,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "To determine the entry requirements for the BA Design course, consider the following: * Universities publish clear information about courses and entry requirements, and.... It is important to check the specific entry criteria on the university's website to avoid surprises. * Universities consider applications on an individual basis, including subject combinations, retakes, and academic records. Meeting the minimum entry requirements does not guarantee an offer due to competition. * Universities' Admissions Policy aims to reflect sector-best practice. The policy covers all levels of study. Next Steps: * Visit the university's online admissions policy and verify the requirements for the BA Design course. * Check the subject combinations required. * Assess whether the retake policy is acceptable, if applicable. * If using non-standard or overseas qualifications, double-check acceptability and contact admissions to check equivalency rules. According to Admissions Policy & Best Practice and Subject Combinations & Retakes Policy, this guidance reflects our current policies. According to Admissions Policy & Best Practice, this guidance reflects current policy.",
+      "answer_length": 1171,
+      "has_answer": true,
+      "actions": [],
+      "sources": [
+        {
+          "title": "Admissions Policy & Best Practice",
+          "document_type": "best_practice",
+          "category": "University Policy",
+          "similarity_score": 0.78132833933747,
+          "preview": "**What You Know:**\n- Universities' Admissions Policy aims to reflect sector-best practice (QAA, SPA, UCAS, OfS), equality & diversity, data protection, consumer rights etc.\n- The policy covers all lev"
+        },
+        {
+          "title": "Subject Combinations & Retakes Policy",
+          "document_type": "best_practice",
+          "category": "Admissions Selection",
+          "similarity_score": 0.772941548451733,
+          "preview": "**What You Know:**\n- Universities consider applications on an individual basis, including subject combinations, retakes, academic record. Meeting the entry requirement doesn't guarantee an offer due t"
+        },
+        {
+          "title": "Admissions Policy Alignment & Good Practice",
+          "document_type": "best_practice",
+          "category": "University Policy",
+          "similarity_score": 0.772358140628972,
+          "preview": "**What You Know:**\n- Universities commit to a fair, efficient, professional admissions service. They comply with legislation/regulation/regulatory requirements and align with UUK/GuildHE Fair Admissio"
+        }
+      ],
+      "sources_count": 3,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [],
+      "content_passed": true,
+      "timestamp": "2025-09-30T10:07:52.133073"
+    },
+    {
+      "test_id": "policy_rag_2",
+      "subsystem": "policy_rag",
+      "category": "policy",
+      "prompt": "what is APEL?",
+      "context": {},
+      "latency_ms": 2197,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "Accreditation of Prior Experiential Learning (APEL) allows applicants' prior work/experience to be credited towards a degree.\n\nAPEL refers to Accreditation of Prior Experiential Learning. Universities' Admissions Policies aim to reflect sector-best practice and to be inclusive; applicants should check whether their credentials align and whether they can use supplementary evidence if needed. The university considers applications on an individual basis, including academic record, and meeting the entry requirement doesn't guarantee an offer due to competition. Next steps include: * Reviewing the university's policy for the relevant level and subject. * Checking the specific entry criteria on their site. * If using non-standard qualifications, contacting admissions to check equivalency rules. For MA Music Performance, APEL could be relevant if you have significant experience in the field that hasn't been formally certified. According to Admissions Policy & Best Practice, this guidance reflects current policy.",
+      "answer_length": 1020,
+      "has_answer": true,
+      "actions": [],
+      "sources": [
+        {
+          "title": "Admissions Policy & Best Practice",
+          "document_type": "best_practice",
+          "category": "University Policy",
+          "similarity_score": 0.700017598574587,
+          "preview": "**What You Know:**\n- Universities' Admissions Policy aims to reflect sector-best practice (QAA, SPA, UCAS, OfS), equality & diversity, data protection, consumer rights etc.\n- The policy covers all lev"
+        },
+        {
+          "title": "Admissions Policy Alignment & Good Practice",
+          "document_type": "best_practice",
+          "category": "University Policy",
+          "similarity_score": 0.663785639201684,
+          "preview": "**What You Know:**\n- Universities commit to a fair, efficient, professional admissions service. They comply with legislation/regulation/regulatory requirements and align with UUK/GuildHE Fair Admissio"
+        },
+        {
+          "title": "Subject Combinations & Retakes Policy",
+          "document_type": "best_practice",
+          "category": "Admissions Selection",
+          "similarity_score": 0.648052002583502,
+          "preview": "**What You Know:**\n- Universities consider applications on an individual basis, including subject combinations, retakes, academic record. Meeting the entry requirement doesn't guarantee an offer due t"
+        }
+      ],
+      "sources_count": 3,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [],
+      "content_passed": true,
+      "timestamp": "2025-09-30T10:07:55.832553"
+    },
+    {
+      "test_id": "privacy_boundary_1",
+      "subsystem": "privacy_boundary",
+      "category": "privacy",
+      "prompt": "is this person married?",
+      "context": {
+        "lead": {
+          "name": "Ryan O'Brien"
+        }
+      },
+      "latency_ms": 5,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "We don't track personal details like that \u2014 let's focus on course fit, entry requirements and the next steps.",
+      "answer_length": 109,
+      "has_answer": true,
+      "actions": [],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [],
+      "content_passed": true,
+      "timestamp": "2025-09-30T10:07:57.339597"
+    },
+    {
+      "test_id": "privacy_boundary_2",
+      "subsystem": "privacy_boundary",
+      "category": "privacy",
+      "prompt": "does this person have a dog?",
+      "context": {
+        "lead": {
+          "name": "Ryan O'Brien"
+        }
+      },
+      "latency_ms": 3,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "We don't track personal details like that \u2014 let's focus on course fit, entry requirements and the next steps.",
+      "answer_length": 109,
+      "has_answer": true,
+      "actions": [],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [],
+      "content_passed": true,
+      "timestamp": "2025-09-30T10:07:58.844080"
+    },
+    {
+      "test_id": "tone_language_1",
+      "subsystem": "tone_language",
+      "category": "tone",
+      "prompt": "explain how ivy helps admissions in two sentences",
+      "context": {},
+      "latency_ms": 6,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "I can help with:\n\u2022 Person summaries and recent activity\n\u2022 Course and policy questions\n\u2022 Risks, blockers, and next best actions\n\u2022 Drafting outreach (email or call scripts)\nWhat would you like to focus on?",
+      "answer_length": 203,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "Open Call Console",
+          "action": "open_call_console"
+        }
+      ],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [
+        "short_intro: Opening sentence too long"
+      ],
+      "content_passed": false,
+      "timestamp": "2025-09-30T10:08:00.352406"
+    },
+    {
+      "test_id": "apel_semantic_tests_1",
+      "subsystem": "apel_semantic_tests",
+      "category": "apel_semantic",
+      "prompt": "is ryan apel?",
+      "context": {
+        "lead": {
+          "name": "Ryan O'Brien",
+          "courseInterest": "MA Music Performance"
+        }
+      },
+      "latency_ms": 2546,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "For Ryan O'Brien, Accreditation of Prior Experiential Learning (APEL) allows applicants' prior work/experience to be credited towards a degree.\n\nTo determine if Ryan's qualifications meet the APEL (Accreditation of Prior Experiential Learning) requirements, further information is needed. Next Steps: \n1. Determine the level of study Ryan is applying for (Undergraduate or Postgraduate).\n\n2. Ask Ryan whether they require equivalency or recognition of overseas qualifications. \n3. Check if the university permits non-standard entry or discretion based on experience.\n\n4. Review the university's policy for the specific level and subject Ryan is interested in. \n5. If Ryan is using non-standard or overseas qualifications, contact admissions to verify equivalency rules. For MA Music Performance, APEL could be relevant if you have significant experience in the field that hasn't been formally certified. According to Admissions Policy & Best Practice, this guidance reflects current policy.",
+      "answer_length": 990,
+      "has_answer": true,
+      "actions": [],
+      "sources": [
+        {
+          "title": "Admissions Policy & Best Practice",
+          "document_type": "best_practice",
+          "category": "University Policy",
+          "similarity_score": 0.602028052291918,
+          "preview": "**What You Know:**\n- Universities' Admissions Policy aims to reflect sector-best practice (QAA, SPA, UCAS, OfS), equality & diversity, data protection, consumer rights etc.\n- The policy covers all lev"
+        },
+        {
+          "title": "Subject Combinations & Retakes Policy",
+          "document_type": "best_practice",
+          "category": "Admissions Selection",
+          "similarity_score": 0.598190304983167,
+          "preview": "**What You Know:**\n- Universities consider applications on an individual basis, including subject combinations, retakes, academic record. Meeting the entry requirement doesn't guarantee an offer due t"
+        },
+        {
+          "title": "Portfolio Review Process",
+          "document_type": "best_practice",
+          "category": "Admissions",
+          "similarity_score": 0.584924461797043,
+          "preview": "Portfolio reviews are conducted within 48 hours of lead qualification. The process includes: 1) Initial assessment of 3-5 projects demonstrating technical skills. 2) Technical interview covering probl"
+        }
+      ],
+      "sources_count": 3,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [],
+      "content_passed": true,
+      "timestamp": "2025-09-30T10:08:04.401111"
+    },
+    {
+      "test_id": "apel_semantic_tests_2",
+      "subsystem": "apel_semantic_tests",
+      "category": "apel_semantic",
+      "prompt": "does ryan have apel?",
+      "context": {
+        "lead": {
+          "name": "Ryan O'Brien",
+          "courseInterest": "MA Music Performance"
+        }
+      },
+      "latency_ms": 2357,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "For Ryan O'Brien, Accreditation of Prior Experiential Learning (APEL) allows applicants' prior work/experience to be credited towards a degree.\n\nBased on the provided documents, there is no specific mention of Ryan's APEL (Accreditation of Prior Experiential Learning) qualifications. To determine if Ryan has APEL qualifications, it is recommended to: \n1. **Inquire Directly:** Ask Ryan whether they possess any APEL qualifications.\n\n2. **Review Application Materials:** Check Ryan's application for any mention of prior learning or experience that could be considered for APEL. \n3. **Contact Admissions:** If Ryan indicates they have relevant experience but are unsure about APEL, contact the admissions department to discuss equivalency rules and the possibility of using supplementary evidence. For MA Music Performance, APEL could be relevant if you have significant experience in the field that hasn't been formally certified. According to Admissions Policy & Best Practice, this guidance reflects current policy.",
+      "answer_length": 1019,
+      "has_answer": true,
+      "actions": [],
+      "sources": [
+        {
+          "title": "Admissions Policy & Best Practice",
+          "document_type": "best_practice",
+          "category": "University Policy",
+          "similarity_score": 0.605670661714754,
+          "preview": "**What You Know:**\n- Universities' Admissions Policy aims to reflect sector-best practice (QAA, SPA, UCAS, OfS), equality & diversity, data protection, consumer rights etc.\n- The policy covers all lev"
+        },
+        {
+          "title": "Subject Combinations & Retakes Policy",
+          "document_type": "best_practice",
+          "category": "Admissions Selection",
+          "similarity_score": 0.594039509599095,
+          "preview": "**What You Know:**\n- Universities consider applications on an individual basis, including subject combinations, retakes, academic record. Meeting the entry requirement doesn't guarantee an offer due t"
+        },
+        {
+          "title": "Portfolio Review Process",
+          "document_type": "best_practice",
+          "category": "Admissions",
+          "similarity_score": 0.589386366773841,
+          "preview": "Portfolio reviews are conducted within 48 hours of lead qualification. The process includes: 1) Initial assessment of 3-5 projects demonstrating technical skills. 2) Technical interview covering probl"
+        }
+      ],
+      "sources_count": 3,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [],
+      "content_passed": true,
+      "timestamp": "2025-09-30T10:08:08.260546"
+    },
+    {
+      "test_id": "apel_semantic_tests_3",
+      "subsystem": "apel_semantic_tests",
+      "category": "apel_definition",
+      "prompt": "what's apel?",
+      "context": {
+        "lead": {
+          "name": "Ryan O'Brien",
+          "courseInterest": "MA Music Performance"
+        }
+      },
+      "latency_ms": 2513,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "For Ryan O'Brien, Accreditation of Prior Experiential Learning (APEL) allows applicants' prior work/experience to be credited towards a degree.\n\nAPEL refers to Accreditation of Prior Experiential Learning. To advise an applicant effectively, clarification is needed regarding their specific situation: \n1. **Level of Study:** Is the applicant applying for undergraduate (UG) or postgraduate (PG) studies? \n2. **Qualification Type:** Does the applicant require equivalency or recognition of overseas qualifications? \n3. **Non-Standard Entry:** Does the university permit non-standard entry or discretion based on experience? Next Steps: * Review the university's admissions policy for the relevant level and subject. * If the applicant is using non-standard or overseas qualifications, contact the admissions department to verify equivalency rules. For MA Music Performance, APEL could be relevant if you have significant experience in the field that hasn't been formally certified. According to Admissions Policy & Best Practice, this guidance reflects current policy.",
+      "answer_length": 1068,
+      "has_answer": true,
+      "actions": [],
+      "sources": [
+        {
+          "title": "Admissions Policy & Best Practice",
+          "document_type": "best_practice",
+          "category": "University Policy",
+          "similarity_score": 0.698961702653908,
+          "preview": "**What You Know:**\n- Universities' Admissions Policy aims to reflect sector-best practice (QAA, SPA, UCAS, OfS), equality & diversity, data protection, consumer rights etc.\n- The policy covers all lev"
+        },
+        {
+          "title": "Subject Combinations & Retakes Policy",
+          "document_type": "best_practice",
+          "category": "Admissions Selection",
+          "similarity_score": 0.679497883646904,
+          "preview": "**What You Know:**\n- Universities consider applications on an individual basis, including subject combinations, retakes, academic record. Meeting the entry requirement doesn't guarantee an offer due t"
+        },
+        {
+          "title": "Admissions Policy Alignment & Good Practice",
+          "document_type": "best_practice",
+          "category": "University Policy",
+          "similarity_score": 0.671770279877094,
+          "preview": "**What You Know:**\n- Universities commit to a fair, efficient, professional admissions service. They comply with legislation/regulation/regulatory requirements and align with UUK/GuildHE Fair Admissio"
+        }
+      ],
+      "sources_count": 3,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [],
+      "content_passed": true,
+      "timestamp": "2025-09-30T10:08:12.275897"
+    },
+    {
+      "test_id": "apel_semantic_tests_4",
+      "subsystem": "apel_semantic_tests",
+      "category": "apel_definition",
+      "prompt": "tell me about apel",
+      "context": {},
+      "latency_ms": 1843,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "Accreditation of Prior Experiential Learning (APEL) allows applicants' prior work/experience to be credited towards a degree.\n\nAPEL (Accreditation of Prior Experiential Learning) qualifications recognise learning gained outside of formal education. This person may be able to gain credits towards a course based on their prior experience. Next steps: Provide this person with detailed information on the APEL process and requirements for their specific course of interest. Advise them to gather documentation of their prior learning and experience. For MA Music Performance, APEL could be relevant if you have significant experience in the field that hasn't been formally certified. According to Admissions Policy & Best Practice, this guidance reflects current policy.",
+      "answer_length": 769,
+      "has_answer": true,
+      "actions": [],
+      "sources": [
+        {
+          "title": "Admissions Policy & Best Practice",
+          "document_type": "best_practice",
+          "category": "University Policy",
+          "similarity_score": 0.693444996675819,
+          "preview": "**What You Know:**\n- Universities' Admissions Policy aims to reflect sector-best practice (QAA, SPA, UCAS, OfS), equality & diversity, data protection, consumer rights etc.\n- The policy covers all lev"
+        },
+        {
+          "title": "Admissions Policy Alignment & Good Practice",
+          "document_type": "best_practice",
+          "category": "University Policy",
+          "similarity_score": 0.671989230068562,
+          "preview": "**What You Know:**\n- Universities commit to a fair, efficient, professional admissions service. They comply with legislation/regulation/regulatory requirements and align with UUK/GuildHE Fair Admissio"
+        },
+        {
+          "title": "Subject Combinations & Retakes Policy",
+          "document_type": "best_practice",
+          "category": "Admissions Selection",
+          "similarity_score": 0.670647884473983,
+          "preview": "**What You Know:**\n- Universities consider applications on an individual basis, including subject combinations, retakes, academic record. Meeting the entry requirement doesn't guarantee an offer due t"
+        }
+      ],
+      "sources_count": 3,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [],
+      "content_passed": true,
+      "timestamp": "2025-09-30T10:08:15.620975"
+    },
+    {
+      "test_id": "apel_semantic_tests_5",
+      "subsystem": "apel_semantic_tests",
+      "category": "apel_semantic",
+      "prompt": "ryan and apel",
+      "context": {
+        "lead": {
+          "name": "Ryan O'Brien",
+          "courseInterest": "MA Music Performance"
+        }
+      },
+      "latency_ms": 2432,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "For Ryan O'Brien, Accreditation of Prior Experiential Learning (APEL) allows applicants' prior work/experience to be credited towards a degree.\n\nRyan is inquiring about APEL (Accreditation of Prior Experiential Learning) qualifications. To best advise Ryan, it is important to: * Determine the level of study Ryan is applying for (Undergraduate or Postgraduate). * Ascertain if Ryan requires equivalency or recognition of overseas qualifications. * Check if the university permits non-standard entry or uses discretion based on experience. Next steps: \n1. Review the university's admissions policy for Ryan's level of study and subject.\n\n2. If Ryan is using non-standard or overseas qualifications, contact admissions to verify equivalency rules. \n3. Double-check the specific entry criteria on the university website. For MA Music Performance, APEL could be relevant if you have significant experience in the field that hasn't been formally certified. According to Admissions Policy & Best Practice, this guidance reflects current policy.",
+      "answer_length": 1039,
+      "has_answer": true,
+      "actions": [],
+      "sources": [
+        {
+          "title": "Admissions Policy & Best Practice",
+          "document_type": "best_practice",
+          "category": "University Policy",
+          "similarity_score": 0.627646050423202,
+          "preview": "**What You Know:**\n- Universities' Admissions Policy aims to reflect sector-best practice (QAA, SPA, UCAS, OfS), equality & diversity, data protection, consumer rights etc.\n- The policy covers all lev"
+        },
+        {
+          "title": "Subject Combinations & Retakes Policy",
+          "document_type": "best_practice",
+          "category": "Admissions Selection",
+          "similarity_score": 0.612730711717665,
+          "preview": "**What You Know:**\n- Universities consider applications on an individual basis, including subject combinations, retakes, academic record. Meeting the entry requirement doesn't guarantee an offer due t"
+        },
+        {
+          "title": "Admissions Policy Alignment & Good Practice",
+          "document_type": "best_practice",
+          "category": "University Policy",
+          "similarity_score": 0.602578386506481,
+          "preview": "**What You Know:**\n- Universities commit to a fair, efficient, professional admissions service. They comply with legislation/regulation/regulatory requirements and align with UUK/GuildHE Fair Admissio"
+        }
+      ],
+      "sources_count": 3,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [],
+      "content_passed": true,
+      "timestamp": "2025-09-30T10:08:19.555246"
+    },
+    {
+      "test_id": "apel_semantic_tests_6",
+      "subsystem": "apel_semantic_tests",
+      "category": "apel_semantic",
+      "prompt": "is ryan an APEL applicant?",
+      "context": {
+        "lead": {
+          "name": "Ryan O'Brien",
+          "courseInterest": "MA Music Performance"
+        }
+      },
+      "latency_ms": 2903,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "For Ryan O'Brien, Accreditation of Prior Experiential Learning (APEL) allows applicants' prior work/experience to be credited towards a degree.\n\nTo determine if Ryan's qualifications meet the APEL (Accreditation of Prior Experiential Learning) requirements, the following steps are recommended: \n1. **Determine the Level of Study:** Ascertain whether Ryan is applying for an undergraduate (UG) or postgraduate (PG) program.\n\n2. **Equivalency Check:** If Ryan possesses overseas qualifications, verify their equivalency. \n3. **University Policy Review:** Examine the university's admissions policy to understand if it permits non-standard entry or discretion based on experience.\n\n4. **Course-Specific Requirements:** Check the specific course prerequisites to ensure Ryan's subject combinations align with them. \n5. **Retake Policy:** If Ryan needs to retake any qualifications, confirm the acceptability of retakes for the chosen course.\n\n6. **International Application (If Applicable):** If Ryan is applying from abroad, consider whether using an overseas advisor would benefit the application. It's important to note that meeting the minimum entry requirements does not guarantee an offer due to competition. Ryan should aim to exceed the minimum requirements to strengthen the application. For MA Music Performance, APEL could be relevant if you have significant experience in the field that hasn't been formally certified. According to Admissions Policy & Best Practice, this guidance reflects current policy.",
+      "answer_length": 1514,
+      "has_answer": true,
+      "actions": [],
+      "sources": [
+        {
+          "title": "Admissions Policy & Best Practice",
+          "document_type": "best_practice",
+          "category": "University Policy",
+          "similarity_score": 0.660752532259661,
+          "preview": "**What You Know:**\n- Universities' Admissions Policy aims to reflect sector-best practice (QAA, SPA, UCAS, OfS), equality & diversity, data protection, consumer rights etc.\n- The policy covers all lev"
+        },
+        {
+          "title": "Subject Combinations & Retakes Policy",
+          "document_type": "best_practice",
+          "category": "Admissions Selection",
+          "similarity_score": 0.632757554868018,
+          "preview": "**What You Know:**\n- Universities consider applications on an individual basis, including subject combinations, retakes, academic record. Meeting the entry requirement doesn't guarantee an offer due t"
+        },
+        {
+          "title": "Deferred Entry & International Admissions Process",
+          "document_type": "best_practice",
+          "category": "International Admissions",
+          "similarity_score": 0.627045603310828,
+          "preview": "**What You Know:**\n- Many subject areas allow applications that want to defer by one year, but you must check course-by-course.\n- There is an international admissions process; educational advisers in "
+        }
+      ],
+      "sources_count": 3,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [
+        "apel_semantic: Misunderstood APEL as person name"
+      ],
+      "content_passed": false,
+      "timestamp": "2025-09-30T10:08:23.960298"
+    },
+    {
+      "test_id": "apel_semantic_tests_7",
+      "subsystem": "apel_semantic_tests",
+      "category": "apel_semantic",
+      "prompt": "if ryan has 8 years' pro experience, could APEL reduce his credits?",
+      "context": {
+        "lead": {
+          "name": "Ryan O'Brien",
+          "courseInterest": "MA Music Performance"
+        }
+      },
+      "latency_ms": 2389,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "For Ryan O'Brien, Accreditation of Prior Experiential Learning (APEL) allows applicants' prior work/experience to be credited towards a degree.\n\nWith eight years of professional experience, Ryan may be eligible for APEL (Accreditation of Prior Experiential Learning) qualifications, which could potentially reduce his credits. Next steps: \n1. Determine if Ryan is applying for undergraduate or postgraduate study, as this will affect the APEL process.\n\n2. Ascertain whether Ryan needs equivalency or recognition of overseas qualifications. \n3. Contact the admissions department to check the university's specific policy on APEL and whether Ryan's experience aligns with their criteria. For MA Music Performance, APEL could be relevant if you have significant experience in the field that hasn't been formally certified. According to Admissions Policy & Best Practice, this guidance reflects current policy.",
+      "answer_length": 906,
+      "has_answer": true,
+      "actions": [],
+      "sources": [
+        {
+          "title": "Admissions Policy & Best Practice",
+          "document_type": "best_practice",
+          "category": "University Policy",
+          "similarity_score": 0.631471180713022,
+          "preview": "**What You Know:**\n- Universities' Admissions Policy aims to reflect sector-best practice (QAA, SPA, UCAS, OfS), equality & diversity, data protection, consumer rights etc.\n- The policy covers all lev"
+        },
+        {
+          "title": "Subject Combinations & Retakes Policy",
+          "document_type": "best_practice",
+          "category": "Admissions Selection",
+          "similarity_score": 0.62463014522156,
+          "preview": "**What You Know:**\n- Universities consider applications on an individual basis, including subject combinations, retakes, academic record. Meeting the entry requirement doesn't guarantee an offer due t"
+        },
+        {
+          "title": "Deferred Entry & International Admissions Process",
+          "document_type": "best_practice",
+          "category": "International Admissions",
+          "similarity_score": 0.599410729605411,
+          "preview": "**What You Know:**\n- Many subject areas allow applications that want to defer by one year, but you must check course-by-course.\n- There is an international admissions process; educational advisers in "
+        }
+      ],
+      "sources_count": 3,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [],
+      "content_passed": true,
+      "timestamp": "2025-09-30T10:08:27.851283"
+    },
+    {
+      "test_id": "apel_semantic_tests_8",
+      "subsystem": "apel_semantic_tests",
+      "category": "apel_semantic",
+      "prompt": "what should i tell ryan about APEL next steps?",
+      "context": {
+        "lead": {
+          "name": "Ryan O'Brien",
+          "courseInterest": "MA Music Performance"
+        }
+      },
+      "latency_ms": 3413,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "For Ryan O'Brien, Accreditation of Prior Experiential Learning (APEL) allows applicants' prior work/experience to be credited towards a degree.\n\nTo advise Ryan regarding APEL (Accreditation of Prior Experiential Learning) qualifications and next steps, consider the following points: * **Determine Ryan's application level:** Ascertain whether Ryan is applying for undergraduate (UG) or postgraduate (PG) studies. Also, find out if he requires equivalency or recognition of overseas qualifications. * **Inquire about non-standard entry:** Ask Ryan if he knows whether the university permits non-standard entry or uses discretion based on experience. * **Advise on inclusivity and alignment:** Universities aim to be inclusive. Ryan should check whether his credentials align with the course requirements and whether he can use supplementary evidence if needed. Smaller universities may offer more flexibility but will still expect baseline criteria to be met. * **Direct Ryan to review university policy:** Ryan should review the university's admissions policy for his level and subject. If using non-standard or overseas qualifications, he should contact admissions to verify equivalency rules. * **Check course page and policy:** Verify that the university's course page is up-to-date for Ryan's desired course. Determine the university's policy on subject combinations, retakes, or non-standard qualifications. If Ryan is using non-standard qualifications or retakes, double-check their acceptability. For MA Music Performance, APEL could be relevant if you have significant experience in the field that hasn't been formally certified. According to Admissions Policy & Best Practice, this guidance reflects current policy.",
+      "answer_length": 1725,
+      "has_answer": true,
+      "actions": [],
+      "sources": [
+        {
+          "title": "Admissions Policy & Best Practice",
+          "document_type": "best_practice",
+          "category": "University Policy",
+          "similarity_score": 0.677242628448415,
+          "preview": "**What You Know:**\n- Universities' Admissions Policy aims to reflect sector-best practice (QAA, SPA, UCAS, OfS), equality & diversity, data protection, consumer rights etc.\n- The policy covers all lev"
+        },
+        {
+          "title": "Subject Combinations & Retakes Policy",
+          "document_type": "best_practice",
+          "category": "Admissions Selection",
+          "similarity_score": 0.665864259526813,
+          "preview": "**What You Know:**\n- Universities consider applications on an individual basis, including subject combinations, retakes, academic record. Meeting the entry requirement doesn't guarantee an offer due t"
+        },
+        {
+          "title": "Admissions Policy Alignment & Good Practice",
+          "document_type": "best_practice",
+          "category": "University Policy",
+          "similarity_score": 0.662397944371763,
+          "preview": "**What You Know:**\n- Universities commit to a fair, efficient, professional admissions service. They comply with legislation/regulation/regulatory requirements and align with UUK/GuildHE Fair Admissio"
+        }
+      ],
+      "sources_count": 3,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [],
+      "content_passed": true,
+      "timestamp": "2025-09-30T10:08:32.766467"
+    },
+    {
+      "test_id": "routing_basic_1",
+      "subsystem": "routing_basic",
+      "category": "routing",
+      "prompt": "help",
+      "context": {},
+      "latency_ms": 3,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "I can help with:\n\u2022 Person summaries and recent activity\n\u2022 Course and policy questions\n\u2022 Risks, blockers, and next best actions\n\u2022 Drafting outreach (email or call scripts)\nWhat would you like to focus on?",
+      "answer_length": 203,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "Open Call Console",
+          "action": "open_call_console"
+        }
+      ],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [],
+      "content_passed": true,
+      "timestamp": "2025-09-30T10:08:34.271369"
+    },
+    {
+      "test_id": "routing_basic_2",
+      "subsystem": "routing_basic",
+      "category": "routing",
+      "prompt": "what can you do?",
+      "context": {},
+      "latency_ms": 4,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "I can help with:\n\u2022 Person summaries and recent activity\n\u2022 Course and policy questions\n\u2022 Risks, blockers, and next best actions\n\u2022 Drafting outreach (email or call scripts)\nWhat would you like to focus on?",
+      "answer_length": 203,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "Open Call Console",
+          "action": "open_call_console"
+        }
+      ],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [],
+      "content_passed": true,
+      "timestamp": "2025-09-30T10:08:35.776825"
+    },
+    {
+      "test_id": "routing_basic_3",
+      "subsystem": "routing_basic",
+      "category": "routing",
+      "prompt": "give me a quick checklist before calling this person",
+      "context": {
+        "lead": {
+          "name": "Ryan O'Brien",
+          "courseInterest": "MA Music Performance"
+        }
+      },
+      "latency_ms": 2245,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "\"Let's address your concerns directly, Ryan O'Brien. I'd like to show you how MA Music Performance can align with your goals and provide the outcomes you're looking for. There's something specific I want to share that might change your perspective.\"\n\nPrior to contacting Ryan O'Brien regarding the MA Music Performance course, please ensure the following: * **GDPR Consent:** Verify Ryan's GDPR consent status. If consent is not provided, Ryan O'Brien cannot discuss specific course details or track engagement. * **Course Information:** Have readily available information about the MA Music Performance course, including program structure, faculty, and any upcoming deadlines. * **Engagement History:** Review Ryan's previous interactions with the university, including website visits or email engagement, to tailor the conversation. * **Questions:** Prepare open-ended questions to understand Ryan's specific interests and career goals related to music performance. * **Next Steps:** Have clear next steps prepared, such as scheduling a consultation with a faculty member or providing access to additional course resources.\n\n**Commercial Insight:** Music industry connections drive career success. Our MA Music Performance provides direct industry access that traditional universities can't match.",
+      "answer_length": 1299,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "Open Call Console",
+          "action": "open_call_console"
+        }
+      ],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [
+        "script_and_bullets: Needs quoted script + 3+ bullets"
+      ],
+      "content_passed": false,
+      "timestamp": "2025-09-30T10:08:39.523271"
+    },
+    {
+      "test_id": "routing_basic_4",
+      "subsystem": "routing_basic",
+      "category": "routing",
+      "prompt": "summarise the last interaction",
+      "context": {
+        "lead": {
+          "name": "Ryan O'Brien",
+          "courseInterest": "MA Music Performance"
+        }
+      },
+      "latency_ms": 852,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "Ryan O'Brien is interested in the MA Music Performance program. To provide a more detailed overview, additional information regarding Ryan's application status, engagement level, and GDPR consent is needed. Once this information is available, I can offer targeted advice and next steps.",
+      "answer_length": 286,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "View Full Profile",
+          "action": "view_profile"
+        }
+      ],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [],
+      "content_passed": true,
+      "timestamp": "2025-09-30T10:08:41.877409"
+    },
+    {
+      "test_id": "profile_lead_info_1",
+      "subsystem": "profile_lead_info",
+      "category": "profile",
+      "prompt": "what's ryan's status and course interest?",
+      "context": {
+        "lead": {
+          "name": "Ryan O'Brien",
+          "courseInterest": "MA Music Performance",
+          "status": "lead"
+        }
+      },
+      "latency_ms": 2491,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "Ryan O'Brien is currently an enquirer with an interest in the MA Music Performance course. To proceed effectively, ensure Ryan has provided GDPR consent. Further engagement will help determine Ryan's conversion likelihood. **Gap:** We're missing recent activity - consider asking about these during your next conversation.",
+      "answer_length": 322,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "View Full Profile",
+          "action": "view_profile"
+        }
+      ],
+      "sources": [
+        {
+          "title": "Subject Combinations & Retakes Policy",
+          "document_type": "best_practice",
+          "category": "Admissions Selection",
+          "similarity_score": 0.654303309558682,
+          "preview": "**What You Know:**\n- Universities consider applications on an individual basis, including subject combinations, retakes, academic record. Meeting the entry requirement doesn't guarantee an offer due t"
+        },
+        {
+          "title": "Fee Status Assessment & Review Process",
+          "document_type": "policy",
+          "category": "Fee Status",
+          "similarity_score": 0.646109736329603,
+          "preview": "**What You Know:**\n- Universities determine fee status using applicant's immigration status and residential history. If unclear, candidate must fill a fee status questionnaire and supply evidence.\n- F"
+        },
+        {
+          "title": "CAS & Fee Deposit & Visa Policy",
+          "document_type": "best_practice",
+          "category": "International Admissions",
+          "similarity_score": 0.644074270384035,
+          "preview": "**What You Know:**\n- Universities require tuition fee deposit for international students who need visa & CAS.\n- Fee status will not be re-assessed after registration, except in exceptional circumstanc"
+        }
+      ],
+      "sources_count": 3,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [],
+      "content_passed": true,
+      "timestamp": "2025-09-30T10:08:45.870033"
+    },
+    {
+      "test_id": "profile_lead_info_2",
+      "subsystem": "profile_lead_info",
+      "category": "profile",
+      "prompt": "when did ryan last engage and how many touchpoints do we have?",
+      "context": {
+        "lead": {
+          "name": "Ryan O'Brien",
+          "courseInterest": "MA Music Performance",
+          "touchpoint_count": 13,
+          "last_engagement_date": "2025-08-20T11:15:00Z"
+        }
+      },
+      "latency_ms": 1263,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "Ryan O'Brien, who is interested in the MA Music Performance program, last engaged on 2025-08-20T11:15:00Z. There have been 13 touchpoints recorded. To increase Ryan's engagement, consider using the re-engagement playbook and follow-up best practices to provide personalized course information and address any questions. **Gap:** We're missing current status - consider asking about these during your next conversation.",
+      "answer_length": 418,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "View Full Profile",
+          "action": "view_profile"
+        }
+      ],
+      "sources": [
+        {
+          "title": "Re-Engagement Playbook \u2014 Recovering Silent Applicants",
+          "document_type": "objection_handling",
+          "category": "Comms",
+          "similarity_score": 0.746507275687785,
+          "preview": "**Context**\nMany applicants disengage after initial contact \u2014 they go silent after an offer, or fail to book an interview. A structured re-engagement playbook can recover a significant percentage of t"
+        },
+        {
+          "title": "Follow-up Best Practices",
+          "document_type": "best_practice",
+          "category": "Follow-up",
+          "similarity_score": 0.711862421638983,
+          "preview": "Effective follow-up strategy: 1) Initial contact within 24 hours of lead generation. 2) Personalized email with relevant course information. 3) Phone call within 48 hours to answer questions and asses"
+        },
+        {
+          "title": "Consultative Selling in Admissions \u2014 Discovery Questions that Uncover Value",
+          "document_type": "best_practice",
+          "category": "Sales Methodology",
+          "similarity_score": 0.706269735438172,
+          "preview": "**Context**\nConsultative selling is about listening first, speaking second. In admissions, it means uncovering what truly matters to an applicant: career goals, family expectations, finances, location"
+        }
+      ],
+      "sources_count": 3,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [],
+      "content_passed": true,
+      "timestamp": "2025-09-30T10:08:48.634531"
+    },
+    {
+      "test_id": "profile_lead_info_3",
+      "subsystem": "profile_lead_info",
+      "category": "profile",
+      "prompt": "do we have ryan's email and phone?",
+      "context": {
+        "lead": {
+          "name": "Ryan O'Brien",
+          "email": "ryan.obrien@yahoo.com",
+          "phone": "+44 7811 234567"
+        }
+      },
+      "latency_ms": 2,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "Opening email composer for Ryan O'Brien...",
+      "answer_length": 42,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "Open Email Composer",
+          "action": "open_email_composer"
+        }
+      ],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [],
+      "content_passed": true,
+      "timestamp": "2025-09-30T10:08:50.138305"
+    },
+    {
+      "test_id": "actions_mapping_extended_1",
+      "subsystem": "actions_mapping_extended",
+      "category": "actions",
+      "prompt": "write to them about next steps",
+      "context": {
+        "lead": {
+          "name": "Ryan O'Brien"
+        }
+      },
+      "latency_ms": 3,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "Opening email composer for Ryan O'Brien...",
+      "answer_length": 42,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "Open Email Composer",
+          "action": "open_email_composer"
+        }
+      ],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [],
+      "content_passed": true,
+      "timestamp": "2025-09-30T10:08:51.642695"
+    },
+    {
+      "test_id": "actions_mapping_extended_2",
+      "subsystem": "actions_mapping_extended",
+      "category": "actions",
+      "prompt": "schedule a call for tomorrow",
+      "context": {
+        "lead": {
+          "name": "Ryan O'Brien"
+        }
+      },
+      "latency_ms": 4,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "Opening meeting scheduler for Ryan O'Brien...",
+      "answer_length": 45,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "Book Meeting",
+          "action": "open_meeting_scheduler"
+        }
+      ],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [],
+      "content_passed": true,
+      "timestamp": "2025-09-30T10:08:53.148937"
+    },
+    {
+      "test_id": "actions_mapping_extended_3",
+      "subsystem": "actions_mapping_extended",
+      "category": "actions",
+      "prompt": "view their profile",
+      "context": {
+        "lead": {
+          "name": "Ryan O'Brien"
+        }
+      },
+      "latency_ms": 743,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "Ryan O'Brien is interested in the MSc in Data Science. To provide a comprehensive overview, I need access to Ryan's current application status, engagement history (touchpoint counts, email interactions), and GDPR consent status. This information will allow me to assess course fit, conversion probability, identify any blockers, and suggest appropriate next steps.\n\nThis guidance is specifically relevant for Ryan O'Brien's interest in MA Music Performance.",
+      "answer_length": 457,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "View Full Profile",
+          "action": "view_profile"
+        }
+      ],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [],
+      "content_passed": true,
+      "timestamp": "2025-09-30T10:08:55.393521"
+    },
+    {
+      "test_id": "nba_suggestions_risks_1",
+      "subsystem": "nba_suggestions_risks",
+      "category": "nba",
+      "prompt": "what should we do next?",
+      "context": {
+        "lead": {
+          "name": "Ryan O'Brien",
+          "courseInterest": "MA Music Performance"
+        }
+      },
+      "latency_ms": 2005,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "**Ryan O'Brien's approach:**\n\n\"Hi Ryan O'Brien, I wanted to follow up on your interest in MA Music Performance. With only 0 touchpoints, they need more engagement.\"\n\n**Key actions:**\n\u2022 Address any questions about MA Music Performance\n\u2022 Share relevant course information and outcomes\n\u2022 Understand their specific goals and timeline\n\n**Next steps:**\n\u2022 Schedule a follow-up call within 48 hours\n\u2022 Send course-specific materials via email\n\u2022 Update CRM with conversation notes\n\n*Gap: no direct evidence found; using playbook*\n\n**Note:** Lower confidence recommendation (score: \n0.3)",
+      "answer_length": 576,
+      "has_answer": true,
+      "actions": [],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [],
+      "content_passed": true,
+      "timestamp": "2025-09-30T10:08:58.900721"
+    },
+    {
+      "test_id": "nba_suggestions_risks_2",
+      "subsystem": "nba_suggestions_risks",
+      "category": "nba",
+      "prompt": "next best action for this person",
+      "context": {
+        "lead": {
+          "name": "Ryan O'Brien",
+          "courseInterest": "MA Music Performance"
+        }
+      },
+      "latency_ms": 2004,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "**Ryan O'Brien's approach:**\n\n\"Hi Ryan O'Brien, I wanted to follow up on your interest in MA Music Performance. With only 0 touchpoints, they need more engagement.\"\n\n**Key actions:**\n\u2022 Address any questions about MA Music Performance\n\u2022 Share relevant course information and outcomes\n\u2022 Understand their specific goals and timeline\n\n**Next steps:**\n\u2022 Schedule a follow-up call within 48 hours\n\u2022 Send course-specific materials via email\n\u2022 Update CRM with conversation notes\n\n*Gap: no direct evidence found; using playbook*\n\n**Note:** Lower confidence recommendation (score: \n0.3)",
+      "answer_length": 576,
+      "has_answer": true,
+      "actions": [],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [],
+      "content_passed": true,
+      "timestamp": "2025-09-30T10:09:02.406433"
+    },
+    {
+      "test_id": "nba_suggestions_risks_3",
+      "subsystem": "nba_suggestions_risks",
+      "category": "nba",
+      "prompt": "any pipeline blockers for ryan?",
+      "context": {
+        "lead": {
+          "name": "Ryan O'Brien",
+          "courseInterest": "MA Music Performance",
+          "gdpr_opt_in": false
+        }
+      },
+      "latency_ms": 2532,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "Ryan O'Brien is interested in the MA Music Performance course. A key pipeline blocker is that Ryan has not provided GDPR consent. Without this, the admissions team cannot engage with Ryan effectively. The next step is to obtain Ryan's GDPR consent to continue the application process. **Gap:** We're missing current status, recent activity - consider asking about these during your next conversation.",
+      "answer_length": 400,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "View Full Profile",
+          "action": "view_profile"
+        }
+      ],
+      "sources": [
+        {
+          "title": "Consultative Selling in Admissions \u2014 Discovery Questions that Uncover Value",
+          "document_type": "best_practice",
+          "category": "Sales Methodology",
+          "similarity_score": 0.599235481709642,
+          "preview": "**Context**\nConsultative selling is about listening first, speaking second. In admissions, it means uncovering what truly matters to an applicant: career goals, family expectations, finances, location"
+        },
+        {
+          "title": "Subject Combinations & Retakes Policy",
+          "document_type": "best_practice",
+          "category": "Admissions Selection",
+          "similarity_score": 0.596236257428266,
+          "preview": "**What You Know:**\n- Universities consider applications on an individual basis, including subject combinations, retakes, academic record. Meeting the entry requirement doesn't guarantee an offer due t"
+        },
+        {
+          "title": "Challenger Sales in HE Admissions \u2014 Teach, Tailor, Take Control",
+          "document_type": "best_practice",
+          "category": "Sales Methodology",
+          "similarity_score": 0.577032770395562,
+          "preview": "**Context**\nThe Challenger Sale is one of the most influential sales methodologies globally. While developed for B2B, its principles map cleanly onto HE admissions: applicants face high stakes, multip"
+        }
+      ],
+      "sources_count": 3,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [
+        "actionable: Missing actionable next steps"
+      ],
+      "content_passed": false,
+      "timestamp": "2025-09-30T10:09:06.440578"
+    },
+    {
+      "test_id": "nba_suggestions_risks_4",
+      "subsystem": "nba_suggestions_risks",
+      "category": "nba",
+      "prompt": "show risks or red flags for this person",
+      "context": {
+        "lead": {
+          "name": "Ryan O'Brien",
+          "courseInterest": "MA Music Performance"
+        }
+      },
+      "latency_ms": 4,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "Risk assessment temporarily unavailable: 'engagement'.",
+      "answer_length": 54,
+      "has_answer": true,
+      "actions": [],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [
+        "personalized: Missing personalization: Missing name: 'Ryan O'Brien'",
+        "actionable: Missing actionable next steps"
+      ],
+      "content_passed": false,
+      "timestamp": "2025-09-30T10:09:07.946705"
+    },
+    {
+      "test_id": "nba_suggestions_risks_5",
+      "subsystem": "nba_suggestions_risks",
+      "category": "nba",
+      "prompt": "how likely is ryan to convert?",
+      "context": {
+        "lead": {
+          "name": "Ryan O'Brien",
+          "courseInterest": "MA Music Performance",
+          "conversion_probability": 0.75
+        }
+      },
+      "latency_ms": 5,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "There's a **75.0% chance** Ryan O'Brien will enrol based on our ML analysis. **To strengthen conversion:**\n**Priority:** Obtain GDPR consent to enable full communication Increase engagement touchpoints (currently 0) Re-engage with personalised course content Address any course-specific questions about MA Music Performance.",
+      "answer_length": 324,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "View Full Analysis",
+          "action": "view_profile"
+        }
+      ],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [
+        "actionable: Missing actionable next steps"
+      ],
+      "content_passed": false,
+      "timestamp": "2025-09-30T10:09:09.453084"
+    },
+    {
+      "test_id": "policy_course_info_extended_1",
+      "subsystem": "policy_course_info_extended",
+      "category": "policy",
+      "prompt": "what documents are needed for an international postgraduate?",
+      "context": {},
+      "latency_ms": 4189,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "To determine the necessary documents for an international postgraduate applicant, it's important to consider several factors: \n1. **Academic Qualifications:** Universities generally require evidence of qualifications equivalent to the standard UK entry requirements. Applicants should verify that their credentials align with the university's standards and whether supplementary evidence can be provided if needed. \n2. **Visa Requirements:** International students who require a visa will need to provide a tuition fee deposit. Failure to pay the deposit may delay the CAS (Confirmation of Acceptance for Studies) and visa issuance. If the applicant is under 18, a guardian consent letter is also required. \n3. **Fee Status:** The applicant must complete a fee status assessment form and upload supporting evidence. The fee status typically remains fixed after registration, it is crucial to ensure its accuracy early on. Next Steps: * Review the university's admissions policy for postgraduate applicants. * Contact the admissions department to check equivalency rules for international qualifications. * Complete and upload the fee status assessment form. * Arrange the fee deposit if a visa...",
+      "answer_length": 1196,
+      "has_answer": true,
+      "actions": [],
+      "sources": [
+        {
+          "title": "Admissions Policy & Best Practice",
+          "document_type": "best_practice",
+          "category": "University Policy",
+          "similarity_score": 0.793298342805809,
+          "preview": "**What You Know:**\n- Universities' Admissions Policy aims to reflect sector-best practice (QAA, SPA, UCAS, OfS), equality & diversity, data protection, consumer rights etc.\n- The policy covers all lev"
+        },
+        {
+          "title": "Scholarships, Bursaries & Costs Transparency",
+          "document_type": "course_info",
+          "category": "Financial Support & Costs",
+          "similarity_score": 0.782878031892951,
+          "preview": "**What You Know:**\n- Universities' Admissions Policy includes a comprehensive section on scholarships & bursaries available for both undergraduate & postgraduate applicants. It also lists course-relat"
+        },
+        {
+          "title": "CAS & Fee Deposit & Visa Policy",
+          "document_type": "best_practice",
+          "category": "International Admissions",
+          "similarity_score": 0.778728969019867,
+          "preview": "**What You Know:**\n- Universities require tuition fee deposit for international students who need visa & CAS.\n- Fee status will not be re-assessed after registration, except in exceptional circumstanc"
+        }
+      ],
+      "sources_count": 3,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [],
+      "content_passed": true,
+      "timestamp": "2025-09-30T10:09:15.144252"
+    },
+    {
+      "test_id": "policy_course_info_extended_2",
+      "subsystem": "policy_course_info_extended",
+      "category": "policy",
+      "prompt": "deadline for january intake applications?",
+      "context": {},
+      "latency_ms": 1772,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "I do not have the specific deadline for January intake applications. Please check the university's official website or contact the admissions department directly for the most accurate and up-to-date information. According to Deferred Entry & International Admissions Process and CAS & Fee Deposit & Visa Policy, this guidance reflects our current policies. According to Deferred Entry & International Admissions Process, this guidance reflects current policy.",
+      "answer_length": 459,
+      "has_answer": true,
+      "actions": [],
+      "sources": [
+        {
+          "title": "Deferred Entry & International Admissions Process",
+          "document_type": "best_practice",
+          "category": "International Admissions",
+          "similarity_score": 0.744823388391524,
+          "preview": "**What You Know:**\n- Many subject areas allow applications that want to defer by one year, but you must check course-by-course.\n- There is an international admissions process; educational advisers in "
+        },
+        {
+          "title": "CAS & Fee Deposit & Visa Policy",
+          "document_type": "best_practice",
+          "category": "International Admissions",
+          "similarity_score": 0.734294013679007,
+          "preview": "**What You Know:**\n- Universities require tuition fee deposit for international students who need visa & CAS.\n- Fee status will not be re-assessed after registration, except in exceptional circumstanc"
+        },
+        {
+          "title": "Subject Combinations & Retakes Policy",
+          "document_type": "best_practice",
+          "category": "Admissions Selection",
+          "similarity_score": 0.719263788553191,
+          "preview": "**What You Know:**\n- Universities consider applications on an individual basis, including subject combinations, retakes, academic record. Meeting the entry requirement doesn't guarantee an offer due t"
+        }
+      ],
+      "sources_count": 3,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [],
+      "content_passed": true,
+      "timestamp": "2025-09-30T10:09:18.417906"
+    },
+    {
+      "test_id": "policy_course_info_extended_3",
+      "subsystem": "policy_course_info_extended",
+      "category": "policy",
+      "prompt": "visa guidance for dependants?",
+      "context": {},
+      "latency_ms": 2611,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "Guidance regarding visas for dependants is not explicitly covered in the provided documentation. However, the documents do address general visa requirements for international students: * Applicants requiring a student visa need to pay the tuition fee deposit to facilitate CAS issuance. Failure to pay the deposit may delay the visa process. * Applicants under 18 needing a student visa must provide a guardian consent letter. To provide specific guidance on visas for dependants, it is recommended to consult the university's international admissions or visa support services directly. They can offer detailed information and requirements related to dependant visas. According to CAS & Fee Deposit & Visa Policy and Fee Status Assessment & Review Process, this guidance reflects our current policies. According to CAS & Fee Deposit & Visa Policy, this guidance reflects current policy.",
+      "answer_length": 886,
+      "has_answer": true,
+      "actions": [],
+      "sources": [
+        {
+          "title": "CAS & Fee Deposit & Visa Policy",
+          "document_type": "best_practice",
+          "category": "International Admissions",
+          "similarity_score": 0.749376394616394,
+          "preview": "**What You Know:**\n- Universities require tuition fee deposit for international students who need visa & CAS.\n- Fee status will not be re-assessed after registration, except in exceptional circumstanc"
+        },
+        {
+          "title": "Fee Status Assessment & Review Process",
+          "document_type": "policy",
+          "category": "Fee Status",
+          "similarity_score": 0.72240372087034,
+          "preview": "**What You Know:**\n- Universities determine fee status using applicant's immigration status and residential history. If unclear, candidate must fill a fee status questionnaire and supply evidence.\n- F"
+        },
+        {
+          "title": "Deferred Entry & International Admissions Process",
+          "document_type": "best_practice",
+          "category": "International Admissions",
+          "similarity_score": 0.716575683141086,
+          "preview": "**What You Know:**\n- Many subject areas allow applications that want to defer by one year, but you must check course-by-course.\n- There is an international admissions process; educational advisers in "
+        }
+      ],
+      "sources_count": 3,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [],
+      "content_passed": true,
+      "timestamp": "2025-09-30T10:09:22.530704"
+    },
+    {
+      "test_id": "policy_course_info_extended_4",
+      "subsystem": "policy_course_info_extended",
+      "category": "policy",
+      "prompt": "how do we assess APEL evidence?",
+      "context": {},
+      "latency_ms": 2903,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "Accreditation of Prior Experiential Learning (APEL) allows applicants' prior work/experience to be credited towards a degree.\n\nTo assess APEL (Accreditation of Prior Experiential Learning) qualifications for evidence, follow these steps: \n1. **Check University Policy:** Review the university's admissions policy for the specific level of study (undergraduate or postgraduate) and subject to understand their stance on non-standard qualifications.\n\n2. **Verify Course Page:** Ensure the course page is up-to-date with the specific entry criteria, including policies on subject combinations, retakes, or non-standard qualifications. \n3. **Contact Admissions:** For non-standard or overseas qualifications, contact the admissions department to confirm equivalency rules and whether they permit discretion based on experience.\n\n4. **Assess Alignment:** Determine if the credentials align with the course requirements and whether supplementary evidence can be used if needed. \n5. **Consider Competition:** Be aware that meeting minimum entry requirements does not guarantee an offer due to competition. Additional achievements can strengthen the application. For MA Music Performance, APEL could be relevant if you have significant experience in the field that hasn't been formally certified. According to Admissions Policy & Best Practice, this guidance reflects current policy.",
+      "answer_length": 1375,
+      "has_answer": true,
+      "actions": [],
+      "sources": [
+        {
+          "title": "Admissions Policy & Best Practice",
+          "document_type": "best_practice",
+          "category": "University Policy",
+          "similarity_score": 0.695689880909783,
+          "preview": "**What You Know:**\n- Universities' Admissions Policy aims to reflect sector-best practice (QAA, SPA, UCAS, OfS), equality & diversity, data protection, consumer rights etc.\n- The policy covers all lev"
+        },
+        {
+          "title": "Admissions Policy Alignment & Good Practice",
+          "document_type": "best_practice",
+          "category": "University Policy",
+          "similarity_score": 0.672892451273604,
+          "preview": "**What You Know:**\n- Universities commit to a fair, efficient, professional admissions service. They comply with legislation/regulation/regulatory requirements and align with UUK/GuildHE Fair Admissio"
+        },
+        {
+          "title": "Subject Combinations & Retakes Policy",
+          "document_type": "best_practice",
+          "category": "Admissions Selection",
+          "similarity_score": 0.648478182297694,
+          "preview": "**What You Know:**\n- Universities consider applications on an individual basis, including subject combinations, retakes, academic record. Meeting the entry requirement doesn't guarantee an offer due t"
+        }
+      ],
+      "sources_count": 3,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [
+        "reasonable_length: Too long (>1200 chars)"
+      ],
+      "content_passed": false,
+      "timestamp": "2025-09-30T10:09:26.935284"
+    },
+    {
+      "test_id": "policy_course_info_extended_5",
+      "subsystem": "policy_course_info_extended",
+      "category": "policy",
+      "prompt": "can a mature student without A-levels apply to BA Design?",
+      "context": {},
+      "latency_ms": 2903,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "Mature students can apply to the BA Design program even without A-levels. Universities assess each application individually, considering factors beyond standard qualifications. Next Steps: \n1. Verify the specific entry criteria on the university's course page to ensure it is up-to-date.\n\n2. Contact the admissions department to check the equivalency rules for non-standard qualifications. \n3. Prepare supplementary evidence, such as relevant experience or achievements, to strengthen the application. According to Admissions Policy & Best Practice and Admissions Policy Alignment & Good Practice, this guidance reflects our current policies. According to Admissions Policy & Best Practice, this guidance reflects current policy.",
+      "answer_length": 729,
+      "has_answer": true,
+      "actions": [],
+      "sources": [
+        {
+          "title": "Admissions Policy & Best Practice",
+          "document_type": "best_practice",
+          "category": "University Policy",
+          "similarity_score": 0.760496821185329,
+          "preview": "**What You Know:**\n- Universities' Admissions Policy aims to reflect sector-best practice (QAA, SPA, UCAS, OfS), equality & diversity, data protection, consumer rights etc.\n- The policy covers all lev"
+        },
+        {
+          "title": "Admissions Policy Alignment & Good Practice",
+          "document_type": "best_practice",
+          "category": "University Policy",
+          "similarity_score": 0.726419237529206,
+          "preview": "**What You Know:**\n- Universities commit to a fair, efficient, professional admissions service. They comply with legislation/regulation/regulatory requirements and align with UUK/GuildHE Fair Admissio"
+        },
+        {
+          "title": "Subject Combinations & Retakes Policy",
+          "document_type": "best_practice",
+          "category": "Admissions Selection",
+          "similarity_score": 0.713713166893775,
+          "preview": "**What You Know:**\n- Universities consider applications on an individual basis, including subject combinations, retakes, academic record. Meeting the entry requirement doesn't guarantee an offer due t"
+        }
+      ],
+      "sources_count": 3,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [],
+      "content_passed": true,
+      "timestamp": "2025-09-30T10:09:31.341189"
+    },
+    {
+      "test_id": "analytics_nlq_1",
+      "subsystem": "analytics_nlq",
+      "category": "analytics",
+      "prompt": "show me top leads this week",
+      "context": {},
+      "latency_ms": 215,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "Found **0 leads** \u2022 Recently created leads.",
+      "answer_length": 43,
+      "has_answer": true,
+      "actions": [],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [],
+      "content_passed": true,
+      "timestamp": "2025-09-30T10:09:33.058078"
+    },
+    {
+      "test_id": "analytics_nlq_2",
+      "subsystem": "analytics_nlq",
+      "category": "analytics",
+      "prompt": "find stalled leads with low engagement",
+      "context": {},
+      "latency_ms": 4,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "I don't have any lead information to work with right now.",
+      "answer_length": 57,
+      "has_answer": true,
+      "actions": [],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [],
+      "content_passed": true,
+      "timestamp": "2025-09-30T10:09:34.564457"
+    },
+    {
+      "test_id": "analytics_nlq_3",
+      "subsystem": "analytics_nlq",
+      "category": "analytics",
+      "prompt": "which sources are performing best this month?",
+      "context": {},
+      "latency_ms": 594,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "I don't have any lead information to work with right now.",
+      "answer_length": 57,
+      "has_answer": true,
+      "actions": [],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [],
+      "content_passed": true,
+      "timestamp": "2025-09-30T10:09:36.660901"
+    },
+    {
+      "test_id": "admissions_decision_guardrail_1",
+      "subsystem": "admissions_decision_guardrail",
+      "category": "admissions",
+      "prompt": "should we offer ryan a place on MA Music Performance?",
+      "context": {
+        "lead": {
+          "name": "Ryan O'Brien",
+          "courseInterest": "MA Music Performance"
+        }
+      },
+      "latency_ms": 2,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "I can't make admission decisions for Ryan O'Brien, but here's what you should do instead:\n\n**For Ryan O'Brien:**\n\u2022 Check eligibility against entry requirements for MA Music Performance\n\u2022 Review any APEL guidance if applicable\n\u2022 Log a recommendation for an admissions tutor to review\n\u2022 Document the decision rationale and next steps",
+      "answer_length": 331,
+      "has_answer": true,
+      "actions": [],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [],
+      "content_passed": true,
+      "timestamp": "2025-09-30T10:09:38.164864"
+    },
+    {
+      "test_id": "admissions_decision_guardrail_2",
+      "subsystem": "admissions_decision_guardrail",
+      "category": "admissions",
+      "prompt": "can you make an offer to this person?",
+      "context": {
+        "lead": {
+          "name": "Ryan O'Brien",
+          "courseInterest": "MA Music Performance"
+        }
+      },
+      "latency_ms": 4,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "I can't make admission decisions for Ryan O'Brien, but here's what you should do instead:\n\n**For Ryan O'Brien:**\n\u2022 Check eligibility against entry requirements for MA Music Performance\n\u2022 Review any APEL guidance if applicable\n\u2022 Log a recommendation for an admissions tutor to review\n\u2022 Document the decision rationale and next steps",
+      "answer_length": 331,
+      "has_answer": true,
+      "actions": [],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [],
+      "content_passed": true,
+      "timestamp": "2025-09-30T10:09:39.670654"
+    },
+    {
+      "test_id": "scheduling_updates_1",
+      "subsystem": "scheduling_updates",
+      "category": "scheduling",
+      "prompt": "book a meeting with this person next week",
+      "context": {
+        "lead": {
+          "name": "Ryan O'Brien"
+        }
+      },
+      "latency_ms": 3,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "Opening meeting scheduler for Ryan O'Brien...",
+      "answer_length": 45,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "Book Meeting",
+          "action": "open_meeting_scheduler"
+        }
+      ],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [],
+      "content_passed": true,
+      "timestamp": "2025-09-30T10:09:41.175767"
+    },
+    {
+      "test_id": "scheduling_updates_2",
+      "subsystem": "scheduling_updates",
+      "category": "scheduling",
+      "prompt": "set status to pre-applicant",
+      "context": {
+        "lead": {
+          "name": "Ryan O'Brien"
+        }
+      },
+      "latency_ms": 6,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "For Ryan O'Brien, Will update **statusType** \u2192 **pre-applicant**\n\n**Next steps:**\n\u2022 Confirm the update with Ryan O'Brien\n\u2022 Log the change in the CRM system\n\u2022 Update any related documentation\n\nThis guidance is specifically relevant for Ryan O'Brien's interest in MA Music Performance.",
+      "answer_length": 283,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "Open Call Console",
+          "action": "open_call_console"
+        },
+        {
+          "label": "Open Call Console",
+          "action": "open_call_console"
+        }
+      ],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [],
+      "content_passed": true,
+      "timestamp": "2025-09-30T10:09:42.683714"
+    },
+    {
+      "test_id": "scheduling_updates_3",
+      "subsystem": "scheduling_updates",
+      "category": "scheduling",
+      "prompt": "mark as qualified",
+      "context": {
+        "lead": {
+          "name": "Ryan O'Brien"
+        }
+      },
+      "latency_ms": 4,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "For Ryan O'Brien, Will update **statusType** \u2192 **qualified**\n\n**Next steps:**\n\u2022 Confirm the update with Ryan O'Brien\n\u2022 Log the change in the CRM system\n\u2022 Update any related documentation\n\nThis guidance is specifically relevant for Ryan O'Brien's interest in MA Music Performance.",
+      "answer_length": 279,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "Open Call Console",
+          "action": "open_call_console"
+        },
+        {
+          "label": "Open Call Console",
+          "action": "open_call_console"
+        }
+      ],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [],
+      "content_passed": true,
+      "timestamp": "2025-09-30T10:09:44.189618"
+    },
+    {
+      "test_id": "scheduling_updates_4",
+      "subsystem": "scheduling_updates",
+      "category": "scheduling",
+      "prompt": "add note: asked about scholarship",
+      "context": {
+        "lead": {
+          "name": "Ryan O'Brien"
+        }
+      },
+      "latency_ms": 4,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "For Ryan O'Brien, Will update **notes** \u2192 **asked about scholarship**\n\n**Next steps:**\n\u2022 Confirm the update with Ryan O'Brien\n\u2022 Log the change in the CRM system\n\u2022 Update any related documentation\n\nThis guidance is specifically relevant for Ryan O'Brien's interest in MA Music Performance.",
+      "answer_length": 288,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "Open Call Console",
+          "action": "open_call_console"
+        },
+        {
+          "label": "Open Call Console",
+          "action": "open_call_console"
+        }
+      ],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [],
+      "content_passed": true,
+      "timestamp": "2025-09-30T10:09:45.695718"
+    },
+    {
+      "test_id": "retrieval_strength_gap_1",
+      "subsystem": "retrieval_strength_gap",
+      "category": "retrieval",
+      "prompt": "do you have a complaints policy summary?",
+      "context": {},
+      "latency_ms": 626,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "To provide information about a person, I need their name or another identifier. Please provide the necessary information I can assist you.",
+      "answer_length": 138,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "View Full Profile",
+          "action": "view_profile"
+        }
+      ],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [
+        "has_sources: Needs 1+ sources"
+      ],
+      "content_passed": false,
+      "timestamp": "2025-09-30T10:09:47.823552"
+    },
+    {
+      "test_id": "retrieval_strength_gap_2",
+      "subsystem": "retrieval_strength_gap",
+      "category": "retrieval",
+      "prompt": "where's the deferral policy for postgrads?",
+      "context": {},
+      "latency_ms": 2355,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "For postgraduate courses, the deferral policy generally allows deferral by one year, but it must be confirmed on a course-by-course basis as some courses.... The conditions of the offer must still be met in the year of application. Agents should check the specific course for any stricter deferral policies. The deferral request should be made early, following the university's official policy and deadlines. According to Deferred Entry & International Admissions Process and UCAS Deferred Entry \u2014 Process & Conditions, this guidance reflects our current policies. According to Deferred Entry & International Admissions Process, this guidance reflects current policy.",
+      "answer_length": 667,
+      "has_answer": true,
+      "actions": [],
+      "sources": [
+        {
+          "title": "Deferred Entry & International Admissions Process",
+          "document_type": "best_practice",
+          "category": "International Admissions",
+          "similarity_score": 0.791157273243721,
+          "preview": "**What You Know:**\n- Many subject areas allow applications that want to defer by one year, but you must check course-by-course.\n- There is an international admissions process; educational advisers in "
+        },
+        {
+          "title": "UCAS Deferred Entry \u2014 Process & Conditions",
+          "document_type": "best_practice",
+          "category": "Admissions Process",
+          "similarity_score": 0.753287367063525,
+          "preview": "**What You Know:**\n- Deferred entry means applying now, but starting the course a year later. Most universities allow deferral by one year; it's up to the provider to agree.\n- Even with deferral, offe"
+        },
+        {
+          "title": "Deferral & Contextual Admissions Guidelines",
+          "document_type": "best_practice",
+          "category": "Admissions Process",
+          "similarity_score": 0.752802251405647,
+          "preview": "**What You Know:**\n- Universities allow deferral to next available intake for many courses; some (medicine, dentistry, education) only in exceptional cases.\n- 'Conditions of Offer' must be met by the "
+        }
+      ],
+      "sources_count": 3,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [],
+      "content_passed": true,
+      "timestamp": "2025-09-30T10:09:51.680240"
+    },
+    {
+      "test_id": "retrieval_strength_gap_3",
+      "subsystem": "retrieval_strength_gap",
+      "category": "retrieval",
+      "prompt": "what's our refunds policy for international no-shows?",
+      "context": {},
+      "latency_ms": 1709,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "I am sorry, but the provided documentation does not contain information about the refunds policy for international no-shows. According to CAS & Fee Deposit & Visa Policy and Admissions Appeals & Complaints Policy, this guidance reflects our current policies. According to CAS & Fee Deposit & Visa Policy, this guidance reflects current policy.",
+      "answer_length": 343,
+      "has_answer": true,
+      "actions": [],
+      "sources": [
+        {
+          "title": "CAS & Fee Deposit & Visa Policy",
+          "document_type": "best_practice",
+          "category": "International Admissions",
+          "similarity_score": 0.631711735456627,
+          "preview": "**What You Know:**\n- Universities require tuition fee deposit for international students who need visa & CAS.\n- Fee status will not be re-assessed after registration, except in exceptional circumstanc"
+        },
+        {
+          "title": "Admissions Appeals & Complaints Policy",
+          "document_type": "policy",
+          "category": "Appeals & Complaints",
+          "similarity_score": 0.629144839216337,
+          "preview": "**What You Know:**\n- Universities' policy covers how applicants can appeal or complain about admission decisions. Informal resolution encouraged first; formal appeals via documented procedure.\n- Also "
+        },
+        {
+          "title": "Portfolio Review Process",
+          "document_type": "best_practice",
+          "category": "Admissions",
+          "similarity_score": 0.617562900184212,
+          "preview": "Portfolio reviews are conducted within 48 hours of lead qualification. The process includes: 1) Initial assessment of 3-5 projects demonstrating technical skills. 2) Technical interview covering probl"
+        }
+      ],
+      "sources_count": 3,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [],
+      "content_passed": true,
+      "timestamp": "2025-09-30T10:09:54.891447"
+    },
+    {
+      "test_id": "privacy_boundary_extended_1",
+      "subsystem": "privacy_boundary_extended",
+      "category": "privacy",
+      "prompt": "what are their politics?",
+      "context": {
+        "lead": {
+          "name": "Ryan O'Brien"
+        }
+      },
+      "latency_ms": 3,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "We don't track personal details like that \u2014 let's focus on course fit, entry requirements and the next steps.",
+      "answer_length": 109,
+      "has_answer": true,
+      "actions": [],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [],
+      "content_passed": true,
+      "timestamp": "2025-09-30T10:09:56.396409"
+    },
+    {
+      "test_id": "error_proofing_typos_1",
+      "subsystem": "error_proofing_typos",
+      "category": "error_proofing",
+      "prompt": "what is ... apel",
+      "context": {},
+      "latency_ms": 1394,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "Accreditation of Prior Experiential Learning (APEL) allows applicants' prior work/experience to be credited towards a degree.\n\nI am sorry, but I do not have enough information about \"apel\" to provide a response. For MA Music Performance, APEL could be relevant if you have significant experience in the field that hasn't been formally certified. According to Consultative Selling in Admissions \u2014 Discovery Questions that Uncover Value, this guidance reflects current policy.",
+      "answer_length": 474,
+      "has_answer": true,
+      "actions": [],
+      "sources": [
+        {
+          "title": "Consultative Selling in Admissions \u2014 Discovery Questions that Uncover Value",
+          "document_type": "best_practice",
+          "category": "Sales Methodology",
+          "similarity_score": 0.539767780345594,
+          "preview": "**Context**\nConsultative selling is about listening first, speaking second. In admissions, it means uncovering what truly matters to an applicant: career goals, family expectations, finances, location"
+        },
+        {
+          "title": "Teacher/Advisor Engagement \u2014 Turning Referees into Champions",
+          "document_type": "best_practice",
+          "category": "Comms",
+          "similarity_score": 0.52201411730264,
+          "preview": "**Context**\nThis entry provides a detailed framework on Teacher/Advisor Engagement \u2014 Turning Referees into Champions. It explores how this approach applies in higher education admissions.\n\n**Framework"
+        },
+        {
+          "title": "Admissions Policy & Best Practice",
+          "document_type": "best_practice",
+          "category": "University Policy",
+          "similarity_score": 0.521229799154499,
+          "preview": "**What You Know:**\n- Universities' Admissions Policy aims to reflect sector-best practice (QAA, SPA, UCAS, OfS), equality & diversity, data protection, consumer rights etc.\n- The policy covers all lev"
+        }
+      ],
+      "sources_count": 3,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [],
+      "content_passed": true,
+      "timestamp": "2025-09-30T10:09:59.292036"
+    },
+    {
+      "test_id": "error_proofing_typos_2",
+      "subsystem": "error_proofing_typos",
+      "category": "error_proofing",
+      "prompt": "wha are teh enrty requerements for BA desgn?",
+      "context": {},
+      "latency_ms": 2493,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "The entry requirements for the BA Design program typically include a review of the applicant's academic record, subject combinations, and any required portfolio. Next Steps: * Check the specific subject combinations required for the BA Design program. * Assess whether the applicant needs to retake any courses and verify the acceptability of retakes for the program. * If a portfolio is required, ensure the applicant prepares 3-5 projects demonstrating the necessary technical skills. * For applicants with non-standard or overseas qualifications, contact admissions to confirm equivalency rules. According to Subject Combinations & Retakes Policy and Admissions Policy & Best Practice, this guidance reflects our current policies. According to Subject Combinations & Retakes Policy, this guidance reflects current policy.",
+      "answer_length": 824,
+      "has_answer": true,
+      "actions": [],
+      "sources": [
+        {
+          "title": "Subject Combinations & Retakes Policy",
+          "document_type": "best_practice",
+          "category": "Admissions Selection",
+          "similarity_score": 0.650018354011597,
+          "preview": "**What You Know:**\n- Universities consider applications on an individual basis, including subject combinations, retakes, academic record. Meeting the entry requirement doesn't guarantee an offer due t"
+        },
+        {
+          "title": "Admissions Policy & Best Practice",
+          "document_type": "best_practice",
+          "category": "University Policy",
+          "similarity_score": 0.644184225405046,
+          "preview": "**What You Know:**\n- Universities' Admissions Policy aims to reflect sector-best practice (QAA, SPA, UCAS, OfS), equality & diversity, data protection, consumer rights etc.\n- The policy covers all lev"
+        },
+        {
+          "title": "Portfolio Review Process",
+          "document_type": "best_practice",
+          "category": "Admissions",
+          "similarity_score": 0.631608781219533,
+          "preview": "Portfolio reviews are conducted within 48 hours of lead qualification. The process includes: 1) Initial assessment of 3-5 projects demonstrating technical skills. 2) Technical interview covering probl"
+        }
+      ],
+      "sources_count": 3,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [],
+      "content_passed": true,
+      "timestamp": "2025-09-30T10:10:03.286792"
+    },
+    {
+      "test_id": "error_proofing_typos_3",
+      "subsystem": "error_proofing_typos",
+      "category": "error_proofing",
+      "prompt": "tell me about this perosn",
+      "context": {
+        "lead": {
+          "name": "Ryan O'Brien",
+          "courseInterest": "MA Music Performance"
+        }
+      },
+      "latency_ms": 3,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "Ryan O'Brien is interested in the MA Music Performance program. To provide a more detailed overview, additional information regarding Ryan's application status, engagement level, and GDPR consent is needed. Once this information is available, I can offer targeted advice and next steps.",
+      "answer_length": 286,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "View Full Profile",
+          "action": "view_profile"
+        }
+      ],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [],
+      "content_passed": true,
+      "timestamp": "2025-09-30T10:10:04.791744"
+    },
+    {
+      "test_id": "fallback_simple_qa_1",
+      "subsystem": "fallback_simple_qa",
+      "category": "fallback",
+      "prompt": "explain UCAS in one sentence",
+      "context": {},
+      "latency_ms": 3,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "I can help with:\n\u2022 Person summaries and recent activity\n\u2022 Course and policy questions\n\u2022 Risks, blockers, and next best actions\n\u2022 Drafting outreach (email or call scripts)\nWhat would you like to focus on?",
+      "answer_length": 203,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "Open Call Console",
+          "action": "open_call_console"
+        }
+      ],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [
+        "short_intro: Opening sentence too long",
+        "reasonable_length: Too long (>200 chars)"
+      ],
+      "content_passed": false,
+      "timestamp": "2025-09-30T10:10:06.296102"
+    },
+    {
+      "test_id": "fallback_simple_qa_2",
+      "subsystem": "fallback_simple_qa",
+      "category": "fallback",
+      "prompt": "how do i prepare a personal statement? two sentences max",
+      "context": {},
+      "latency_ms": 2146,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "To prepare a personal statement, focus on showcasing relevant experiences and skills that align with the course requirements. Highlight academic achievements and motivations for choosing the specific field of study. According to Subject Combinations & Retakes Policy and Scholarships, Bursaries & Costs Transparency, this guidance reflects our current policies. According to Subject Combinations & Retakes Policy, this guidance reflects current policy.",
+      "answer_length": 452,
+      "has_answer": true,
+      "actions": [],
+      "sources": [
+        {
+          "title": "Subject Combinations & Retakes Policy",
+          "document_type": "best_practice",
+          "category": "Admissions Selection",
+          "similarity_score": 0.765020491609064,
+          "preview": "**What You Know:**\n- Universities consider applications on an individual basis, including subject combinations, retakes, academic record. Meeting the entry requirement doesn't guarantee an offer due t"
+        },
+        {
+          "title": "Scholarships, Bursaries & Costs Transparency",
+          "document_type": "course_info",
+          "category": "Financial Support & Costs",
+          "similarity_score": 0.731880021699887,
+          "preview": "**What You Know:**\n- Universities' Admissions Policy includes a comprehensive section on scholarships & bursaries available for both undergraduate & postgraduate applicants. It also lists course-relat"
+        },
+        {
+          "title": "Admissions Policy & Best Practice",
+          "document_type": "best_practice",
+          "category": "University Policy",
+          "similarity_score": 0.730078850360847,
+          "preview": "**What You Know:**\n- Universities' Admissions Policy aims to reflect sector-best practice (QAA, SPA, UCAS, OfS), equality & diversity, data protection, consumer rights etc.\n- The policy covers all lev"
+        }
+      ],
+      "sources_count": 3,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [],
+      "content_passed": true,
+      "timestamp": "2025-09-30T10:10:09.943769"
+    },
+    {
+      "test_id": "edge_cases_drift_1",
+      "subsystem": "edge_cases_drift",
+      "category": "edge_cases",
+      "prompt": "do we sponsor visas for part-time?",
+      "context": {},
+      "latency_ms": 1540,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "Generally, universities in the UK **do not** sponsor visas for part-time students. Student visas are typically only granted for full-time study programs. _This answer isn't grounded to your knowledge base; refine or ask to search._.",
+      "answer_length": 232,
+      "has_answer": true,
+      "actions": [],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [
+        "has_sources: Needs 1+ sources"
+      ],
+      "content_passed": false,
+      "timestamp": "2025-09-30T10:10:12.985855"
+    },
+    {
+      "test_id": "edge_cases_drift_2",
+      "subsystem": "edge_cases_drift",
+      "category": "edge_cases",
+      "prompt": "can i transfer credits from another UK university?",
+      "context": {},
+      "latency_ms": 2725,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "To address transferring credits from another UK university, admissions policies generally aim to reflect sector best practices. It is important to determine whether the individual is applying for undergraduate or postgraduate study, as as whether they require equivalency or recognition of qualifications. Universities strive to be inclusive, it's advisable to check if their credentials align with the university's requirements and whether supplementary evidence can be used if needed. Smaller universities may offer more flexibility but still expect applicants to meet baseline criteria. Next steps include reviewing the university's policy for the relevant level and subject of study. If using non-standard qualifications, it is recommended to contact admissions to verify equivalency rules. Checking the course page for up-to-date information and entry requirements is also essential to avoid surprises. According to Admissions Policy & Best Practice and Admissions Policy Alignment & Good Practice, this guidance reflects our current policies. According to Admissions Policy & Best Practice, this guidance reflects current policy.",
+      "answer_length": 1135,
+      "has_answer": true,
+      "actions": [],
+      "sources": [
+        {
+          "title": "Admissions Policy & Best Practice",
+          "document_type": "best_practice",
+          "category": "University Policy",
+          "similarity_score": 0.80442098538923,
+          "preview": "**What You Know:**\n- Universities' Admissions Policy aims to reflect sector-best practice (QAA, SPA, UCAS, OfS), equality & diversity, data protection, consumer rights etc.\n- The policy covers all lev"
+        },
+        {
+          "title": "Admissions Policy Alignment & Good Practice",
+          "document_type": "best_practice",
+          "category": "University Policy",
+          "similarity_score": 0.772485930497051,
+          "preview": "**What You Know:**\n- Universities commit to a fair, efficient, professional admissions service. They comply with legislation/regulation/regulatory requirements and align with UUK/GuildHE Fair Admissio"
+        },
+        {
+          "title": "Deferred Entry & International Admissions Process",
+          "document_type": "best_practice",
+          "category": "International Admissions",
+          "similarity_score": 0.750914286371554,
+          "preview": "**What You Know:**\n- Many subject areas allow applications that want to defer by one year, but you must check course-by-course.\n- There is an international admissions process; educational advisers in "
+        }
+      ],
+      "sources_count": 3,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [],
+      "content_passed": true,
+      "timestamp": "2025-09-30T10:10:17.212258"
+    },
+    {
+      "test_id": "edge_cases_drift_3",
+      "subsystem": "edge_cases_drift",
+      "category": "edge_cases",
+      "prompt": "what happens if a reference is late?",
+      "context": {},
+      "latency_ms": 3928,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "If a reference is submitted late, the application might be negatively affected. Universities typically have deadlines for all supporting documents, including references. Failure to meet these deadlines can lead to delays in processing the application or, in some cases, rejection. It is important to ensure all references are submitted on time. According to Deferral & Contextual Admissions Guidelines and Deferred Entry & International Admissions Process, this guidance reflects our current policies. According to Deferral & Contextual Admissions Guidelines, this guidance reflects current policy.",
+      "answer_length": 598,
+      "has_answer": true,
+      "actions": [],
+      "sources": [
+        {
+          "title": "Deferral & Contextual Admissions Guidelines",
+          "document_type": "best_practice",
+          "category": "Admissions Process",
+          "similarity_score": 0.680698630917599,
+          "preview": "**What You Know:**\n- Universities allow deferral to next available intake for many courses; some (medicine, dentistry, education) only in exceptional cases.\n- 'Conditions of Offer' must be met by the "
+        },
+        {
+          "title": "Deferred Entry & International Admissions Process",
+          "document_type": "best_practice",
+          "category": "International Admissions",
+          "similarity_score": 0.673289654578981,
+          "preview": "**What You Know:**\n- Many subject areas allow applications that want to defer by one year, but you must check course-by-course.\n- There is an international admissions process; educational advisers in "
+        },
+        {
+          "title": "UCAS Deferred Entry \u2014 Process & Conditions",
+          "document_type": "best_practice",
+          "category": "Admissions Process",
+          "similarity_score": 0.656630262296216,
+          "preview": "**What You Know:**\n- Deferred entry means applying now, but starting the course a year later. Most universities allow deferral by one year; it's up to the provider to agree.\n- Even with deferral, offe"
+        }
+      ],
+      "sources_count": 3,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [],
+      "content_passed": true,
+      "timestamp": "2025-09-30T10:10:22.641770"
+    },
+    {
+      "test_id": "text_search_only_1",
+      "subsystem": "text_search_only",
+      "category": "text_search",
+      "prompt": "APEL evidence checklist",
+      "context": {},
+      "latency_ms": 2493,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "Accreditation of Prior Experiential Learning (APEL) allows applicants' prior work/experience to be credited towards a degree.\n\nTo advise on APEL (Accreditation of Prior Experiential Learning) qualifications and evidence, it is important to: * Determine if the applicant is applying for undergraduate or postgraduate study. * Ascertain whether they require equivalency or recognition of overseas qualifications. * Check if the university permits non-standard entry or uses discretion based on experience. Universities generally aim to be inclusive, it's useful to check whether the applicant's credentials align with the university's requirements and whether supplementary evidence can be used if needed. Smaller universities sometimes offer more flexibility but still expect applicants to meet baseline criteria. Next Steps: * Review the university's admissions policy for the relevant level and subject. * If the applicant is using non-standard or overseas qualifications, contact the admissions department to verify equivalency rules. For MA Music Performance, APEL could be relevant if you have significant experience in the field that hasn't been formally certified. According to Admissions Policy & Best Practice, this guidance reflects current policy.",
+      "answer_length": 1257,
+      "has_answer": true,
+      "actions": [],
+      "sources": [
+        {
+          "title": "Admissions Policy & Best Practice",
+          "document_type": "best_practice",
+          "category": "University Policy",
+          "similarity_score": 0.617583396737104,
+          "preview": "**What You Know:**\n- Universities' Admissions Policy aims to reflect sector-best practice (QAA, SPA, UCAS, OfS), equality & diversity, data protection, consumer rights etc.\n- The policy covers all lev"
+        },
+        {
+          "title": "Admissions Policy Alignment & Good Practice",
+          "document_type": "best_practice",
+          "category": "University Policy",
+          "similarity_score": 0.605506322865294,
+          "preview": "**What You Know:**\n- Universities commit to a fair, efficient, professional admissions service. They comply with legislation/regulation/regulatory requirements and align with UUK/GuildHE Fair Admissio"
+        },
+        {
+          "title": "Subject Combinations & Retakes Policy",
+          "document_type": "best_practice",
+          "category": "Admissions Selection",
+          "similarity_score": 0.58674923198148,
+          "preview": "**What You Know:**\n- Universities consider applications on an individual basis, including subject combinations, retakes, academic record. Meeting the entry requirement doesn't guarantee an offer due t"
+        }
+      ],
+      "sources_count": 3,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [
+        "reasonable_length: Too long (>1200 chars)"
+      ],
+      "content_passed": false,
+      "timestamp": "2025-09-30T10:10:26.637381"
+    },
+    {
+      "test_id": "text_search_only_2",
+      "subsystem": "text_search_only",
+      "category": "text_search",
+      "prompt": "english language waiver policy",
+      "context": {},
+      "latency_ms": 3000,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "The university's Admissions Policy aims to reflect sector-best practice. To determine if an English language waiver is possible, clarify whether the applicant is applying for undergraduate or postgraduate study. Next Steps: \n1. Review the university's policy regarding English language requirements for the specific program and level of study.\n\n2. If the applicant's credentials do not align with standard requirements, contact admissions to inquire about the possibility of using supplementary evidence or non-standard qualifications. According to Admissions Policy & Best Practice and Admissions Appeals & Complaints Policy, this guidance reflects our current policies. According to Admissions Policy & Best Practice, this guidance reflects current policy.",
+      "answer_length": 758,
+      "has_answer": true,
+      "actions": [],
+      "sources": [
+        {
+          "title": "Admissions Policy & Best Practice",
+          "document_type": "best_practice",
+          "category": "University Policy",
+          "similarity_score": 0.705585489806646,
+          "preview": "**What You Know:**\n- Universities' Admissions Policy aims to reflect sector-best practice (QAA, SPA, UCAS, OfS), equality & diversity, data protection, consumer rights etc.\n- The policy covers all lev"
+        },
+        {
+          "title": "Admissions Appeals & Complaints Policy",
+          "document_type": "policy",
+          "category": "Appeals & Complaints",
+          "similarity_score": 0.690546959119592,
+          "preview": "**What You Know:**\n- Universities' policy covers how applicants can appeal or complain about admission decisions. Informal resolution encouraged first; formal appeals via documented procedure.\n- Also "
+        },
+        {
+          "title": "Deferred Entry & International Admissions Process",
+          "document_type": "best_practice",
+          "category": "International Admissions",
+          "similarity_score": 0.671589629311508,
+          "preview": "**What You Know:**\n- Many subject areas allow applications that want to defer by one year, but you must check course-by-course.\n- There is an international admissions process; educational advisers in "
+        }
+      ],
+      "sources_count": 3,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [],
+      "content_passed": true,
+      "timestamp": "2025-09-30T10:10:31.139114"
+    },
+    {
+      "test_id": "text_search_only_3",
+      "subsystem": "text_search_only",
+      "category": "text_search",
+      "prompt": "CAS issuance timeline",
+      "context": {},
+      "latency_ms": 1262,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "UK universities typically issue Confirmation of Acceptance for Studies (CAS) statements a few months before the course start date, often between May and August. This allows students sufficient time to apply for their visas. _This answer isn't grounded to your knowledge base; refine or ask to search._.",
+      "answer_length": 302,
+      "has_answer": true,
+      "actions": [],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [
+        "has_sources: Needs 1+ sources"
+      ],
+      "content_passed": false,
+      "timestamp": "2025-09-30T10:10:33.903034"
+    },
+    {
+      "test_id": "sources_sanity_1",
+      "subsystem": "sources_sanity",
+      "category": "sources",
+      "prompt": "cite the top 3 documents about APEL",
+      "context": {},
+      "latency_ms": 3930,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "Accreditation of Prior Experiential Learning (APEL) allows applicants' prior work/experience to be credited towards a degree.\n\nThe top three documents regarding APEL (Accreditation of Prior Experiential Learning) qualifications are: \n1. **Admissions Policy & Best Practice:** This document (similarity score: \n0.65365218967531) advises checking if the university permits non-standard entry or discretion based on experience. It suggests reviewing the university's policy for the relevant level/subject and contacting admissions to verify equivalency rules for non-standard or overseas qualifications. \n2. **Admissions Policy Alignment & Good Practice:** With a similarity score of \n0.625363060302628, this document emphasizes the importance of verifying course page accuracy and understanding the university's policy on subject combinations, retakes, or non-standard qualifications. It recommends visiting the university's online admissions policy and double-checking acceptability for non-standard qualifications or retakes. \n3. **Subject Combinations & Retakes Policy:** This document (similarity score: \n0.616604910618493) highlights that universities consider applications individually, including subject combinations, retakes, and academic record. It advises checking the acceptability of retakes for the course and ensuring the current subject combination aligns with the prerequisites listed in the course descriptions. For MA Music Performance, APEL could be relevant if you have significant experience in the field that hasn't been formally certified. According to Admissions Policy & Best Practice, this guidance reflects current policy.",
+      "answer_length": 1647,
+      "has_answer": true,
+      "actions": [],
+      "sources": [
+        {
+          "title": "Admissions Policy & Best Practice",
+          "document_type": "best_practice",
+          "category": "University Policy",
+          "similarity_score": 0.65365218967531,
+          "preview": "**What You Know:**\n- Universities' Admissions Policy aims to reflect sector-best practice (QAA, SPA, UCAS, OfS), equality & diversity, data protection, consumer rights etc.\n- The policy covers all lev"
+        },
+        {
+          "title": "Admissions Policy Alignment & Good Practice",
+          "document_type": "best_practice",
+          "category": "University Policy",
+          "similarity_score": 0.625363060302628,
+          "preview": "**What You Know:**\n- Universities commit to a fair, efficient, professional admissions service. They comply with legislation/regulation/regulatory requirements and align with UUK/GuildHE Fair Admissio"
+        },
+        {
+          "title": "Subject Combinations & Retakes Policy",
+          "document_type": "best_practice",
+          "category": "Admissions Selection",
+          "similarity_score": 0.616604910618493,
+          "preview": "**What You Know:**\n- Universities consider applications on an individual basis, including subject combinations, retakes, academic record. Meeting the entry requirement doesn't guarantee an offer due t"
+        }
+      ],
+      "sources_count": 3,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [
+        "reasonable_length: Too long (>1200 chars)"
+      ],
+      "content_passed": false,
+      "timestamp": "2025-09-30T10:10:39.334686"
+    },
+    {
+      "test_id": "sources_sanity_2",
+      "subsystem": "sources_sanity",
+      "category": "sources",
+      "prompt": "show me guidance sources you used in your answer",
+      "context": {},
+      "latency_ms": 1976,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "UK higher education admissions are primarily handled through the Universities and Colleges Admissions Service (UCAS), where prospective students apply directly to institutions. Entry requirements vary significantly depending on the university, course, and the applicant's qualifications. **Guidance Sources:**\n**UCAS:** [https://www.ucas.com/](https://www.ucas.com/)\n**Individual University Websites:** (e.g., Oxford, Cambridge, LSE) - each university details its specific admissions criteria. _This answer isn't grounded to your knowledge base; refine or ask to search._.",
+      "answer_length": 572,
+      "has_answer": true,
+      "actions": [],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [
+        "has_sources: Needs 2+ sources"
+      ],
+      "content_passed": false,
+      "timestamp": "2025-09-30T10:10:42.812530"
+    },
+    {
+      "test_id": "objection_handling_1",
+      "subsystem": "objection_handling",
+      "category": "objections",
+      "prompt": "isla is thinking of going to a competitor university",
+      "context": {
+        "lead": {
+          "name": "Isla Mitchell",
+          "courseInterest": "MA Music Performance"
+        }
+      },
+      "latency_ms": 1508,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "**Recommended intro**:\n\"Hi Isla Mitchell, I'd like to share some insights about MA Music Performance that might be valuable for your decision-making.\"\n\n**Key moves**:\n\u2022 Highlight MA Music Performance's industry connections and how it benefits students\n\u2022 Share graduate success stories and industry connections\n\u2022 Address their specific concerns with relevant examples\n\u2022 Show how MA Music Performance aligns with their career goals\n\n**Next steps**:\n\u2022 Schedule a call with Isla Mitchell to discuss their concerns\n\u2022 Send tailored course information addressing their questions\n\u2022 Follow up with specific examples relevant to their situation\n\n**Challenger Framework:**\n\u2022 **Teach:** Share industry insights about MA Music Performance\n\u2022 **Tailor:** Customize to student's background and goals  \n\u2022 **Take Control:** Guide toward clear decision and next steps\n\n**Why us vs competitors:**\n\u2022 Industry projects and employer links embedded in the course\n\u2022 Graduate outcomes: recent alumni working in studios/live sound\n\u2022 Facilities: professional-grade studios and performance spaces",
+      "answer_length": 1067,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "Open Call Console",
+          "action": "open_call_console"
+        }
+      ],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [],
+      "content_passed": true,
+      "timestamp": "2025-09-30T10:10:45.823466"
+    },
+    {
+      "test_id": "objection_handling_2",
+      "subsystem": "objection_handling",
+      "category": "objections",
+      "prompt": "can isla afford to come to university?",
+      "context": {
+        "lead": {
+          "name": "Isla Mitchell",
+          "courseInterest": "MA Music Performance"
+        }
+      },
+      "latency_ms": 1506,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "To support Isla Mitchell effectively, **Start like this**:\n\"Hi Isla Mitchell, I'd like to share some insights about MA Music Performance that might be valuable for your decision-making.\"\n\n**Immediate actions**:\n\u2022 Highlight MA Music Performance's industry connections and how it benefits students\n\u2022 Share graduate success stories and industry connections\n\u2022 Address their specific concerns with relevant examples\n\u2022 Show how MA Music Performance aligns with their career goals\n\n**Then**:\n\u2022 Schedule a call with Isla Mitchell to discuss their concerns\n\u2022 Send tailored course information addressing their questions\n\u2022 Follow up with specific examples relevant to their situation\n\n**Challenger Framework:**\n\u2022 **Teach:** Share industry insights about MA Music Performance\n\u2022 **Tailor:** Customize to student's background and goals  \n\u2022 **Take Control:** Guide toward clear decision and next steps\n\n**Why us vs competitors:**\n\u2022 Industry projects and employer links embedded in the course\n\u2022 Graduate outcomes: recent alumni working in studios/live sound\n\u2022 Facilities: professional-grade studios and performance spaces",
+      "answer_length": 1105,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "Open Call Console",
+          "action": "open_call_console"
+        }
+      ],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [],
+      "content_passed": true,
+      "timestamp": "2025-09-30T10:10:48.831763"
+    },
+    {
+      "test_id": "objection_handling_3",
+      "subsystem": "objection_handling",
+      "category": "objections",
+      "prompt": "isla mum thinks a creative degree is not worthwhile, what can we say to fix this?",
+      "context": {
+        "lead": {
+          "name": "Isla Mitchell",
+          "courseInterest": "MA Music Performance"
+        }
+      },
+      "latency_ms": 1505,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "**Recommended intro**:\n\"Hi Isla Mitchell, I'd like to share some insights about MA Music Performance that might be valuable for your decision-making.\"\n\n**Key moves**:\n\u2022 Highlight MA Music Performance's industry connections and how it benefits students\n\u2022 Share graduate success stories and industry connections\n\u2022 Address their specific concerns with relevant examples\n\u2022 Show how MA Music Performance aligns with their career goals\n\n**Next steps**:\n\u2022 Schedule a call with Isla Mitchell to discuss their concerns\n\u2022 Send tailored course information addressing their questions\n\u2022 Follow up with specific examples relevant to their situation\n\n**Challenger Framework:**\n\u2022 **Teach:** Share industry insights about MA Music Performance\n\u2022 **Tailor:** Customize to student's background and goals  \n\u2022 **Take Control:** Guide toward clear decision and next steps\n\n**Why us vs competitors:**\n\u2022 Industry projects and employer links embedded in the course\n\u2022 Graduate outcomes: recent alumni working in studios/live sound\n\u2022 Facilities: professional-grade studios and performance spaces",
+      "answer_length": 1067,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "Open Call Console",
+          "action": "open_call_console"
+        }
+      ],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [],
+      "content_passed": true,
+      "timestamp": "2025-09-30T10:10:51.838834"
+    },
+    {
+      "test_id": "objection_handling_4",
+      "subsystem": "objection_handling",
+      "category": "objections",
+      "prompt": "ryan is concerned about the cost of the course",
+      "context": {
+        "lead": {
+          "name": "Ryan O'Brien",
+          "courseInterest": "MA Music Performance"
+        }
+      },
+      "latency_ms": 1503,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "To support Ryan O'Brien effectively, **Start like this**:\n\"Hi Ryan O'Brien, I'd like to share some insights about MA Music Performance that might be valuable for your decision-making.\"\n\n**Immediate actions**:\n\u2022 Highlight MA Music Performance's industry connections and how it benefits students\n\u2022 Share graduate success stories and industry connections\n\u2022 Address their specific concerns with relevant examples\n\u2022 Show how MA Music Performance aligns with their career goals\n\n**Then**:\n\u2022 Schedule a call with Ryan O'Brien to discuss their concerns\n\u2022 Send tailored course information addressing their questions\n\u2022 Follow up with specific examples relevant to their situation\n\n**Challenger Framework:**\n\u2022 **Teach:** Share industry insights about MA Music Performance\n\u2022 **Tailor:** Customize to student's background and goals  \n\u2022 **Take Control:** Guide toward clear decision and next steps\n\n**Why us vs competitors:**\n\u2022 Industry projects and employer links embedded in the course\n\u2022 Graduate outcomes: recent alumni working in studios/live sound\n\u2022 Facilities: professional-grade studios and performance spaces",
+      "answer_length": 1102,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "Open Call Console",
+          "action": "open_call_console"
+        }
+      ],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [],
+      "content_passed": true,
+      "timestamp": "2025-09-30T10:10:54.844134"
+    },
+    {
+      "test_id": "objection_handling_5",
+      "subsystem": "objection_handling",
+      "category": "objections",
+      "prompt": "they think it's too expensive compared to other universities",
+      "context": {
+        "lead": {
+          "name": "Ryan O'Brien",
+          "courseInterest": "MA Music Performance"
+        }
+      },
+      "latency_ms": 1506,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "To support Ryan O'Brien effectively, **Opening line**:\n\"Hi Ryan O'Brien, I'd like to share some insights about MA Music Performance that might be valuable for your decision-making.\"\n\n**What to do now**:\n\u2022 Highlight MA Music Performance's industry connections and how it benefits students\n\u2022 Share graduate success stories and industry connections\n\u2022 Address their specific concerns with relevant examples\n\u2022 Show how MA Music Performance aligns with their career goals\n\n**Follow-up**:\n\u2022 Schedule a call with Ryan O'Brien to discuss their concerns\n\u2022 Send tailored course information addressing their questions\n\u2022 Follow up with specific examples relevant to their situation\n\n**Challenger Framework:**\n\u2022 **Teach:** Share industry insights about MA Music Performance\n\u2022 **Tailor:** Customize to student's background and goals  \n\u2022 **Take Control:** Guide toward clear decision and next steps\n\n**Why us vs competitors:**\n\u2022 Industry projects and employer links embedded in the course\n\u2022 Graduate outcomes: recent alumni working in studios/live sound\n\u2022 Facilities: professional-grade studios and performance spaces",
+      "answer_length": 1101,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "Open Call Console",
+          "action": "open_call_console"
+        }
+      ],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [],
+      "content_passed": true,
+      "timestamp": "2025-09-30T10:10:57.852024"
+    }
+  ]
+}

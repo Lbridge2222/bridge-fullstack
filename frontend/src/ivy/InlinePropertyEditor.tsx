@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { X, Save, Calendar, Phone, Mail, User, GraduationCap } from 'lucide-react';
 
 interface PropertyField {
@@ -124,79 +125,76 @@ export const InlinePropertyEditor: React.FC<InlinePropertyEditorProps> = ({
   };
 
   return (
-    <Card className="p-4 bg-white border border-border shadow-lg">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-foreground">Edit Properties</h3>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={onCancel}
-          className="h-8 w-8 p-0"
-        >
-          <X className="h-4 w-4" />
-        </Button>
-      </div>
+    <Dialog open={isVisible} onOpenChange={(open) => !open && onCancel()}>
+      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <User className="h-5 w-5" />
+            Edit Properties
+          </DialogTitle>
+        </DialogHeader>
 
-      <div className="space-y-4">
-        {fields.map((field) => (
-          <div key={field.key} className="flex items-center gap-3">
-            <div className="flex items-center gap-2 min-w-[120px]">
-              {field.icon}
-              <Label className="text-sm font-medium text-muted-foreground">
-                {field.label}:
-              </Label>
+        <div className="space-y-4">
+          {fields.map((field) => (
+            <div key={field.key} className="flex items-center gap-3">
+              <div className="flex items-center gap-2 min-w-[120px]">
+                {field.icon}
+                <Label className="text-sm font-medium text-muted-foreground">
+                  {field.label}:
+                </Label>
+              </div>
+              
+              {editingField === field.key ? (
+                <div className="flex items-center gap-2 flex-1">
+                  <Input
+                    type={field.type}
+                    value={editValue}
+                    onChange={(e) => setEditValue(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    className="flex-1"
+                    autoFocus
+                  />
+                  <Button
+                    size="sm"
+                    onClick={handleSave}
+                    className="h-8 px-2"
+                  >
+                    <Save className="h-3 w-3" />
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={handleCancel}
+                    className="h-8 px-2"
+                  >
+                    <X className="h-3 w-3" />
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 flex-1">
+                  <span className="text-sm text-foreground flex-1">
+                    {field.value || <span className="text-muted-foreground italic">Not set</span>}
+                  </span>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => handleEdit(field)}
+                    className="h-8 px-2 text-muted-foreground hover:text-foreground"
+                  >
+                    Edit
+                  </Button>
+                </div>
+              )}
             </div>
-            
-            {editingField === field.key ? (
-              <div className="flex items-center gap-2 flex-1">
-                <Input
-                  type={field.type}
-                  value={editValue}
-                  onChange={(e) => setEditValue(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  className="flex-1"
-                  autoFocus
-                />
-                <Button
-                  size="sm"
-                  onClick={handleSave}
-                  className="h-8 px-2"
-                >
-                  <Save className="h-3 w-3" />
-                </Button>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={handleCancel}
-                  className="h-8 px-2"
-                >
-                  <X className="h-3 w-3" />
-                </Button>
-              </div>
-            ) : (
-              <div className="flex items-center gap-2 flex-1">
-                <span className="text-sm text-foreground flex-1">
-                  {field.value || <span className="text-muted-foreground italic">Not set</span>}
-                </span>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => handleEdit(field)}
-                  className="h-8 px-2 text-muted-foreground hover:text-foreground"
-                >
-                  Edit
-                </Button>
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
 
-      <div className="mt-4 pt-4 border-t border-border">
-        <p className="text-xs text-muted-foreground">
-          💡 Tip: Click "Edit" next to any field to update it inline. Press Enter to save, Escape to cancel.
-        </p>
-      </div>
-    </Card>
+        <div className="mt-4 pt-4 border-t border-border">
+          <p className="text-xs text-muted-foreground">
+            💡 Tip: Click "Edit" next to any field to update it inline. Press Enter to save, Escape to cancel.
+          </p>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 };

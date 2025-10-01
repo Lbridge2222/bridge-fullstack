@@ -341,6 +341,13 @@ html, body, #root {
 
 /* ===== UTILITY CLASSES ===== */
 @layer components {
+  /* Reusable glow accents */
+  .glow-white {
+    background: radial-gradient(ellipse at center, rgba(255,255,255,0.18), transparent 60%);
+  }
+  .glow-green {
+    background: radial-gradient(ellipse at center, rgba(21,107,74,0.12), transparent 60%);
+  }
   /* Card Styles */
   .card-base {
     @apply bg-card border border-border rounded-lg shadow-sm;

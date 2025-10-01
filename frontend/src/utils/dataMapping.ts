@@ -53,38 +53,38 @@ export function mapLifecycleToDisplay(lifecycle: string): string {
 // Get priority color for styling
 export function getPriorityColor(priority: string): string {
   const colorMap: Record<string, string> = {
-    'critical': 'text-red-600 bg-red-50 border-red-200',
-    'high': 'text-orange-600 bg-orange-50 border-orange-200',
-    'medium': 'text-yellow-600 bg-yellow-50 border-yellow-200',
-    'low': 'text-green-600 bg-green-50 border-green-200',
+    'critical': 'text-destructive bg-destructive/5 border-destructive/20',
+    'high': 'text-warning bg-warning/5 border-warning/20',
+    'medium': 'text-slate-600 bg-slate-50 border-slate-200',
+    'low': 'text-success bg-success/5 border-success/20',
   };
   
-  return colorMap[priority] || 'text-gray-600 bg-gray-50 border-gray-200';
+  return colorMap[priority] || 'text-slate-600 bg-slate-50 border-slate-200';
 }
 
 // Get urgency color for styling
 export function getUrgencyColor(urgency: string): string {
   const colorMap: Record<string, string> = {
-    'high': 'text-red-600 bg-red-50 border-red-200',
-    'medium': 'text-yellow-600 bg-yellow-50 border-yellow-200',
-    'low': 'text-green-600 bg-green-50 border-green-200',
+    'high': 'text-destructive bg-destructive/5 border-destructive/20',
+    'medium': 'text-warning bg-warning/5 border-warning/20',
+    'low': 'text-success bg-success/5 border-success/20',
   };
   
-  return colorMap[urgency] || 'text-gray-600 bg-gray-50 border-gray-200';
+  return colorMap[urgency] || 'text-slate-600 bg-slate-50 border-slate-200';
 }
 
 // Get lifecycle state color for styling
 export function getLifecycleColor(lifecycle: string): string {
   const colorMap: Record<string, string> = {
-    'enquiry': 'text-blue-600 bg-blue-50 border-blue-200',
-    'pre_applicant': 'text-purple-600 bg-purple-50 border-purple-200',
-    'applicant': 'text-orange-600 bg-orange-50 border-orange-200',
-    'enrolled': 'text-green-600 bg-green-50 border-green-200',
-    'student': 'text-emerald-600 bg-emerald-50 border-emerald-200',
-    'alumni': 'text-indigo-600 bg-indigo-50 border-indigo-200',
+    'enquiry': 'text-slate-600 bg-slate-50 border-slate-200',
+    'pre_applicant': 'text-slate-700 bg-slate-100 border-slate-300',
+    'applicant': 'text-warning bg-warning/5 border-warning/20',
+    'enrolled': 'text-success bg-success/5 border-success/20',
+    'student': 'text-forest-green bg-forest-green/5 border-forest-green/20',
+    'alumni': 'text-slate-600 bg-slate-100 border-slate-300',
   };
   
-  return colorMap[lifecycle] || 'text-gray-600 bg-gray-50 border-gray-200';
+  return colorMap[lifecycle] || 'text-slate-600 bg-slate-50 border-slate-200';
 }
 
 // Format lead score for display

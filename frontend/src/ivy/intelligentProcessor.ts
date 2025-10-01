@@ -32,11 +32,15 @@ export class IntelligentProcessor {
    * Main processing entry point - determines best response strategy
    */
   async processQuery(query: string, context: IvyContext): Promise<ProcessedQuery> {
+    console.log('🔍 DEBUG: processQuery called with query:', query);
     const intent = this.analyzeIntent(query);
+    console.log('🔍 DEBUG: analyzed intent:', intent);
     
     // Try direct command match first (high confidence)
     const directCommand = findCommand(query, contactRegistry);
+    console.log('🔍 DEBUG: directCommand found:', directCommand);
     if (directCommand && intent.confidence > 0.8) {
+      console.log('🔍 DEBUG: Using direct command match');
       return {
         type: 'command',
         command: directCommand,
@@ -46,12 +50,16 @@ export class IntelligentProcessor {
     }
 
     // Check for hybrid opportunities (command + additional context)
+    console.log('🔍 DEBUG: Trying hybrid query processing');
     const hybridResult = await this.processHybridQuery(query, intent, context);
+    console.log('🔍 DEBUG: hybridResult:', hybridResult);
     if (hybridResult.confidence > 0.7) {
+      console.log('🔍 DEBUG: Using hybrid result');
       return hybridResult;
     }
 
     // Fall back to RAG for complex questions
+    console.log('🔍 DEBUG: Falling back to RAG');
     const ragContext = this.buildRagContext(context, intent);
     return {
       type: 'rag',
@@ -89,7 +97,9 @@ export class IntelligentProcessor {
       'modify_data': [
         /^(update|change|edit|modify|fix|correct)/,
         /(can i|how do i).+(update|change|edit)/,
-        /need to (update|change|fix)/
+        /need to (update|change|fix)/,
+        /set (first name|last name|email|phone|date of birth|nationality)/,
+        /(first name|last name|email|phone|date of birth|nationality) (is|should be|to)/
       ],
       
       // Communication intents
@@ -142,9 +152,15 @@ export class IntelligentProcessor {
     intent: QueryIntent, 
     context: IvyContext
   ): Promise<ProcessedQuery> {
+    console.log('🔍 DEBUG: processHybridQuery called with query:', query);
+    console.log('🔍 DEBUG: intent:', intent);
+    
     // Check for specific property updates first
     const propertyUpdateMatch = this.detectPropertyUpdate(query, intent);
+    console.log('🔍 DEBUG: propertyUpdateMatch result:', propertyUpdateMatch);
+    
     if (propertyUpdateMatch) {
+      console.log('🔍 DEBUG: Property update detected, returning command with detectedField:', propertyUpdateMatch.field);
       return {
         type: 'command',
         command: {
@@ -201,40 +217,62 @@ export class IntelligentProcessor {
   private detectPropertyUpdate(query: string, intent: QueryIntent): { field: string; value?: string } | null {
     const queryLower = query.toLowerCase();
     
+    console.log('🔍 DEBUG: detectPropertyUpdate called with query:', query);
+    console.log('🔍 DEBUG: intent:', intent);
+    
     // Date of birth patterns
     if (queryLower.includes('date of birth') || queryLower.includes('dob') || queryLower.includes('birthday')) {
+      console.log('🔍 DEBUG: Detected date of birth pattern');
       const dateMatch = query.match(/(\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4}|\d{1,2}\s+(january|february|march|april|may|june|july|august|september|october|november|december)\s+\d{2,4}|\d{1,2}(st|nd|rd|th)?\s+(january|february|march|april|may|june|july|august|september|october|november|december)\s+\d{2,4})/i);
       if (dateMatch) {
         const rawDate = dateMatch[0];
         // Convert natural language date to ISO format
         const convertedDate = this.convertNaturalDateToISO(rawDate);
+        console.log('🔍 DEBUG: Date match found:', { field: 'date_of_birth', value: convertedDate });
         return { field: 'date_of_birth', value: convertedDate };
       }
     }
     
     // Phone patterns
     if (queryLower.includes('phone') || queryLower.includes('mobile') || queryLower.includes('telephone')) {
+      console.log('🔍 DEBUG: Detected phone pattern');
       const phoneMatch = query.match(/(\+?[\d\s\-\(\)]{10,})/);
-      return { field: 'phone', value: phoneMatch?.[0] };
+      const result = { field: 'phone', value: phoneMatch?.[0] };
+      console.log('🔍 DEBUG: Phone match found:', result);
+      return result;
     }
     
     // Email patterns
     if (queryLower.includes('email') || queryLower.includes('@')) {
+      console.log('🔍 DEBUG: Detected email pattern');
       const emailMatch = query.match(/([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/);
-      return { field: 'email', value: emailMatch?.[0] };
+      const result = { field: 'email', value: emailMatch?.[0] };
+      console.log('🔍 DEBUG: Email match found:', result);
+      return result;
     }
     
     // Name patterns
     if (queryLower.includes('first name') || queryLower.includes('last name')) {
-      if (queryLower.includes('first name')) return { field: 'first_name' };
-      if (queryLower.includes('last name')) return { field: 'last_name' };
+      console.log('🔍 DEBUG: Detected name pattern');
+      if (queryLower.includes('first name')) {
+        console.log('🔍 DEBUG: First name match found:', { field: 'first_name' });
+        return { field: 'first_name' };
+      }
+      if (queryLower.includes('last name')) {
+        console.log('🔍 DEBUG: Last name match found:', { field: 'last_name' });
+        return { field: 'last_name' };
+      }
     }
     
     // Nationality patterns
     if (queryLower.includes('nationality') || queryLower.includes('country') || queryLower.includes('citizenship')) {
-      return { field: 'nationality' };
+      console.log('🔍 DEBUG: Detected nationality pattern');
+      const result = { field: 'nationality' };
+      console.log('🔍 DEBUG: Nationality match found:', result);
+      return result;
     }
     
+    console.log('🔍 DEBUG: No property update pattern matched');
     return null;
   }
 

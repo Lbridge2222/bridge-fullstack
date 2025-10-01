@@ -75,8 +75,34 @@ async def route_query(request: RouterRequest) -> RouterResponse:
         t0 = time.time()
         logger.info(f"Routing query: {request.query[:100]}...")
         
+        # Early guard for untracked personal questions - more precise patterns
+        ql = (request.query or "").lower()
+        import re
+        
+        # Skip privacy guard for APEL-related queries
+        if "apel" in ql:
+            pass  # Allow APEL queries through
+        else:
+            personal_patterns = [
+                r"\b(are|is|do|does|have|has|what|who).*(boyfriend|girlfriend|married|religion|political views|pets?|dog|cat)\b",
+                r"\b(do they|does.*have|are they).*(married|boyfriend|girlfriend|pets?|religion|political)\b"
+            ]
+            
+            for pattern in personal_patterns:
+                if re.search(pattern, ql, re.IGNORECASE):
+                    from app.ai.text_sanitiser import cleanse_conversational
+                    return RouterResponse(
+                        answer_markdown=cleanse_conversational(
+                            "We don't track personal details like that — let's focus on course fit, entry requirements and the next steps."
+                        ),
+                        actions=[{"label": "Open Call Console", "action": "open_call_console"}],
+                        confidence=0.9,
+                        intent="personal_untracked",
+                        session_id=router_instance.session_id
+                    )
+        
         # Route the query through the AI router
-        response = await router_instance.route(request.query, request.context)
+        v1_response = await router_instance.route(request.query, request.context)
         
         # Normalize actions to what the FE understands
         KNOWN_ACTIONS = {"open_call_console","open_email_composer","open_meeting_scheduler","view_profile"}
@@ -92,28 +118,39 @@ async def route_query(request: RouterRequest) -> RouterResponse:
             return "open_call_console"
         
         # Centralised action normalisation (adds a sensible default if empty)
-        response.actions = normalise_actions(response.actions)
-
+        actions = normalise_actions(v1_response.actions)
+        
         # Belt & braces: never return an empty answer
-        if not (response.answer_markdown or "").strip():
-            response.answer_markdown = (
+        answer = v1_response.answer_markdown or ""
+        if not answer.strip():
+            answer = (
                 "I can help with that. While I gather more context, you can:\n\n"
                 "• View the profile to see recent activity\n"
                 "• Send a follow-up email or book a 1-1"
             )
         
+        # Return RouterResponse for legacy endpoint compatibility
+        response = RouterResponse(
+            answer_markdown=answer,
+            actions=actions,
+            sources=v1_response.sources or [],
+            confidence=v1_response.confidence,
+            intent=v1_response.intent,
+            session_id=v1_response.session_id
+        )
+        
         dt = int((time.time() - t0) * 1000)
         try:
             lead_preview = request.context.get("lead", {}) if isinstance(request.context, dict) else {}
-            lead_preview = {k: lead_preview.get(k) for k in ("name","status","courseInterest","leadScore") if k in lead_preview}
+            lead_preview = {k: lead_preview.get(k) for k in ("name","status","courseInterest","leadScore","email","phone","source","touchpoint_count","last_engagement_date","latest_academic_year","conversion_probability","ai_insights","triage_score","forecast") if k in lead_preview}
         except Exception:
             lead_preview = {}
         logger.info(
             "AI router trace: %s",
             {
                 "sid": getattr(router_instance, "session_id", "unknown"),
-                "intent": response.intent,
-                "confidence": response.confidence,
+                "intent": v1_response.intent,
+                "confidence": v1_response.confidence,
                 "latency_ms": dt,
                 "lead_preview": lead_preview,
                 "steps": ["router_v1"],
@@ -123,14 +160,10 @@ async def route_query(request: RouterRequest) -> RouterResponse:
     except Exception as e:
         logger.error(f"Router error: {str(e)}")
         # Always return something, even on error
-        return RouterResponse(
-            intent="unknown",
-            confidence=0.3,
+        return IvyConversationalResponse(
             answer_markdown=f"I encountered an error processing your request: {str(e)}. Please try rephrasing your question.",
-            actions=[],
-            sources=[],
-            telemetry={"routed_to": ["error"], "error": str(e)},
-            session_id="error"
+            actions=[{"label": "Open Call Console", "action": "open_call_console"}],
+            sources=[]
         )
 
 @router.post("/v2")
@@ -153,18 +186,35 @@ async def route_query_v2(request: RouterRequest):
             
             if has_signals:
                 kind = "modal"
-                sreq = SuggestionsQuery(query=request.query, lead=lead)
-                modal_payload = await generate_suggestions_response(sreq)
-                actions = [UIAction(**a) for a in normalise_actions([modal_payload.get("ui", {}).get("primary_cta")]) if a]
-                response = IvyModalResponse(modal={"type": "suggestions", "payload": modal_payload}, actions=actions)
+                if modal_type == "suggestions":
+                    sreq = SuggestionsQuery(query=request.query, lead=lead)
+                    modal_payload = await generate_suggestions_response(sreq)
+                    actions = [UIAction(label="View Suggestions", action="view_profile")]
+                    response = IvyModalResponse(modal={"type": "suggestions", "payload": modal_payload}, actions=actions)
+                elif modal_type == "risks":
+                    # Generate risk assessment modal
+                    modal_payload = {
+                        "title": "Risk Assessment",
+                        "summary": "Reviewing potential concerns and red flags",
+                        "risks": [
+                            {"type": "gdpr", "severity": "high", "description": "No GDPR opt-in consent"},
+                            {"type": "engagement", "severity": "medium", "description": "Low touchpoint count"}
+                        ],
+                        "recommendations": ["Request GDPR consent", "Increase engagement touchpoints"]
+                    }
+                    actions = [UIAction(label="Send Consent Request", action="open_email_composer")]
+                    response = IvyModalResponse(modal={"type": "risks", "payload": modal_payload}, actions=actions)
             else:
                 # Force conversational when no signals
                 modal_type = None
         
         if not modal_type:
             # Conversational default via existing router
-            legacy = await route_query(request)
+            legacy = await router_instance.route(request.query, request.context)
             intent = getattr(legacy, 'intent', 'unknown')
+            
+            # DEBUG: Log the legacy response intent
+            logger.info(f"V2 Router received from V1: intent={intent}, confidence={getattr(legacy, 'confidence', 'N/A')}, telemetry={getattr(legacy, 'telemetry', {})}")
             # Extract top KB score if available
             if hasattr(legacy, 'sources') and legacy.sources:
                 try:
@@ -181,7 +231,19 @@ async def route_query_v2(request: RouterRequest):
                 except Exception:
                     sources = None
             # If empty answer, inject short helpful default and at most one action via normaliser
-            actions = [UIAction(**a) for a in normalise_actions(legacy.actions)]
+            # Convert legacy actions to dictionaries if they're UIAction objects
+            legacy_actions = []
+            for action in (legacy.actions or []):
+                if hasattr(action, 'label') and hasattr(action, 'action'):
+                    # It's a UIAction object, convert to dict
+                    legacy_actions.append({"label": action.label, "action": action.action})
+                elif isinstance(action, dict):
+                    # It's already a dict
+                    legacy_actions.append(action)
+                else:
+                    # Skip unknown format
+                    continue
+            actions = [UIAction(**a) for a in normalise_actions(legacy_actions)]
             if not answer:
                 answer = (
                     "I can help with that. While I gather more context, you can:\n\n"
@@ -191,10 +253,14 @@ async def route_query_v2(request: RouterRequest):
                 # Keep only one action (normalise_actions already ensures at least one)
                 actions = actions[:1]
 
+            # Contract enforcement is handled centrally in router._ok() method
+            # No need to duplicate here since legacy responses already have contracts applied
+
             response = IvyConversationalResponse(
                 answer_markdown=answer,
                 actions=actions,
                 sources=sources,
+                content_contract=getattr(legacy, "content_contract", None),
             )
         
         # Record latency and update rolling buffer
@@ -203,6 +269,20 @@ async def route_query_v2(request: RouterRequest):
         
         # Check for performance warnings
         _check_latency_warnings()
+        
+        # Structured E2E telemetry for debugging
+        logger.info("AI E2E: %s", {
+            "endpoint": "router_v2",
+            "intent": intent,
+            "latency_ms": latency_ms,
+            "kb_results": len(getattr(legacy, "sources", []) or []) if 'legacy' in locals() else 0,
+            "kb_top": kb_top_score,
+            "actions": [a.get("action") if isinstance(a, dict) else getattr(a, "action", None) for a in getattr(response, 'actions', [])],
+            "empty_answer": not bool(getattr(response, 'answer_markdown', '').strip()),
+            "lead_ctx": bool((request.context or {}).get("lead")),
+            "model": os.getenv("AI_MODEL_PROVIDER", "unknown"),
+            "kind": getattr(response, 'kind', 'unknown')
+        })
         
         # Log telemetry with WARN if thresholds exceeded
         actions_count = len(getattr(response, 'actions', []))
@@ -233,8 +313,17 @@ async def route_query_v2(request: RouterRequest):
         
         # Final style enforcement for conversational responses
         if response.kind == "conversational":
-            from app.ai.text_sanitiser import cleanse_conversational
-            response.answer_markdown = cleanse_conversational(response.answer_markdown or "")
+            # Skip sanitization if content contract was applied (already structured)
+            contract_applied = getattr(legacy, "contract_applied", False)
+            if not contract_applied:
+                from app.ai.text_sanitiser import cleanse_conversational
+                # Pass the intent from legacy to preserve structure
+                legacy_intent = getattr(legacy, "intent", "unknown")
+                extra = {"contract_applied": False}
+                response.answer_markdown = cleanse_conversational(response.answer_markdown or "", intent=legacy_intent, extra=extra)
+            else:
+                # Contract was applied - use the already rewritten answer
+                response.answer_markdown = legacy.answer_markdown
         
         return response
         

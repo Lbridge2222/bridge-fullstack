@@ -1,4 +1,4 @@
-import asyncio, random, logging
+import asyncio, random, logging, os
 from concurrent.futures import ThreadPoolExecutor
 from typing import List, Tuple, Union
 
@@ -22,6 +22,13 @@ except Exception:
     AI_TIMEOUT_MAIN_MS = 7000
     AI_TIMEOUT_HELPER_MS = 3000
     AI_TIMEOUT_MS = AI_TIMEOUT_MAIN_MS
+
+# Centralized model management - env-driven with fallbacks
+GEMINI_MODEL_ENV = os.getenv("GEMINI_MODEL", "gemini-2.0-flash-001")
+GEMINI_CANDIDATES_ENV = os.getenv("GEMINI_CANDIDATES", "gemini-2.0-flash,gemini-1.5-flash-001,gemini-1.5-flash").split(",")
+
+# Use only valid, stable Gemini model IDs to avoid 404s
+VALID_GEMINI = [GEMINI_MODEL_ENV] + [c.strip() for c in GEMINI_CANDIDATES_ENV if c.strip()]
 
 def _normalize_gemini_model(name: str | None) -> str:
     """Normalize Gemini model names to API-key surface stable forms.
@@ -83,10 +90,14 @@ class LLMCtx:
 
                         def _sync_call_with_model(model_name: str) -> str:
                             mdl = genai.GenerativeModel(model_name)
-                            resp = mdl.generate_content(prompt)
+                            # Increase max output tokens for longer responses (especially APEL/policy)
+                            resp = mdl.generate_content(prompt, generation_config=genai.types.GenerationConfig(
+                                max_output_tokens=4096,  # Increased from default 2048
+                                temperature=0.7
+                            ))
                             return (getattr(resp, "text", "") or "").strip()
 
-                        # Try a small set of API-key models to dodge regional alias issues
+                        # Build candidate models list
                         candidate_models = []
                         base = selected_model_for_attempt
                         if base not in candidate_models:
@@ -94,36 +105,56 @@ class LLMCtx:
                         alias = base.replace("-001", "")
                         if alias not in candidate_models:
                             candidate_models.append(alias)
-                        for extra in (
-                            # Prefer 2.0 family first when available in your tenant
-                            "gemini-2.0-flash",
-                            "gemini-2.0-flash-latest",
-                            # Then 1.5 family aliases
-                            "gemini-1.5-flash-latest",
-                            "gemini-1.5-flash",
-                            # Older fallbacks
-                            "gemini-pro",
-                            "gemini-1.0-pro",
-                        ):
-                            if extra not in candidate_models:
-                                candidate_models.append(extra)
+                        
+                        # Add valid models that aren't already in the list
+                        for valid_model in VALID_GEMINI:
+                            if valid_model not in candidate_models:
+                                candidate_models.append(valid_model)
 
+                        # Circuit breaker: stop after hard failures to avoid 404 spam
+                        HARD_FAIL_CODES = {404, 501, 403}  # Critical errors - don't retry
+                        SOFT_FAIL_CODES = {429, 500, 408}   # Temporary issues - can retry
+                        
                         last_direct_err = None
+                        attempts = 0
+                        model_used = None
+                        llm_last_status = None
+                        
                         for cand in candidate_models:
                             try:
-                                log.info("LLM try candidate: %s", cand)
+                                attempts += 1
+                                log.info("LLM try candidate: %s (attempt %d)", cand, attempts)
                                 resp_text = await asyncio.wait_for(
                                     loop.run_in_executor(None, _sync_call_with_model, cand),
                                     timeout=(self.timeout_ms or AI_TIMEOUT_MS) / 1000,
                                 )
+                                model_used = cand
+                                llm_last_status = "success"
+                                log.info("LLM success: model=%s, attempts=%d", model_used, attempts)
                                 return resp_text
                             except Exception as cand_err:
                                 last_direct_err = cand_err
-                                log.warning("Gemini direct candidate failed (%s): %s", cand, cand_err)
+                                llm_last_status = getattr(cand_err, 'status_code', 'unknown')
+                                
+                                # Check if this is a hard failure that should stop retries
+                                if hasattr(cand_err, 'status_code') and cand_err.status_code in HARD_FAIL_CODES:
+                                    log.warning("Gemini hard failure (%s): %s - stopping retries", cand, cand_err)
+                                    break
+                                elif attempts >= 2:  # Circuit breaker: max 2 attempts
+                                    log.warning("Gemini circuit breaker: max attempts reached")
+                                    break
+                                else:
+                                    log.warning("Gemini candidate failed (%s): %s - retrying", cand, cand_err)
+                                    await asyncio.sleep(0.15 * attempts)  # Small jitter for soft fails
+
+                        # Log final status for monitoring
+                        if attempts > 2:
+                            log.warning("LLM exceeded retry limit: attempts=%d, last_status=%s", attempts, llm_last_status)
+                        
                         raise last_direct_err or RuntimeError("Gemini direct failed all candidates")
-                    except Exception as direct_err:
-                        last = direct_err
-                        log.warning("Gemini direct failed: %s", direct_err)
+                    except Exception as e:
+                        last = e
+                        log.warning("Gemini direct failed: %s", e)
                 # For OpenAI path, we need to execute the LLM call
                 if ACTIVE_MODEL == "openai" and OPENAI_API_KEY:
                     log.info("LLM call: provider=openai model=%s timeout_ms=%s attempt=%d", 

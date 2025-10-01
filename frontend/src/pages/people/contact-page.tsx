@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { peopleApi, PersonEnriched } from '@/services/api';
+import { peopleApi, PersonEnriched, activitiesApi } from '@/services/api';
 import { aiLeadsApi } from '@/services/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { 
   Mail, Phone, Calendar, MapPin, Zap, FileText, Heart, Video, Target, 
-  Award, CheckCircle, GraduationCap, Plus, BarChart3, ChevronUp, ChevronDown, Search, Globe, RefreshCw, Brain, Upload, Filter, Clock, User, Sparkles, Edit, Copy, X
+  Award, CheckCircle, GraduationCap, Plus, BarChart3, ChevronUp, ChevronDown, Search, Globe, RefreshCw, Brain, Upload, Filter, Clock, User, Sparkles, Edit, Copy, X, MoreHorizontal
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { CallConsole, type Lead as CallConsoleLead } from '@/components/CallConsole';
@@ -24,6 +24,11 @@ import { InlineIvyInput } from '@/ivy/InlineIvyInput';
 import { contactRegistry } from '@/ivy/contactRegistry';
 import type { IvyContext } from '@/ivy/types';
 import { InlinePropertyEditor } from '@/ivy/InlinePropertyEditor';
+import { useActivities, type ActivityItem } from '@/hooks/useActivities';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Skeleton, SkeletonCircle, SkeletonText } from '@/components/ui/skeleton';
+import { useToast } from '@/components/ui/toast';
 
 // Utility functions
 const fmtDate = (d?: string) => (d && !Number.isNaN(Date.parse(d)) 
@@ -43,6 +48,7 @@ const PersonDetailPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [triageData, setTriageData] = useState<any>(null);
+  const [mlForecastData, setMlForecastData] = useState<any>(null);
   const [filesExpanded, setFilesExpanded] = useState(false);
   
   // Utility for consistent column scrolling
@@ -64,68 +70,42 @@ const PersonDetailPage: React.FC = () => {
   const [detectedValue, setDetectedValue] = useState<string | null>(null);
   const [lastQuery, setLastQuery] = useState<string>('');
   const [queryType, setQueryType] = useState<string>('');
+  const [showActionDock, setShowActionDock] = useState(false);
   
   // Ask Ivy integration
   const { IvyOverlay, setIvyContext, openIvy } = useIvy();
+  const { push: toast } = useToast();
 
   // Activities toolbar state
   const [activeTab, setActiveTab] = useState<ActivityKind>('all');
   const [query, setQuery] = useState('');
   const searchInputRef = useRef<HTMLInputElement | null>(null);
   
-  // Activity state for optimistic updates
-  interface ActivityItem {
-    id: string;
-    type: 'email' | 'call' | 'meeting' | 'website' | 'workflow' | 'property_updated';
-    title: string;
-    subtitle?: string;
-    when: string;
-    icon: React.ReactNode;
-    tintClass: string;
-  }
+  // Use real activities from API
+  const { activities, addActivity: addActivityToApi, loading: activitiesLoading } = useActivities(person?.id || null);
   
-  const [activities, setActivities] = useState<ActivityItem[]>([
-    {
-      id: '1',
-      type: 'email',
-      title: `Email sent to ${person?.first_name || 'contact'}`,
-      subtitle: 'Subject: Course Application Follow-up • Opens: 1 • Clicks: 0',
-      when: '2h ago',
-      icon: <Mail className="h-3.5 w-3.5" />,
-      tintClass: 'bg-accent/10 text-accent'
-    },
-    {
-      id: '2',
-      type: 'website',
-      title: 'Website visit',
-      subtitle: 'Course Overview, Application Form • 8 minutes',
-      when: '1d ago',
-      icon: <Globe className="h-3.5 w-3.5" />,
-      tintClass: 'bg-success/10 text-success'
-    },
-    {
-      id: '3',
-      type: 'call',
-      title: 'Call completed',
-      subtitle: '15 minutes • Discussed course requirements',
-      when: '2d ago',
-      icon: <Phone className="h-3.5 w-3.5" />,
-      tintClass: 'bg-info/10 text-info'
-    },
-    {
-      id: '4',
-      type: 'workflow',
-      title: 'Workflow assigned',
-      subtitle: '"New Lead Nurture" workflow started',
-      when: '3d ago',
-      icon: <RefreshCw className="h-3.5 w-3.5" />,
-      tintClass: 'bg-warning/10 text-warning'
+  const appendActivity = useCallback(async (item: { 
+    type: string; 
+    title: string; 
+    subtitle?: string; 
+    when?: string;
+    metadata?: Record<string, any>;
+  }) => {
+    if (!person?.id) return;
+    
+    try {
+      await addActivityToApi({
+        person_id: person.id,
+        activity_type: item.type,
+        activity_title: item.title,
+        activity_description: item.subtitle,
+        metadata: item.metadata
+      });
+    } catch (error) {
+      console.error('Failed to save activity:', error);
+      // Could show a toast notification here
     }
-  ]);
-  
-  const appendActivity = useCallback((item: ActivityItem) => {
-    setActivities(prev => [item, ...prev]);
-  }, []);
+  }, [person?.id, addActivityToApi]);
 
   // Inline property editing
   const handleInlinePropertySave = useCallback(async (field: string, value: string) => {
@@ -137,14 +117,11 @@ const PersonDetailPage: React.FC = () => {
       setPerson(updatedPerson);
       
       // Add activity log
-      appendActivity({
-        id: Date.now().toString(),
+      await appendActivity({
         type: 'property_updated',
         title: `Updated ${field.replace('_', ' ')}`,
         subtitle: `Changed to: ${value}`,
-        when: new Date().toISOString(),
-        icon: <Edit className="h-3.5 w-3.5" />,
-        tintClass: 'bg-success/10 text-success'
+        metadata: { field, old_value: person[field], new_value: value }
       });
       
       // Make API call to save the property
@@ -182,22 +159,25 @@ const PersonDetailPage: React.FC = () => {
       setIsInlineEditOpen(false);
       setDetectedField(null);
       setDetectedValue(null);
+      toast({ title: 'Saved', description: `Updated ${field.replace('_', ' ')}`, variant: 'success' });
       
     } catch (error) {
       console.error('Failed to save property:', error);
       // Revert optimistic update
       setPerson(person);
       
-      // Show error message (you could add a toast notification here)
-      alert(`Failed to save ${field}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      // Show error message
+      toast({ title: 'Failed to save', description: `${field.replace('_',' ')}: ${error instanceof Error ? error.message : 'Unknown error'}`, variant: 'destructive' });
     }
-  }, [person, appendActivity]);
+  }, [person, appendActivity, toast]);
 
   // Handle field detection from Ask Ivy
   const handleFieldDetected = useCallback((field: string, value?: string) => {
+    console.log('🔍 DEBUG: handleFieldDetected called with field:', field, 'value:', value);
     setDetectedField(field);
     setDetectedValue(value || null);
     setIsInlineEditOpen(true);
+    console.log('🔍 DEBUG: handleFieldDetected - set isInlineEditOpen to true');
   }, []);
 
 
@@ -210,20 +190,57 @@ const PersonDetailPage: React.FC = () => {
         a.title.toLowerCase().includes(q) || (a.subtitle?.toLowerCase().includes(q) ?? false)
       );
     }
-    return base;
+    // Sort by most recent
+    const sorted = [...base].sort((a, b) => (b.ts ?? 0) - (a.ts ?? 0));
+    return sorted;
   }, [activities, activeTab, query]);
+
+  // Time formatting and grouping helpers
+  const formatRelative = useCallback((ts: number) => {
+    const now = Date.now();
+    const diff = Math.max(0, now - ts);
+    const s = Math.floor(diff / 1000);
+    const m = Math.floor(s / 60);
+    const h = Math.floor(m / 60);
+    const d = Math.floor(h / 24);
+    if (d > 7) return new Date(ts).toLocaleDateString();
+    if (d >= 1) return `${d}d ago`;
+    if (h >= 1) return `${h}h ago`;
+    if (m >= 1) return `${m}m ago`;
+    return `just now`;
+  }, []);
+
+  const isSameDay = (a: Date, b: Date) => a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+  const startOfDay = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const daysBetween = (a: Date, b: Date) => Math.round((startOfDay(a).getTime() - startOfDay(b).getTime()) / (24 * 60 * 60 * 1000));
+
+  type ActivityGroup = { label: string; items: ActivityItem[] };
+  const groupedActivities = useMemo<ActivityGroup[]>(() => {
+    if (!filteredActivities.length) return [];
+    const today = new Date();
+    const buckets: Record<string, ActivityItem[]> = {};
+    for (const item of filteredActivities) {
+      const ts = item.ts ?? Date.now();
+      const d = new Date(ts);
+      const diff = daysBetween(today, d);
+      const label = diff === 0 ? 'Today' : diff === 1 ? 'Yesterday' : diff <= 7 ? 'Last 7 days' : d.toLocaleDateString();
+      (buckets[label] ||= []).push(item);
+    }
+    return Object.entries(buckets).map(([label, items]) => ({ label, items }));
+  }, [filteredActivities]);
 
   // TimelineItem component for consistency
   const TimelineItem = ({ 
-    icon, tintClass, title, subtitle, when 
+    icon, tintClass, title, subtitle, when, ts 
   }: { 
     icon: React.ReactNode; 
     tintClass: string; 
     title: string; 
     subtitle?: string; 
     when: string;
+    ts?: number;
   }) => (
-    <div className="group grid grid-cols-[28px_1fr_60px] gap-3 p-3 min-h-[44px] rounded-lg border border-border bg-white hover:bg-muted/50 hover:shadow transition-all duration-200 cursor-pointer overflow-hidden">
+    <div className="relative z-10 group grid grid-cols-[28px_1fr_60px] gap-3 p-3 min-h-[44px] rounded-lg border border-border bg-white hover:bg-muted/50 hover:shadow-md transition-all duration-200 cursor-pointer overflow-hidden will-change-transform hover:-translate-y-0.5">
       <span className={`h-7 w-7 rounded-full grid place-items-center flex-shrink-0 ${tintClass}`}>
         {icon}
       </span>
@@ -231,16 +248,45 @@ const PersonDetailPage: React.FC = () => {
         <p className="text-sm font-medium truncate">{title}</p>
         {subtitle && <p className="text-xs text-muted-foreground truncate">{subtitle}</p>}
       </div>
-      <time className="text-xs text-muted-foreground text-right flex-shrink-0 whitespace-nowrap">{when}</time>
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <time className="text-xs text-muted-foreground text-right flex-shrink-0 whitespace-nowrap cursor-help">
+              {when}
+            </time>
+          </TooltipTrigger>
+          {ts && (
+            <TooltipContent side="left" className="text-xs">{new Date(ts).toLocaleString()}</TooltipContent>
+          )}
+        </Tooltip>
+      </TooltipProvider>
     </div>
   );
 
   // Empty state component
   const EmptyState = () => (
-    <div className="text-center py-8 text-muted-foreground">
-      <FileText className="h-8 w-8 mx-auto mb-2 opacity-50" />
+    <div className="text-center py-8">
+      <FileText className="h-8 w-8 mx-auto mb-2 opacity-50 text-muted-foreground" />
       <p className="text-sm font-medium mb-1">No activities yet</p>
-      <p className="text-xs">Activities will appear here as they happen</p>
+      <p className="text-xs text-muted-foreground mb-3">Start by contacting this person</p>
+      <div className="flex items-center justify-center gap-2">
+        <Button size="sm" variant="outline" onClick={() => setIsEmailComposerOpen(true)}>
+          <Mail className="h-3.5 w-3.5 mr-1" /> Send email
+        </Button>
+        <Button size="sm" variant="outline" onClick={() => setIsCallConsoleOpen(true)}>
+          <Phone className="h-3.5 w-3.5 mr-1" /> Log call
+        </Button>
+        <Button size="sm" variant="outline" onClick={() => {
+          appendActivity({
+            type: 'workflow',
+            title: 'Note added',
+            subtitle: 'Added a quick note',
+            metadata: { note_type: 'quick_note' }
+          });
+        }}>
+          <FileText className="h-3.5 w-3.5 mr-1" /> Add note
+        </Button>
+      </div>
     </div>
   );
   
@@ -362,6 +408,19 @@ const PersonDetailPage: React.FC = () => {
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, []);
 
+  // Floating action dock visibility based on scroll
+  useEffect(() => {
+    const onScroll = () => {
+      try {
+        const y = window.scrollY || document.documentElement.scrollTop || 0;
+        setShowActionDock(y > 240);
+      } catch {}
+    };
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll as any);
+  }, []);
+
   // Setup Ivy context when person data changes
   useEffect(() => {
     if (!person) return;
@@ -411,9 +470,11 @@ const PersonDetailPage: React.FC = () => {
         if (key === "ai") setAiSummariesExpanded(true);
       },
       startInlineEdit: () => setIsInlineEditOpen(true),
-      appendActivity
+      appendActivity,
+      triageData: triageData,  // Pass ML triage data to Ivy
+      mlForecast: mlForecastData  // Pass ML forecast data to Ivy
     };
-  }, [person, appendActivity]);
+  }, [person, appendActivity, triageData, mlForecastData]);
 
   // Contact Ask Ivy Bar component
   const ContactAskIvyBar = React.useMemo(() => {
@@ -572,19 +633,170 @@ const PersonDetailPage: React.FC = () => {
 
   const lifecycleContent = getLifecycleContent();
 
+  // Loading skeleton view
+  if (loading) {
+    return (
+      <div className="flex flex-col gap-4 p-4 md:p-6" aria-busy>
+        {/* Header skeleton */}
+        <Card className="relative overflow-hidden border-border/70 sticky top-0 z-20 bg-white/80 backdrop-blur shadow-md">
+          <CardContent className="px-4 py-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <SkeletonCircle size={40} className="ring-2 ring-white/70" />
+                <div className="min-w-0 w-56">
+                  <Skeleton className="h-4 w-40 mb-2" />
+                  <div className="flex items-center gap-2">
+                    <Skeleton className="h-5 w-20 rounded-full" />
+                    <Skeleton className="h-5 w-24 rounded-full" />
+                  </div>
+                </div>
+              </div>
+              <div className="hidden sm:flex items-center gap-2">
+                <Skeleton className="h-7 w-20 rounded-md" />
+                <Skeleton className="h-7 w-20 rounded-md" />
+                <Skeleton className="h-7 w-24 rounded-md" />
+                <Skeleton className="h-7 w-16 rounded-md" />
+              </div>
+              <div className="sm:hidden">
+                <Skeleton className="h-7 w-24 rounded-md" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Desktop grid skeleton */}
+        <div className="hidden lg:grid grid-cols-12 gap-4">
+          {/* Left column */}
+          <aside className="col-span-3">
+            <div className="space-y-4">
+              <Card>
+                <CardHeader className="pb-2">
+                  <Skeleton className="h-4 w-32" />
+                  <Skeleton className="h-3 w-40 mt-1" />
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {Array.from({ length: 8 }).map((_, i) => (
+                    <div key={i} className="space-y-2">
+                      <Skeleton className="h-3 w-24" />
+                      <Skeleton className="h-4 w-48" />
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+            </div>
+          </aside>
+
+          {/* Middle column */}
+          <main className="col-span-5">
+            <Card>
+              <CardHeader className="pb-2">
+                <div className="flex items-center justify-between">
+                  <Skeleton className="h-4 w-24" />
+                  <div className="flex items-center gap-2">
+                    <Skeleton className="h-7 w-14 rounded-full" />
+                    <Skeleton className="h-7 w-16 rounded-full" />
+                    <Skeleton className="h-7 w-16 rounded-full" />
+                    <Skeleton className="h-7 w-20 rounded-full" />
+                  </div>
+                </div>
+                <div className="mt-2">
+                  <Skeleton className="h-8 w-full" />
+                </div>
+              </CardHeader>
+              <CardContent className="pt-0 space-y-2">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <div key={i} className="grid grid-cols-[28px_1fr_60px] gap-3 p-3 rounded-lg border">
+                    <SkeletonCircle size={28} />
+                    <SkeletonText lines={2} />
+                    <Skeleton className="h-3 w-12 justify-self-end" />
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          </main>
+
+          {/* Right column */}
+          <section className="col-span-4">
+            <div className="space-y-4">
+              <Card>
+                <CardHeader className="pb-2">
+                  <Skeleton className="h-4 w-24" />
+                  <Skeleton className="h-3 w-40 mt-1" />
+                </CardHeader>
+                <CardContent className="grid grid-cols-2 gap-2">
+                  {Array.from({ length: 6 }).map((_, i) => (
+                    <Skeleton key={i} className="h-8 w-full rounded-md" />
+                  ))}
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="pb-2">
+                  <Skeleton className="h-4 w-28" />
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <Skeleton className="h-24 w-full" />
+                  <Skeleton className="h-3 w-1/2" />
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="pb-2">
+                  <Skeleton className="h-4 w-20" />
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  <SkeletonText lines={4} />
+                </CardContent>
+              </Card>
+            </div>
+          </section>
+        </div>
+
+        {/* Mobile skeleton */}
+        <div className="lg:hidden space-y-4">
+          <Card>
+            <CardContent className="p-4">
+              <Skeleton className="h-24 w-full" />
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="pb-2">
+              <Skeleton className="h-4 w-24" />
+            </CardHeader>
+            <CardContent className="space-y-2">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="flex items-center gap-3">
+                  <SkeletonCircle size={24} />
+                  <SkeletonText lines={2} className="flex-1" />
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-4 p-4 md:p-6">
       {/* Header: Avatar • Name • Stage • Readiness */}
-      <Card className="border-border sticky top-0 z-10">
+      <Card className="relative overflow-hidden border-border/70 sticky top-0 z-20 bg-white/80 backdrop-blur supports-[backdrop-filter]:bg-white/65 shadow-md">
+        {/* Decorative, responsive gradient accents */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -top-24 -right-20 h-56 w-56 rounded-full blur-2xl glow-white"
+        />
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -bottom-24 -left-16 h-64 w-64 rounded-full blur-2xl glow-green"
+        />
         <CardContent className="px-4 py-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               {/* Avatar */}
               <div className="relative">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-slate-600 to-slate-700 flex items-center justify-center text-white text-sm font-bold shadow-sm">
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-slate-600 to-slate-700 flex items-center justify-center text-white text-sm font-bold shadow-md ring-2 ring-white/70">
                   {initials}
                 </div>
-                <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-success border border-card" />
+                <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-success border border-card shadow-sm" />
               </div>
 
               <div className="min-w-0">
@@ -592,20 +804,45 @@ const PersonDetailPage: React.FC = () => {
                   <h1 className="text-lg font-bold text-foreground truncate">
                     {`${person.first_name || ''} ${person.last_name || ''}`.trim() || 'Unnamed Person'}
                   </h1>
-                  <Badge variant="secondary" className="capitalize text-xs">
+                  <Badge variant="secondary" className="capitalize text-xs shadow-sm">
                     {person.lifecycle_state}
                   </Badge>
-                  <Badge
-                    className={
-                      conversionPercent > 70
-                        ? 'bg-success/10 text-success border-success/20 hover:bg-success hover:text-white'
-                        : conversionPercent > 40
-                        ? 'bg-warning/10 text-warning border-warning/20 hover:bg-warning hover:text-white'
-                        : 'bg-muted text-muted-foreground border-muted hover:bg-foreground/80 hover:text-white'
-                    }
-                  >
-                    {conversionPercent > 70 ? 'High' : conversionPercent > 40 ? 'Med' : 'Low'} readiness
-                  </Badge>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Badge
+                          className={
+                            conversionPercent > 70
+                              ? 'bg-success/10 text-success border-success/20 hover:bg-success hover:text-white shadow-sm cursor-help'
+                              : conversionPercent > 40
+                              ? 'bg-warning/10 text-warning border-warning/20 hover:bg-warning hover:text-white shadow-sm cursor-help'
+                              : 'bg-muted text-muted-foreground border-muted hover:bg-foreground/80 hover:text-white shadow-sm cursor-help'
+                          }
+                        >
+                          {conversionPercent > 70 ? 'High' : conversionPercent > 40 ? 'Med' : 'Low'} readiness
+                        </Badge>
+                      </TooltipTrigger>
+                      <TooltipContent side="bottom" align="start" className="max-w-xs text-xs leading-relaxed">
+                        <div className="font-medium mb-1">ML Readiness</div>
+                        <div className="grid grid-cols-2 gap-x-4 gap-y-1">
+                          <span className="text-muted-foreground">Probability</span>
+                          <span className="tabular-nums text-right">{conversionPercent}%</span>
+                          {typeof person.lead_score === 'number' && (
+                            <>
+                              <span className="text-muted-foreground">Lead score</span>
+                              <span className="tabular-nums text-right">{person.lead_score}</span>
+                            </>
+                          )}
+                          {person.next_best_action && (
+                            <>
+                              <span className="text-muted-foreground">Next action</span>
+                              <span className="text-right truncate" title={String(person.next_best_action)}>{String(person.next_best_action)}</span>
+                            </>
+                          )}
+                        </div>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                 </div>
 
                 <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
@@ -633,49 +870,100 @@ const PersonDetailPage: React.FC = () => {
 
             {/* Quick Actions - With icons and full words */}
             <div className="flex items-center gap-2">
-              <Button 
-                size="sm" 
-                variant="outline" 
-                className="gap-1.5"
-                onClick={() => setIsCallConsoleOpen(true)}
-              >
-                <Phone className="h-3.5 w-3.5" />
-                Call
-              </Button>
-              <Button 
-                size="sm" 
-                variant="outline" 
-                className="gap-1.5"
-                onClick={() => setIsEmailComposerOpen(true)}
-              >
-                <Mail className="h-3.5 w-3.5" />
-                Email
-              </Button>
-              <Button 
-                size="sm" 
-                variant="outline" 
-                className="gap-1.5"
-                onClick={() => setIsMeetingBookerOpen(true)}
-              >
-                <Video className="h-3.5 w-3.5" />
-                Meeting
-              </Button>
-              <Button 
-                size="sm" 
-                variant="outline" 
-                className="gap-1.5"
-              >
-                <Plus className="h-3.5 w-3.5" />
-                Task
-              </Button>
+              {/* Desktop / Tablet actions */}
+              <div className="hidden sm:flex items-center gap-2">
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  className="gap-1.5 transition-transform hover:-translate-y-0.5"
+                  onClick={() => setIsCallConsoleOpen(true)}
+                >
+                  <Phone className="h-3.5 w-3.5" />
+                  Call
+                </Button>
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  className="gap-1.5 transition-transform hover:-translate-y-0.5"
+                  onClick={() => setIsEmailComposerOpen(true)}
+                >
+                  <Mail className="h-3.5 w-3.5" />
+                  Email
+                </Button>
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  className="gap-1.5 transition-transform hover:-translate-y-0.5"
+                  onClick={() => setIsMeetingBookerOpen(true)}
+                >
+                  <Video className="h-3.5 w-3.5" />
+                  Meeting
+                </Button>
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  className="gap-1.5 transition-transform hover:-translate-y-0.5"
+                  onClick={() =>
+                    appendActivity({
+                      type: 'workflow',
+                      title: 'Task created',
+                      subtitle: 'Follow up tomorrow',
+                      metadata: { task_type: 'follow_up' }
+                    })
+                  }
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  Task
+                </Button>
+              </div>
+              {/* Mobile action menu */}
+              <div className="sm:hidden">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button size="sm" variant="outline" className="gap-1.5">
+                      <MoreHorizontal className="h-4 w-4" /> Actions
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-44">
+                    <DropdownMenuItem onClick={() => setIsCallConsoleOpen(true)}>
+                      <Phone className="h-3.5 w-3.5 mr-2" /> Call
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setIsEmailComposerOpen(true)}>
+                      <Mail className="h-3.5 w-3.5 mr-2" /> Email
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setIsMeetingBookerOpen(true)}>
+                      <Video className="h-3.5 w-3.5 mr-2" /> Meeting
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() =>
+                      appendActivity({
+                        type: 'workflow',
+                        title: 'Task created',
+                        subtitle: 'Follow up tomorrow',
+                        metadata: { task_type: 'follow_up' }
+                      })
+                    }>
+                      <Plus className="h-3.5 w-3.5 mr-2" /> Add task
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
             </div>
           </div>
         </CardContent>
       </Card>
 
       {/* Ask Ivy Inline Input */}
-      <Card className="border-success bg-success text-white">
-        <CardContent className="p-4">
+      <Card className="relative overflow-hidden border-success bg-success text-white shadow-md">
+        {/* Subtle dynamic background pattern */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 opacity-30"
+          style={{
+            background:
+              "radial-gradient(1200px 400px at 100% -10%, rgba(255,255,255,0.15), transparent 70%), radial-gradient(800px 300px at -10% 120%, rgba(255,255,255,0.12), transparent 70%)",
+          }}
+        />
+        <CardContent className="p-4 relative">
           <div className="flex items-center gap-3 mb-3">
             <Brain className="h-5 w-5 text-white" />
             <h2 className="font-semibold text-white">Ask Ivy</h2>
@@ -692,7 +980,7 @@ const PersonDetailPage: React.FC = () => {
             <Button 
               variant="ghost" 
               size="sm" 
-              className="h-6 px-2 text-xs text-white/80 hover:bg-white/10 hover:text-white"
+              className="h-6 px-2 text-xs text-white/80 hover:bg-white/10 hover:text-white transition-colors"
               onClick={() => setIsEmailHistoryOpen(true)}
             >
               Show me all emails from {person.first_name}
@@ -700,7 +988,7 @@ const PersonDetailPage: React.FC = () => {
             <Button 
               variant="ghost" 
               size="sm" 
-              className="h-6 px-2 text-xs text-white/80 hover:bg-white/10 hover:text-white"
+              className="h-6 px-2 text-xs text-white/80 hover:bg-white/10 hover:text-white transition-colors"
               onClick={() => setAiSummariesExpanded(true)}
             >
               What's her conversion probability?
@@ -708,7 +996,7 @@ const PersonDetailPage: React.FC = () => {
             <Button 
               variant="ghost" 
               size="sm" 
-              className="h-6 px-2 text-xs text-white/80 hover:bg-white/10 hover:text-white"
+              className="h-6 px-2 text-xs text-white/80 hover:bg-white/10 hover:text-white transition-colors"
               onClick={() => setIsCallConsoleOpen(true)}
             >
               Schedule a demo call
@@ -716,7 +1004,7 @@ const PersonDetailPage: React.FC = () => {
             <Button 
               variant="ghost" 
               size="sm" 
-              className="h-6 px-2 text-xs text-white/80 hover:bg-white/10 hover:text-white"
+              className="h-6 px-2 text-xs text-white/80 hover:bg-white/10 hover:text-white transition-colors"
               onClick={() => setSmartSuggestionsExpanded(true)}
             >
               Show recent activity
@@ -730,8 +1018,8 @@ const PersonDetailPage: React.FC = () => {
       <div className="hidden lg:grid grid-cols-12 gap-4">
         {/* LEFT: Applicant Properties (sticky) */}
         <aside className="col-span-3">
-          <div className="sticky top-[92px] space-y-4">
-            <Card className="flex flex-col h-[calc(100vh-120px)]">
+          <div className="space-y-4">
+            <Card className="flex flex-col h-[calc(100vh-120px)] hover:shadow-md transition-shadow">
               <CardHeader className="pb-2 flex-shrink-0">
                 <CardTitle className="text-sm font-semibold tracking-tight">Applicant Properties</CardTitle>
                 <p className="text-xs text-muted-foreground">All available details</p>
@@ -760,7 +1048,7 @@ const PersonDetailPage: React.FC = () => {
 
         {/* MIDDLE: Activity timeline (always visible) */}
         <main className="col-span-5">
-          <Card>
+          <Card className="hover:shadow-md transition-shadow">
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-sm font-semibold tracking-tight">Activity</CardTitle>
@@ -782,54 +1070,74 @@ const PersonDetailPage: React.FC = () => {
               </div>
             </CardHeader>
             <CardContent className="pt-0">
-              <div className="divide-y rounded-md border">
-                {filteredActivities.length ? filteredActivities.map(a => (
-                  <div key={a.id} className="p-3 hover:bg-muted/60 transition-colors">
-                    <TimelineItem icon={a.icon} tintClass={a.tintClass} title={a.title} subtitle={a.subtitle} when={a.when} />
-                  </div>
-                )) : <EmptyState />}
-              </div>
+              {filteredActivities.length ? (
+                <div className="space-y-4">
+                  {groupedActivities.map(group => (
+                    <section key={group.label} className="relative">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{group.label}</span>
+                        <div className="h-px flex-1 bg-border" />
+                      </div>
+                      <div className="relative">
+                        <div className="absolute left-[14px] top-2 bottom-2 w-px bg-border" aria-hidden />
+                        <div className="space-y-2">
+                          {group.items.map(a => (
+                            <TimelineItem
+                              key={a.id}
+                              icon={a.icon}
+                              tintClass={a.tintClass}
+                              title={a.title}
+                              subtitle={a.subtitle}
+                              when={a.ts ? formatRelative(a.ts) : a.when}
+                              ts={a.ts}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    </section>
+                  ))}
+                </div>
+              ) : (
+                <EmptyState />
+              )}
             </CardContent>
           </Card>
         </main>
 
         {/* RIGHT: Quick Access + AI Summary */}
         <section className="col-span-4">
-          <div className="sticky top-[92px] space-y-4">
-            <Card>
+          <div className="space-y-4">
+            <Card className="hover:shadow-md transition-shadow">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-semibold tracking-tight">Quick access</CardTitle>
                 <p className="text-xs text-muted-foreground">Open tools without asking Ivy</p>
               </CardHeader>
               <CardContent className="grid grid-cols-2 gap-2">
-                <Button variant="outline" size="sm" className="justify-start gap-2" onClick={() => setIsCallConsoleOpen(true)}>
+                <Button variant="outline" size="sm" className="justify-start gap-2 transition-transform hover:-translate-y-0.5" onClick={() => setIsCallConsoleOpen(true)}>
                   <Phone className="h-3.5 w-3.5" /> Call console
                 </Button>
-                <Button variant="outline" size="sm" className="justify-start gap-2" onClick={() => setIsEmailComposerOpen(true)}>
+                <Button variant="outline" size="sm" className="justify-start gap-2 transition-transform hover:-translate-y-0.5" onClick={() => setIsEmailComposerOpen(true)}>
                   <Mail className="h-3.5 w-3.5" /> Email composer
                 </Button>
-                <Button variant="outline" size="sm" className="justify-start gap-2" onClick={() => setIsMeetingBookerOpen(true)}>
+                <Button variant="outline" size="sm" className="justify-start gap-2 transition-transform hover:-translate-y-0.5" onClick={() => setIsMeetingBookerOpen(true)}>
                   <Video className="h-3.5 w-3.5" /> Book meeting
                 </Button>
-                <Button variant="outline" size="sm" className="justify-start gap-2" onClick={() => setIsEmailHistoryOpen(true)}>
+                <Button variant="outline" size="sm" className="justify-start gap-2 transition-transform hover:-translate-y-0.5" onClick={() => setIsEmailHistoryOpen(true)}>
                   <FileText className="h-3.5 w-3.5" /> Email history
                 </Button>
-                <Button variant="outline" size="sm" className="justify-start gap-2" onClick={() => setIsInlineEditOpen(true)}>
+                <Button variant="outline" size="sm" className="justify-start gap-2 transition-transform hover:-translate-y-0.5" onClick={() => setIsInlineEditOpen(true)}>
                   <Edit className="h-3.5 w-3.5" /> Inline property editor
                 </Button>
                 <Button
                   variant="outline"
                   size="sm"
-                  className="justify-start gap-2"
+                  className="justify-start gap-2 transition-transform hover:-translate-y-0.5"
                   onClick={() =>
                     appendActivity({
-                      id: crypto.randomUUID(),
                       type: 'workflow',
                       title: 'Task created',
                       subtitle: 'Follow up tomorrow',
-                      when: 'just now',
-                      icon: <Target className="h-3.5 w-3.5" />,
-                      tintClass: 'bg-warning/10 text-warning'
+                      metadata: { task_type: 'follow_up' }
                     })
                   }
                 >
@@ -840,7 +1148,7 @@ const PersonDetailPage: React.FC = () => {
 
             <AIScoreGraph personId={person.id} personData={person} triageData={triageData} />
 
-            <Card>
+            <Card className="hover:shadow-md transition-shadow">
               <CardHeader 
                 className="cursor-pointer hover:bg-slate-50/50 transition-colors pb-2"
                 onClick={() => setAiSummariesExpanded(!aiSummariesExpanded)}
@@ -865,6 +1173,7 @@ const PersonDetailPage: React.FC = () => {
                     lastQuery={lastQuery}
                     profileMode={queryType === 'lead_profile' || queryType === 'lead_info'}
                     onTriageDataChange={setTriageData}
+                    onMLForecastChange={setMlForecastData}
                   />
                 </CardContent>
               )}
@@ -873,11 +1182,59 @@ const PersonDetailPage: React.FC = () => {
         </section>
       </div>
 
+      {/* Floating Action Dock */}
+      {showActionDock && (
+        <div className="fixed bottom-5 right-5 z-40">
+          <div className="bg-card/95 backdrop-blur border border-border rounded-full shadow-lg px-2 py-1 flex items-center gap-1">
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button size="icon" variant="ghost" className="h-9 w-9" aria-label="Open Call Console" onClick={() => setIsCallConsoleOpen(true)}>
+                    <Phone className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Call</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button size="icon" variant="ghost" className="h-9 w-9" aria-label="Compose Email" onClick={() => setIsEmailComposerOpen(true)}>
+                    <Mail className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Email</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button size="icon" variant="ghost" className="h-9 w-9" aria-label="Book Meeting" onClick={() => setIsMeetingBookerOpen(true)}>
+                    <Video className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Meeting</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button size="icon" variant="ghost" className="h-9 w-9" aria-label="Add Task" onClick={() => appendActivity({ type: 'workflow', title: 'Task created', subtitle: 'Follow up tomorrow', metadata: { task_type: 'follow_up' } })}>
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Task</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
+        </div>
+      )}
+
       {/* Key Metrics (Always Visible) and Collapsible Panels (mobile only) */}
       <div className="lg:hidden">
         {/* Key Metrics (Always Visible) */}
         <div className="grid grid-cols-3 gap-4">
-          <Card className="border-border bg-white">
+          <Card className="border-border bg-white hover:shadow-md transition-shadow">
             <CardContent className="p-4 text-center">
               <div className="flex items-center justify-center gap-1 mb-1">
                 <Zap className="h-4 w-4 text-warning" />
@@ -888,7 +1245,7 @@ const PersonDetailPage: React.FC = () => {
             </CardContent>
           </Card>
           
-          <Card className="border-border bg-white">
+          <Card className="border-border bg-white hover:shadow-md transition-shadow">
             <CardContent className="p-4 text-center">
               <div className="text-2xl font-bold text-foreground mb-1">{conversionPercent}%</div>
               <p className="text-xs text-muted-foreground">Convert</p>
@@ -928,19 +1285,36 @@ const PersonDetailPage: React.FC = () => {
             </CardHeader>
             {smartSuggestionsExpanded && (
               <CardContent className="pt-0">
-                <div className="space-y-1">
-                  {filteredActivities.slice(0, 5).map(activity => (
-                    <TimelineItem
-                      key={activity.id}
-                      icon={activity.icon}
-                      tintClass={activity.tintClass}
-                      title={activity.title}
-                      subtitle={activity.subtitle}
-                      when={activity.when}
-                    />
-                  ))}
-                  {filteredActivities.length === 0 && <EmptyState />}
-                </div>
+                {filteredActivities.length ? (
+                  <div className="space-y-4">
+                    {groupedActivities.map(group => (
+                      <section key={group.label} className="relative">
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{group.label}</span>
+                          <div className="h-px flex-1 bg-border" />
+                        </div>
+                        <div className="relative">
+                          <div className="absolute left-[14px] top-2 bottom-2 w-px bg-border" aria-hidden />
+                          <div className="space-y-2">
+                            {group.items.slice(0, 5).map(activity => (
+                              <TimelineItem
+                                key={activity.id}
+                                icon={activity.icon}
+                                tintClass={activity.tintClass}
+                                title={activity.title}
+                                subtitle={activity.subtitle}
+                                when={activity.ts ? formatRelative(activity.ts) : activity.when}
+                                ts={activity.ts}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      </section>
+                    ))}
+                  </div>
+                ) : (
+                  <EmptyState />
+                )}
               </CardContent>
             )}
           </Card>
@@ -994,18 +1368,15 @@ const PersonDetailPage: React.FC = () => {
         isOpen={isCallConsoleOpen}
         onClose={() => setIsCallConsoleOpen(false)}
         lead={convertToCallConsoleLead}
-        onSaveCall={(callData) => {
+        onSaveCall={async (callData) => {
           console.log('Call saved:', callData);
           
-          // Optimistic timeline append
-          appendActivity({
-            id: crypto.randomUUID(),
+          // Add activity to timeline
+          await appendActivity({
             type: 'call',
             title: `Call with ${person?.first_name || 'contact'}`,
             subtitle: `${Math.round(callData.duration / 60)} minutes • ${callData.outcome?.type || 'Completed'}`,
-            when: 'just now',
-            icon: <Phone className="h-3.5 w-3.5" />,
-            tintClass: 'bg-info/10 text-info'
+            metadata: { duration: callData.duration, outcome: callData.outcome }
           });
           
           setIsCallConsoleOpen(false);
@@ -1030,15 +1401,12 @@ const PersonDetailPage: React.FC = () => {
               });
             }
             
-            // Optimistic timeline append
-            appendActivity({
-              id: crypto.randomUUID(),
+            // Add activity to timeline
+            await appendActivity({
               type: 'email',
               title: `Email sent to ${person?.first_name || 'contact'}`,
               subtitle: `Subject: ${emailData.subject} • ${emailData.intent || 'manual'}`,
-              when: 'just now',
-              icon: <Mail className="h-3.5 w-3.5" />,
-              tintClass: 'bg-accent/10 text-accent'
+              metadata: { subject: emailData.subject, intent: emailData.intent }
             });
             
             console.log('Email logged successfully:', emailData);
@@ -1055,18 +1423,15 @@ const PersonDetailPage: React.FC = () => {
         isOpen={isMeetingBookerOpen}
         onClose={() => setIsMeetingBookerOpen(false)}
         lead={convertToLead}
-        onBookMeeting={(meetingData) => {
+        onBookMeeting={async (meetingData) => {
           console.log('Meeting booked:', meetingData);
           
-          // Optimistic timeline append
-          appendActivity({
-            id: crypto.randomUUID(),
+          // Add activity to timeline
+          await appendActivity({
             type: 'meeting',
             title: `Meeting scheduled with ${person?.first_name || 'contact'}`,
             subtitle: `${meetingData.meetingType || 'Demo'} • ${meetingData.location}`,
-            when: 'just now',
-            icon: <Video className="h-3.5 w-3.5" />,
-            tintClass: 'bg-success/10 text-success'
+            metadata: { meetingType: meetingData.meetingType, location: meetingData.location }
           });
           
           setIsMeetingBookerOpen(false);
@@ -1106,8 +1471,10 @@ const FilterChip: React.FC<{ label: string; active?: boolean; onClick: () => voi
   <button
     onClick={onClick}
     className={cn(
-      "px-2.5 h-7 rounded-full text-xs border transition-colors",
-      active ? "bg-foreground text-background border-foreground" : "bg-background hover:bg-muted border-border"
+      "px-2.5 h-7 rounded-full text-xs border transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-ring/50",
+      active
+        ? "bg-foreground text-background border-foreground shadow-sm"
+        : "bg-background hover:bg-muted border-border hover:shadow-sm"
     )}
   >
     {label}
@@ -1126,6 +1493,7 @@ const AtAGlanceProperty: React.FC<{
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(typeof value === 'string' ? value : '');
   const [isSaving, setIsSaving] = useState(false);
+  const { push: toast } = useToast();
 
   const handleEdit = () => {
     if (editable && fieldName) {
@@ -1164,7 +1532,7 @@ const AtAGlanceProperty: React.FC<{
   };
 
   return (
-    <div className="space-y-1 py-1 group">
+    <div className="space-y-1 py-1 group rounded-md px-2 -mx-2 hover:bg-muted/40 transition-colors">
       <span className="text-xs text-muted-foreground font-medium">{label}</span>
       <div className="flex items-center gap-2">
         {isEditing ? (
@@ -1209,6 +1577,7 @@ const AtAGlanceProperty: React.FC<{
                 onClick={(e) => {
                   e.stopPropagation();
                   navigator.clipboard.writeText(value);
+                  toast({ title: 'Copied', description: `${label} copied to clipboard`, variant: 'success' });
                 }}
                 aria-label={`Copy ${label}`}
               >
@@ -1236,6 +1605,3 @@ const AtAGlanceProperty: React.FC<{
 
 
 // Editable Property Component
-
-
-

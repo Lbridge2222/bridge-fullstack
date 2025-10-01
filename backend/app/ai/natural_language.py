@@ -708,7 +708,8 @@ async def process_natural_language_query(request: NaturalLanguageQuery):
             "time_preset": trange.get("preset"),
             "top_example": f"{results[0]['first_name']} {results[0]['last_name']}" if results else None
         }
-        summary = await narrate(mode="lead-search", facts=facts)
+        result = await narrate(f"Search results for {intent}", kb_sources=[])
+        summary = result["text"]
 
         # Generate suggestions for follow-up queries
         suggestions = [

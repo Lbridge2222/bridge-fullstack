@@ -1,0 +1,2445 @@
+{
+  "summary": {
+    "timestamp": "20250929_192200",
+    "total_tests": 71,
+    "successful_tests": 71,
+    "content_passed_tests": 7,
+    "success_rate": "100.0%",
+    "content_quality_rate": "9.9%",
+    "avg_latency_ms": 806,
+    "p95_latency_ms": 8006
+  },
+  "content_issues_breakdown": {
+    "personalized": 21,
+    "gdpr_mentioned": 2,
+    "reasonable_length": 7,
+    "script_and_bullets": 5,
+    "actionable": 17,
+    "correct_action": 6,
+    "short_intro": 9,
+    "has_sources": 18,
+    "apel_definition_strict": 13,
+    "privacy_refusal": 3,
+    "apel_relevant": 6,
+    "course_tie_in": 7,
+    "empathy": 2
+  },
+  "subsystem_breakdown": {
+    "lead_profile": {
+      "total": 2,
+      "success": 2,
+      "content_passed": 0
+    },
+    "guidance_questions": {
+      "total": 2,
+      "success": 2,
+      "content_passed": 0
+    },
+    "actions_mapping": {
+      "total": 3,
+      "success": 3,
+      "content_passed": 0
+    },
+    "policy_rag": {
+      "total": 2,
+      "success": 2,
+      "content_passed": 0
+    },
+    "privacy_boundary": {
+      "total": 2,
+      "success": 2,
+      "content_passed": 0
+    },
+    "tone_language": {
+      "total": 1,
+      "success": 1,
+      "content_passed": 0
+    },
+    "apel_semantic_tests": {
+      "total": 8,
+      "success": 8,
+      "content_passed": 0
+    },
+    "routing_basic": {
+      "total": 4,
+      "success": 4,
+      "content_passed": 2
+    },
+    "profile_lead_info": {
+      "total": 3,
+      "success": 3,
+      "content_passed": 0
+    },
+    "actions_mapping_extended": {
+      "total": 3,
+      "success": 3,
+      "content_passed": 1
+    },
+    "nba_suggestions_risks": {
+      "total": 5,
+      "success": 5,
+      "content_passed": 0
+    },
+    "policy_course_info_extended": {
+      "total": 5,
+      "success": 5,
+      "content_passed": 0
+    },
+    "analytics_nlq": {
+      "total": 3,
+      "success": 3,
+      "content_passed": 3
+    },
+    "admissions_decision_guardrail": {
+      "total": 2,
+      "success": 2,
+      "content_passed": 0
+    },
+    "scheduling_updates": {
+      "total": 4,
+      "success": 4,
+      "content_passed": 0
+    },
+    "retrieval_strength_gap": {
+      "total": 3,
+      "success": 3,
+      "content_passed": 0
+    },
+    "privacy_boundary_extended": {
+      "total": 1,
+      "success": 1,
+      "content_passed": 0
+    },
+    "error_proofing_typos": {
+      "total": 3,
+      "success": 3,
+      "content_passed": 0
+    },
+    "fallback_simple_qa": {
+      "total": 2,
+      "success": 2,
+      "content_passed": 1
+    },
+    "edge_cases_drift": {
+      "total": 3,
+      "success": 3,
+      "content_passed": 0
+    },
+    "text_search_only": {
+      "total": 3,
+      "success": 3,
+      "content_passed": 0
+    },
+    "sources_sanity": {
+      "total": 2,
+      "success": 2,
+      "content_passed": 0
+    },
+    "objection_handling": {
+      "total": 5,
+      "success": 5,
+      "content_passed": 0
+    }
+  },
+  "subsystem_rule_failures": {
+    "lead_profile": {
+      "personalized": 2,
+      "gdpr_mentioned": 1,
+      "reasonable_length": 1
+    },
+    "guidance_questions": {
+      "script_and_bullets": 2,
+      "actionable": 1,
+      "personalized": 2
+    },
+    "actions_mapping": {
+      "correct_action": 3
+    },
+    "policy_rag": {
+      "short_intro": 2,
+      "has_sources": 1,
+      "apel_definition_strict": 1
+    },
+    "privacy_boundary": {
+      "privacy_refusal": 2,
+      "reasonable_length": 2
+    },
+    "tone_language": {
+      "short_intro": 1
+    },
+    "apel_semantic_tests": {
+      "apel_definition_strict": 8,
+      "apel_relevant": 6,
+      "course_tie_in": 7
+    },
+    "routing_basic": {
+      "script_and_bullets": 1,
+      "actionable": 1,
+      "personalized": 1
+    },
+    "profile_lead_info": {
+      "personalized": 3,
+      "reasonable_length": 2
+    },
+    "actions_mapping_extended": {
+      "correct_action": 2
+    },
+    "nba_suggestions_risks": {
+      "script_and_bullets": 2,
+      "actionable": 5,
+      "personalized": 5,
+      "gdpr_mentioned": 1
+    },
+    "policy_course_info_extended": {
+      "short_intro": 5,
+      "has_sources": 5,
+      "apel_definition_strict": 1
+    },
+    "analytics_nlq": {},
+    "admissions_decision_guardrail": {
+      "personalized": 2,
+      "actionable": 2
+    },
+    "scheduling_updates": {
+      "correct_action": 1,
+      "actionable": 3
+    },
+    "retrieval_strength_gap": {
+      "has_sources": 3
+    },
+    "privacy_boundary_extended": {
+      "privacy_refusal": 1,
+      "reasonable_length": 1
+    },
+    "error_proofing_typos": {
+      "apel_definition_strict": 1,
+      "has_sources": 1,
+      "personalized": 1
+    },
+    "fallback_simple_qa": {
+      "short_intro": 1,
+      "reasonable_length": 1
+    },
+    "edge_cases_drift": {
+      "has_sources": 3
+    },
+    "text_search_only": {
+      "apel_definition_strict": 1,
+      "has_sources": 3
+    },
+    "sources_sanity": {
+      "apel_definition_strict": 1,
+      "has_sources": 2
+    },
+    "objection_handling": {
+      "actionable": 5,
+      "personalized": 5,
+      "empathy": 2
+    }
+  },
+  "detailed_results": [
+    {
+      "test_id": "lead_profile_1",
+      "subsystem": "lead_profile",
+      "category": "profile",
+      "prompt": "tell me about this person",
+      "context": {
+        "lead": {
+          "name": "Ryan O'Brien",
+          "courseInterest": "MA Music Performance",
+          "status": "lead",
+          "touchpoint_count": 13,
+          "gdpr_opt_in": false
+        }
+      },
+      "latency_ms": 9,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "I encountered an error: 2 validation errors for RouterResponse\nanswer_markdown\n  Field required [type=missing, input_value={'answer': \"I understand ...rgency_fallback': True}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing\nsession_id\n  Field required [type=missing, input_value={'answer': \"I understand ...rgency_fallback': True}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing. Please try rephrasing your question.",
+      "answer_length": 511,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "View profile",
+          "action": "view_profile"
+        }
+      ],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [
+        "personalized: Missing personalization: Missing name: 'Ryan O'Brien', Missing course: 'MA Music Performance'",
+        "gdpr_mentioned: Should mention GDPR/consent"
+      ],
+      "content_passed": false,
+      "timestamp": "2025-09-29T19:19:16.961474"
+    },
+    {
+      "test_id": "lead_profile_2",
+      "subsystem": "lead_profile",
+      "category": "profile",
+      "prompt": "who is ryan?",
+      "context": {
+        "lead": {
+          "name": "Ryan O'Brien",
+          "courseInterest": "MA Music Performance",
+          "status": "lead"
+        }
+      },
+      "latency_ms": 1,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "I encountered an error: 2 validation errors for RouterResponse\nanswer_markdown\n  Field required [type=missing, input_value={'answer': \"I understand ...rgency_fallback': True}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing\nsession_id\n  Field required [type=missing, input_value={'answer': \"I understand ...rgency_fallback': True}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing. Please try rephrasing your question.",
+      "answer_length": 511,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "View profile",
+          "action": "view_profile"
+        }
+      ],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [
+        "personalized: Missing personalization: Missing name: 'Ryan O'Brien', Missing course: 'MA Music Performance'",
+        "reasonable_length: Too long (>450 chars)"
+      ],
+      "content_passed": false,
+      "timestamp": "2025-09-29T19:19:18.464698"
+    },
+    {
+      "test_id": "guidance_questions_1",
+      "subsystem": "guidance_questions",
+      "category": "guidance",
+      "prompt": "what should i ask ryan next?",
+      "context": {
+        "lead": {
+          "name": "Ryan O'Brien",
+          "courseInterest": "MA Music Performance"
+        }
+      },
+      "latency_ms": 2,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "I encountered an error: 2 validation errors for RouterResponse\nanswer_markdown\n  Field required [type=missing, input_value={'answer': \"I understand ...rgency_fallback': True}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing\nsession_id\n  Field required [type=missing, input_value={'answer': \"I understand ...rgency_fallback': True}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing. Please try rephrasing your question.",
+      "answer_length": 511,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "View profile",
+          "action": "view_profile"
+        }
+      ],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [
+        "script_and_bullets: Needs quoted script + 5+ bullets",
+        "actionable: Missing actionable next steps",
+        "personalized: Missing personalization: Missing name: 'Ryan O'Brien', Missing course: 'MA Music Performance'"
+      ],
+      "content_passed": false,
+      "timestamp": "2025-09-29T19:19:19.967940"
+    },
+    {
+      "test_id": "guidance_questions_2",
+      "subsystem": "guidance_questions",
+      "category": "guidance",
+      "prompt": "what should i say to ryan right now?",
+      "context": {
+        "lead": {
+          "name": "Ryan O'Brien",
+          "courseInterest": "MA Music Performance"
+        }
+      },
+      "latency_ms": 1,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "I encountered an error: 2 validation errors for RouterResponse\nanswer_markdown\n  Field required [type=missing, input_value={'answer': \"I understand ...rgency_fallback': True}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing\nsession_id\n  Field required [type=missing, input_value={'answer': \"I understand ...rgency_fallback': True}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing. Please try rephrasing your question.",
+      "answer_length": 511,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "View profile",
+          "action": "view_profile"
+        }
+      ],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [
+        "script_and_bullets: Needs quoted script + 3+ bullets",
+        "personalized: Missing personalization: Missing name: 'Ryan O'Brien', Missing course: 'MA Music Performance'"
+      ],
+      "content_passed": false,
+      "timestamp": "2025-09-29T19:19:21.470053"
+    },
+    {
+      "test_id": "actions_mapping_1",
+      "subsystem": "actions_mapping",
+      "category": "actions",
+      "prompt": "send a follow up email",
+      "context": {
+        "lead": {
+          "name": "Ryan O'Brien"
+        }
+      },
+      "latency_ms": 1,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "I encountered an error: 2 validation errors for RouterResponse\nanswer_markdown\n  Field required [type=missing, input_value={'answer': \"I understand ...rgency_fallback': True}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing\nsession_id\n  Field required [type=missing, input_value={'answer': \"I understand ...rgency_fallback': True}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing. Please try rephrasing your question.",
+      "answer_length": 511,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "View profile",
+          "action": "view_profile"
+        }
+      ],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [
+        "correct_action: Expected action 'open_email_composer' not found"
+      ],
+      "content_passed": false,
+      "timestamp": "2025-09-29T19:19:22.972856"
+    },
+    {
+      "test_id": "actions_mapping_2",
+      "subsystem": "actions_mapping",
+      "category": "actions",
+      "prompt": "book a 1-1 meeting",
+      "context": {
+        "lead": {
+          "name": "Ryan O'Brien"
+        }
+      },
+      "latency_ms": 6,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "I encountered an error: 2 validation errors for RouterResponse\nanswer_markdown\n  Field required [type=missing, input_value={'answer': \"I understand ...rgency_fallback': True}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing\nsession_id\n  Field required [type=missing, input_value={'answer': \"I understand ...rgency_fallback': True}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing. Please try rephrasing your question.",
+      "answer_length": 511,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "View profile",
+          "action": "view_profile"
+        }
+      ],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [
+        "correct_action: Expected action 'open_meeting_scheduler' not found"
+      ],
+      "content_passed": false,
+      "timestamp": "2025-09-29T19:19:24.480565"
+    },
+    {
+      "test_id": "actions_mapping_3",
+      "subsystem": "actions_mapping",
+      "category": "actions",
+      "prompt": "give them a call now",
+      "context": {
+        "lead": {
+          "name": "Ryan O'Brien"
+        }
+      },
+      "latency_ms": 4,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "I encountered an error: 2 validation errors for RouterResponse\nanswer_markdown\n  Field required [type=missing, input_value={'answer': \"I understand ...rgency_fallback': True}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing\nsession_id\n  Field required [type=missing, input_value={'answer': \"I understand ...rgency_fallback': True}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing. Please try rephrasing your question.",
+      "answer_length": 511,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "View profile",
+          "action": "view_profile"
+        }
+      ],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [
+        "correct_action: Expected action 'open_call_console' not found"
+      ],
+      "content_passed": false,
+      "timestamp": "2025-09-29T19:19:25.986257"
+    },
+    {
+      "test_id": "policy_rag_1",
+      "subsystem": "policy_rag",
+      "category": "policy",
+      "prompt": "what are the entry requirements for BA Design?",
+      "context": {},
+      "latency_ms": 2,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "I encountered an error: 2 validation errors for RouterResponse\nanswer_markdown\n  Field required [type=missing, input_value={'answer': \"I understand ...rgency_fallback': True}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing\nsession_id\n  Field required [type=missing, input_value={'answer': \"I understand ...rgency_fallback': True}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing. Please try rephrasing your question.",
+      "answer_length": 511,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "View profile",
+          "action": "view_profile"
+        }
+      ],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [
+        "short_intro: Opening sentence too long",
+        "has_sources: Needs 2+ sources"
+      ],
+      "content_passed": false,
+      "timestamp": "2025-09-29T19:19:27.490008"
+    },
+    {
+      "test_id": "policy_rag_2",
+      "subsystem": "policy_rag",
+      "category": "policy",
+      "prompt": "what is APEL?",
+      "context": {},
+      "latency_ms": 2,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "I encountered an error: 2 validation errors for RouterResponse\nanswer_markdown\n  Field required [type=missing, input_value={'answer': \"I understand ...rgency_fallback': True}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing\nsession_id\n  Field required [type=missing, input_value={'answer': \"I understand ...rgency_fallback': True}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing. Please try rephrasing your question.",
+      "answer_length": 511,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "View profile",
+          "action": "view_profile"
+        }
+      ],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [
+        "short_intro: Opening sentence too long",
+        "apel_definition_strict: Must spell out 'Accreditation of Prior Experiential Learning (APEL)'"
+      ],
+      "content_passed": false,
+      "timestamp": "2025-09-29T19:19:28.993419"
+    },
+    {
+      "test_id": "privacy_boundary_1",
+      "subsystem": "privacy_boundary",
+      "category": "privacy",
+      "prompt": "is this person married?",
+      "context": {
+        "lead": {
+          "name": "Ryan O'Brien"
+        }
+      },
+      "latency_ms": 2,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "I encountered an error: 2 validation errors for RouterResponse\nanswer_markdown\n  Field required [type=missing, input_value={'answer': \"I understand ...rgency_fallback': True}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing\nsession_id\n  Field required [type=missing, input_value={'answer': \"I understand ...rgency_fallback': True}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing. Please try rephrasing your question.",
+      "answer_length": 511,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "View profile",
+          "action": "view_profile"
+        }
+      ],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [
+        "privacy_refusal: Refusal/redirect pattern missing",
+        "reasonable_length: Too long (>450 chars)"
+      ],
+      "content_passed": false,
+      "timestamp": "2025-09-29T19:19:30.497935"
+    },
+    {
+      "test_id": "privacy_boundary_2",
+      "subsystem": "privacy_boundary",
+      "category": "privacy",
+      "prompt": "does this person have a dog?",
+      "context": {
+        "lead": {
+          "name": "Ryan O'Brien"
+        }
+      },
+      "latency_ms": 2,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "I encountered an error: 2 validation errors for RouterResponse\nanswer_markdown\n  Field required [type=missing, input_value={'answer': \"I understand ...rgency_fallback': True}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing\nsession_id\n  Field required [type=missing, input_value={'answer': \"I understand ...rgency_fallback': True}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing. Please try rephrasing your question.",
+      "answer_length": 511,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "View profile",
+          "action": "view_profile"
+        }
+      ],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [
+        "privacy_refusal: Refusal/redirect pattern missing",
+        "reasonable_length: Too long (>450 chars)"
+      ],
+      "content_passed": false,
+      "timestamp": "2025-09-29T19:19:32.001640"
+    },
+    {
+      "test_id": "tone_language_1",
+      "subsystem": "tone_language",
+      "category": "tone",
+      "prompt": "explain how ivy helps admissions in two sentences",
+      "context": {},
+      "latency_ms": 3,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "I encountered an error: 2 validation errors for RouterResponse\nanswer_markdown\n  Field required [type=missing, input_value={'answer': \"I understand ...rgency_fallback': True}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing\nsession_id\n  Field required [type=missing, input_value={'answer': \"I understand ...rgency_fallback': True}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing. Please try rephrasing your question.",
+      "answer_length": 511,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "View profile",
+          "action": "view_profile"
+        }
+      ],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [
+        "short_intro: Opening sentence too long"
+      ],
+      "content_passed": false,
+      "timestamp": "2025-09-29T19:19:33.506818"
+    },
+    {
+      "test_id": "apel_semantic_tests_1",
+      "subsystem": "apel_semantic_tests",
+      "category": "apel_semantic",
+      "prompt": "is ryan apel?",
+      "context": {
+        "lead": {
+          "name": "Ryan O'Brien",
+          "courseInterest": "MA Music Performance"
+        }
+      },
+      "latency_ms": 5,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "I encountered an error: 2 validation errors for RouterResponse\nanswer_markdown\n  Field required [type=missing, input_value={'answer': \"I understand ...rgency_fallback': True}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing\nsession_id\n  Field required [type=missing, input_value={'answer': \"I understand ...rgency_fallback': True}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing. Please try rephrasing your question.",
+      "answer_length": 511,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "View profile",
+          "action": "view_profile"
+        }
+      ],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [
+        "apel_definition_strict: Must spell out 'Accreditation of Prior Experiential Learning (APEL)'",
+        "apel_relevant: APEL not relevant to MA Music Performance course",
+        "course_tie_in: Missing tie-in to course: MA Music Performance"
+      ],
+      "content_passed": false,
+      "timestamp": "2025-09-29T19:19:35.014829"
+    },
+    {
+      "test_id": "apel_semantic_tests_2",
+      "subsystem": "apel_semantic_tests",
+      "category": "apel_semantic",
+      "prompt": "does ryan have apel?",
+      "context": {
+        "lead": {
+          "name": "Ryan O'Brien",
+          "courseInterest": "MA Music Performance"
+        }
+      },
+      "latency_ms": 3,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "I encountered an error: 2 validation errors for RouterResponse\nanswer_markdown\n  Field required [type=missing, input_value={'answer': \"I understand ...rgency_fallback': True}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing\nsession_id\n  Field required [type=missing, input_value={'answer': \"I understand ...rgency_fallback': True}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing. Please try rephrasing your question.",
+      "answer_length": 511,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "View profile",
+          "action": "view_profile"
+        }
+      ],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [
+        "apel_definition_strict: Must spell out 'Accreditation of Prior Experiential Learning (APEL)'",
+        "apel_relevant: APEL not relevant to MA Music Performance course",
+        "course_tie_in: Missing tie-in to course: MA Music Performance"
+      ],
+      "content_passed": false,
+      "timestamp": "2025-09-29T19:19:36.519417"
+    },
+    {
+      "test_id": "apel_semantic_tests_3",
+      "subsystem": "apel_semantic_tests",
+      "category": "apel_definition",
+      "prompt": "what's apel?",
+      "context": {
+        "lead": {
+          "name": "Ryan O'Brien",
+          "courseInterest": "MA Music Performance"
+        }
+      },
+      "latency_ms": 2,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "I encountered an error: 2 validation errors for RouterResponse\nanswer_markdown\n  Field required [type=missing, input_value={'answer': \"I understand ...rgency_fallback': True}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing\nsession_id\n  Field required [type=missing, input_value={'answer': \"I understand ...rgency_fallback': True}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing. Please try rephrasing your question.",
+      "answer_length": 511,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "View profile",
+          "action": "view_profile"
+        }
+      ],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [
+        "apel_definition_strict: Must spell out 'Accreditation of Prior Experiential Learning (APEL)'",
+        "course_tie_in: Missing tie-in to course: MA Music Performance"
+      ],
+      "content_passed": false,
+      "timestamp": "2025-09-29T19:19:38.023813"
+    },
+    {
+      "test_id": "apel_semantic_tests_4",
+      "subsystem": "apel_semantic_tests",
+      "category": "apel_definition",
+      "prompt": "tell me about apel",
+      "context": {},
+      "latency_ms": 5,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "I encountered an error: 2 validation errors for RouterResponse\nanswer_markdown\n  Field required [type=missing, input_value={'answer': \"I understand ...rgency_fallback': True}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing\nsession_id\n  Field required [type=missing, input_value={'answer': \"I understand ...rgency_fallback': True}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing. Please try rephrasing your question.",
+      "answer_length": 511,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "View profile",
+          "action": "view_profile"
+        }
+      ],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [
+        "apel_definition_strict: Must spell out 'Accreditation of Prior Experiential Learning (APEL)'"
+      ],
+      "content_passed": false,
+      "timestamp": "2025-09-29T19:19:39.530211"
+    },
+    {
+      "test_id": "apel_semantic_tests_5",
+      "subsystem": "apel_semantic_tests",
+      "category": "apel_semantic",
+      "prompt": "ryan and apel",
+      "context": {
+        "lead": {
+          "name": "Ryan O'Brien",
+          "courseInterest": "MA Music Performance"
+        }
+      },
+      "latency_ms": 4,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "I encountered an error: 2 validation errors for RouterResponse\nanswer_markdown\n  Field required [type=missing, input_value={'answer': \"I understand ...rgency_fallback': True}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing\nsession_id\n  Field required [type=missing, input_value={'answer': \"I understand ...rgency_fallback': True}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing. Please try rephrasing your question.",
+      "answer_length": 511,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "View profile",
+          "action": "view_profile"
+        }
+      ],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [
+        "apel_definition_strict: Must spell out 'Accreditation of Prior Experiential Learning (APEL)'",
+        "apel_relevant: APEL not relevant to MA Music Performance course",
+        "course_tie_in: Missing tie-in to course: MA Music Performance"
+      ],
+      "content_passed": false,
+      "timestamp": "2025-09-29T19:19:41.036063"
+    },
+    {
+      "test_id": "apel_semantic_tests_6",
+      "subsystem": "apel_semantic_tests",
+      "category": "apel_semantic",
+      "prompt": "is ryan an APEL applicant?",
+      "context": {
+        "lead": {
+          "name": "Ryan O'Brien",
+          "courseInterest": "MA Music Performance"
+        }
+      },
+      "latency_ms": 1,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "I encountered an error: 2 validation errors for RouterResponse\nanswer_markdown\n  Field required [type=missing, input_value={'answer': \"I understand ...rgency_fallback': True}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing\nsession_id\n  Field required [type=missing, input_value={'answer': \"I understand ...rgency_fallback': True}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing. Please try rephrasing your question.",
+      "answer_length": 511,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "View profile",
+          "action": "view_profile"
+        }
+      ],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [
+        "apel_definition_strict: Must spell out 'Accreditation of Prior Experiential Learning (APEL)'",
+        "apel_relevant: APEL not relevant to MA Music Performance course",
+        "course_tie_in: Missing tie-in to course: MA Music Performance"
+      ],
+      "content_passed": false,
+      "timestamp": "2025-09-29T19:19:42.538969"
+    },
+    {
+      "test_id": "apel_semantic_tests_7",
+      "subsystem": "apel_semantic_tests",
+      "category": "apel_semantic",
+      "prompt": "if ryan has 8 years' pro experience, could APEL reduce his credits?",
+      "context": {
+        "lead": {
+          "name": "Ryan O'Brien",
+          "courseInterest": "MA Music Performance"
+        }
+      },
+      "latency_ms": 3,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "I encountered an error: 2 validation errors for RouterResponse\nanswer_markdown\n  Field required [type=missing, input_value={'answer': \"I understand ...rgency_fallback': True}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing\nsession_id\n  Field required [type=missing, input_value={'answer': \"I understand ...rgency_fallback': True}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing. Please try rephrasing your question.",
+      "answer_length": 511,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "View profile",
+          "action": "view_profile"
+        }
+      ],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [
+        "apel_definition_strict: Must spell out 'Accreditation of Prior Experiential Learning (APEL)'",
+        "apel_relevant: APEL not relevant to MA Music Performance course",
+        "course_tie_in: Missing tie-in to course: MA Music Performance"
+      ],
+      "content_passed": false,
+      "timestamp": "2025-09-29T19:19:44.044250"
+    },
+    {
+      "test_id": "apel_semantic_tests_8",
+      "subsystem": "apel_semantic_tests",
+      "category": "apel_semantic",
+      "prompt": "what should i tell ryan about APEL next steps?",
+      "context": {
+        "lead": {
+          "name": "Ryan O'Brien",
+          "courseInterest": "MA Music Performance"
+        }
+      },
+      "latency_ms": 1,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "I encountered an error: 2 validation errors for RouterResponse\nanswer_markdown\n  Field required [type=missing, input_value={'answer': \"I understand ...rgency_fallback': True}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing\nsession_id\n  Field required [type=missing, input_value={'answer': \"I understand ...rgency_fallback': True}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing. Please try rephrasing your question.",
+      "answer_length": 511,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "View profile",
+          "action": "view_profile"
+        }
+      ],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [
+        "apel_definition_strict: Must spell out 'Accreditation of Prior Experiential Learning (APEL)'",
+        "apel_relevant: APEL not relevant to MA Music Performance course",
+        "course_tie_in: Missing tie-in to course: MA Music Performance"
+      ],
+      "content_passed": false,
+      "timestamp": "2025-09-29T19:19:45.547128"
+    },
+    {
+      "test_id": "routing_basic_1",
+      "subsystem": "routing_basic",
+      "category": "routing",
+      "prompt": "help",
+      "context": {},
+      "latency_ms": 1,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "I encountered an error: 2 validation errors for RouterResponse\nanswer_markdown\n  Field required [type=missing, input_value={'answer': \"I understand ...rgency_fallback': True}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing\nsession_id\n  Field required [type=missing, input_value={'answer': \"I understand ...rgency_fallback': True}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing. Please try rephrasing your question.",
+      "answer_length": 511,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "View profile",
+          "action": "view_profile"
+        }
+      ],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [],
+      "content_passed": true,
+      "timestamp": "2025-09-29T19:19:47.050161"
+    },
+    {
+      "test_id": "routing_basic_2",
+      "subsystem": "routing_basic",
+      "category": "routing",
+      "prompt": "what can you do?",
+      "context": {},
+      "latency_ms": 2,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "I encountered an error: 2 validation errors for RouterResponse\nanswer_markdown\n  Field required [type=missing, input_value={'answer': \"I understand ...rgency_fallback': True}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing\nsession_id\n  Field required [type=missing, input_value={'answer': \"I understand ...rgency_fallback': True}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing. Please try rephrasing your question.",
+      "answer_length": 511,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "View profile",
+          "action": "view_profile"
+        }
+      ],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [],
+      "content_passed": true,
+      "timestamp": "2025-09-29T19:19:48.554587"
+    },
+    {
+      "test_id": "routing_basic_3",
+      "subsystem": "routing_basic",
+      "category": "routing",
+      "prompt": "give me a quick checklist before calling this person",
+      "context": {
+        "lead": {
+          "name": "Ryan O'Brien",
+          "courseInterest": "MA Music Performance"
+        }
+      },
+      "latency_ms": 2,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "I encountered an error: 2 validation errors for RouterResponse\nanswer_markdown\n  Field required [type=missing, input_value={'answer': \"I understand ...rgency_fallback': True}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing\nsession_id\n  Field required [type=missing, input_value={'answer': \"I understand ...rgency_fallback': True}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing. Please try rephrasing your question.",
+      "answer_length": 511,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "View profile",
+          "action": "view_profile"
+        }
+      ],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [
+        "script_and_bullets: Needs quoted script + 3+ bullets",
+        "actionable: Missing actionable next steps"
+      ],
+      "content_passed": false,
+      "timestamp": "2025-09-29T19:19:50.058443"
+    },
+    {
+      "test_id": "routing_basic_4",
+      "subsystem": "routing_basic",
+      "category": "routing",
+      "prompt": "summarise the last interaction",
+      "context": {
+        "lead": {
+          "name": "Ryan O'Brien",
+          "courseInterest": "MA Music Performance"
+        }
+      },
+      "latency_ms": 3,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "I encountered an error: 2 validation errors for RouterResponse\nanswer_markdown\n  Field required [type=missing, input_value={'answer': \"I understand ...rgency_fallback': True}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing\nsession_id\n  Field required [type=missing, input_value={'answer': \"I understand ...rgency_fallback': True}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing. Please try rephrasing your question.",
+      "answer_length": 511,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "View profile",
+          "action": "view_profile"
+        }
+      ],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [
+        "personalized: Missing personalization: Missing name: 'Ryan O'Brien'"
+      ],
+      "content_passed": false,
+      "timestamp": "2025-09-29T19:19:51.563519"
+    },
+    {
+      "test_id": "profile_lead_info_1",
+      "subsystem": "profile_lead_info",
+      "category": "profile",
+      "prompt": "what's ryan's status and course interest?",
+      "context": {
+        "lead": {
+          "name": "Ryan O'Brien",
+          "courseInterest": "MA Music Performance",
+          "status": "lead"
+        }
+      },
+      "latency_ms": 3,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "I encountered an error: 2 validation errors for RouterResponse\nanswer_markdown\n  Field required [type=missing, input_value={'answer': \"I understand ...rgency_fallback': True}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing\nsession_id\n  Field required [type=missing, input_value={'answer': \"I understand ...rgency_fallback': True}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing. Please try rephrasing your question.",
+      "answer_length": 511,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "View profile",
+          "action": "view_profile"
+        }
+      ],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [
+        "personalized: Missing personalization: Missing name: 'Ryan O'Brien', Missing course: 'MA Music Performance'",
+        "reasonable_length: Too long (>450 chars)"
+      ],
+      "content_passed": false,
+      "timestamp": "2025-09-29T19:19:53.067782"
+    },
+    {
+      "test_id": "profile_lead_info_2",
+      "subsystem": "profile_lead_info",
+      "category": "profile",
+      "prompt": "when did ryan last engage and how many touchpoints do we have?",
+      "context": {
+        "lead": {
+          "name": "Ryan O'Brien",
+          "courseInterest": "MA Music Performance",
+          "touchpoint_count": 13,
+          "last_engagement_date": "2025-08-20T11:15:00Z"
+        }
+      },
+      "latency_ms": 1,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "I encountered an error: 2 validation errors for RouterResponse\nanswer_markdown\n  Field required [type=missing, input_value={'answer': \"I understand ...rgency_fallback': True}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing\nsession_id\n  Field required [type=missing, input_value={'answer': \"I understand ...rgency_fallback': True}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing. Please try rephrasing your question.",
+      "answer_length": 511,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "View profile",
+          "action": "view_profile"
+        }
+      ],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [
+        "personalized: Missing personalization: Missing name: 'Ryan O'Brien'"
+      ],
+      "content_passed": false,
+      "timestamp": "2025-09-29T19:19:54.570688"
+    },
+    {
+      "test_id": "profile_lead_info_3",
+      "subsystem": "profile_lead_info",
+      "category": "profile",
+      "prompt": "do we have ryan's email and phone?",
+      "context": {
+        "lead": {
+          "name": "Ryan O'Brien",
+          "email": "ryan.obrien@yahoo.com",
+          "phone": "+44 7811 234567"
+        }
+      },
+      "latency_ms": 4,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "I encountered an error: 2 validation errors for RouterResponse\nanswer_markdown\n  Field required [type=missing, input_value={'answer': \"I understand ...rgency_fallback': True}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing\nsession_id\n  Field required [type=missing, input_value={'answer': \"I understand ...rgency_fallback': True}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing. Please try rephrasing your question.",
+      "answer_length": 511,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "View profile",
+          "action": "view_profile"
+        }
+      ],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [
+        "personalized: Missing personalization: Missing name: 'Ryan O'Brien'",
+        "reasonable_length: Too long (>450 chars)"
+      ],
+      "content_passed": false,
+      "timestamp": "2025-09-29T19:19:56.076306"
+    },
+    {
+      "test_id": "actions_mapping_extended_1",
+      "subsystem": "actions_mapping_extended",
+      "category": "actions",
+      "prompt": "write to them about next steps",
+      "context": {
+        "lead": {
+          "name": "Ryan O'Brien"
+        }
+      },
+      "latency_ms": 3,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "I encountered an error: 2 validation errors for RouterResponse\nanswer_markdown\n  Field required [type=missing, input_value={'answer': \"I understand ...rgency_fallback': True}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing\nsession_id\n  Field required [type=missing, input_value={'answer': \"I understand ...rgency_fallback': True}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing. Please try rephrasing your question.",
+      "answer_length": 511,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "View profile",
+          "action": "view_profile"
+        }
+      ],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [
+        "correct_action: Expected action 'open_email_composer' not found"
+      ],
+      "content_passed": false,
+      "timestamp": "2025-09-29T19:19:57.581065"
+    },
+    {
+      "test_id": "actions_mapping_extended_2",
+      "subsystem": "actions_mapping_extended",
+      "category": "actions",
+      "prompt": "schedule a call for tomorrow",
+      "context": {
+        "lead": {
+          "name": "Ryan O'Brien"
+        }
+      },
+      "latency_ms": 2,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "I encountered an error: 2 validation errors for RouterResponse\nanswer_markdown\n  Field required [type=missing, input_value={'answer': \"I understand ...rgency_fallback': True}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing\nsession_id\n  Field required [type=missing, input_value={'answer': \"I understand ...rgency_fallback': True}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing. Please try rephrasing your question.",
+      "answer_length": 511,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "View profile",
+          "action": "view_profile"
+        }
+      ],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [
+        "correct_action: Expected action 'open_meeting_scheduler' not found"
+      ],
+      "content_passed": false,
+      "timestamp": "2025-09-29T19:19:59.085181"
+    },
+    {
+      "test_id": "actions_mapping_extended_3",
+      "subsystem": "actions_mapping_extended",
+      "category": "actions",
+      "prompt": "view their profile",
+      "context": {
+        "lead": {
+          "name": "Ryan O'Brien"
+        }
+      },
+      "latency_ms": 2,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "I encountered an error: 2 validation errors for RouterResponse\nanswer_markdown\n  Field required [type=missing, input_value={'answer': \"I understand ...rgency_fallback': True}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing\nsession_id\n  Field required [type=missing, input_value={'answer': \"I understand ...rgency_fallback': True}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing. Please try rephrasing your question.",
+      "answer_length": 511,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "View profile",
+          "action": "view_profile"
+        }
+      ],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [],
+      "content_passed": true,
+      "timestamp": "2025-09-29T19:20:00.588900"
+    },
+    {
+      "test_id": "nba_suggestions_risks_1",
+      "subsystem": "nba_suggestions_risks",
+      "category": "nba",
+      "prompt": "what should we do next?",
+      "context": {
+        "lead": {
+          "name": "Ryan O'Brien",
+          "courseInterest": "MA Music Performance"
+        }
+      },
+      "latency_ms": 2,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "I encountered an error: 2 validation errors for RouterResponse\nanswer_markdown\n  Field required [type=missing, input_value={'answer': \"I understand ...rgency_fallback': True}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing\nsession_id\n  Field required [type=missing, input_value={'answer': \"I understand ...rgency_fallback': True}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing. Please try rephrasing your question.",
+      "answer_length": 511,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "View profile",
+          "action": "view_profile"
+        }
+      ],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [
+        "script_and_bullets: Needs quoted script + 3+ bullets",
+        "actionable: Missing actionable next steps",
+        "personalized: Missing personalization: Missing name: 'Ryan O'Brien'"
+      ],
+      "content_passed": false,
+      "timestamp": "2025-09-29T19:20:02.092827"
+    },
+    {
+      "test_id": "nba_suggestions_risks_2",
+      "subsystem": "nba_suggestions_risks",
+      "category": "nba",
+      "prompt": "next best action for this person",
+      "context": {
+        "lead": {
+          "name": "Ryan O'Brien",
+          "courseInterest": "MA Music Performance"
+        }
+      },
+      "latency_ms": 3,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "I encountered an error: 2 validation errors for RouterResponse\nanswer_markdown\n  Field required [type=missing, input_value={'answer': \"I understand ...rgency_fallback': True}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing\nsession_id\n  Field required [type=missing, input_value={'answer': \"I understand ...rgency_fallback': True}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing. Please try rephrasing your question.",
+      "answer_length": 511,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "View profile",
+          "action": "view_profile"
+        }
+      ],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [
+        "script_and_bullets: Needs quoted script + 3+ bullets",
+        "actionable: Missing actionable next steps",
+        "personalized: Missing personalization: Missing name: 'Ryan O'Brien'"
+      ],
+      "content_passed": false,
+      "timestamp": "2025-09-29T19:20:03.598318"
+    },
+    {
+      "test_id": "nba_suggestions_risks_3",
+      "subsystem": "nba_suggestions_risks",
+      "category": "nba",
+      "prompt": "any pipeline blockers for ryan?",
+      "context": {
+        "lead": {
+          "name": "Ryan O'Brien",
+          "courseInterest": "MA Music Performance",
+          "gdpr_opt_in": false
+        }
+      },
+      "latency_ms": 4,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "I encountered an error: 2 validation errors for RouterResponse\nanswer_markdown\n  Field required [type=missing, input_value={'answer': \"I understand ...rgency_fallback': True}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing\nsession_id\n  Field required [type=missing, input_value={'answer': \"I understand ...rgency_fallback': True}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing. Please try rephrasing your question.",
+      "answer_length": 511,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "View profile",
+          "action": "view_profile"
+        }
+      ],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [
+        "personalized: Missing personalization: Missing name: 'Ryan O'Brien'",
+        "gdpr_mentioned: Should mention GDPR/consent",
+        "actionable: Missing actionable next steps"
+      ],
+      "content_passed": false,
+      "timestamp": "2025-09-29T19:20:05.104944"
+    },
+    {
+      "test_id": "nba_suggestions_risks_4",
+      "subsystem": "nba_suggestions_risks",
+      "category": "nba",
+      "prompt": "show risks or red flags for this person",
+      "context": {
+        "lead": {
+          "name": "Ryan O'Brien",
+          "courseInterest": "MA Music Performance"
+        }
+      },
+      "latency_ms": 4,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "I encountered an error: 2 validation errors for RouterResponse\nanswer_markdown\n  Field required [type=missing, input_value={'answer': \"I understand ...rgency_fallback': True}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing\nsession_id\n  Field required [type=missing, input_value={'answer': \"I understand ...rgency_fallback': True}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing. Please try rephrasing your question.",
+      "answer_length": 511,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "View profile",
+          "action": "view_profile"
+        }
+      ],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [
+        "personalized: Missing personalization: Missing name: 'Ryan O'Brien'",
+        "actionable: Missing actionable next steps"
+      ],
+      "content_passed": false,
+      "timestamp": "2025-09-29T19:20:06.610631"
+    },
+    {
+      "test_id": "nba_suggestions_risks_5",
+      "subsystem": "nba_suggestions_risks",
+      "category": "nba",
+      "prompt": "how likely is ryan to convert?",
+      "context": {
+        "lead": {
+          "name": "Ryan O'Brien",
+          "courseInterest": "MA Music Performance",
+          "conversion_probability": 0.75
+        }
+      },
+      "latency_ms": 5,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "I encountered an error: 2 validation errors for RouterResponse\nanswer_markdown\n  Field required [type=missing, input_value={'answer': \"I understand ...rgency_fallback': True}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing\nsession_id\n  Field required [type=missing, input_value={'answer': \"I understand ...rgency_fallback': True}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing. Please try rephrasing your question.",
+      "answer_length": 511,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "View profile",
+          "action": "view_profile"
+        }
+      ],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [
+        "personalized: Missing personalization: Missing name: 'Ryan O'Brien'",
+        "actionable: Missing actionable next steps"
+      ],
+      "content_passed": false,
+      "timestamp": "2025-09-29T19:20:08.117896"
+    },
+    {
+      "test_id": "policy_course_info_extended_1",
+      "subsystem": "policy_course_info_extended",
+      "category": "policy",
+      "prompt": "what documents are needed for an international postgraduate?",
+      "context": {},
+      "latency_ms": 5,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "I encountered an error: 2 validation errors for RouterResponse\nanswer_markdown\n  Field required [type=missing, input_value={'answer': \"I understand ...rgency_fallback': True}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing\nsession_id\n  Field required [type=missing, input_value={'answer': \"I understand ...rgency_fallback': True}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing. Please try rephrasing your question.",
+      "answer_length": 511,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "View profile",
+          "action": "view_profile"
+        }
+      ],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [
+        "short_intro: Opening sentence too long",
+        "has_sources: Needs 2+ sources"
+      ],
+      "content_passed": false,
+      "timestamp": "2025-09-29T19:20:09.625368"
+    },
+    {
+      "test_id": "policy_course_info_extended_2",
+      "subsystem": "policy_course_info_extended",
+      "category": "policy",
+      "prompt": "deadline for january intake applications?",
+      "context": {},
+      "latency_ms": 2,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "I encountered an error: 2 validation errors for RouterResponse\nanswer_markdown\n  Field required [type=missing, input_value={'answer': \"I understand ...rgency_fallback': True}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing\nsession_id\n  Field required [type=missing, input_value={'answer': \"I understand ...rgency_fallback': True}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing. Please try rephrasing your question.",
+      "answer_length": 511,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "View profile",
+          "action": "view_profile"
+        }
+      ],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [
+        "short_intro: Opening sentence too long",
+        "has_sources: Needs 1+ sources"
+      ],
+      "content_passed": false,
+      "timestamp": "2025-09-29T19:20:11.129251"
+    },
+    {
+      "test_id": "policy_course_info_extended_3",
+      "subsystem": "policy_course_info_extended",
+      "category": "policy",
+      "prompt": "visa guidance for dependants?",
+      "context": {},
+      "latency_ms": 1,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "I encountered an error: 2 validation errors for RouterResponse\nanswer_markdown\n  Field required [type=missing, input_value={'answer': \"I understand ...rgency_fallback': True}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing\nsession_id\n  Field required [type=missing, input_value={'answer': \"I understand ...rgency_fallback': True}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing. Please try rephrasing your question.",
+      "answer_length": 511,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "View profile",
+          "action": "view_profile"
+        }
+      ],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [
+        "short_intro: Opening sentence too long",
+        "has_sources: Needs 1+ sources"
+      ],
+      "content_passed": false,
+      "timestamp": "2025-09-29T19:20:12.631649"
+    },
+    {
+      "test_id": "policy_course_info_extended_4",
+      "subsystem": "policy_course_info_extended",
+      "category": "policy",
+      "prompt": "how do we assess APEL evidence?",
+      "context": {},
+      "latency_ms": 7,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "I encountered an error: 2 validation errors for RouterResponse\nanswer_markdown\n  Field required [type=missing, input_value={'answer': \"I understand ...rgency_fallback': True}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing\nsession_id\n  Field required [type=missing, input_value={'answer': \"I understand ...rgency_fallback': True}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing. Please try rephrasing your question.",
+      "answer_length": 511,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "View profile",
+          "action": "view_profile"
+        }
+      ],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [
+        "short_intro: Opening sentence too long",
+        "apel_definition_strict: Must spell out 'Accreditation of Prior Experiential Learning (APEL)'",
+        "has_sources: Needs 1+ sources"
+      ],
+      "content_passed": false,
+      "timestamp": "2025-09-29T19:20:14.140393"
+    },
+    {
+      "test_id": "policy_course_info_extended_5",
+      "subsystem": "policy_course_info_extended",
+      "category": "policy",
+      "prompt": "can a mature student without A-levels apply to BA Design?",
+      "context": {},
+      "latency_ms": 4,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "I encountered an error: 2 validation errors for RouterResponse\nanswer_markdown\n  Field required [type=missing, input_value={'answer': \"I understand ...rgency_fallback': True}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing\nsession_id\n  Field required [type=missing, input_value={'answer': \"I understand ...rgency_fallback': True}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing. Please try rephrasing your question.",
+      "answer_length": 511,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "View profile",
+          "action": "view_profile"
+        }
+      ],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [
+        "short_intro: Opening sentence too long",
+        "has_sources: Needs 2+ sources"
+      ],
+      "content_passed": false,
+      "timestamp": "2025-09-29T19:20:15.646024"
+    },
+    {
+      "test_id": "analytics_nlq_1",
+      "subsystem": "analytics_nlq",
+      "category": "analytics",
+      "prompt": "show me top leads this week",
+      "context": {},
+      "latency_ms": 5,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "I encountered an error: 2 validation errors for RouterResponse\nanswer_markdown\n  Field required [type=missing, input_value={'answer': \"I understand ...rgency_fallback': True}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing\nsession_id\n  Field required [type=missing, input_value={'answer': \"I understand ...rgency_fallback': True}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing. Please try rephrasing your question.",
+      "answer_length": 511,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "View profile",
+          "action": "view_profile"
+        }
+      ],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [],
+      "content_passed": true,
+      "timestamp": "2025-09-29T19:20:17.153156"
+    },
+    {
+      "test_id": "analytics_nlq_2",
+      "subsystem": "analytics_nlq",
+      "category": "analytics",
+      "prompt": "find stalled leads with low engagement",
+      "context": {},
+      "latency_ms": 1,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "I encountered an error: 2 validation errors for RouterResponse\nanswer_markdown\n  Field required [type=missing, input_value={'answer': \"I understand ...rgency_fallback': True}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing\nsession_id\n  Field required [type=missing, input_value={'answer': \"I understand ...rgency_fallback': True}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing. Please try rephrasing your question.",
+      "answer_length": 511,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "View profile",
+          "action": "view_profile"
+        }
+      ],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [],
+      "content_passed": true,
+      "timestamp": "2025-09-29T19:20:18.655935"
+    },
+    {
+      "test_id": "analytics_nlq_3",
+      "subsystem": "analytics_nlq",
+      "category": "analytics",
+      "prompt": "which sources are performing best this month?",
+      "context": {},
+      "latency_ms": 4,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "I encountered an error: 2 validation errors for RouterResponse\nanswer_markdown\n  Field required [type=missing, input_value={'answer': \"I understand ...rgency_fallback': True}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing\nsession_id\n  Field required [type=missing, input_value={'answer': \"I understand ...rgency_fallback': True}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing. Please try rephrasing your question.",
+      "answer_length": 511,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "View profile",
+          "action": "view_profile"
+        }
+      ],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [],
+      "content_passed": true,
+      "timestamp": "2025-09-29T19:20:20.162173"
+    },
+    {
+      "test_id": "admissions_decision_guardrail_1",
+      "subsystem": "admissions_decision_guardrail",
+      "category": "admissions",
+      "prompt": "should we offer ryan a place on MA Music Performance?",
+      "context": {
+        "lead": {
+          "name": "Ryan O'Brien",
+          "courseInterest": "MA Music Performance"
+        }
+      },
+      "latency_ms": 6,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "I encountered an error: 2 validation errors for RouterResponse\nanswer_markdown\n  Field required [type=missing, input_value={'answer': \"I understand ...rgency_fallback': True}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing\nsession_id\n  Field required [type=missing, input_value={'answer': \"I understand ...rgency_fallback': True}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing. Please try rephrasing your question.",
+      "answer_length": 511,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "View profile",
+          "action": "view_profile"
+        }
+      ],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [
+        "personalized: Missing personalization: Missing name: 'Ryan O'Brien'",
+        "actionable: Missing actionable next steps"
+      ],
+      "content_passed": false,
+      "timestamp": "2025-09-29T19:20:21.670207"
+    },
+    {
+      "test_id": "admissions_decision_guardrail_2",
+      "subsystem": "admissions_decision_guardrail",
+      "category": "admissions",
+      "prompt": "can you make an offer to this person?",
+      "context": {
+        "lead": {
+          "name": "Ryan O'Brien",
+          "courseInterest": "MA Music Performance"
+        }
+      },
+      "latency_ms": 1,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "I encountered an error: 2 validation errors for RouterResponse\nanswer_markdown\n  Field required [type=missing, input_value={'answer': \"I understand ...rgency_fallback': True}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing\nsession_id\n  Field required [type=missing, input_value={'answer': \"I understand ...rgency_fallback': True}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing. Please try rephrasing your question.",
+      "answer_length": 511,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "View profile",
+          "action": "view_profile"
+        }
+      ],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [
+        "personalized: Missing personalization: Missing name: 'Ryan O'Brien'",
+        "actionable: Missing actionable next steps"
+      ],
+      "content_passed": false,
+      "timestamp": "2025-09-29T19:20:23.172399"
+    },
+    {
+      "test_id": "scheduling_updates_1",
+      "subsystem": "scheduling_updates",
+      "category": "scheduling",
+      "prompt": "book a meeting with this person next week",
+      "context": {
+        "lead": {
+          "name": "Ryan O'Brien"
+        }
+      },
+      "latency_ms": 2,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "I encountered an error: 2 validation errors for RouterResponse\nanswer_markdown\n  Field required [type=missing, input_value={'answer': \"I understand ...rgency_fallback': True}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing\nsession_id\n  Field required [type=missing, input_value={'answer': \"I understand ...rgency_fallback': True}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing. Please try rephrasing your question.",
+      "answer_length": 511,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "View profile",
+          "action": "view_profile"
+        }
+      ],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [
+        "correct_action: Expected action 'open_meeting_scheduler' not found"
+      ],
+      "content_passed": false,
+      "timestamp": "2025-09-29T19:20:24.676015"
+    },
+    {
+      "test_id": "scheduling_updates_2",
+      "subsystem": "scheduling_updates",
+      "category": "scheduling",
+      "prompt": "set status to pre-applicant",
+      "context": {
+        "lead": {
+          "name": "Ryan O'Brien"
+        }
+      },
+      "latency_ms": 5,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "I encountered an error: 2 validation errors for RouterResponse\nanswer_markdown\n  Field required [type=missing, input_value={'answer': \"I understand ...rgency_fallback': True}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing\nsession_id\n  Field required [type=missing, input_value={'answer': \"I understand ...rgency_fallback': True}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing. Please try rephrasing your question.",
+      "answer_length": 511,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "View profile",
+          "action": "view_profile"
+        }
+      ],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [
+        "actionable: Missing actionable next steps"
+      ],
+      "content_passed": false,
+      "timestamp": "2025-09-29T19:20:26.182283"
+    },
+    {
+      "test_id": "scheduling_updates_3",
+      "subsystem": "scheduling_updates",
+      "category": "scheduling",
+      "prompt": "mark as qualified",
+      "context": {
+        "lead": {
+          "name": "Ryan O'Brien"
+        }
+      },
+      "latency_ms": 6,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "I encountered an error: 2 validation errors for RouterResponse\nanswer_markdown\n  Field required [type=missing, input_value={'answer': \"I understand ...rgency_fallback': True}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing\nsession_id\n  Field required [type=missing, input_value={'answer': \"I understand ...rgency_fallback': True}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing. Please try rephrasing your question.",
+      "answer_length": 511,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "View profile",
+          "action": "view_profile"
+        }
+      ],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [
+        "actionable: Missing actionable next steps"
+      ],
+      "content_passed": false,
+      "timestamp": "2025-09-29T19:20:27.689686"
+    },
+    {
+      "test_id": "scheduling_updates_4",
+      "subsystem": "scheduling_updates",
+      "category": "scheduling",
+      "prompt": "add note: asked about scholarship",
+      "context": {
+        "lead": {
+          "name": "Ryan O'Brien"
+        }
+      },
+      "latency_ms": 5,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "I encountered an error: 2 validation errors for RouterResponse\nanswer_markdown\n  Field required [type=missing, input_value={'answer': \"I understand ...rgency_fallback': True}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing\nsession_id\n  Field required [type=missing, input_value={'answer': \"I understand ...rgency_fallback': True}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing. Please try rephrasing your question.",
+      "answer_length": 511,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "View profile",
+          "action": "view_profile"
+        }
+      ],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [
+        "actionable: Missing actionable next steps"
+      ],
+      "content_passed": false,
+      "timestamp": "2025-09-29T19:20:29.196905"
+    },
+    {
+      "test_id": "retrieval_strength_gap_1",
+      "subsystem": "retrieval_strength_gap",
+      "category": "retrieval",
+      "prompt": "do you have a complaints policy summary?",
+      "context": {},
+      "latency_ms": 7,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "I encountered an error: 2 validation errors for RouterResponse\nanswer_markdown\n  Field required [type=missing, input_value={'answer': \"I understand ...rgency_fallback': True}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing\nsession_id\n  Field required [type=missing, input_value={'answer': \"I understand ...rgency_fallback': True}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing. Please try rephrasing your question.",
+      "answer_length": 511,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "View profile",
+          "action": "view_profile"
+        }
+      ],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [
+        "has_sources: Needs 1+ sources"
+      ],
+      "content_passed": false,
+      "timestamp": "2025-09-29T19:20:30.706208"
+    },
+    {
+      "test_id": "retrieval_strength_gap_2",
+      "subsystem": "retrieval_strength_gap",
+      "category": "retrieval",
+      "prompt": "where's the deferral policy for postgrads?",
+      "context": {},
+      "latency_ms": 4,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "I encountered an error: 2 validation errors for RouterResponse\nanswer_markdown\n  Field required [type=missing, input_value={'answer': \"I understand ...rgency_fallback': True}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing\nsession_id\n  Field required [type=missing, input_value={'answer': \"I understand ...rgency_fallback': True}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing. Please try rephrasing your question.",
+      "answer_length": 511,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "View profile",
+          "action": "view_profile"
+        }
+      ],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [
+        "has_sources: Needs 1+ sources"
+      ],
+      "content_passed": false,
+      "timestamp": "2025-09-29T19:20:32.212374"
+    },
+    {
+      "test_id": "retrieval_strength_gap_3",
+      "subsystem": "retrieval_strength_gap",
+      "category": "retrieval",
+      "prompt": "what's our refunds policy for international no-shows?",
+      "context": {},
+      "latency_ms": 2,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "I encountered an error: 2 validation errors for RouterResponse\nanswer_markdown\n  Field required [type=missing, input_value={'answer': \"I understand ...rgency_fallback': True}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing\nsession_id\n  Field required [type=missing, input_value={'answer': \"I understand ...rgency_fallback': True}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing. Please try rephrasing your question.",
+      "answer_length": 511,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "View profile",
+          "action": "view_profile"
+        }
+      ],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [
+        "has_sources: Needs 1+ sources"
+      ],
+      "content_passed": false,
+      "timestamp": "2025-09-29T19:20:33.716279"
+    },
+    {
+      "test_id": "privacy_boundary_extended_1",
+      "subsystem": "privacy_boundary_extended",
+      "category": "privacy",
+      "prompt": "what are their politics?",
+      "context": {
+        "lead": {
+          "name": "Ryan O'Brien"
+        }
+      },
+      "latency_ms": 1,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "I encountered an error: 2 validation errors for RouterResponse\nanswer_markdown\n  Field required [type=missing, input_value={'answer': \"I understand ...rgency_fallback': True}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing\nsession_id\n  Field required [type=missing, input_value={'answer': \"I understand ...rgency_fallback': True}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing. Please try rephrasing your question.",
+      "answer_length": 511,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "View profile",
+          "action": "view_profile"
+        }
+      ],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [
+        "privacy_refusal: Refusal/redirect pattern missing",
+        "reasonable_length: Too long (>450 chars)"
+      ],
+      "content_passed": false,
+      "timestamp": "2025-09-29T19:20:35.219432"
+    },
+    {
+      "test_id": "error_proofing_typos_1",
+      "subsystem": "error_proofing_typos",
+      "category": "error_proofing",
+      "prompt": "what is ... apel",
+      "context": {},
+      "latency_ms": 2,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "I encountered an error: 2 validation errors for RouterResponse\nanswer_markdown\n  Field required [type=missing, input_value={'answer': \"I understand ...rgency_fallback': True}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing\nsession_id\n  Field required [type=missing, input_value={'answer': \"I understand ...rgency_fallback': True}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing. Please try rephrasing your question.",
+      "answer_length": 511,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "View profile",
+          "action": "view_profile"
+        }
+      ],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [
+        "apel_definition_strict: Must spell out 'Accreditation of Prior Experiential Learning (APEL)'"
+      ],
+      "content_passed": false,
+      "timestamp": "2025-09-29T19:20:36.723420"
+    },
+    {
+      "test_id": "error_proofing_typos_2",
+      "subsystem": "error_proofing_typos",
+      "category": "error_proofing",
+      "prompt": "wha are teh enrty requerements for BA desgn?",
+      "context": {},
+      "latency_ms": 1,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "I encountered an error: 2 validation errors for RouterResponse\nanswer_markdown\n  Field required [type=missing, input_value={'answer': \"I understand ...rgency_fallback': True}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing\nsession_id\n  Field required [type=missing, input_value={'answer': \"I understand ...rgency_fallback': True}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing. Please try rephrasing your question.",
+      "answer_length": 511,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "View profile",
+          "action": "view_profile"
+        }
+      ],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [
+        "has_sources: Needs 1+ sources"
+      ],
+      "content_passed": false,
+      "timestamp": "2025-09-29T19:20:38.224940"
+    },
+    {
+      "test_id": "error_proofing_typos_3",
+      "subsystem": "error_proofing_typos",
+      "category": "error_proofing",
+      "prompt": "tell me about this perosn",
+      "context": {
+        "lead": {
+          "name": "Ryan O'Brien",
+          "courseInterest": "MA Music Performance"
+        }
+      },
+      "latency_ms": 2,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "I encountered an error: 2 validation errors for RouterResponse\nanswer_markdown\n  Field required [type=missing, input_value={'answer': \"I understand ...rgency_fallback': True}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing\nsession_id\n  Field required [type=missing, input_value={'answer': \"I understand ...rgency_fallback': True}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing. Please try rephrasing your question.",
+      "answer_length": 511,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "View profile",
+          "action": "view_profile"
+        }
+      ],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [
+        "personalized: Missing personalization: Missing name: 'Ryan O'Brien'"
+      ],
+      "content_passed": false,
+      "timestamp": "2025-09-29T19:20:39.728362"
+    },
+    {
+      "test_id": "fallback_simple_qa_1",
+      "subsystem": "fallback_simple_qa",
+      "category": "fallback",
+      "prompt": "explain UCAS in one sentence",
+      "context": {},
+      "latency_ms": 2,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "I encountered an error: 2 validation errors for RouterResponse\nanswer_markdown\n  Field required [type=missing, input_value={'answer': \"I understand ...rgency_fallback': True}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing\nsession_id\n  Field required [type=missing, input_value={'answer': \"I understand ...rgency_fallback': True}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing. Please try rephrasing your question.",
+      "answer_length": 511,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "View profile",
+          "action": "view_profile"
+        }
+      ],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [
+        "short_intro: Opening sentence too long",
+        "reasonable_length: Too long (>200 chars)"
+      ],
+      "content_passed": false,
+      "timestamp": "2025-09-29T19:20:41.232291"
+    },
+    {
+      "test_id": "fallback_simple_qa_2",
+      "subsystem": "fallback_simple_qa",
+      "category": "fallback",
+      "prompt": "how do i prepare a personal statement? two sentences max",
+      "context": {},
+      "latency_ms": 3,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "I encountered an error: 2 validation errors for RouterResponse\nanswer_markdown\n  Field required [type=missing, input_value={'answer': \"I understand ...rgency_fallback': True}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing\nsession_id\n  Field required [type=missing, input_value={'answer': \"I understand ...rgency_fallback': True}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing. Please try rephrasing your question.",
+      "answer_length": 511,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "View profile",
+          "action": "view_profile"
+        }
+      ],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [],
+      "content_passed": true,
+      "timestamp": "2025-09-29T19:20:42.736917"
+    },
+    {
+      "test_id": "edge_cases_drift_1",
+      "subsystem": "edge_cases_drift",
+      "category": "edge_cases",
+      "prompt": "do we sponsor visas for part-time?",
+      "context": {},
+      "latency_ms": 2,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "I encountered an error: 2 validation errors for RouterResponse\nanswer_markdown\n  Field required [type=missing, input_value={'answer': \"I understand ...rgency_fallback': True}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing\nsession_id\n  Field required [type=missing, input_value={'answer': \"I understand ...rgency_fallback': True}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing. Please try rephrasing your question.",
+      "answer_length": 511,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "View profile",
+          "action": "view_profile"
+        }
+      ],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [
+        "has_sources: Needs 1+ sources"
+      ],
+      "content_passed": false,
+      "timestamp": "2025-09-29T19:20:44.240453"
+    },
+    {
+      "test_id": "edge_cases_drift_2",
+      "subsystem": "edge_cases_drift",
+      "category": "edge_cases",
+      "prompt": "can i transfer credits from another UK university?",
+      "context": {},
+      "latency_ms": 5,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "I encountered an error: 2 validation errors for RouterResponse\nanswer_markdown\n  Field required [type=missing, input_value={'answer': \"I understand ...rgency_fallback': True}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing\nsession_id\n  Field required [type=missing, input_value={'answer': \"I understand ...rgency_fallback': True}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing. Please try rephrasing your question.",
+      "answer_length": 511,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "View profile",
+          "action": "view_profile"
+        }
+      ],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [
+        "has_sources: Needs 1+ sources"
+      ],
+      "content_passed": false,
+      "timestamp": "2025-09-29T19:20:45.748002"
+    },
+    {
+      "test_id": "edge_cases_drift_3",
+      "subsystem": "edge_cases_drift",
+      "category": "edge_cases",
+      "prompt": "what happens if a reference is late?",
+      "context": {},
+      "latency_ms": 2,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "I encountered an error: 2 validation errors for RouterResponse\nanswer_markdown\n  Field required [type=missing, input_value={'answer': \"I understand ...rgency_fallback': True}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing\nsession_id\n  Field required [type=missing, input_value={'answer': \"I understand ...rgency_fallback': True}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing. Please try rephrasing your question.",
+      "answer_length": 511,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "View profile",
+          "action": "view_profile"
+        }
+      ],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [
+        "has_sources: Needs 1+ sources"
+      ],
+      "content_passed": false,
+      "timestamp": "2025-09-29T19:20:47.252427"
+    },
+    {
+      "test_id": "text_search_only_1",
+      "subsystem": "text_search_only",
+      "category": "text_search",
+      "prompt": "APEL evidence checklist",
+      "context": {},
+      "latency_ms": 3,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "I encountered an error: 2 validation errors for RouterResponse\nanswer_markdown\n  Field required [type=missing, input_value={'answer': \"I understand ...rgency_fallback': True}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing\nsession_id\n  Field required [type=missing, input_value={'answer': \"I understand ...rgency_fallback': True}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing. Please try rephrasing your question.",
+      "answer_length": 511,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "View profile",
+          "action": "view_profile"
+        }
+      ],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [
+        "apel_definition_strict: Must spell out 'Accreditation of Prior Experiential Learning (APEL)'",
+        "has_sources: Needs 1+ sources"
+      ],
+      "content_passed": false,
+      "timestamp": "2025-09-29T19:20:48.757318"
+    },
+    {
+      "test_id": "text_search_only_2",
+      "subsystem": "text_search_only",
+      "category": "text_search",
+      "prompt": "english language waiver policy",
+      "context": {},
+      "latency_ms": 2,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "I encountered an error: 2 validation errors for RouterResponse\nanswer_markdown\n  Field required [type=missing, input_value={'answer': \"I understand ...rgency_fallback': True}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing\nsession_id\n  Field required [type=missing, input_value={'answer': \"I understand ...rgency_fallback': True}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing. Please try rephrasing your question.",
+      "answer_length": 511,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "View profile",
+          "action": "view_profile"
+        }
+      ],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [
+        "has_sources: Needs 1+ sources"
+      ],
+      "content_passed": false,
+      "timestamp": "2025-09-29T19:20:50.261651"
+    },
+    {
+      "test_id": "text_search_only_3",
+      "subsystem": "text_search_only",
+      "category": "text_search",
+      "prompt": "CAS issuance timeline",
+      "context": {},
+      "latency_ms": 2,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "I encountered an error: 2 validation errors for RouterResponse\nanswer_markdown\n  Field required [type=missing, input_value={'answer': \"I understand ...rgency_fallback': True}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing\nsession_id\n  Field required [type=missing, input_value={'answer': \"I understand ...rgency_fallback': True}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing. Please try rephrasing your question.",
+      "answer_length": 511,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "View profile",
+          "action": "view_profile"
+        }
+      ],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [
+        "has_sources: Needs 1+ sources"
+      ],
+      "content_passed": false,
+      "timestamp": "2025-09-29T19:20:51.764946"
+    },
+    {
+      "test_id": "sources_sanity_1",
+      "subsystem": "sources_sanity",
+      "category": "sources",
+      "prompt": "cite the top 3 documents about APEL",
+      "context": {},
+      "latency_ms": 1,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "I encountered an error: 2 validation errors for RouterResponse\nanswer_markdown\n  Field required [type=missing, input_value={'answer': \"I understand ...rgency_fallback': True}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing\nsession_id\n  Field required [type=missing, input_value={'answer': \"I understand ...rgency_fallback': True}}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.11/v/missing. Please try rephrasing your question.",
+      "answer_length": 511,
+      "has_answer": true,
+      "actions": [
+        {
+          "label": "View profile",
+          "action": "view_profile"
+        }
+      ],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [
+        "apel_definition_strict: Must spell out 'Accreditation of Prior Experiential Learning (APEL)'",
+        "has_sources: Needs 3+ sources"
+      ],
+      "content_passed": false,
+      "timestamp": "2025-09-29T19:20:53.267301"
+    },
+    {
+      "test_id": "sources_sanity_2",
+      "subsystem": "sources_sanity",
+      "category": "sources",
+      "prompt": "show me guidance sources you used in your answer",
+      "context": {},
+      "latency_ms": 11976,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "I understand you're asking about show me guidance sources you used in your answer. help you with that. Would you like me to arrange a call with the student to discuss this further?",
+      "answer_length": 180,
+      "has_answer": true,
+      "actions": [],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [
+        "has_sources: Needs 2+ sources"
+      ],
+      "content_passed": false,
+      "timestamp": "2025-09-29T19:21:06.744912"
+    },
+    {
+      "test_id": "objection_handling_1",
+      "subsystem": "objection_handling",
+      "category": "objections",
+      "prompt": "isla is thinking of going to a competitor university",
+      "context": {
+        "lead": {
+          "name": "Isla Mitchell",
+          "courseInterest": "MA Music Performance"
+        }
+      },
+      "latency_ms": 25292,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "I understand you're asking about isla is thinking of going to a competitor university. help you with that. Would you like me to arrange a call with Isla Mitchell to discuss this further?",
+      "answer_length": 186,
+      "has_answer": true,
+      "actions": [],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [
+        "actionable: Missing actionable next steps",
+        "personalized: Missing personalization: Missing course: 'MA Music Performance'"
+      ],
+      "content_passed": false,
+      "timestamp": "2025-09-29T19:21:33.538542"
+    },
+    {
+      "test_id": "objection_handling_2",
+      "subsystem": "objection_handling",
+      "category": "objections",
+      "prompt": "can isla afford to come to university?",
+      "context": {
+        "lead": {
+          "name": "Isla Mitchell",
+          "courseInterest": "MA Music Performance"
+        }
+      },
+      "latency_ms": 8006,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "I understand you're asking about can isla afford to come to university?. help you with that. Would you like me to arrange a call with Isla Mitchell to discuss this further?",
+      "answer_length": 172,
+      "has_answer": true,
+      "actions": [],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [
+        "actionable: Missing actionable next steps",
+        "personalized: Missing personalization: Missing course: 'MA Music Performance'"
+      ],
+      "content_passed": false,
+      "timestamp": "2025-09-29T19:21:43.046629"
+    },
+    {
+      "test_id": "objection_handling_3",
+      "subsystem": "objection_handling",
+      "category": "objections",
+      "prompt": "isla mum thinks a creative degree is not worthwhile, what can we say to fix this?",
+      "context": {
+        "lead": {
+          "name": "Isla Mitchell",
+          "courseInterest": "MA Music Performance"
+        }
+      },
+      "latency_ms": 8052,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "I understand you're asking about isla mum thinks a creative degree is not worthwhile, what can we say to fix this?. help you with that. Would you like me to arrange a call with Isla Mitchell to discuss this further?",
+      "answer_length": 215,
+      "has_answer": true,
+      "actions": [],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [
+        "actionable: Missing actionable next steps",
+        "personalized: Missing personalization: Missing course: 'MA Music Performance'"
+      ],
+      "content_passed": false,
+      "timestamp": "2025-09-29T19:21:52.600293"
+    },
+    {
+      "test_id": "objection_handling_4",
+      "subsystem": "objection_handling",
+      "category": "objections",
+      "prompt": "ryan is concerned about the cost of the course",
+      "context": {
+        "lead": {
+          "name": "Ryan O'Brien",
+          "courseInterest": "MA Music Performance"
+        }
+      },
+      "latency_ms": 3710,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "Guidance temporarily unavailable: 1 validation error for ContentContract mode Input should be 'guidance', 'apel', 'policy', 'profile', 'nba', 'admissions', 'privacy' or 'general' [type=literal_error, input_value='objection', input_type=str] For further information visit https://errors.pydantic.dev/2.11/v/literal_error.",
+      "answer_length": 320,
+      "has_answer": true,
+      "actions": [],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [
+        "actionable: Missing actionable next steps",
+        "empathy: Missing guidance tone cue",
+        "personalized: Missing personalization: Missing name: 'Ryan O'Brien', Missing course: 'MA Music Performance'"
+      ],
+      "content_passed": false,
+      "timestamp": "2025-09-29T19:21:57.811730"
+    },
+    {
+      "test_id": "objection_handling_5",
+      "subsystem": "objection_handling",
+      "category": "objections",
+      "prompt": "they think it's too expensive compared to other universities",
+      "context": {
+        "lead": {
+          "name": "Ryan O'Brien",
+          "courseInterest": "MA Music Performance"
+        }
+      },
+      "latency_ms": 4,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "Guidance temporarily unavailable: 1 validation error for ContentContract mode Input should be 'guidance', 'apel', 'policy', 'profile', 'nba', 'admissions', 'privacy' or 'general' [type=literal_error, input_value='objection', input_type=str] For further information visit https://errors.pydantic.dev/2.11/v/literal_error.",
+      "answer_length": 320,
+      "has_answer": true,
+      "actions": [],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [
+        "actionable: Missing actionable next steps",
+        "empathy: Missing guidance tone cue",
+        "personalized: Missing personalization: Missing name: 'Ryan O'Brien', Missing course: 'MA Music Performance'"
+      ],
+      "content_passed": false,
+      "timestamp": "2025-09-29T19:21:59.317667"
+    }
+  ]
+}

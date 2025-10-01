@@ -4,7 +4,7 @@ import {
   Search, Filter, MoreHorizontal, Phone, Mail, Calendar, Eye, 
   Users, GraduationCap, UserCheck, UserX, Clock, Star, 
   ChevronDown, ChevronUp, RefreshCw, Download, Settings,
-  BookUser, MapPin, Calendar as CalendarIcon, Target, TrendingUp
+  BookUser, MapPin, Calendar as CalendarIcon, Target, TrendingUp, BookmarkPlus
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -16,12 +16,19 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { peopleApi, PersonEnriched } from '@/services/api';
+import { Skeleton, SkeletonCircle } from '@/components/ui/skeleton';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { cn } from '@/lib/utils';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { useToast } from '@/components/ui/toast';
 
 type LifecycleState = 'enquiry' | 'applicant' | 'enrolled' | 'alumni';
 type ViewMode = 'table' | 'cards' | 'list';
 
 const Directory: React.FC = () => {
   const navigate = useNavigate();
+  const { push: toast } = useToast();
   const [people, setPeople] = useState<PersonEnriched[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -32,6 +39,71 @@ const Directory: React.FC = () => {
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [lifecycleFilter, setLifecycleFilter] = useState<LifecycleState | 'all'>('all');
   const [showFilters, setShowFilters] = useState(false);
+  const searchInputRef = React.useRef<HTMLInputElement | null>(null);
+
+  // Saved Views (localStorage)
+  type DirSavedView = {
+    id: string;
+    name: string;
+    description?: string;
+    lifecycle: LifecycleState | 'all';
+    sortBy: 'name' | 'created_at' | 'lead_score' | 'lifecycle_state';
+    sortOrder: 'asc' | 'desc';
+    search?: string;
+    created?: string;
+    lastUsed?: string;
+  };
+  const [savedViews, setSavedViews] = useState<DirSavedView[]>(() => {
+    try { return JSON.parse(localStorage.getItem('directorySavedViews') || '[]') as DirSavedView[]; } catch { return []; }
+  });
+  const [currentViewId, setCurrentViewId] = useState<string | null>(null);
+  const persistViews = (views: DirSavedView[]) => {
+    setSavedViews(views);
+    localStorage.setItem('directorySavedViews', JSON.stringify(views));
+  };
+  const buildCurrentView = useCallback((name: string, description?: string): DirSavedView => ({
+    id: crypto.randomUUID(),
+    name,
+    description,
+    lifecycle: lifecycleFilter,
+    sortBy,
+    sortOrder,
+    search: searchTerm || undefined,
+    created: new Date().toISOString(),
+    lastUsed: new Date().toISOString(),
+  }), [lifecycleFilter, sortBy, sortOrder, searchTerm]);
+  const applyView = useCallback((v: DirSavedView) => {
+    setLifecycleFilter(v.lifecycle);
+    setSortBy(v.sortBy);
+    setSortOrder(v.sortOrder);
+    setSearchTerm(v.search || '');
+    setCurrentViewId(v.id);
+    const next = savedViews.map(sv => sv.id === v.id ? { ...sv, lastUsed: new Date().toISOString() } : sv);
+    persistViews(next);
+    toast({ title: 'View applied', description: `"${v.name}" active`, variant: 'success' });
+  }, [savedViews, toast]);
+  const clearView = useCallback(() => { setCurrentViewId(null); toast({ title: 'View cleared' }); }, [toast]);
+  // Save dialog
+  const [showSaveDialog, setShowSaveDialog] = useState(false);
+  const [saveForm, setSaveForm] = useState<{ name: string; description?: string }>({ name: '', description: '' });
+  const saveCurrentView = useCallback(() => {
+    if (!saveForm.name.trim()) return;
+    const v = buildCurrentView(saveForm.name.trim(), saveForm.description?.trim() || undefined);
+    const next = [v, ...savedViews];
+    persistViews(next);
+    setCurrentViewId(v.id);
+    setShowSaveDialog(false);
+    setSaveForm({ name: '', description: '' });
+    toast({ title: 'View saved', description: `"${v.name}" added`, variant: 'success' });
+  }, [buildCurrentView, savedViews, saveForm, toast]);
+  // Manage dialog
+  const [showManageDialog, setShowManageDialog] = useState(false);
+  const deleteView = useCallback((id: string) => {
+    const next = savedViews.filter(v => v.id !== id);
+    persistViews(next);
+    if (currentViewId === id) setCurrentViewId(null);
+    toast({ title: 'View deleted', variant: 'default' });
+  }, [savedViews, currentViewId, toast]);
 
   // Fetch all people
   const fetchPeople = useCallback(async () => {
@@ -49,6 +121,23 @@ const Directory: React.FC = () => {
   useEffect(() => {
     fetchPeople();
   }, [fetchPeople]);
+
+  // Keyboard: '/' focuses search, Escape clears
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const isTyping = (el: EventTarget | null) => el && (el as HTMLElement).closest('input,textarea,[contenteditable="true"]');
+      if (isTyping(e.target)) return;
+      if (e.key === '/') {
+        e.preventDefault();
+        searchInputRef.current?.focus();
+      }
+      if (e.key === 'Escape') {
+        setSearchTerm('');
+      }
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, []);
 
   // Filter and sort people
   const filteredAndSortedPeople = useMemo(() => {
@@ -132,123 +221,264 @@ const Directory: React.FC = () => {
     }
   };
 
-  if (loading) return <div className="p-6 text-center">Loading directory...</div>;
   if (error) return <div className="p-6 text-destructive">Error: {error}</div>;
 
+  // Rail color by lifecycle
+  const lifecycleToColor = (state?: string) => {
+    switch ((state || '').toLowerCase()) {
+      case 'enquiry': return 'hsl(var(--info))';
+      case 'applicant': return 'hsl(var(--warning))';
+      case 'enrolled': return 'hsl(var(--success))';
+      case 'alumni': return 'hsl(var(--accent))';
+      default: return 'hsl(var(--slate-400))';
+    }
+  };
+
+  const ColorBar = ({ color, w = 6 }: { color: string; w?: number }) => (
+    <div
+      aria-hidden
+      className="opacity-90 group-hover:opacity-100 transition-opacity"
+      style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: w, borderTopLeftRadius: w, borderBottomLeftRadius: w, background: color, boxShadow: '0 0 0 1px rgba(0,0,0,0.03)' }}
+    />
+  );
+
   return (
-    <div className="p-6 space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Directory</h1>
-          <p className="text-muted-foreground">Master contact list - all people across the student lifecycle</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={fetchPeople}>
-            <RefreshCw className="h-4 w-4 mr-2" />
-            Refresh
-          </Button>
-          <Button variant="outline" size="sm">
-            <Download className="h-4 w-4 mr-2" />
-            Export
-          </Button>
-          <Button variant="outline" size="sm">
-            <Settings className="h-4 w-4 mr-2" />
-            Settings
-          </Button>
-        </div>
-      </div>
+    <TooltipProvider>
+    <div className="flex h-screen bg-gradient-to-br from-background via-background to-muted/30">
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Sticky Glass Header */}
+        <div className="relative bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60 border-b border-border/30 sticky top-0 z-40 shadow-sm overflow-hidden">
+          <div aria-hidden className="pointer-events-none absolute -top-24 -right-20 h-56 w-56 rounded-full blur-2xl glow-white" />
+          <div aria-hidden className="pointer-events-none absolute -bottom-24 -left-16 h-64 w-64 rounded-full blur-2xl glow-green" />
 
-      {/* Filters and Search */}
-      <Card>
-        <CardContent className="p-4">
-          <div className="flex flex-col lg:flex-row gap-4">
-            {/* Search */}
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search people by name, email, or phone..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
+          {/* Title Row */}
+          <div className="px-4 lg:px-6 py-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3 min-w-0">
+                <h1 className="text-xl lg:text-2xl font-bold text-foreground truncate">Directory</h1>
+                <span className="text-sm text-muted-foreground tabular-nums">{filteredAndSortedPeople.length.toLocaleString()} people</span>
+                {selectedPeople.size > 0 && (
+                  <span className="text-xs bg-[hsl(var(--accent))]/10 text-[hsl(var(--accent))] px-2 py-1 rounded-full font-medium">
+                    {selectedPeople.size} selected
+                  </span>
+                )}
               </div>
-            </div>
-
-            {/* Filters */}
-            <div className="flex gap-2">
-              <Select value={lifecycleFilter} onValueChange={(value) => setLifecycleFilter(value as LifecycleState | 'all')}>
-                <SelectTrigger className="w-40">
-                  <SelectValue placeholder="Lifecycle" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Lifecycle</SelectItem>
-                  <SelectItem value="enquiry">Enquiry</SelectItem>
-                  <SelectItem value="applicant">Applicant</SelectItem>
-                  <SelectItem value="enrolled">Enrolled</SelectItem>
-                  <SelectItem value="alumni">Alumni</SelectItem>
-                </SelectContent>
-              </Select>
-
-              <Select value={sortBy} onValueChange={(value) => setSortBy(value as any)}>
-                <SelectTrigger className="w-32">
-                  <SelectValue placeholder="Sort by" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="name">Name</SelectItem>
-                  <SelectItem value="created_at">Created</SelectItem>
-                  <SelectItem value="lead_score">Score</SelectItem>
-                  <SelectItem value="lifecycle_state">Lifecycle</SelectItem>
-                </SelectContent>
-              </Select>
-
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
-              >
-                {sortOrder === 'asc' ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-              </Button>
-
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setViewMode(prev => prev === 'table' ? 'cards' : prev === 'cards' ? 'list' : 'table')}
-              >
-                {viewMode === 'table' ? 'Table' : viewMode === 'cards' ? 'Cards' : 'List'}
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="default" onClick={fetchPeople} className="h-9 px-3 text-sm bg-background/60 backdrop-blur-sm border-border/50 hover:bg-background/80 transition-all">
+                  <RefreshCw className="h-4 w-4" />
+                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="default" className="h-9 px-3 text-sm bg-background/60 backdrop-blur-sm border-border/50 hover:bg-background/80 transition-all gap-2">
+                      <BookmarkPlus className="h-4 w-4" />
+                      <span className="hidden sm:inline">Views</span>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-64">
+                    <DropdownMenuItem onClick={() => setShowSaveDialog(true)}>
+                      <BookmarkPlus className="h-4 w-4 mr-2" /> Save current view…
+                    </DropdownMenuItem>
+                    {savedViews.length > 0 && <div className="border-t my-1" />}
+                    {savedViews.length > 0 && (
+                      <div className="max-h-64 overflow-auto">
+                        {savedViews.map(v => (
+                          <DropdownMenuItem key={v.id} onClick={() => applyView(v)} className="flex items-start gap-2">
+                            <div className="flex-1 min-w-0">
+                              <div className="text-sm font-medium truncate">{v.name}</div>
+                              {v.description && <div className="text-xs text-muted-foreground truncate">{v.description}</div>}
+                            </div>
+                            <span className="text-[10px] text-muted-foreground">{v.lastUsed ? new Date(v.lastUsed).toLocaleDateString() : ''}</span>
+                          </DropdownMenuItem>
+                        ))}
+                      </div>
+                    )}
+                    <div className="border-t my-1" />
+                    <DropdownMenuItem onClick={() => setShowManageDialog(true)}>Manage saved views…</DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+                <Button variant="outline" size="default" className="h-9 px-3 text-sm bg-background/60 backdrop-blur-sm border-border/50 hover:bg-background/80 transition-all">
+                  <Download className="h-4 w-4" />
+                </Button>
+                <Button variant="outline" size="default" className="h-9 px-3 text-sm bg-background/60 backdrop-blur-sm border-border/50 hover:bg-background/80 transition-all">
+                  <Settings className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
           </div>
 
-          {/* Selected count */}
-          {selectedPeople.size > 0 && (
-            <div className="mt-4 flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">
-                {selectedPeople.size} selected
-              </span>
-              <Button variant="outline" size="sm" onClick={clearSelection}>
-                Clear Selection
-              </Button>
+          {/* Controls */}
+          <div className="px-4 lg:px-6 py-3 border-t border-border/30 bg-muted/10 backdrop-blur-sm">
+            <div className="flex flex-col lg:flex-row gap-3">
+              <div className="relative flex-1 min-w-0">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                <Input
+                  ref={searchInputRef}
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  placeholder="Search people… (name, email, phone)"
+                  className="w-full pl-10 h-9 text-sm border-border/50 bg-background/60 backdrop-blur-sm focus:ring-2 focus:ring-ring/50 focus:bg-background/80 transition-all"
+                />
+              </div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <Select value={lifecycleFilter} onValueChange={(v) => setLifecycleFilter(v as LifecycleState | 'all')}>
+                  <SelectTrigger className="w-40 h-9 border-border text-sm">
+                    <SelectValue placeholder="Lifecycle" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Lifecycle</SelectItem>
+                    <SelectItem value="enquiry">Enquiry</SelectItem>
+                    <SelectItem value="applicant">Applicant</SelectItem>
+                    <SelectItem value="enrolled">Enrolled</SelectItem>
+                    <SelectItem value="alumni">Alumni</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Select value={sortBy} onValueChange={(v) => setSortBy(v as any)}>
+                  <SelectTrigger className="w-40 h-9 border-border text-sm">
+                    <SelectValue placeholder="Sort by" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="name">Name</SelectItem>
+                    <SelectItem value="created_at">Created</SelectItem>
+                    <SelectItem value="lead_score">Score</SelectItem>
+                    <SelectItem value="lifecycle_state">Lifecycle</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
+                  className="h-9 px-3 text-sm bg-background/60 backdrop-blur-sm border-border/50 hover:bg-background/80 transition-all"
+                >
+                  {sortOrder === 'asc' ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setViewMode(prev => prev === 'table' ? 'cards' : prev === 'cards' ? 'list' : 'table')}
+                  className="h-9 px-3 text-sm bg-background/60 backdrop-blur-sm border-border/50 hover:bg-background/80 transition-all"
+                >
+                  {viewMode === 'table' ? 'Table' : viewMode === 'cards' ? 'Cards' : 'List'}
+                </Button>
+                {selectedPeople.size > 0 && (
+                  <Button variant="ghost" size="sm" onClick={clearSelection} className="h-9 px-3 text-sm">Clear ({selectedPeople.size})</Button>
+                )}
+              </div>
             </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Results */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold">
-            {filteredAndSortedPeople.length} people
-          </h2>
+          </div>
         </div>
+
+        {/* Content */}
+        <div className="flex-1 overflow-auto p-3 sm:p-4 lg:p-6 xl:p-8">
+          {loading ? (
+            <Card className="overflow-hidden border-0 shadow-xl">
+              <CardContent className="p-0">
+                <div className="p-4">
+                  <div className="border rounded-lg overflow-hidden">
+                    <div className="grid grid-cols-[40px_1.5fr_1fr_1fr_120px_1fr_1fr] gap-0 bg-slate-50 border-b px-3 py-2">
+                      <Skeleton className="h-4 w-5" />
+                      <Skeleton className="h-4 w-32" />
+                      <Skeleton className="h-4 w-24" />
+                      <Skeleton className="h-4 w-24" />
+                      <Skeleton className="h-4 w-16 justify-self-end" />
+                      <Skeleton className="h-4 w-24" />
+                      <Skeleton className="h-4 w-24" />
+                    </div>
+                    <div className="divide-y">
+                      {Array.from({ length: 10 }).map((_, i) => (
+                        <div key={i} className="grid grid-cols-[40px_1.5fr_1fr_1fr_120px_1fr_1fr] items-center px-3 py-3">
+                          <Skeleton className="h-5 w-5 rounded-sm" />
+                          <div className="flex items-center gap-3">
+                            <SkeletonCircle size={32} />
+                            <div className="flex-1 min-w-0">
+                              <Skeleton className="h-4 w-40" />
+                              <Skeleton className="h-3 w-24 mt-1" />
+                            </div>
+                          </div>
+                          <Skeleton className="h-4 w-32" />
+                          <Skeleton className="h-4 w-20" />
+                          <Skeleton className="h-3 w-16 justify-self-end" />
+                          <Skeleton className="h-4 w-24" />
+                          <div className="justify-self-start flex gap-2">
+                            <Skeleton className="h-7 w-7 rounded-md" />
+                            <Skeleton className="h-7 w-7 rounded-md" />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="space-y-4">
+              {/* Results header */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <h2 className="text-lg font-semibold">{filteredAndSortedPeople.length} people</h2>
+                  {currentViewId && (
+                    <Badge variant="secondary" className="px-2 py-1 text-xs">
+                      {savedViews.find(v => v.id === currentViewId)?.name}
+                      <Button variant="ghost" size="icon" className="h-5 w-5 ml-1" onClick={clearView} aria-label="Clear view">×</Button>
+                    </Badge>
+                  )}
+                </div>
+              </div>
+              {/* Filter chips */}
+              {(lifecycleFilter !== 'all' || searchTerm) && (
+                <div className="flex items-center gap-2 flex-wrap">
+                  {lifecycleFilter !== 'all' && (
+                    <Badge variant="secondary" className="px-3 py-1.5 text-xs shadow-sm">
+                      Lifecycle: {lifecycleFilter}
+                      <Button variant="ghost" size="icon" className="h-6 w-6 ml-2" onClick={() => setLifecycleFilter('all')} aria-label="Clear lifecycle filter">
+                        ×
+                      </Button>
+                    </Badge>
+                  )}
+                  {searchTerm && (
+                    <Badge variant="secondary" className="px-3 py-1.5 text-xs shadow-sm">
+                      Search: {searchTerm}
+                      <Button variant="ghost" size="icon" className="h-6 w-6 ml-2" onClick={() => setSearchTerm('')} aria-label="Clear search">
+                        ×
+                      </Button>
+                    </Badge>
+                  )}
+                </div>
+              )}
+
+              {/* Empty state */}
+              {filteredAndSortedPeople.length === 0 && (
+                <Card className="p-8 text-center">
+                  <div className="mx-auto w-20 h-20 bg-muted rounded-full flex items-center justify-center mb-4">
+                    <Users className="h-10 w-10 text-muted-foreground" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-foreground mb-1">No people found</h3>
+                  <p className="text-sm text-muted-foreground mb-4">Try clearing filters or adjusting your search.</p>
+                  <div className="flex gap-2 justify-center">
+                    {lifecycleFilter !== 'all' && (
+                      <Button variant="outline" onClick={() => setLifecycleFilter('all')}>Clear lifecycle</Button>
+                    )}
+                    {searchTerm && (
+                      <Button variant="outline" onClick={() => setSearchTerm('')}>Clear search</Button>
+                    )}
+                  </div>
+                </Card>
+              )}
 
         {/* Table View */}
         {viewMode === 'table' && (
-          <Card>
-            <ScrollArea className="h-[600px]">
+          <Card className="overflow-hidden border-0 shadow-xl">
+            <ScrollArea className="h-[calc(100vh-260px)]">
               <table className="w-full">
-                <thead className="sticky top-0 bg-background border-b">
+                <colgroup>
+                  <col style={{ width: '40px' }} />
+                  <col style={{ width: '28%' }} />
+                  <col style={{ width: '22%' }} />
+                  <col style={{ width: '12%' }} />
+                  <col style={{ width: '12%' }} />
+                  <col style={{ width: '18%' }} />
+                  <col style={{ width: '8%' }} />
+                </colgroup>
+                <thead className="sticky top-0 bg-gradient-to-r from-slate-50 to-slate-100 border-b border-slate-200 z-10">
                   <tr>
                     <th className="p-4 text-left">
                       <Checkbox
@@ -262,22 +492,28 @@ const Directory: React.FC = () => {
                         }}
                       />
                     </th>
-                    <th className="p-4 text-left font-semibold">Name</th>
-                    <th className="p-4 text-left font-semibold">Contact</th>
-                    <th className="p-4 text-left font-semibold">Lifecycle</th>
-                    <th className="p-4 text-left font-semibold">Score</th>
-                    <th className="p-4 text-left font-semibold">Programme</th>
-                    <th className="p-4 text-left font-semibold">Actions</th>
+                    <th className="p-4 text-left text-xs font-semibold uppercase tracking-wider">Name</th>
+                    <th className="p-4 text-left text-xs font-semibold uppercase tracking-wider">Contact</th>
+                    <th className="p-4 text-left text-xs font-semibold uppercase tracking-wider">Lifecycle</th>
+                    <th className="p-4 text-left text-xs font-semibold uppercase tracking-wider">Score</th>
+                    <th className="p-4 text-left text-xs font-semibold uppercase tracking-wider">Programme</th>
+                    <th className="p-4 text-left text-xs font-semibold uppercase tracking-wider">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredAndSortedPeople.map((person) => (
+                  {filteredAndSortedPeople.map((person) => {
+                    const isSelected = selectedPeople.has(person.id);
+                    return (
                     <tr
                       key={person.id}
-                      className="hover:bg-muted/50 border-b cursor-pointer"
+                      className={cn(
+                        "group hover:bg-muted/50 transition-colors duration-200 border-b cursor-pointer",
+                        isSelected && "bg-muted ring-1 ring-inset ring-border"
+                      )}
                       onClick={() => navigate(`/directory/${person.id}`)}
                     >
-                      <td className="p-4" onClick={(e) => e.stopPropagation()}>
+                      <td className="p-4 relative" onClick={(e) => e.stopPropagation()}>
+                        <ColorBar color={lifecycleToColor(person.lifecycle_state)} w={selectedPeople.has(person.id) ? 8 : 6} />
                         <Checkbox
                           checked={selectedPeople.has(person.id)}
                           onCheckedChange={() => togglePersonSelection(person.id)}
@@ -285,7 +521,7 @@ const Directory: React.FC = () => {
                       </td>
                       <td className="p-4">
                         <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-chart-1 to-chart-2 flex items-center justify-center text-primary-foreground text-sm font-bold">
+                          <div className="mr-1 sm:mr-2 flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-muted to-muted/80 text-muted-foreground text-sm font-bold border border-border">
                             {`${person.first_name?.[0] || ''}${person.last_name?.[0] || ''}`.toUpperCase()}
                           </div>
                           <div>
@@ -318,13 +554,13 @@ const Directory: React.FC = () => {
                       </td>
                       <td className="p-4">
                         <div className="flex items-center gap-2">
-                                                  <div className="w-16 h-2 bg-muted rounded-full">
-                          <div 
-                            className="h-2 bg-gradient-to-r from-chart-1 to-chart-2 rounded-full"
-                            style={{ width: `${Math.min(100, (person.lead_score || 0))}%` }}
-                          />
-                        </div>
-                          <span className="text-sm font-medium">{person.lead_score || 0}</span>
+                          <div className="w-16 h-2 bg-muted rounded-full">
+                            <div
+                              className="h-2 rounded-full bg-muted-foreground/50"
+                              style={{ width: `${Math.min(100, (person.lead_score || 0))}%` }}
+                            />
+                          </div>
+                          <span className="text-sm font-medium tabular-nums">{person.lead_score || 0}</span>
                         </div>
                       </td>
                       <td className="p-4">
@@ -339,40 +575,51 @@ const Directory: React.FC = () => {
                       </td>
                       <td className="p-4">
                         <div className="flex items-center gap-1">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              // Handle phone call
-                            }}
-                          >
-                            <Phone className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              // Handle email
-                            }}
-                          >
-                            <Mail className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              navigate(`/directory/${person.id}`);
-                            }}
-                          >
-                            <Eye className="h-4 w-4" />
-                          </Button>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={(e) => { e.stopPropagation(); }}
+                                aria-label="Call"
+                                className="hover:bg-[hsl(var(--success))]/10 hover:text-[hsl(var(--success))]"
+                              >
+                                <Phone className="h-4 w-4" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Call</TooltipContent>
+                          </Tooltip>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={(e) => { e.stopPropagation(); }}
+                                aria-label="Email"
+                                className="hover:bg-blue-500/10 hover:text-blue-600"
+                              >
+                                <Mail className="h-4 w-4" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Email</TooltipContent>
+                          </Tooltip>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={(e) => { e.stopPropagation(); navigate(`/directory/${person.id}`); }}
+                                aria-label="View"
+                              >
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Open profile</TooltipContent>
+                          </Tooltip>
                         </div>
                       </td>
                     </tr>
-                  ))}
+                  );})}
                 </tbody>
               </table>
             </ScrollArea>
@@ -391,7 +638,7 @@ const Directory: React.FC = () => {
                 <CardContent className="p-4">
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-chart-1 to-chart-2 flex items-center justify-center text-primary-foreground font-bold">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-muted to-muted/80 text-muted-foreground text-sm font-bold border border-border">
                         {`${person.first_name?.[0] || ''}${person.last_name?.[0] || ''}`.toUpperCase()}
                       </div>
                       <div>
@@ -463,7 +710,7 @@ const Directory: React.FC = () => {
                         onCheckedChange={() => togglePersonSelection(person.id)}
                         onClick={(e) => e.stopPropagation()}
                       />
-                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-chart-1 to-chart-2 flex items-center justify-center text-primary-foreground text-sm font-bold">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-muted to-muted/80 text-muted-foreground text-xs font-bold border border-border">
                         {`${person.first_name?.[0] || ''}${person.last_name?.[0] || ''}`.toUpperCase()}
                       </div>
                       <div className="flex-1">
@@ -500,9 +747,14 @@ const Directory: React.FC = () => {
             ))}
           </div>
         )}
+            </div>
+          )}
+        </div>
       </div>
     </div>
+    </TooltipProvider>
   );
 };
+
 
 export default Directory;

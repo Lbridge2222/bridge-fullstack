@@ -15,7 +15,8 @@ async def test_short_memory_influences_narration():
         add_turn(key, "user", "What about finance?")
         # Build minimal facts including session id
         facts = {"session_id": key, "person": "Test Lead"}
-        out = await narrate("lead-info", facts)
+        result = await narrate("What about finance?", person={"name": "Test Lead"})
+        out = result["text"]
         assert isinstance(out, str)
         # Expect some reference to finance or previous topic
         assert ("finance" in out.lower()) or ("previous" in out.lower())

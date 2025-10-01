@@ -23,26 +23,20 @@ def normalise_action(action: str | Dict[str, Any]) -> Dict[str, str] | None:
         a = "view_profile" if a == "open_profile" else "open_call_console"
 
     if a not in CANONICAL_ACTIONS:
-        # Enhanced alias mapping
-        alias_map = {
-            "meeting": ["meeting", "meet", "1-1", "one to one", "appointment", "schedule", "book time", "book a call"],
-            "email": ["email", "compose", "draft", "follow-up", "follow up", "write"],
-            "profile": ["profile", "open card", "profile card", "open profile"],
-        }
+        # Enhanced alias mapping with tokenized matching
+        import re
         
+        # Tokenize the action string for better matching
         al = a.replace("_", " ").strip()
-        if any(w in al for w in alias_map["meeting"]):
+        tokens = set(re.findall(r"[a-z0-9+-]+", al.lower()))
+        
+        # Check explicit patterns with tokenized matching
+        if {"zoom","teams","calendar"} & tokens or "1-1" in al or {"book","schedule","arrange","set"} & tokens:
             a = "open_meeting_scheduler"
-        elif any(w in al for w in alias_map["email"]):
+        elif {"email","compose","draft","follow","follow-up","template"} & tokens or "drop a line" in al:
             a = "open_email_composer"
-        elif any(w in al for w in alias_map["profile"]):
+        elif "profile" in tokens:
             a = "view_profile"
-        elif "profile" in a:
-            a = "view_profile"
-        elif "email" in a:
-            a = "open_email_composer"
-        elif ("meeting" in a) or ("book" in a):
-            a = "open_meeting_scheduler"
         else:
             a = "open_call_console"
 
@@ -62,9 +56,7 @@ def normalise_actions(actions: List[Any] | None) -> List[Dict[str, str]]:
         norm = normalise_action(a)
         if norm:
             result.append(norm)
-    # Provide a sensible default if empty
-    if not result:
-        result = [{"label": "Open Call Console", "action": "open_call_console"}]
+    # Return empty list if no valid actions (let the UI decide if it needs a default)
     return result
 
 

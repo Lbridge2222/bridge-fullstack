@@ -23,6 +23,7 @@ import {
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Progress } from "@/components/ui/progress";
+import { Skeleton, SkeletonCircle, SkeletonText } from "@/components/ui/skeleton";
 import { usePeople } from "@/hooks/usePeople";
 import { aiLeadsApi } from "@/services/api";
 import EmailComposer, { type Lead as EmailComposerLead } from "@/components/EmailComposer";
@@ -726,7 +727,8 @@ const LeadsManagementPage: React.FC = () => {
     <div
       role="presentation"
       aria-hidden="true"
-      style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: w, borderTopLeftRadius: w, borderBottomLeftRadius: w, background: statusToColor(tag ?? "") }}
+      className="opacity-90 group-hover:opacity-100 transition-opacity"
+      style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: w, borderTopLeftRadius: w, borderBottomLeftRadius: w, background: statusToColor(tag ?? ""), boxShadow: '0 0 0 1px rgba(0,0,0,0.03)' }}
     />
   );
 
@@ -1004,7 +1006,7 @@ const LeadsManagementPage: React.FC = () => {
 
   // Real data via API - use dedicated enquiries endpoint which filters to enquiry stage
   const filters = useMemo(() => ({ limit: 200 }), []);
-  const { people, fetchPeople } = usePeople('leads', filters);
+  const { people, fetchPeople, loading: peopleLoading } = usePeople('leads', filters);
   
   // Refresh function for updates
   const handleRefresh = useCallback(() => {
@@ -1840,7 +1842,7 @@ const LeadsManagementPage: React.FC = () => {
           onContextMenu={handleContextMenu}
         >
           <td className="px-4 py-4 relative">
-            <ColorBar tag={getEffectiveTag(lead)} w={4} />
+            <ColorBar tag={getEffectiveTag(lead)} w={selected ? 8 : 6} />
             <Checkbox
               checked={selectedLeads.has(lead.uid)}
               onCheckedChange={(val) => {
@@ -2866,7 +2868,7 @@ const LeadsManagementPage: React.FC = () => {
         <Badge
           key={filter.key}
           variant="secondary"
-          className="gap-2 px-3 py-1.5 cursor-pointer hover:bg-muted transition-colors duration-200"
+          className="gap-2 px-3 py-1.5 cursor-pointer hover:bg-muted transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-ring/50 shadow-sm"
           onClick={() => removeFilter(filter.key)}
         >
           {filter.label}: {filter.value}
@@ -3882,8 +3884,10 @@ const LeadsManagementPage: React.FC = () => {
 
         {/* Main */}
         <div className="flex-1 flex flex-col overflow-hidden">
-          {/* Liquid Glass Apple-style Header */}
-          <div className="bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60 border-b border-border/30 sticky top-0 z-40 shadow-sm">
+          {/* Liquid Glass Apple-style Header with subtle glow accents */}
+          <div className="relative bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60 border-b border-border/30 sticky top-0 z-40 shadow-sm overflow-hidden">
+            <div aria-hidden className="pointer-events-none absolute -top-24 -right-20 h-56 w-56 rounded-full blur-2xl glow-white" />
+            <div aria-hidden className="pointer-events-none absolute -bottom-24 -left-16 h-64 w-64 rounded-full blur-2xl glow-green" />
             {/* Title Row */}
             <div className="px-4 lg:px-6 py-4">
               <div className="flex items-center justify-between">
@@ -4455,8 +4459,62 @@ const LeadsManagementPage: React.FC = () => {
 
           {/* Content */}
           <div className="flex-1 overflow-auto p-3 sm:p-4 lg:p-6 xl:p-8">
-            {false ? (
-              <AnalyticsDashboard />
+            {(peopleLoading && people.length === 0) ? (
+              <Card className="overflow-hidden border-0 shadow-xl">
+                <CardContent className="p-0">
+                  <div className="p-4">
+                    {/* Toolbar skeleton */}
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-2">
+                        <Skeleton className="h-6 w-40" />
+                        <Skeleton className="h-5 w-16 rounded-full" />
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Skeleton className="h-9 w-28 rounded-md" />
+                        <Skeleton className="h-9 w-24 rounded-md" />
+                        <Skeleton className="h-9 w-24 rounded-md" />
+                      </div>
+                    </div>
+                    {/* Table skeleton */}
+                    <div className="border rounded-lg overflow-hidden">
+                      <div className="grid grid-cols-[40px_1.5fr_1fr_120px_120px_120px_1fr_1fr] gap-0 bg-slate-50 border-b px-3 py-2">
+                        <Skeleton className="h-4 w-5" />
+                        <Skeleton className="h-4 w-32" />
+                        <Skeleton className="h-4 w-24" />
+                        <Skeleton className="h-4 w-16 justify-self-end" />
+                        <Skeleton className="h-4 w-16 justify-self-end" />
+                        <Skeleton className="h-4 w-16 justify-self-end" />
+                        <Skeleton className="h-4 w-20" />
+                        <Skeleton className="h-4 w-20" />
+                      </div>
+                      <div className="divide-y">
+                        {Array.from({ length: 10 }).map((_, i) => (
+                          <div key={i} className="grid grid-cols-[40px_1.5fr_1fr_120px_120px_120px_1fr_1fr] items-center px-3 py-3">
+                            <Skeleton className="h-5 w-5 rounded-sm" />
+                            <div className="flex items-center gap-3">
+                              <SkeletonCircle size={40} />
+                              <div className="flex-1 min-w-0">
+                                <Skeleton className="h-4 w-40" />
+                                <Skeleton className="h-3 w-24 mt-1" />
+                              </div>
+                            </div>
+                            <Skeleton className="h-4 w-24" />
+                            <Skeleton className="h-3 w-16 justify-self-end" />
+                            <Skeleton className="h-3 w-16 justify-self-end" />
+                            <Skeleton className="h-3 w-16 justify-self-end" />
+                            <Skeleton className="h-4 w-24" />
+                            <div className="justify-self-start flex gap-2">
+                              <Skeleton className="h-7 w-7 rounded-md" />
+                              <Skeleton className="h-7 w-7 rounded-md" />
+                              <Skeleton className="h-7 w-7 rounded-md" />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             ) : (
               <>
                 <Card className="overflow-hidden border-0 shadow-xl">

@@ -1,0 +1,183 @@
+{
+  "summary": {
+    "timestamp": "20250928_225200",
+    "total_tests": 5,
+    "successful_tests": 5,
+    "content_passed_tests": 0,
+    "success_rate": "100.0%",
+    "content_quality_rate": "0.0%",
+    "avg_latency_ms": 1494,
+    "p95_latency_ms": 2370
+  },
+  "content_issues_breakdown": {
+    "actionable": 5,
+    "empathy": 5,
+    "personalized": 5
+  },
+  "subsystem_breakdown": {
+    "objection_handling": {
+      "total": 5,
+      "success": 5,
+      "content_passed": 0
+    }
+  },
+  "subsystem_rule_failures": {
+    "objection_handling": {
+      "actionable": 5,
+      "empathy": 5,
+      "personalized": 5
+    }
+  },
+  "detailed_results": [
+    {
+      "test_id": "objection_handling_1",
+      "subsystem": "objection_handling",
+      "category": "objections",
+      "prompt": "isla is thinking of going to a competitor university",
+      "context": {
+        "lead": {
+          "name": "Isla Mitchell",
+          "courseInterest": "MA Music Performance"
+        }
+      },
+      "latency_ms": 1487,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "Guidance temporarily unavailable: 1 validation error for ContentContract\nmode Input should be 'guidance', 'apel', 'policy', 'profile', 'nba', 'admissions', 'privacy' or 'general' [type=literal_error, input_value='objection', input_type=str] For further information visit https://errors.pydantic.dev/2.11/v/literal_error.",
+      "answer_length": 320,
+      "has_answer": true,
+      "actions": [],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [
+        "actionable: Missing actionable next steps",
+        "empathy: Missing guidance tone cue",
+        "personalized: Missing personalization: Missing name: 'Isla Mitchell', Missing course: 'MA Music Performance'"
+      ],
+      "content_passed": false,
+      "timestamp": "2025-09-28T22:51:47.016561"
+    },
+    {
+      "test_id": "objection_handling_2",
+      "subsystem": "objection_handling",
+      "category": "objections",
+      "prompt": "can isla afford to come to university?",
+      "context": {
+        "lead": {
+          "name": "Isla Mitchell",
+          "courseInterest": "MA Music Performance"
+        }
+      },
+      "latency_ms": 1297,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "Guidance temporarily unavailable: 1 validation error for ContentContract\nmode Input should be 'guidance', 'apel', 'policy', 'profile', 'nba', 'admissions', 'privacy' or 'general' [type=literal_error, input_value='objection', input_type=str] For further information visit https://errors.pydantic.dev/2.11/v/literal_error.",
+      "answer_length": 320,
+      "has_answer": true,
+      "actions": [],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [
+        "actionable: Missing actionable next steps",
+        "empathy: Missing guidance tone cue",
+        "personalized: Missing personalization: Missing name: 'Isla Mitchell', Missing course: 'MA Music Performance'"
+      ],
+      "content_passed": false,
+      "timestamp": "2025-09-28T22:51:49.815031"
+    },
+    {
+      "test_id": "objection_handling_3",
+      "subsystem": "objection_handling",
+      "category": "objections",
+      "prompt": "isla mum thinks a creative degree is not worthwhile, what can we say to fix this?",
+      "context": {
+        "lead": {
+          "name": "Isla Mitchell",
+          "courseInterest": "MA Music Performance"
+        }
+      },
+      "latency_ms": 2370,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "Guidance temporarily unavailable: 1 validation error for ContentContract\nmode Input should be 'guidance', 'apel', 'policy', 'profile', 'nba', 'admissions', 'privacy' or 'general' [type=literal_error, input_value='objection', input_type=str] For further information visit https://errors.pydantic.dev/2.11/v/literal_error.",
+      "answer_length": 320,
+      "has_answer": true,
+      "actions": [],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [
+        "actionable: Missing actionable next steps",
+        "empathy: Missing guidance tone cue",
+        "personalized: Missing personalization: Missing name: 'Isla Mitchell', Missing course: 'MA Music Performance'"
+      ],
+      "content_passed": false,
+      "timestamp": "2025-09-28T22:51:53.687095"
+    },
+    {
+      "test_id": "objection_handling_4",
+      "subsystem": "objection_handling",
+      "category": "objections",
+      "prompt": "ryan is concerned about the cost of the course",
+      "context": {
+        "lead": {
+          "name": "Ryan O'Brien",
+          "courseInterest": "MA Music Performance"
+        }
+      },
+      "latency_ms": 953,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "Guidance temporarily unavailable: 1 validation error for ContentContract\nmode Input should be 'guidance', 'apel', 'policy', 'profile', 'nba', 'admissions', 'privacy' or 'general' [type=literal_error, input_value='objection', input_type=str] For further information visit https://errors.pydantic.dev/2.11/v/literal_error.",
+      "answer_length": 320,
+      "has_answer": true,
+      "actions": [],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [
+        "actionable: Missing actionable next steps",
+        "empathy: Missing guidance tone cue",
+        "personalized: Missing personalization: Missing name: 'Ryan O'Brien', Missing course: 'MA Music Performance'"
+      ],
+      "content_passed": false,
+      "timestamp": "2025-09-28T22:51:56.142176"
+    },
+    {
+      "test_id": "objection_handling_5",
+      "subsystem": "objection_handling",
+      "category": "objections",
+      "prompt": "they think it's too expensive compared to other universities",
+      "context": {
+        "lead": {
+          "name": "Ryan O'Brien",
+          "courseInterest": "MA Music Performance"
+        }
+      },
+      "latency_ms": 1365,
+      "intent": "unknown",
+      "kind": "conversational",
+      "answer": "Guidance temporarily unavailable: 1 validation error for ContentContract\nmode Input should be 'guidance', 'apel', 'policy', 'profile', 'nba', 'admissions', 'privacy' or 'general' [type=literal_error, input_value='objection', input_type=str] For further information visit https://errors.pydantic.dev/2.11/v/literal_error.",
+      "answer_length": 320,
+      "has_answer": true,
+      "actions": [],
+      "sources": [],
+      "sources_count": 0,
+      "status": "success",
+      "status_code": 200,
+      "content_issues": [
+        "actionable: Missing actionable next steps",
+        "empathy: Missing guidance tone cue",
+        "personalized: Missing personalization: Missing name: 'Ryan O'Brien', Missing course: 'MA Music Performance'"
+      ],
+      "content_passed": false,
+      "timestamp": "2025-09-28T22:51:59.008621"
+    }
+  ]
+}

@@ -1,5 +1,5 @@
 // API service layer for backend integration
-const API_BASE = 'http://localhost:8000';
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 
 export interface ApiError {
   detail: string;
@@ -33,6 +33,57 @@ export interface ApplicationCard {
   has_active_interview: boolean;
   last_activity_at?: string;
   offer_type?: string;
+  // NEW: Progression intelligence fields
+  progression_probability?: number;
+  enrollment_probability?: number;
+  next_stage_eta_days?: number;
+  enrollment_eta_days?: number;
+  progression_blockers?: Blocker[];
+  recommended_actions?: NextBestAction[];
+}
+
+export interface Blocker {
+  type: string;
+  severity: 'critical' | 'high' | 'medium' | 'low';
+  item: string;
+  impact: string;
+  resolution_action: string;
+  estimated_delay_days?: number;
+}
+
+export interface NextBestAction {
+  action: string;
+  priority: number;
+  impact: string;
+  effort: 'low' | 'medium' | 'high';
+  deadline?: string;
+  action_type: 'communication' | 'documentation' | 'scheduling' | 'review' | 'resolution';
+}
+
+export interface ProgressionPrediction {
+  next_stage: string;
+  progression_probability: number;
+  eta_days?: number;
+  confidence: number;
+}
+
+export interface EnrollmentPrediction {
+  enrollment_probability: number;
+  enrollment_eta_days?: number;
+  confidence: number;
+  key_factors: string[];
+}
+
+export interface ApplicationIntelligence {
+  application_id: string;
+  current_stage: string;
+  days_in_stage: number;
+  progression_prediction: ProgressionPrediction;
+  enrollment_prediction: EnrollmentPrediction;
+  blockers: Blocker[];
+  next_best_actions: NextBestAction[];
+  cohort_insights: Record<string, any>;
+  generated_at: string;
 }
 
 export interface PersonEnriched {
@@ -155,6 +206,71 @@ export const applicationsApi = {
   // Refresh materialized view
   refreshBoard: (): Promise<void> => {
     return apiFetch('/applications/board/_refresh', { method: 'POST', returnType: 'void' });
+  },
+
+  // Get available stages
+  getStages: (): Promise<{id: string; label: string}[]> => {
+    return apiFetch<{id: string; label: string}[]>('/applications/stages');
+  },
+
+  // Get application details
+  getDetails: (applicationId: string): Promise<any> => {
+    return apiFetch(`/applications/${applicationId}/details`);
+  },
+
+  // Get application statistics
+  getStats: (): Promise<any> => {
+    return apiFetch('/applications/stats');
+  },
+
+  // NEW: Get application progression intelligence
+  getProgressionIntelligence: (applicationId: string, options?: {
+    include_blockers?: boolean;
+    include_nba?: boolean;
+    include_cohort_analysis?: boolean;
+  }): Promise<ApplicationIntelligence> => {
+    return apiFetch('/ai/application-intelligence/predict', {
+      method: 'POST',
+      body: JSON.stringify({
+        application_id: applicationId,
+        include_blockers: options?.include_blockers ?? true,
+        include_nba: options?.include_nba ?? true,
+        include_cohort_analysis: options?.include_cohort_analysis ?? true,
+      }),
+    });
+  },
+
+  // NEW: Batch predict progression for multiple applications
+  predictProgressionBatch: (applicationIds: string[]): Promise<any> => {
+    return apiFetch('/ai/application-intelligence/predict-batch', {
+      method: 'POST',
+      body: JSON.stringify(applicationIds),
+    });
+  },
+
+  // Bulk stage update
+  bulkMoveStage: (payload: {
+    application_ids: string[];
+    to_stage: string;
+    note?: string;
+    changed_by?: string;
+  }): Promise<any> => {
+    return apiFetch('/applications/bulk/stage', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  },
+
+  // Bulk priority update
+  bulkUpdatePriority: (payload: {
+    application_ids: string[];
+    priority: string;
+    urgency_reason?: string;
+  }): Promise<any> => {
+    return apiFetch('/applications/bulk/priority', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
   },
 };
 
@@ -539,6 +655,50 @@ export const ragApi = {
     return apiFetch<IvyConversationalResponse>(`/rag/query_v2`, {
       method: 'POST',
       body: JSON.stringify(payload),
+    });
+  },
+};
+
+// Activity interfaces
+export interface ActivityCreate {
+  person_id: string;
+  activity_type: string;
+  activity_title: string;
+  activity_description?: string;
+  metadata?: Record<string, any>;
+}
+
+export interface ActivityOut {
+  id: number;
+  lead_id: string;
+  activity_type: string;
+  activity_title: string;
+  activity_description?: string;
+  created_at: string;
+  metadata?: Record<string, any>;
+}
+
+export const activitiesApi = {
+  create: (activity: ActivityCreate): Promise<ActivityOut> => {
+    return apiFetch<ActivityOut>(`/activities/`, {
+      method: 'POST',
+      body: JSON.stringify(activity),
+    });
+  },
+  
+  getByPerson: (personId: string, limit: number = 50, offset: number = 0): Promise<ActivityOut[]> => {
+    const url = `/activities/person/${personId}?limit=${limit}&offset=${offset}`;
+    console.log('🌐 Activities API URL:', `${API_BASE}${url}`);
+    return apiFetch<ActivityOut[]>(url);
+  },
+  
+  getById: (activityId: number): Promise<ActivityOut> => {
+    return apiFetch<ActivityOut>(`/activities/${activityId}`);
+  },
+  
+  delete: (activityId: number): Promise<{ message: string }> => {
+    return apiFetch<{ message: string }>(`/activities/${activityId}`, {
+      method: 'DELETE',
     });
   },
 };

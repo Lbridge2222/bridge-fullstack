@@ -125,7 +125,7 @@ async def _generate_json_tool_response(query: str, context: Dict[str, Any], know
             f"Person: {facts}\n"
             f"Top sources: {kb_titles}"
         )
-        llm = LLMCtx(temperature=0.2, timeout_ms=AI_TIMEOUT_HELPER_MS)
+        llm = LLMCtx(temperature=0.4, timeout_ms=AI_TIMEOUT_HELPER_MS)
         out = await llm.ainvoke([("system", sys), ("human", human)])
         text = (out or "").strip()
         # Ensure it's valid JSON; if not, fallback
@@ -175,7 +175,7 @@ async def multi_query_expansions(q: str, ctx: Optional[Dict[str,Any]] = None) ->
     try:
         from app.ai import ACTIVE_MODEL, OPENAI_API_KEY, OPENAI_MODEL, GEMINI_API_KEY, GEMINI_MODEL
         from app.ai.safe_llm import LLMCtx
-        llm = LLMCtx(temperature=0.2)
+        llm = LLMCtx(temperature=0.4)
 
         prompt = (
           "Rewrite the UK admissions/helpdesk question into 3 semantically different "
@@ -459,34 +459,44 @@ async def generate_person_answer(query: str, knowledge_results: List[Dict[str,An
     
     # Early guard for untracked personal questions
     ql = (query or "").lower()
-    personal_untracked = ["dog","cat","pet","married","boyfriend","girlfriend","religion","politics"]
-    if any(w in ql for w in personal_untracked):
-        from app.ai.text_sanitiser import cleanse_conversational
-        return cleanse_conversational(
-            "We don't record personal details like that. Let's focus on the course fit, entry requirements, and the next sensible step."
-        )
+    
+    # Skip privacy guard for APEL-related queries
+    if "apel" not in ql:
+        import re
+        personal_untracked = ["dog","cat","pet","married","boyfriend","girlfriend","religion","political","political views"]
+        if any(re.search(rf'\b{w}\b', ql) for w in personal_untracked):
+            from app.ai.text_sanitiser import cleanse_conversational
+            return cleanse_conversational(
+                "We don't record personal details like that. Let's focus on the course fit, entry requirements, and the next sensible step."
+            )
     
     # If it's clearly a profile-y question, delegate to the profile generator
     if is_profile_query(query):
         return await generate_person_profile(query, context)
     
     try:
-        # Conversational mode: use organic narrator for 1–2 paragraphs
+        # Conversational mode: use organic narrator for a concise, grounded answer
         if IVY_ORGANIC_ENABLED:
-            facts = {}
             lead = (context or {}).get("lead", {})
-            if lead:
-                facts.update({
-                    "person": lead.get("name"),
-                    "course": lead.get("courseInterest") or lead.get("latest_programme_name"),
-                    "status": lead.get("status") or lead.get("statusType"),
-                    "touchpoints": lead.get("touchpoint_count"),
-                    "last_activity": lead.get("last_engagement_date"),
-                })
-            # Include top source titles lightly
-            if knowledge_results:
-                facts["kb_titles"] = [r.get("title") for r in knowledge_results[:3]]
-            return await narrate("conversational", facts)
+            # Build a flat preview plus a few derived facts for the narrator
+            from app.ai.privacy_utils import safe_preview as _safe_preview
+            preview = _safe_preview(lead) if lead else {}
+            if lead.get("name"):
+                preview["name"] = lead.get("name")
+            if lead.get("courseInterest") or lead.get("latest_programme_name"):
+                preview["courseInterest"] = lead.get("courseInterest") or lead.get("latest_programme_name")
+            if lead.get("status") or lead.get("statusType"):
+                status_value = lead.get("status") or lead.get("statusType")
+                if isinstance(status_value, str) and status_value.lower() == "lead":
+                    preview["status"] = "enquirer"
+                else:
+                    preview["status"] = status_value
+            if lead.get("touchpoint_count") is not None:
+                preview["touchpoint_count"] = lead.get("touchpoint_count")
+            if lead.get("last_engagement_date"):
+                preview["last_engagement_date"] = lead.get("last_engagement_date")
+            result = await narrate(query, person=preview, kb_sources=knowledge_results, intent="lead_info")
+            return result["text"]
 
         # Fallback legacy structure when organic disabled
         from app.ai import ACTIVE_MODEL, GEMINI_API_KEY, GEMINI_MODEL, OPENAI_API_KEY, OPENAI_MODEL
@@ -647,14 +657,21 @@ def _get_response_rate(lead: dict) -> Optional[str]:
 
 async def generate_person_profile(query: str, context: Optional[Dict[str,Any]]) -> str:
     """Generate a narrated lead profile from facts (LLM styles it)."""
-    # Early guard for untracked personal questions
+    # Early guard for untracked personal questions - only check the original user query
     ql = (query or "").lower()
-    personal_untracked = ["dog","cat","pet","married","boyfriend","girlfriend","religion","politics"]
-    if any(w in ql for w in personal_untracked):
-        from app.ai.text_sanitiser import cleanse_conversational
-        return cleanse_conversational(
-            "We don't record personal details like that. Let's focus on the course fit, entry requirements, and the next sensible step."
-        )
+    # More precise patterns to avoid false positives from RAG expansions
+    personal_patterns = [
+        r"\b(are|is|do|does|have|has|what|who).*(boyfriend|girlfriend|married|religion|political views|pet|dog|cat)\b",
+        r"\b(do they|does.*have|are they).*(married|boyfriend|girlfriend|pets?|religion|political)\b"
+    ]
+    
+    import re
+    for pattern in personal_patterns:
+        if re.search(pattern, ql, re.IGNORECASE):
+            from app.ai.text_sanitiser import cleanse_conversational
+            return cleanse_conversational(
+                "We don't record personal details like that. Let's focus on the course fit, entry requirements, and the next sensible step."
+            )
     
     lead = (context or {}).get("lead") or {}
     ai   = lead.get("aiInsights") or (context or {}).get("ai") or {}
@@ -677,7 +694,7 @@ async def generate_person_profile(query: str, context: Optional[Dict[str,Any]]) 
             "eligibility": lead.get("applicantType") or lead.get("country"),
         },
         "funnel": {
-            "status": lead.get("status") or lead.get("statusType"),
+            "status": ("enquirer" if (lead.get("status") or lead.get("statusType") or "").lower() == "lead" else lead.get("status") or lead.get("statusType")),
             "lead_score": lead.get("leadScore"),
             "next_best_action": lead.get("nextAction") or ai.get("recommendedAction") or ai.get("callStrategy"),
             "follow_up": lead.get("followUpDate"),
@@ -706,17 +723,69 @@ async def generate_person_profile(query: str, context: Optional[Dict[str,Any]]) 
 
     # Conversational gate: return 1–2 paragraphs if organic is enabled
     if IVY_ORGANIC_ENABLED:
-        simple_facts = {
-            "person": facts.get("name"),
-            "course": facts.get("academic", {}).get("course"),
-            "status": facts.get("funnel", {}).get("status"),
-            "touchpoints": facts.get("conversation", {}).get("email_count"),
-            "last_activity": facts.get("activity", {}).get("last_activity"),
-        }
-        text = await narrate("conversational", simple_facts)
-        # Scrub contact info unless query is about contact
-        from app.ai.text_sanitiser import scrub_contact_info
-        return scrub_contact_info(text, query)
+        # Start with safe preview and dynamically add available lead data
+        from app.ai.privacy_utils import safe_preview
+        
+        # Get the original lead object from context if available
+        lead = (context or {}).get("lead", {})
+        
+        # Start with safe preview (whitelisted fields)
+        preview = safe_preview(lead) if lead else {}
+        if name and name not in (None, ""):
+            preview["name"] = name
+        
+        # Dynamically add derived facts if they exist in the nested structure
+        if facts.get("academic", {}).get("course"):
+            preview["courseInterest"] = facts["academic"]["course"]
+        if facts.get("funnel", {}).get("status"):
+            status_val = facts["funnel"].get("status")
+            if isinstance(status_val, str) and status_val.lower() == "lead":
+                preview["status"] = "enquirer"
+            else:
+                preview["status"] = status_val
+        if facts.get("conversation", {}).get("email_count") or facts.get("conversation", {}).get("call_count"):
+            email_count = facts.get("conversation", {}).get("email_count", 0)
+            call_count = facts.get("conversation", {}).get("call_count", 0)
+            preview["touchpoint_count"] = email_count + call_count
+        if facts.get("activity", {}).get("last_activity"):
+            preview["last_engagement_date"] = facts["activity"]["last_activity"]
+        if facts.get("contact", {}).get("email"):
+            preview["email"] = facts["contact"]["email"]
+        if facts.get("contact", {}).get("phone"):
+            preview["phone"] = facts["contact"]["phone"]
+        if facts.get("consent", {}).get("gdpr_opt_in") is not None:
+            preview["gdpr_opt_in"] = facts["consent"]["gdpr_opt_in"]
+        if facts.get("funnel", {}).get("conversion_probability") is not None:
+            preview["conversion_probability"] = facts["funnel"]["conversion_probability"]
+        if facts.get("insights"):
+            preview["ai_insights"] = facts["insights"]
+        if facts.get("triage", {}).get("score") is not None:
+            preview["triage_score"] = facts["triage"]["score"]
+        if facts.get("forecast"):
+            preview["forecast"] = facts["forecast"]
+        if facts.get("funnel", {}).get("application_status"):
+            preview["application_status"] = facts["funnel"]["application_status"]
+        if facts.get("funnel", {}).get("enrollment_status"):
+            preview["enrollment_status"] = facts["funnel"]["enrollment_status"]
+        
+        # Add additional dynamic fields if available in lead
+        if lead:
+            if lead.get("firstContactAt"):
+                preview["first_contact_at"] = lead["firstContactAt"]
+            if lead.get("address"):
+                preview["address"] = lead["address"]
+            if lead.get("dateOfBirth"):
+                preview["date_of_birth"] = lead["dateOfBirth"]
+            if lead.get("appliedDate"):
+                preview["applied_date"] = lead["appliedDate"]
+            if lead.get("leadScore"):
+                preview["leadScore"] = lead["leadScore"]
+            if lead.get("latest_academic_year"):
+                preview["latest_academic_year"] = lead["latest_academic_year"]
+        
+        result = await narrate(query, person=preview, intent="lead_profile")
+        text = result["text"]
+        return text
 
     # Legacy: structured narrative (kept for modal/legacy flows)
     name_disp = facts.get("name", "This person")
@@ -727,7 +796,7 @@ async def generate_person_profile(query: str, context: Optional[Dict[str,Any]]) 
         response_parts.append(f"Status: {facts['funnel']['status']}")
     return "\n".join(response_parts)
 
-def add_gap_if_needed(text: str, knowledge_results: List[Dict[str,Any]], min_supported: float = 0.52) -> str:
+def add_gap_if_needed(text: str, knowledge_results: List[Dict[str,Any]], min_supported: float = 0.45) -> str:
     """Add gap notice when knowledge coverage is insufficient"""
     top = float(knowledge_results[0]["similarity_score"]) if knowledge_results else 0.0
     if top < min_supported:
@@ -880,7 +949,7 @@ Generate the suggestions modal JSON for {lead_name}."""
         
         # Initialize LLM using safe wrapper
         from app.ai.safe_llm import LLMCtx
-        llm = LLMCtx(temperature=0.1)
+        llm = LLMCtx(temperature=0.3)
 
         # Generate response
         response = await llm.ainvoke([("system", system_prompt), ("human", human_prompt)])
@@ -1443,30 +1512,38 @@ async def hybrid_search(
             """
             
             # Call the database function with proper parameters
-            logger.info(f"Calling hybrid_search with threshold: {similarity_threshold}")
-            results = await fetch(query, 
-                expanded_query,              # query_text (expanded)
-                embedding_str,                # query_embedding
-                document_types if document_types and len(document_types) > 0 else None,  # document_types
-                categories if categories and len(categories) > 0 else None,              # categories
-                limit_count,                  # limit_count
-                similarity_threshold          # similarity_threshold
-            )
-            
-            logger.info(f"Vector search found {len(results)} results")
-            if len(results) == 0:
-                logger.warning(f"No results found for query: '{query_text[:50]}...' with threshold {similarity_threshold}")
-                # Debug: check if we can find any documents at all (skip if embedding column doesn't exist)
-                try:
-                    debug_results = await fetch("SELECT COUNT(*) as count FROM active_knowledge_documents WHERE embedding IS NOT NULL")
-                    logger.info(f"Total documents with embeddings: {debug_results[0]['count']}")
-                except Exception:
-                    pass  # Don't spam logs if embedding column doesn't exist
-            else:
-                logger.info(f"Top result: {results[0]['title']} (similarity: {results[0]['similarity_score']:.3f})")
-            CACHE.set(cache_key, results)
-            return results, False
-        
+            try:
+                logger.info(f"Calling hybrid_search with threshold: {similarity_threshold}")
+                results = await fetch(
+                    query,
+                    expanded_query,              # query_text (expanded)
+                    embedding_str,                # query_embedding
+                    document_types if document_types and len(document_types) > 0 else None,  # document_types
+                    categories if categories and len(categories) > 0 else None,              # categories
+                    limit_count,                  # limit_count
+                    similarity_threshold          # similarity_threshold
+                )
+
+                logger.info(f"Vector search found {len(results)} results")
+                if len(results) == 0:
+                    logger.warning(
+                        f"No results found for query: '{query_text[:50]}...' with threshold {similarity_threshold}"
+                    )
+                else:
+                    logger.info(
+                        f"Top result: {results[0]['title']} (similarity: {results[0]['similarity_score']:.3f})"
+                    )
+                CACHE.set(cache_key, results)
+                return results, False
+            except Exception as vector_err:
+                logger.warning(
+                    "Vector search unavailable (%s). Falling back to text search.",
+                    getattr(vector_err, "pgerror", vector_err)
+                )
+                results = await text_search(expanded_query, document_types, categories, limit_count)
+                CACHE.set(cache_key, results)
+                return results, False
+
         else:
             # Fallback to text search if no embeddings
             logger.info(f"Falling back to text search for: '{query_text[:50]}...'")
@@ -1701,7 +1778,11 @@ async def generate_personalised_sales_strategy(
         knowledge_context = ""
         if knowledge_results:
             for result in knowledge_results[:3]:
-                knowledge_context += f"**{result['title']}:**\n{result['content'][:500]}...\n\n"
+                # Don't truncate content for policy/APEL responses - they need full context
+                content = result['content']
+                if len(content) > 500 and not any(word in result.get('category', '').lower() for word in ['policy', 'apel', 'admissions']):
+                    content = content[:500] + "..."
+                knowledge_context += f"**{result['title']}:**\n{content}\n\n"
         
         # Create AI prompt for personalised sales strategy
         messages = [
@@ -1819,8 +1900,16 @@ async def generate_knowledge_based_answer(
             "weak_evidence": (not knowledge_results) or (knowledge_results and float(knowledge_results[0].get("similarity_score",0)) < 0.52)
         }
         
-        # Use narrator for progressive language
-        text = await narrate("rag-answer", facts)
+        # Detect intent from query for proper sanitization
+        detected_intent = "policy_info"  # Default for knowledge-based answers
+        if any(word in query.lower() for word in ["course", "programme", "degree", "ba", "ma", "bsc", "msc"]):
+            detected_intent = "course_info"
+        elif any(word in query.lower() for word in ["apel", "prior learning", "accreditation"]):
+            detected_intent = "policy_info"
+        
+        # Use narrator for progressive language with intent
+        result = await narrate(query, kb_sources=knowledge_results, intent=detected_intent)
+        text = result["text"]
         # Standardise weak-evidence gap message
         text = add_gap_if_needed(text, knowledge_results)
         return text

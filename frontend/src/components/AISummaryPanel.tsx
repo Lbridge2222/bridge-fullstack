@@ -57,9 +57,10 @@ interface AISummaryPanelProps {
   profileMode?: boolean; // Optional prop to force profile mode
   lastQuery?: string; // Last query to detect profile intent
   onTriageDataChange?: (triageData: TriageItem | null) => void; // Callback to pass triage data to parent
+  onMLForecastChange?: (mlForecast: any) => void; // Callback to pass ML forecast data to parent
 }
 
-const AISummaryPanel: React.FC<AISummaryPanelProps> = ({ personId, personData, profileMode: forcedProfileMode, lastQuery, onTriageDataChange }) => {
+const AISummaryPanel: React.FC<AISummaryPanelProps> = ({ personId, personData, profileMode: forcedProfileMode, lastQuery, onTriageDataChange, onMLForecastChange }) => {
   const [triageData, setTriageData] = useState<TriageItem | null>(null);
 
   const [mlForecast, setMlForecast] = useState<{
@@ -280,6 +281,10 @@ const AISummaryPanel: React.FC<AISummaryPanelProps> = ({ personId, personData, p
       if (!res.ok) throw new Error('Failed to fetch ML forecast');
       const data = await res.json();
       setMlForecast(data);
+      // Pass ML forecast to parent component
+      if (onMLForecastChange) {
+        onMLForecastChange(data);
+      }
     } catch (e) {
       console.warn('ML forecast unavailable:', e);
     }

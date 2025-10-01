@@ -34,6 +34,21 @@ async def startup_event():
     """Initialize application on startup"""
     print("🚀 Starting Bridge CRM API...")
     
+    # Log AI configuration for debugging
+    try:
+        from app.ai import IVY_ORGANIC_ENABLED, AI_PARSER_ENABLED, AI_NARRATOR_ENABLED, OPENAI_API_KEY, GEMINI_API_KEY
+        ai_config = {
+            "AI_MODEL_PROVIDER": os.getenv("AI_MODEL_PROVIDER", "unknown"),
+            "IVY_ORGANIC_ENABLED": IVY_ORGANIC_ENABLED,
+            "AI_PARSER_ENABLED": AI_PARSER_ENABLED,
+            "AI_NARRATOR_ENABLED": AI_NARRATOR_ENABLED,
+            "OPENAI_API_KEY": bool(OPENAI_API_KEY),
+            "GEMINI_API_KEY": bool(GEMINI_API_KEY),
+        }
+        print(f"🤖 AI Configuration: {ai_config}")
+    except Exception as e:
+        print(f"⚠️  AI config logging failed: {e}")
+    
     # Pre-warm ML model for faster first requests
     try:
         from app.ai.model_registry import load_active_model
@@ -47,13 +62,13 @@ async def startup_event():
     # Warm up narrate() cache for common modes
     try:
         import asyncio
-        from app.ai.runtime import narrate
+        from app.ai.runtime import narrate, narrate_triage_bullets
         
         # Warm up cache with minimal calls
         warmup_tasks = [
-            narrate("conversational", {"person": "."}),
-            narrate("rag-answer", {"query": "."}),
-            narrate("triage-bullets", {"score": 0})
+            narrate("Tell me about this person", person={"name": "Test"}),
+            narrate("What are the entry requirements?", kb_sources=[]),
+            narrate_triage_bullets({"score": 0})
         ]
         
         # Run warmup in background
@@ -118,6 +133,8 @@ from app.routers.applications import router as apps_router
 app.include_router(apps_router, prefix="/applications", tags=["applications"])
 from app.routers.events import router as events_router
 app.include_router(events_router, prefix="/events", tags=["events"])
+from app.routers.activities import router as activities_router
+app.include_router(activities_router, prefix="/activities", tags=["activities"])
 from app.routers.consents import router as consents_router
 app.include_router(consents_router, tags=["consents"])
 from app.routers.dashboard import router as dashboard_router
@@ -126,6 +143,10 @@ from app.routers.offers import router as offers_router
 app.include_router(offers_router, prefix="/offers", tags=["offers"])
 from app.routers.properties import router as properties_router
 app.include_router(properties_router, tags=["properties"])
+
+# Health monitoring
+from app.routers.health import router as health_router
+app.include_router(health_router, tags=["health"])
 
 # AI routers
 try:
@@ -229,6 +250,15 @@ if os.getenv("AI_ENABLE_LEGACY_ADVANCED_ML", "true").lower() == "true":
         pass
 else:
     print("ℹ️  Advanced ML (legacy) router disabled via environment variable")
+
+# Application Intelligence ML router (Application Progression Prediction)
+try:
+    from app.ai.application_ml import router as application_ml_router
+    app.include_router(application_ml_router)
+    print("✅ Application Intelligence ML router loaded successfully")
+except Exception as e:
+    print(f"❌ Failed to load application intelligence ML router: {e}")
+    pass
 
 # AI Chat router (Phase 4.2 - Gemini Integration)
 try:

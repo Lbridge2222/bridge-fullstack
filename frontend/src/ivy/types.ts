@@ -7,6 +7,8 @@ export interface IvyContext {
   personName?: string;
   personData?: any;
   person?: any; // Add person property for consistency with intelligentProcessor
+  triageData?: any; // ML triage data from AI Summary panel
+  mlForecast?: any; // ML forecast data with conversion_probability from AI Summary panel
   
   // Modal openers
   openEmailComposer?: (opts?: { template?: string }) => void;

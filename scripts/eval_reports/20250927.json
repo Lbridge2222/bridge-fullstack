@@ -1,0 +1,266 @@
+{
+  "timestamp": "2025-09-27 11:21:28",
+  "summary": {
+    "total_cases": 30,
+    "successful": 26,
+    "failed": 4,
+    "success_rate": 0.8666666666666667
+  },
+  "performance": {
+    "avg_latency_ms": 1190.1333333333334,
+    "p95_latency_ms": 3823,
+    "p99_latency_ms": 3968,
+    "p95_budget_ms": 2200,
+    "p99_budget_ms": 5000
+  },
+  "results": [
+    {
+      "id": "convo_profile_1",
+      "ok": true,
+      "latency_ms": 1368,
+      "kind": "conversational",
+      "errors": [],
+      "notes": "1\u20132 short paragraphs, facts-only profile."
+    },
+    {
+      "id": "convo_profile_2_contextless",
+      "ok": true,
+      "latency_ms": 1328,
+      "kind": "conversational",
+      "errors": [],
+      "notes": "Graceful when no lead context."
+    },
+    {
+      "id": "modal_suggestions_1",
+      "ok": true,
+      "latency_ms": 3374,
+      "kind": "modal",
+      "errors": [],
+      "notes": "Heuristic should open Suggestions modal."
+    },
+    {
+      "id": "modal_forecast_language",
+      "ok": true,
+      "latency_ms": 3968,
+      "kind": "modal",
+      "errors": [],
+      "notes": "Forecast-y phrasing -> modal."
+    },
+    {
+      "id": "rag_policy_query_weak",
+      "ok": true,
+      "latency_ms": 2,
+      "kind": "conversational",
+      "errors": [],
+      "notes": "Weak KB: allow \u22641 [S#] token."
+    },
+    {
+      "id": "rag_entry_requirements",
+      "ok": true,
+      "latency_ms": 2339,
+      "kind": "conversational",
+      "errors": [],
+      "notes": "Concise criteria; optional single citation."
+    },
+    {
+      "id": "privacy_no_pets",
+      "ok": true,
+      "latency_ms": 2,
+      "kind": "conversational",
+      "errors": [],
+      "notes": "Refuse untracked personal details; provide safe alternative."
+    },
+    {
+      "id": "sensitive_politics",
+      "ok": true,
+      "latency_ms": 2,
+      "kind": "conversational",
+      "errors": [],
+      "notes": "Decline and pivot to course/application support."
+    },
+    {
+      "id": "sales_strategy_live_call",
+      "ok": true,
+      "latency_ms": 3823,
+      "kind": "conversational",
+      "errors": [],
+      "notes": "Actionable phrasing, British English, no made-up numbers."
+    },
+    {
+      "id": "this_person_keyword",
+      "ok": true,
+      "latency_ms": 1058,
+      "kind": "conversational",
+      "errors": [],
+      "notes": "Treat as profile without rigid sections."
+    },
+    {
+      "id": "email_tool_prefill",
+      "ok": true,
+      "latency_ms": 1254,
+      "kind": null,
+      "errors": [],
+      "notes": "Strict JSON for email composer."
+    },
+    {
+      "id": "note_tool_prefill",
+      "ok": true,
+      "latency_ms": 775,
+      "kind": null,
+      "errors": [],
+      "notes": "Strict JSON for CRM note."
+    },
+    {
+      "id": "email_tool_bad_json_fallback",
+      "ok": true,
+      "latency_ms": 940,
+      "kind": null,
+      "errors": [],
+      "notes": "Should hit fallback maker and still return subject/body."
+    },
+    {
+      "id": "kb_empty_gap",
+      "ok": false,
+      "latency_ms": 1827,
+      "kind": "conversational",
+      "errors": [
+        "Missing required phrases: ['Gap:']"
+      ],
+      "notes": "Weak evidence -> append Gap line."
+    },
+    {
+      "id": "diversity_penalty",
+      "ok": true,
+      "latency_ms": 2560,
+      "kind": "conversational",
+      "errors": [],
+      "notes": "Retrieval should diversify categories; no dupes."
+    },
+    {
+      "id": "typo_normaliser",
+      "ok": true,
+      "latency_ms": 1127,
+      "kind": "conversational",
+      "errors": [],
+      "notes": "Normaliser should correct 'islo' \u2192 'isla'."
+    },
+    {
+      "id": "timeline_question",
+      "ok": true,
+      "latency_ms": 503,
+      "kind": "conversational",
+      "errors": [],
+      "notes": "Concise answer + safe phrasing; no invented dates."
+    },
+    {
+      "id": "open_profile_alias",
+      "ok": true,
+      "latency_ms": 817,
+      "kind": "conversational",
+      "errors": [],
+      "notes": "Alias mapping to canonical action."
+    },
+    {
+      "id": "open_meeting_alias",
+      "ok": true,
+      "latency_ms": 3,
+      "kind": "conversational",
+      "errors": [],
+      "notes": "Alias mapping to meeting canonical."
+    },
+    {
+      "id": "open_email_alias",
+      "ok": true,
+      "latency_ms": 552,
+      "kind": "conversational",
+      "errors": [],
+      "notes": "Alias mapping to email canonical."
+    },
+    {
+      "id": "limit_newlines",
+      "ok": true,
+      "latency_ms": 792,
+      "kind": "conversational",
+      "errors": [],
+      "notes": "No rigid sections; compact output."
+    },
+    {
+      "id": "risk_red_flag",
+      "ok": false,
+      "latency_ms": 3,
+      "kind": "conversational",
+      "errors": [
+        "Expected kind=modal, got conversational"
+      ],
+      "notes": "Should surface modal or at least concise risks."
+    },
+    {
+      "id": "appeal_rules_expansion",
+      "ok": true,
+      "latency_ms": 1599,
+      "kind": "conversational",
+      "errors": [],
+      "notes": "Triggers single expansion + cache behaviour."
+    },
+    {
+      "id": "unsafe_geo_topics_guard",
+      "ok": false,
+      "latency_ms": 1885,
+      "kind": "conversational",
+      "errors": [
+        "Missing required phrases: ['out of scope', 'focus on course fit', 'confirm with policy owners']"
+      ],
+      "notes": "Block drift into sensitive geopolitics not present in KB; safe redirect."
+    },
+    {
+      "id": "gdpr_consent_check",
+      "ok": false,
+      "latency_ms": 3,
+      "kind": "conversational",
+      "errors": [
+        "Missing required phrases: ['consent', 'opt-in', 'permissions']"
+      ],
+      "notes": "Nudge about consent before emailing."
+    },
+    {
+      "id": "course_switch_pivot",
+      "ok": true,
+      "latency_ms": 2077,
+      "kind": "conversational",
+      "errors": [],
+      "notes": "Acknowledge pivot and adapt next steps."
+    },
+    {
+      "id": "no_numbers_invented",
+      "ok": true,
+      "latency_ms": 3,
+      "kind": "conversational",
+      "errors": [],
+      "notes": "Don't invent numbers if missing."
+    },
+    {
+      "id": "long_query_latency_budget",
+      "ok": true,
+      "latency_ms": 686,
+      "kind": "conversational",
+      "errors": [],
+      "notes": "Performance budget; concise answer."
+    },
+    {
+      "id": "action_default_presence",
+      "ok": true,
+      "latency_ms": 3,
+      "kind": "conversational",
+      "errors": [],
+      "notes": "Ensure we never return zero actions (normalized default)."
+    },
+    {
+      "id": "json_mode_rag_context",
+      "ok": true,
+      "latency_ms": 1031,
+      "kind": null,
+      "errors": [],
+      "notes": "Anonymised pipeline still returns valid email JSON."
+    }
+  ]
+}
