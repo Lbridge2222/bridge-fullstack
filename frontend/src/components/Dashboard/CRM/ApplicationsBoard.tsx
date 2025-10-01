@@ -148,6 +148,7 @@ function BlockerBadge({ count, severity }: { count: number; severity?: string })
 }
 
 export default function ApplicationsBoardPage() {
+  const { push: toast } = useToast();
   const [view, setView] = React.useState<"board" | "table">("board");
   const [search, setSearch] = React.useState("");
   const [program, setProgram] = React.useState<string>("all");
@@ -172,6 +173,77 @@ export default function ApplicationsBoardPage() {
   const [selectedApplicationForEmail, setSelectedApplicationForEmail] = React.useState<typeof applications[0] | null>(null);
   const [isCallConsoleOpen, setIsCallConsoleOpen] = React.useState(false);
   const [selectedApplicationForCall, setSelectedApplicationForCall] = React.useState<typeof applications[0] | null>(null);
+
+  // Saved Views (local)
+  type AppSavedView = {
+    id: string;
+    name: string;
+    description?: string;
+    search?: string;
+    program: string;
+    urgency: string;
+    priority: string;
+    deliveryMode: 'all'|'online'|'onsite'|'hybrid';
+    studyPattern: 'all'|'full_time'|'part_time'|'accelerated';
+    multiOnly: boolean;
+    created?: string;
+    lastUsed?: string;
+  };
+  const [savedViews, setSavedViews] = React.useState<AppSavedView[]>(() => {
+    try { return JSON.parse(localStorage.getItem('applicationsSavedViews') || '[]') as AppSavedView[]; } catch { return []; }
+  });
+  const [currentViewId, setCurrentViewId] = React.useState<string | null>(null);
+  const persistViews = (views: AppSavedView[]) => {
+    setSavedViews(views);
+    localStorage.setItem('applicationsSavedViews', JSON.stringify(views));
+  };
+  const buildCurrentView = React.useCallback((name: string, description?: string): AppSavedView => ({
+    id: crypto.randomUUID(),
+    name,
+    description,
+    search: search || undefined,
+    program,
+    urgency,
+    priority,
+    deliveryMode,
+    studyPattern,
+    multiOnly,
+    created: new Date().toISOString(),
+    lastUsed: new Date().toISOString(),
+  }), [search, program, urgency, priority, deliveryMode, studyPattern, multiOnly]);
+  const applyView = React.useCallback((v: AppSavedView) => {
+    setSearch(v.search || '');
+    setProgram(v.program);
+    setUrgency(v.urgency);
+    setPriority(v.priority);
+    setDeliveryMode(v.deliveryMode);
+    setStudyPattern(v.studyPattern);
+    setMultiOnly(v.multiOnly);
+    setCurrentViewId(v.id);
+    const next = savedViews.map(sv => sv.id === v.id ? { ...sv, lastUsed: new Date().toISOString() } : sv);
+    persistViews(next);
+    toast({ title: 'View applied', description: `"${v.name}" active`, variant: 'success' });
+  }, [savedViews, toast]);
+  const clearView = React.useCallback(() => { setCurrentViewId(null); toast({ title: 'View cleared' }); }, [toast]);
+  const [showSaveDialog, setShowSaveDialog] = React.useState(false);
+  const [saveForm, setSaveForm] = React.useState<{ name: string; description?: string }>({ name: '', description: '' });
+  const saveCurrentView = React.useCallback(() => {
+    if (!saveForm.name.trim()) return;
+    const v = buildCurrentView(saveForm.name.trim(), saveForm.description?.trim() || undefined);
+    const next = [v, ...savedViews];
+    persistViews(next);
+    setCurrentViewId(v.id);
+    setShowSaveDialog(false);
+    setSaveForm({ name: '', description: '' });
+    toast({ title: 'View saved', description: `"${v.name}" added`, variant: 'success' });
+  }, [buildCurrentView, savedViews, saveForm, toast]);
+  const [showManageDialog, setShowManageDialog] = React.useState(false);
+  const deleteView = React.useCallback((id: string) => {
+    const next = savedViews.filter(v => v.id !== id);
+    persistViews(next);
+    if (currentViewId === id) setCurrentViewId(null);
+    toast({ title: 'View deleted' });
+  }, [savedViews, currentViewId, toast]);
 
   // Use the custom hooks for data
   const { stages, loading: stagesLoading, error: stagesError } = useStages();
@@ -733,6 +805,33 @@ export default function ApplicationsBoardPage() {
                   </TabsTrigger>
                 </TabsList>
               </Tabs>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="default" className="gap-2 h-9 px-3 text-sm bg-background/60 backdrop-blur-sm border-border/50 hover:bg-background/80 transition-all">
+                    <BookmarkPlus className="h-4 w-4" />
+                    <span className="hidden sm:inline">Views</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-64">
+                  <DropdownMenuItem onClick={() => setShowSaveDialog(true)}>
+                    <BookmarkPlus className="h-4 w-4 mr-2" /> Save current view…
+                  </DropdownMenuItem>
+                  {savedViews.length > 0 && <div className="border-t my-1" />}
+                  {savedViews.length > 0 && (
+                    <div className="max-h-64 overflow-auto">
+                      {savedViews.map(v => (
+                        <DropdownMenuItem key={v.id} onClick={() => applyView(v)} className="flex items-start gap-2">
+                          <div className="flex-1 min-w-0">
+                            <div className="text-sm font-medium truncate">{v.name}</div>
+                            {v.description && <div className="text-xs text-muted-foreground truncate">{v.description}</div>}
+                          </div>
+                          <span className="text-[10px] text-muted-foreground">{v.lastUsed ? new Date(v.lastUsed).toLocaleDateString() : ''}</span>
+                        </DropdownMenuItem>
+                      ))}
+                    </div>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
               <Button onClick={refreshBoard} variant="outline" className="gap-2 h-9 px-3 text-sm bg-background/60 backdrop-blur-sm border-border/50 hover:bg-background/80 transition-all" disabled={isRefreshing}>
                 <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
                 <span className="hidden sm:inline">{isRefreshing ? 'Refreshing…' : 'Refresh'}</span>
@@ -819,15 +918,17 @@ export default function ApplicationsBoardPage() {
           </div>
           
           <div className="flex flex-wrap items-center gap-3 mb-3">
-            <div className="relative w-full sm:w-80">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-              <Input
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="pl-9 border-slate-200 focus:border-slate-300"
-                placeholder="Search students, programs, or emails…"
-              />
-            </div>
+            {showFilters && (
+              <div className="relative w-full sm:w-80">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                <Input
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="pl-9 border-slate-200 focus:border-slate-300"
+                  placeholder="Search students, programs, or emails…"
+                />
+              </div>
+            )}
 
             <Select value={program} onValueChange={setProgram}>
               <SelectTrigger className="w-48 border-slate-200">
@@ -918,6 +1019,23 @@ export default function ApplicationsBoardPage() {
             </div>
           )}
         </div>
+
+        {/* Save View Dialog */}
+        <Dialog open={showSaveDialog} onOpenChange={setShowSaveDialog}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Save Current View</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-3">
+              <Input placeholder="View name" value={saveForm.name} onChange={(e) => setSaveForm(prev => ({ ...prev, name: e.target.value }))} />
+              <Input placeholder="Description (optional)" value={saveForm.description || ''} onChange={(e) => setSaveForm(prev => ({ ...prev, description: e.target.value }))} />
+              <div className="flex justify-end gap-2 pt-2">
+                <Button variant="outline" onClick={() => setShowSaveDialog(false)}>Cancel</Button>
+                <Button onClick={saveCurrentView}>Save</Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
 
         {/* Bulk Actions */}
         {selectedApps.length > 0 && (
