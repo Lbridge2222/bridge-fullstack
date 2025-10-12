@@ -3,7 +3,7 @@
  * Industry-leading AI assistant for granular person management
  */
 
-import { IvyCommand, IvyContext } from './types';
+import type { IvyCommand, IvyContext } from './types';
 import { contactRegistry, findCommand, processNaturalLanguage } from './contactRegistry';
 import { ragApi, type RagContext, type RagResponse } from '@/services/callConsoleApi';
 

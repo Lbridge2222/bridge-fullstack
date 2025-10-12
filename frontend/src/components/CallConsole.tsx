@@ -54,6 +54,7 @@ interface CallConsoleProps {
   mode?: "compact" | "full";
   hasQueue?: boolean;
   onStartNextCall?: () => void;
+  forceFullscreen?: boolean;
 }
 
 // Main CallConsole component
@@ -64,7 +65,8 @@ export const CallConsole: React.FC<CallConsoleProps> = ({
   onSaveCall, 
   mode = "compact",
   hasQueue = false,
-  onStartNextCall 
+  onStartNextCall,
+  forceFullscreen = false
 }) => {
   // State
   const [callState, setCallState] = useState<"idle" | "dialing" | "active" | "wrapup">("idle");
@@ -90,8 +92,32 @@ export const CallConsole: React.FC<CallConsoleProps> = ({
   // Drag and resize state
   const [isDragging, setIsDragging] = useState(false);
   const [isResizing, setIsResizing] = useState(false);
-  const [position, setPosition] = useState({ x: window.innerWidth - 850, y: 20 });
-  const [size, setSize] = useState({ width: 720, height: Math.round(window.innerHeight * 0.7) });
+  // DEBUG: Better initial positioning with proper viewport detection
+  const getViewportDimensions = () => {
+    // Use multiple methods to get accurate viewport dimensions
+    const width = Math.max(
+      window.innerWidth || 0,
+      document.documentElement.clientWidth || 0,
+      document.body.clientWidth || 0
+    );
+    const height = Math.max(
+      window.innerHeight || 0,
+      document.documentElement.clientHeight || 0,
+      document.body.clientHeight || 0
+    );
+    return { width, height };
+  };
+  
+  const viewport = getViewportDimensions();
+  // DEBUG: Center the modal on screen instead of off-screen positioning
+  const initialX = Math.max(20, Math.min(viewport.width - 740, (viewport.width - 720) / 2));
+  const initialY = Math.max(20, Math.min(viewport.height - 420, (viewport.height - 400) / 2));
+  const initialWidth = Math.min(720, viewport.width - 40);
+  const initialHeight = Math.max(400, Math.min(600, Math.round(viewport.height * 0.7)));
+  
+  
+  const [position, setPosition] = useState({ x: initialX, y: initialY });
+  const [size, setSize] = useState({ width: initialWidth, height: initialHeight });
   const [isMinimized, setIsMinimized] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [resizeStart, setResizeStart] = useState({ x: 0, y: 0, width: 0, height: 0 });
@@ -113,6 +139,7 @@ export const CallConsole: React.FC<CallConsoleProps> = ({
     return 'floating' as const;
   };
   const [consoleMode, setConsoleMode] = useState<ConsoleMode>(pickMode());
+  const effectiveConsoleMode = forceFullscreen ? "fullscreen" : consoleMode;
   useEffect(() => {
     const onResize = () => setConsoleMode(pickMode());
     window.addEventListener('resize', onResize);
@@ -135,6 +162,7 @@ export const CallConsole: React.FC<CallConsoleProps> = ({
     if (banner && banner.offsetHeight) headerHeight = banner.offsetHeight;
     return Math.max(0, headerHeight - 8); // allow slight overlap
   }, []);
+
 
   // Ensure initial position/size are in bounds and below header before first paint
   useLayoutEffect(() => {
@@ -169,6 +197,30 @@ export const CallConsole: React.FC<CallConsoleProps> = ({
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
+
+  // Initialize positioning for floating mode
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    
+    if (effectiveConsoleMode === "floating") {
+      // Calculate center position
+      const viewport = getViewportDimensions();
+      const centerX = (viewport.width - sizeLiveRef.current.width) / 2;
+      const centerY = (viewport.height - sizeLiveRef.current.height) / 2;
+      
+      // Set position immediately
+      positionRef.current = { x: centerX, y: centerY };
+      setPosition(positionRef.current);
+      
+      // Apply positioning directly with transform-based approach
+      el.style.position = 'fixed';
+      el.style.top = '0';
+      el.style.left = '0';
+      el.style.transform = `translate3d(${centerX}px, ${centerY}px, 0)`;
+      el.style.zIndex = '40';
+    }
+  }, [isOpen, effectiveConsoleMode]);
 
   // Keep in bounds on window resize
   useEffect(() => {
@@ -765,7 +817,20 @@ export const CallConsole: React.FC<CallConsoleProps> = ({
     onClose();
   }, [saveCallOutcome, onClose]);
 
-  if (!isOpen || !lead) return null;
+  if (!isOpen) return null;
+  
+  // Handle missing lead gracefully
+  if (!lead) {
+    return (
+      <div className="fixed inset-0 z-[10000] bg-background/80 backdrop-blur-sm flex items-center justify-center">
+        <div className="bg-card border rounded-lg p-6 max-w-md text-center">
+          <h2 className="text-lg font-semibold mb-2">No Lead Selected</h2>
+          <p className="text-muted-foreground mb-4">Please select a lead to make a call.</p>
+          <Button onClick={onClose} variant="outline">Close</Button>
+        </div>
+      </div>
+    );
+  }
 
   if (isMinimized) {
     return (
@@ -834,18 +899,26 @@ export const CallConsole: React.FC<CallConsoleProps> = ({
   }
 
   return (
-    <div 
-      ref={containerRef}
-      className={`fixed z-50 bg-card border rounded-2xl overflow-hidden transition-all duration-300 ${
+    <>
+      
+      <div 
+        ref={containerRef}
+        className={`fixed z-50 bg-card border rounded-2xl overflow-hidden transition-all duration-300 ${
         callState === "active" 
           ? 'border-success/30 shadow-success/10' 
           : 'border-border'
-      } ${isDragging ? 'cursor-grabbing' : (consoleMode==='floating' ? 'cursor-grab' : '')} ${consoleMode!=='floating' ? 'left-0 right-0' : ''} ${consoleMode==='floating' ? 'shadow-2xl' : 'shadow-lg'}`}
-      style={consoleMode === 'floating' ? { 
-        transform: `translate3d(${positionRef.current.x}px, ${positionRef.current.y}px, 0)`,
-        width: sizeLiveRef.current.width,
-        height: sizeLiveRef.current.height
-      } : (consoleMode === 'docked' ? {
+      } ${isDragging ? 'cursor-grabbing' : (effectiveConsoleMode==='floating' ? 'cursor-grab' : '')} ${effectiveConsoleMode!=='floating' ? 'left-0 right-0' : ''} ${effectiveConsoleMode==='floating' ? 'shadow-2xl' : 'shadow-lg'}`}
+      style={effectiveConsoleMode === 'floating' ? { 
+        position: 'fixed',
+        top: '50vh',
+        left: '50vw',
+        transform: 'translate(-50%, -50%)',
+        width: '800px',
+        height: '600px',
+        maxWidth: '90vw',
+        maxHeight: '90vh',
+        zIndex: 40
+      } : (effectiveConsoleMode === 'docked' ? {
         bottom: 0,
         margin: 8,
         left: 8,
@@ -929,15 +1002,15 @@ export const CallConsole: React.FC<CallConsoleProps> = ({
         </div>
         
         {/* Main call console content */}
-        <div className="h-[calc(100%-60px)] flex overscroll-contain" style={{ ['--lane-a-width' as any]: `${computeLaneAWidth(sizeLiveRef.current.width)}px` }}>
+        <div className="flex flex-1 overflow-hidden" style={{ height: 'calc(100% - 60px)', ['--lane-a-width' as any]: `${computeLaneAWidth(sizeLiveRef.current.width)}px` }}>
 
           {/* Lane A: Call Controls (adjustable width) */}
           <div className={`${
             callState === "active" ? '' : 'w-full'
           } ${callState === "active" ? 'border-r border-border' : ''} flex flex-col transition-[width] duration-200`}
                style={callState === "active" ? { width: 'var(--lane-a-width)' } : undefined}>
-            <ScrollArea className="flex-1">
-              <div className="p-0">
+            <ScrollArea className="flex-1 h-full">
+              <div className="p-0 h-full">
             <LaneA
               callState={callState}
               duration={duration}
@@ -1003,8 +1076,8 @@ export const CallConsole: React.FC<CallConsoleProps> = ({
 
           {/* Lane B: AI Omnibox + Live Transcript (always visible during calls) */}
           {callState !== "idle" && (
-            <ScrollArea className="flex-1">
-              <div className="flex flex-col">
+            <ScrollArea className="flex-1 h-full">
+              <div className="flex flex-col h-full">
               <LaneB
                 lead={lead}
                 transcriptWindow={transcriptWindow}
@@ -1029,7 +1102,7 @@ export const CallConsole: React.FC<CallConsoleProps> = ({
         {/* Transcript is now live in LaneB - no overlay needed */}
         
         {/* Resize handle - larger hit area */}
-        {consoleMode==='floating' && (
+        {effectiveConsoleMode==='floating' && (
         <div
           className="absolute bottom-0 right-0 w-6 h-6 cursor-se-resize bg-transparent"
           onMouseDown={(e) => handleMouseDown(e, 'resize')}
@@ -1110,7 +1183,8 @@ export const CallConsole: React.FC<CallConsoleProps> = ({
             </div>
           </div>
         )}
-    </div>
+      </div>
+    </>
   );
 };
 

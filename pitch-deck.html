@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IvyOS Pitch Deck</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #111111;
+            color: #FFFFFF;
+            overflow-x: hidden;
+        }
+
+        .slide-container {
+            scroll-snap-type: y mandatory;
+            overflow-y: scroll;
+            height: 100vh;
+        }
+
+        .slide {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 4rem;
+            scroll-snap-align: start;
+            position: relative;
+        }
+
+        .slide-content {
+            max-width: 1200px;
+            width: 100%;
+        }
+
+        /* Brand Colors */
+        .primary { color: #FF0800; }
+        .success { color: #11694A; }
+        .brand-bg-primary { background: #FF0800; }
+        .brand-bg-success { background: #11694A; }
+        
+        /* Typography */
+        h1 {
+            font-size: 4rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            line-height: 1.2;
+        }
+
+        h2 {
+            font-size: 3rem;
+            font-weight: 600;
+            margin-bottom: 2rem;
+            line-height: 1.3;
+        }
+
+        h3 {
+            font-size: 2rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        p {
+            font-size: 1.5rem;
+            line-height: 1.6;
+            margin-bottom: 1.5rem;
+            color: #e5e5e5;
+        }
+
+        .subtitle {
+            font-size: 2rem;
+            color: #a3a3a3;
+            margin-bottom: 2rem;
+        }
+
+        /* Logo */
+        .logo {
+            font-size: 3rem;
+            font-weight: 700;
+            color: #11694A;
+            margin-bottom: 2rem;
+        }
+
+        /* Features Grid */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+
+        .feature-card {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 2rem;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .feature-card h3 {
+            color: #11694A;
+            margin-bottom: 1rem;
+        }
+
+        .feature-card p {
+            font-size: 1.2rem;
+            color: #d4d4d4;
+        }
+
+        /* Stats */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 3rem;
+            margin-top: 4rem;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 4rem;
+            font-weight: 700;
+            color: #11694A;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            font-size: 1.3rem;
+            color: #a3a3a3;
+        }
+
+        /* List */
+        ul {
+            list-style: none;
+            margin-top: 2rem;
+        }
+
+        li {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            padding-left: 2rem;
+            position: relative;
+            color: #e5e5e5;
+        }
+
+        li::before {
+            content: "→";
+            position: absolute;
+            left: 0;
+            color: #11694A;
+            font-weight: 700;
+        }
+
+        /* Tech Stack */
+        .tech-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1.5rem;
+            margin-top: 3rem;
+        }
+
+        .tech-item {
+            background: rgba(17, 105, 74, 0.1);
+            padding: 1.5rem;
+            border-radius: 8px;
+            text-align: center;
+            border: 1px solid #11694A;
+        }
+
+        .tech-item h4 {
+            font-size: 1.2rem;
+            color: #11694A;
+            margin-bottom: 0.5rem;
+        }
+
+        .tech-item p {
+            font-size: 1rem;
+            color: #a3a3a3;
+            margin: 0;
+        }
+
+        /* CTA Button */
+        .cta-button {
+            display: inline-block;
+            background: #FF0800;
+            color: #FFFFFF;
+            padding: 1.5rem 3rem;
+            font-size: 1.5rem;
+            font-weight: 600;
+            border-radius: 8px;
+            text-decoration: none;
+            margin-top: 3rem;
+            transition: transform 0.2s;
+        }
+
+        .cta-button:hover {
+            transform: scale(1.05);
+        }
+
+        /* Navigation */
+        .nav-dots {
+            position: fixed;
+            right: 2rem;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 100;
+        }
+
+        .nav-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            margin: 1rem 0;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .nav-dot:hover,
+        .nav-dot.active {
+            background: #11694A;
+            transform: scale(1.3);
+        }
+
+        /* Slide Number */
+        .slide-number {
+            position: absolute;
+            bottom: 2rem;
+            right: 2rem;
+            font-size: 1rem;
+            color: #525252;
+        }
+
+        /* Problem/Solution Cards */
+        .two-column {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 3rem;
+            margin-top: 3rem;
+        }
+
+        .column-card {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 2.5rem;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .column-card.problem {
+            border-left: 4px solid #FF0800;
+        }
+
+        .column-card.solution {
+            border-left: 4px solid #11694A;
+        }
+
+        /* Print styles for PDF export */
+        @media print {
+            .slide {
+                page-break-after: always;
+                page-break-inside: avoid;
+            }
+            
+            .nav-dots {
+                display: none;
+            }
+            
+            body {
+                background: #111111;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            h1 { font-size: 2.5rem; }
+            h2 { font-size: 2rem; }
+            h3 { font-size: 1.5rem; }
+            p, li { font-size: 1.2rem; }
+            
+            .features-grid,
+            .two-column {
+                grid-template-columns: 1fr;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+                gap: 2rem;
+            }
+            
+            .tech-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="nav-dots" id="navDots"></div>
+    
+    <div class="slide-container" id="slideContainer">
+        <!-- Slide 1: Title -->
+        <div class="slide">
+            <div class="slide-content" style="text-align: center;">
+                <div class="logo">IvyOS</div>
+                <h1>The Higher Education <span class="success">Operating System</span></h1>
+                <p class="subtitle">AI-Powered Admissions Intelligence for Modern Universities</p>
+                <div style="margin-top: 4rem;">
+                    <p style="font-size: 1.2rem; color: #a3a3a3;">Version 2.0.0 | Production Ready</p>
+                </div>
+            </div>
+            <div class="slide-number">1</div>
+        </div>
+
+        <!-- Slide 2: The Problem -->
+        <div class="slide">
+            <div class="slide-content">
+                <h2>The <span class="primary">Problem</span></h2>
+                <div class="two-column">
+                    <div class="column-card problem">
+                        <h3>Admissions Teams Are Drowning</h3>
+                        <ul>
+                            <li>Manual lead scoring and prioritization</li>
+                            <li>Fragmented data across multiple systems</li>
+                            <li>No predictive insights on conversions</li>
+                            <li>Time-consuming administrative tasks</li>
+                            <li>Poor visibility into pipeline health</li>
+                        </ul>
+                    </div>
+                    <div class="column-card">
+                        <h3>The Cost</h3>
+                        <ul>
+                            <li><strong>Lost Revenue</strong> from missed opportunities</li>
+                            <li><strong>Low Conversion</strong> due to poor follow-up</li>
+                            <li><strong>Staff Burnout</strong> from repetitive tasks</li>
+                            <li><strong>Poor Experience</strong> for prospective students</li>
+                            <li><strong>No Forecasting</strong> for enrollment planning</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="slide-number">2</div>
+        </div>
+
+        <!-- Slide 3: The Solution -->
+        <div class="slide">
+            <div class="slide-content">
+                <h2>The <span class="success">Solution</span></h2>
+                <p>IvyOS is a comprehensive platform that transforms how universities manage their admissions pipeline with AI-native intelligence.</p>
+                <div class="features-grid">
+                    <div class="feature-card">
+                        <h3>🤖 AI-Powered Triage</h3>
+                        <p>Intelligent lead scoring with Gemini-powered explanations and adaptive weighting</p>
+                    </div>
+                    <div class="feature-card">
+                        <h3>🔮 Predictive Forecasting</h3>
+                        <p>ML-driven conversion predictions and enrollment probability scoring</p>
+                    </div>
+                    <div class="feature-card">
+                        <h3>💬 Conversational Intelligence</h3>
+                        <p>Ask Ivy (⌘K) - RAG-powered assistant with hybrid search and contextual recommendations</p>
+                    </div>
+                    <div class="feature-card">
+                        <h3>📊 Real-Time Analytics</h3>
+                        <p>Live pipeline insights, blocker detection, and next-best-action recommendations</p>
+                    </div>
+                </div>
+            </div>
+            <div class="slide-number">3</div>
+        </div>
+
+        <!-- Slide 4: How It Works -->
+        <div class="slide">
+            <div class="slide-content">
+                <h2>How It <span class="success">Works</span></h2>
+                <div style="margin-top: 3rem;">
+                    <div class="column-card" style="margin-bottom: 2rem;">
+                        <h3 class="success">1. Intelligent Intake</h3>
+                        <p>Every lead is automatically scored using 5 adaptive factors: engagement, recency, source quality, contactability, and course fit.</p>
+                    </div>
+                    <div class="column-card" style="margin-bottom: 2rem;">
+                        <h3 class="success">2. Predictive Intelligence</h3>
+                        <p>ML models predict conversion probability, progression likelihood, and enrollment ETA for every applicant.</p>
+                    </div>
+                    <div class="column-card" style="margin-bottom: 2rem;">
+                        <h3 class="success">3. Smart Automation</h3>
+                        <p>AI detects blockers, suggests next actions, and automates communication with personalized email composition.</p>
+                    </div>
+                    <div class="column-card">
+                        <h3 class="success">4. Continuous Learning</h3>
+                        <p>The system learns from outcomes, optimizing scoring weights and predictions weekly based on real conversion data.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="slide-number">4</div>
+        </div>
+
+        <!-- Slide 5: Key Features -->
+        <div class="slide">
+            <div class="slide-content">
+                <h2>Platform <span class="success">Features</span></h2>
+                <div class="features-grid">
+                    <div class="feature-card">
+                        <h3>18-Stage Kanban Board</h3>
+                        <p>Visual pipeline management with drag-and-drop, SLA tracking, and overdue indicators</p>
+                    </div>
+                    <div class="feature-card">
+                        <h3>Blocker Detection</h3>
+                        <p>Automatic identification of data gaps, engagement stalls, and capacity issues</p>
+                    </div>
+                    <div class="feature-card">
+                        <h3>Call Console</h3>
+                        <p>Full-featured VoIP integration with live transcription and RAG-powered insights</p>
+                    </div>
+                    <div class="feature-card">
+                        <h3>Email Composer</h3>
+                        <p>AI-generated email content with context-aware suggestions and templates</p>
+                    </div>
+                    <div class="feature-card">
+                        <h3>Knowledge Base (RAG)</h3>
+                        <p>768-dimensional vector embeddings with hybrid search for instant policy answers</p>
+                    </div>
+                    <div class="feature-card">
+                        <h3>Progressive Properties</h3>
+                        <p>Flexible data model that reveals fields based on lifecycle stage to prevent overwhelm</p>
+                    </div>
+                    <div class="feature-card">
+                        <h3>Real-Time Dashboards</h3>
+                        <p>Materialized views for instant analytics on sources, cohorts, and performance</p>
+                    </div>
+                    <div class="feature-card">
+                        <h3>Audit Logging</h3>
+                        <p>Complete audit trail for compliance, GDPR, and quality assurance</p>
+                    </div>
+                </div>
+            </div>
+            <div class="slide-number">5</div>
+        </div>
+
+        <!-- Slide 6: Technology -->
+        <div class="slide">
+            <div class="slide-content">
+                <h2>Built on <span class="success">Modern Tech</span></h2>
+                <div class="tech-grid">
+                    <div class="tech-item">
+                        <h4>FastAPI</h4>
+                        <p>High-performance Python backend</p>
+                    </div>
+                    <div class="tech-item">
+                        <h4>React + TypeScript</h4>
+                        <p>Type-safe frontend</p>
+                    </div>
+                    <div class="tech-item">
+                        <h4>PostgreSQL 15</h4>
+                        <p>Vector search + materialized views</p>
+                    </div>
+                    <div class="tech-item">
+                        <h4>LangChain</h4>
+                        <p>AI orchestration substrate</p>
+                    </div>
+                    <div class="tech-item">
+                        <h4>Gemini 2.0</h4>
+                        <p>Google's latest AI model</p>
+                    </div>
+                    <div class="tech-item">
+                        <h4>shadcn/ui</h4>
+                        <p>Modern component library</p>
+                    </div>
+                    <div class="tech-item">
+                        <h4>Vite</h4>
+                        <p>Lightning-fast builds</p>
+                    </div>
+                    <div class="tech-item">
+                        <h4>Tailwind CSS</h4>
+                        <p>Utility-first styling</p>
+                    </div>
+                </div>
+                <div class="column-card" style="margin-top: 3rem;">
+                    <h3>Architecture Highlights</h3>
+                    <ul>
+                        <li><strong>API Response Time:</strong> ~160ms for ML predictions</li>
+                        <li><strong>Vector Search:</strong> 768-dim embeddings with IVFFlat indexing</li>
+                        <li><strong>Real-Time Updates:</strong> WebSocket-based for VoIP integration</li>
+                        <li><strong>32+ Database Migrations:</strong> Production-hardened schema</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="slide-number">6</div>
+        </div>
+
+        <!-- Slide 7: Performance & Status -->
+        <div class="slide">
+            <div class="slide-content" style="text-align: center;">
+                <h2><span class="success">Production Ready</span></h2>
+                <p>IvyOS v2.0.0 is fully operational with verified performance metrics</p>
+                <div class="stats-grid">
+                    <div class="stat">
+                        <div class="stat-number">~160ms</div>
+                        <div class="stat-label">ML Prediction Time</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-number">100%</div>
+                        <div class="stat-label">Success Rate</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-number">1-3s</div>
+                        <div class="stat-label">RAG Query Response</div>
+                    </div>
+                </div>
+                <div class="column-card" style="margin-top: 4rem; text-align: left;">
+                    <h3>System Status</h3>
+                    <ul>
+                        <li>✅ <strong>AI Triage System</strong> - Active with Gemini integration</li>
+                        <li>✅ <strong>ML Predictions</strong> - Lead conversion + Application progression</li>
+                        <li>✅ <strong>RAG Conversational AI</strong> - Ask Ivy with ⌘K shortcut</li>
+                        <li>✅ <strong>Communication Tools</strong> - Call console, Email composer, Meetings</li>
+                        <li>✅ <strong>18-Stage Pipeline</strong> - Full kanban board with drag-and-drop</li>
+                        <li>✅ <strong>Database Operations</strong> - Materialized views, Vector search</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="slide-number">7</div>
+        </div>
+
+        <!-- Slide 8: Market Opportunity -->
+        <div class="slide">
+            <div class="slide-content">
+                <h2>Market <span class="primary">Opportunity</span></h2>
+                <div class="two-column">
+                    <div class="column-card">
+                        <h3>Higher Education Tech Market</h3>
+                        <ul>
+                            <li>Admissions RevOps is underserved</li>
+                            <li>Universities struggle with legacy systems</li>
+                            <li>AI adoption is accelerating</li>
+                            <li>Student expectations are rising</li>
+                        </ul>
+                    </div>
+                    <div class="column-card">
+                        <h3>Target Customers</h3>
+                        <ul>
+                            <li>UK/US universities (10K+ applicants/year)</li>
+                            <li>International enrollment teams</li>
+                            <li>Private institutions seeking competitive edge</li>
+                            <li>Multi-campus organizations</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="column-card" style="margin-top: 2rem;">
+                    <h3>Competitive Advantages</h3>
+                    <ul>
+                        <li><strong>AI-Native</strong> - Built with conversational intelligence from day one</li>
+                        <li><strong>Predictive</strong> - ML forecasting for every lead and applicant</li>
+                        <li><strong>Modern Stack</strong> - Fast, scalable, and maintainable architecture</li>
+                        <li><strong>Purpose-Built</strong> - Designed specifically for HE admissions workflows</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="slide-number">8</div>
+        </div>
+
+        <!-- Slide 9: Go-to-Market -->
+        <div class="slide">
+            <div class="slide-content">
+                <h2>Go-to-Market <span class="success">Strategy</span></h2>
+                <div class="features-grid">
+                    <div class="feature-card">
+                        <h3>Phase 1: Pilot</h3>
+                        <p>Launch with 3-5 UK universities for beta testing and case study development</p>
+                    </div>
+                    <div class="feature-card">
+                        <h3>Phase 2: Scale</h3>
+                        <p>Expand to 20+ institutions with direct sales and industry events</p>
+                    </div>
+                    <div class="feature-card">
+                        <h3>Phase 3: Enterprise</h3>
+                        <p>Multi-campus deployments with white-label options and API access</p>
+                    </div>
+                    <div class="feature-card">
+                        <h3>Phase 4: Platform</h3>
+                        <p>Marketplace for third-party integrations and AI model customization</p>
+                    </div>
+                </div>
+                <div class="column-card" style="margin-top: 3rem;">
+                    <h3>Revenue Model</h3>
+                    <ul>
+                        <li><strong>SaaS Subscription</strong> - Tiered pricing based on applicant volume</li>
+                        <li><strong>Implementation Fees</strong> - Custom setup and data migration</li>
+                        <li><strong>AI Add-Ons</strong> - Advanced ML models and custom training</li>
+                        <li><strong>Professional Services</strong> - Training, consulting, and support</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="slide-number">9</div>
+        </div>
+
+        <!-- Slide 10: Team & Traction -->
+        <div class="slide">
+            <div class="slide-content">
+                <h2>Team & <span class="success">Traction</span></h2>
+                <div class="column-card" style="margin-bottom: 2rem;">
+                    <h3>Built by Admissions Experts</h3>
+                    <p>IvyOS is developed by Laurance Bridge, combining deep higher education expertise with modern software engineering and AI implementation.</p>
+                </div>
+                <div class="two-column">
+                    <div class="column-card">
+                        <h3>Current Status</h3>
+                        <ul>
+                            <li>✅ Production-ready v2.0.0</li>
+                            <li>✅ Full-stack AI platform</li>
+                            <li>✅ 32+ database migrations</li>
+                            <li>✅ Complete documentation</li>
+                            <li>✅ Modern tech stack</li>
+                        </ul>
+                    </div>
+                    <div class="column-card">
+                        <h3>IP & Ownership</h3>
+                        <ul>
+                            <li>100% independently developed</li>
+                            <li>Closed-source & proprietary</li>
+                            <li>All rights reserved</li>
+                            <li>Ready for commercialization</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="slide-number">10</div>
+        </div>
+
+        <!-- Slide 11: Investment Ask -->
+        <div class="slide">
+            <div class="slide-content" style="text-align: center;">
+                <h2>Investment <span class="primary">Opportunity</span></h2>
+                <p>Seeking funding to accelerate go-to-market and scale operations</p>
+                <div class="column-card" style="margin-top: 3rem; text-align: left;">
+                    <h3>Use of Funds</h3>
+                    <ul>
+                        <li><strong>Go-to-Market</strong> - Sales team, marketing, and pilot partnerships</li>
+                        <li><strong>Product Development</strong> - Additional AI features, integrations, and mobile</li>
+                        <li><strong>Infrastructure</strong> - Cloud hosting, security, and compliance certifications</li>
+                        <li><strong>Team Expansion</strong> - Engineering, customer success, and support</li>
+                    </ul>
+                </div>
+                <div style="margin-top: 4rem;">
+                    <p style="font-size: 1.3rem;">Join us in transforming higher education admissions with AI-powered intelligence</p>
+                </div>
+            </div>
+            <div class="slide-number">11</div>
+        </div>
+
+        <!-- Slide 12: Contact -->
+        <div class="slide">
+            <div class="slide-content" style="text-align: center;">
+                <div class="logo" style="font-size: 4rem; margin-bottom: 2rem;">IvyOS</div>
+                <h1>Let's Talk</h1>
+                <p style="font-size: 2rem; margin-top: 2rem;">The Higher Education Operating System</p>
+                <div style="margin-top: 4rem;">
+                    <p style="font-size: 1.5rem; color: #a3a3a3;">Production Ready | AI-Powered | Purpose-Built</p>
+                </div>
+            </div>
+            <div class="slide-number">12</div>
+        </div>
+    </div>
+
+    <script>
+        // Navigation dots
+        const slideContainer = document.getElementById('slideContainer');
+        const slides = document.querySelectorAll('.slide');
+        const navDots = document.getElementById('navDots');
+
+        // Create navigation dots
+        slides.forEach((slide, index) => {
+            const dot = document.createElement('div');
+            dot.className = 'nav-dot';
+            dot.addEventListener('click', () => {
+                slides[index].scrollIntoView({ behavior: 'smooth' });
+            });
+            navDots.appendChild(dot);
+        });
+
+        // Update active dot on scroll
+        const updateActiveDot = () => {
+            const scrollPosition = slideContainer.scrollTop;
+            const slideHeight = slides[0].offsetHeight;
+            const activeIndex = Math.round(scrollPosition / slideHeight);
+            
+            document.querySelectorAll('.nav-dot').forEach((dot, index) => {
+                dot.classList.toggle('active', index === activeIndex);
+            });
+        };
+
+        slideContainer.addEventListener('scroll', updateActiveDot);
+        updateActiveDot(); // Initial call
+
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            const scrollPosition = slideContainer.scrollTop;
+            const slideHeight = slides[0].offsetHeight;
+            const currentSlide = Math.round(scrollPosition / slideHeight);
+
+            if (e.key === 'ArrowDown' || e.key === 'ArrowRight' || e.key === ' ') {
+                e.preventDefault();
+                if (currentSlide < slides.length - 1) {
+                    slides[currentSlide + 1].scrollIntoView({ behavior: 'smooth' });
+                }
+            } else if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') {
+                e.preventDefault();
+                if (currentSlide > 0) {
+                    slides[currentSlide - 1].scrollIntoView({ behavior: 'smooth' });
+                }
+            } else if (e.key === 'Home') {
+                e.preventDefault();
+                slides[0].scrollIntoView({ behavior: 'smooth' });
+            } else if (e.key === 'End') {
+                e.preventDefault();
+                slides[slides.length - 1].scrollIntoView({ behavior: 'smooth' });
+            }
+        });
+
+        // Print instructions
+        console.log('IvyOS Pitch Deck');
+        console.log('Navigation: Arrow keys, scroll, or click dots');
+        console.log('To export to PDF: Cmd/Ctrl + P → Save as PDF');
+        console.log('For best results: Use landscape orientation and remove headers/footers');
+    </script>
+</body>
+</html>

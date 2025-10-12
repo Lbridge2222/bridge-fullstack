@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { peopleApi, PersonEnriched } from '../../services/api';
+import { peopleApi, type PersonEnriched } from '@/services/api';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';

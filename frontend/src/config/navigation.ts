@@ -49,8 +49,8 @@ export const NAVIGATION: Navigation = [
                 title: "CRM",
                 icon: LayoutDashboard,
                 children: [
-                  { title: "Enquiries", icon: Users, href: "/admissions/leads" },
-                  { title: "Conversations", icon: MessageSquareIcon, href: "/admissions/conversations" },
+                  { title: "Enquiries", icon: Users, href: "/admissions/leads", badge: 5 },
+                  { title: "Conversations", icon: MessageSquareIcon, href: "/admissions/conversations", badge: 2 },
                   { title: "Interviews", icon: CalendarClock, href: "/admissions/interviews" },
                   { title: "Applications Board", icon: LayoutDashboard, href: "/admissions/applications" },
                   { title: "Offers", icon: FileSignature, href: "/admissions/offers" },

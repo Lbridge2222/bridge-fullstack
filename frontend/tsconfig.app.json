@@ -22,6 +22,8 @@
     "erasableSyntaxOnly": true,
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true,
+    "noUncheckedIndexedAccess": true,
+    "forceConsistentCasingInFileNames": true,
 
     /* ✅ Aliases & project setup */
     "baseUrl": ".",
@@ -34,8 +36,8 @@
     "composite": true
   },
   "include": [
-    "src",
-    "components/src/components"
+    "src/**/*",
+    "components/src/components/**/*"
   ],
   "exclude": [
     "vite.config.ts",

@@ -14,10 +14,22 @@ import {
   TooltipTrigger,
   TooltipContent,
 } from "@/components/ui/tooltip"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { Switch } from "@/components/ui/switch"
 
 export default function DashboardLayout() {
   const location = useLocation();
   const navigate = useNavigate();
+  const navRef = React.useRef<HTMLDivElement | null>(null);
+  const closeHoverTimer = React.useRef<number | null>(null);
   const [expandedSections, setExpandedSections] = React.useState<string[]>(() => {
     try {
       const raw = localStorage.getItem("nav.expandedSections");
@@ -48,6 +60,23 @@ export default function DashboardLayout() {
       return raw ? JSON.parse(raw) : false;
     } catch {
       return false;
+    }
+  });
+  const [compact, setCompact] = React.useState<boolean>(() => {
+    try {
+      const raw = localStorage.getItem("nav.compact");
+      return raw ? JSON.parse(raw) : false;
+    } catch {
+      return false;
+    }
+  });
+  const [hoveredSection, setHoveredSection] = React.useState<string | null>(null);
+  const [lastVisitedBySection, setLastVisitedBySection] = React.useState<Record<string, string>>(() => {
+    try {
+      const raw = localStorage.getItem("nav.lastVisited");
+      return raw ? JSON.parse(raw) : {};
+    } catch {
+      return {};
     }
   });
   const currentPath = location.pathname;
@@ -94,6 +123,41 @@ export default function DashboardLayout() {
   React.useEffect(() => {
     try { localStorage.setItem("nav.manuallyCollapsedSections", JSON.stringify(manuallyCollapsedSections)); } catch {}
   }, [manuallyCollapsedSections]);
+
+  React.useEffect(() => {
+    try { localStorage.setItem("nav.compact", JSON.stringify(compact)); } catch {}
+  }, [compact]);
+
+  // Track last visited leaf per top-level section
+  React.useEffect(() => {
+    // identify section + leaf for currentPath
+    const find = () => {
+      for (const section of NAVIGATION) {
+        const children = section.children || [];
+        for (const child of children) {
+          if ('href' in child && child.href && (currentPath === child.href || currentPath.startsWith(child.href + "/"))) {
+            return { section: section.title, href: child.href };
+          }
+          if ('children' in child && child.children) {
+            for (const sub of child.children) {
+              if ('href' in sub && sub.href && (currentPath === sub.href || currentPath.startsWith(sub.href + "/"))) {
+                return { section: section.title, href: sub.href };
+              }
+            }
+          }
+        }
+      }
+      return null;
+    };
+    const match = find();
+    if (match) {
+      setLastVisitedBySection(prev => {
+        const next = { ...prev, [match.section]: match.href };
+        try { localStorage.setItem("nav.lastVisited", JSON.stringify(next)); } catch {}
+        return next;
+      });
+    }
+  }, [currentPath]);
 
   // Breadcrumbs from NAVIGATION
   const getBreadcrumbs = React.useCallback((): Array<{ title: string; href?: string }> => {
@@ -143,7 +207,9 @@ export default function DashboardLayout() {
                   iconSize={level === 0 ? 18 : 16}
                   variant={level === 0 ? "primary" : "secondary"}
                   collapsed
+                  dense={compact}
                   size="sm"
+                  badge={'badge' in item ? (item as NavLeaf).badge : undefined}
                 >
                   {item.title}
                 </NavLink>
@@ -156,7 +222,9 @@ export default function DashboardLayout() {
               icon={item.icon}
               iconSize={level === 0 ? 18 : 16}
               variant={level === 0 ? "primary" : "secondary"}
+              dense={compact}
               size={level === 0 ? "md" : "sm"}
+              badge={'badge' in item ? (item as NavLeaf).badge : undefined}
             >
               {item.title}
             </NavLink>
@@ -173,12 +241,15 @@ export default function DashboardLayout() {
             type="button"
             className={cn(
               "group relative flex items-center rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-2",
-              level === 0 ? "px-4 py-2.5 text-sm font-semibold" : "px-4 py-2 text-xs font-medium",
+              level === 0
+                ? (compact ? "px-3 py-2 text-sm font-semibold" : "px-4 py-2.5 text-sm font-semibold")
+                : (compact ? "px-3 py-1.5 text-xs font-medium" : "px-4 py-2 text-xs font-medium"),
               sidebarCollapsed ? "justify-center w-10 h-10" : "w-full",
               "text-foreground/90 hover:bg-accent/20 hover:text-foreground"
             )}
             data-rail={!sidebarCollapsed}
             aria-expanded={hasChildren ? expanded : undefined}
+            aria-haspopup={hasChildren ? "menu" : undefined}
             onClick={() => {
               if (hasChildren) {
                 if (sidebarCollapsed) {
@@ -227,6 +298,60 @@ export default function DashboardLayout() {
     );
   };
 
+  // Keyboard navigation inside nav
+  const handleNavKeyDown = (e: React.KeyboardEvent) => {
+    if (!navRef.current) return;
+    const focusables = Array.from(
+      navRef.current.querySelectorAll<HTMLElement>(
+        'a[href],button:not([disabled]),[tabindex]:not([tabindex="-1"])'
+      )
+    ).filter(el => el.offsetParent !== null);
+    const currentIndex = focusables.indexOf(document.activeElement as HTMLElement);
+    const viewport = navRef.current.querySelector<HTMLElement>('[data-radix-scroll-area-viewport]');
+
+    if (e.key === 'ArrowDown') {
+      if (currentIndex > -1 && currentIndex < focusables.length - 1) {
+        e.preventDefault();
+        focusables[currentIndex + 1]?.focus();
+      }
+    } else if (e.key === 'ArrowUp') {
+      if (currentIndex > 0) {
+        e.preventDefault();
+        focusables[currentIndex - 1]?.focus();
+      }
+    } else if (e.key === 'PageDown' && viewport) {
+      e.preventDefault();
+      viewport.scrollBy({ top: viewport.clientHeight - 32, behavior: 'smooth' });
+    } else if (e.key === 'PageUp' && viewport) {
+      e.preventDefault();
+      viewport.scrollBy({ top: -(viewport.clientHeight - 32), behavior: 'smooth' });
+    } else if (e.key === 'Home') {
+      e.preventDefault();
+      focusables[0]?.focus();
+    } else if (e.key === 'End') {
+      e.preventDefault();
+      focusables[focusables.length - 1]?.focus();
+    } else if (e.key === 'ArrowRight') {
+      const target = document.activeElement as HTMLElement | null;
+      if (target && target.getAttribute('aria-expanded') !== null) {
+        const expanded = target.getAttribute('aria-expanded') === 'true';
+        if (!expanded) {
+          e.preventDefault();
+          target.click();
+        }
+      }
+    } else if (e.key === 'ArrowLeft') {
+      const target = document.activeElement as HTMLElement | null;
+      if (target && target.getAttribute('aria-expanded') !== null) {
+        const expanded = target.getAttribute('aria-expanded') === 'true';
+        if (expanded) {
+          e.preventDefault();
+          target.click();
+        }
+      }
+    }
+  };
+
   return (
     <div className="h-screen bg-background flex overflow-hidden">
       {/* Sidebar */}
@@ -256,8 +381,8 @@ export default function DashboardLayout() {
 
         {/* Navigation */}
         <TooltipProvider delayDuration={200}>
-        <nav className="flex-1 py-3" aria-label="Primary">
-          <ScrollArea className="h-full pr-1">
+        <nav ref={navRef} className="flex-1 min-h-0 py-3" aria-label="Primary" onKeyDown={handleNavKeyDown}>
+          <ScrollArea className="h-full pr-1" type="always" scrollHideDelay={400}>
           <div className="space-y-0">
             {NAVIGATION.map((section: NavNode, index: number) => {
               const hasChildren = !!section.children?.length;
@@ -292,16 +417,17 @@ export default function DashboardLayout() {
                         {sidebarCollapsed ? (
                           <Tooltip>
                             <TooltipTrigger asChild>
-                              <NavLink
-                                href={section.href!}
-                                icon={section.icon}
-                                iconSize={18}
-                                variant="primary"
-                                collapsed
-                                size="sm"
-                              >
-                                {section.title}
-                              </NavLink>
+                          <NavLink
+                            href={section.href!}
+                            icon={section.icon}
+                            iconSize={18}
+                            variant="primary"
+                            collapsed
+                            dense={compact}
+                            size="sm"
+                          >
+                            {section.title}
+                          </NavLink>
                             </TooltipTrigger>
                             <TooltipContent side="right">{section.title}</TooltipContent>
                           </Tooltip>
@@ -311,6 +437,7 @@ export default function DashboardLayout() {
                             icon={section.icon}
                             iconSize={18}
                             variant="primary"
+                            dense={compact}
                             size="md"
                           >
                             {section.title}
@@ -319,13 +446,41 @@ export default function DashboardLayout() {
                       </div>
                     ) : (
                       // Section with children (expandable)
-                      <div className={cn(sidebarCollapsed ? "flex justify-center" : "mx-2")}>
+                      <div
+                        className={cn(sidebarCollapsed ? "relative flex justify-center" : "mx-2")}
+                        onMouseEnter={() => {
+                          if (!sidebarCollapsed) return;
+                          if (closeHoverTimer.current) window.clearTimeout(closeHoverTimer.current);
+                          setHoveredSection(section.title);
+                        }}
+                        onMouseLeave={() => {
+                          if (!sidebarCollapsed) return;
+                          if (closeHoverTimer.current) window.clearTimeout(closeHoverTimer.current);
+                          closeHoverTimer.current = window.setTimeout(() => {
+                            setHoveredSection((prev) => (prev === section.title ? null : prev));
+                          }, 250);
+                        }}
+                      >
+                        <DropdownMenu
+                          open={sidebarCollapsed && hoveredSection === section.title}
+                          onOpenChange={(v) => {
+                            if (!sidebarCollapsed) return;
+                            if (v) {
+                              if (closeHoverTimer.current) window.clearTimeout(closeHoverTimer.current);
+                              setHoveredSection(section.title);
+                            } else {
+                              setHoveredSection((prev) => (prev === section.title ? null : prev));
+                            }
+                          }}
+                          modal={false}
+                        >
+                          <DropdownMenuTrigger asChild>
                         <button
                           type="button"
                           className={cn(
                             "group relative flex items-center rounded-lg transition-colors",
                             "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-2",
-                            "px-4 py-2.5 text-sm font-semibold",
+                            compact ? "px-3 py-2 text-sm font-semibold" : "px-4 py-2.5 text-sm font-semibold",
                             sidebarCollapsed 
                               ? "justify-center w-10 h-10 px-0" 
                               : "w-full",
@@ -337,12 +492,19 @@ export default function DashboardLayout() {
                           )}
                           data-rail={!sidebarCollapsed}
                           aria-controls={`nav-group-${index}`}
+                          aria-haspopup={hasChildren ? "menu" : undefined}
                           onClick={() => {
                             if (hasChildren) {
                               if (sidebarCollapsed) {
                                 setSidebarCollapsed(false);
                               } else {
-                                toggleSection(section.title);
+                                // Expand first if closed; navigate to last visited only when already expanded
+                                if (!expanded) {
+                                  toggleSection(section.title);
+                                } else {
+                                  const last = lastVisitedBySection[section.title];
+                                  if (last) navigate(last);
+                                }
                               }
                             }
                           }}
@@ -375,11 +537,84 @@ export default function DashboardLayout() {
                                     expanded && "rotate-90",
                                     (expanded || isParentOfActive) && "text-success"
                                   )}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    toggleSection(section.title);
+                                  }}
                                 />
                               )}
                             </>
                           )}
                         </button>
+                          </DropdownMenuTrigger>
+                          {sidebarCollapsed && hasChildren && (
+                            <DropdownMenuContent
+                              align="start"
+                              side="right"
+                              sideOffset={6}
+                              className="min-w-[200px]"
+                              onMouseEnter={() => {
+                                if (closeHoverTimer.current) window.clearTimeout(closeHoverTimer.current);
+                                setHoveredSection(section.title);
+                              }}
+                              onMouseLeave={() => {
+                                if (closeHoverTimer.current) window.clearTimeout(closeHoverTimer.current);
+                                closeHoverTimer.current = window.setTimeout(() => {
+                                  setHoveredSection((prev) => (prev === section.title ? null : prev));
+                                }, 250);
+                              }}
+                            >
+                              {section.children!.map((child) => {
+                                if ("href" in child && child.href) {
+                                  const LeafIcon = child.icon;
+                                  return (
+                                    <DropdownMenuItem key={child.title} onSelect={() => navigate(child.href!)}>
+                                      <LeafIcon className="mr-2" /> {child.title}
+                                    </DropdownMenuItem>
+                                  );
+                                }
+                                if ("children" in child && child.children) {
+                                  const SubIcon = child.icon;
+                                  return (
+                                    <DropdownMenuSub key={child.title}>
+                                      <DropdownMenuSubTrigger>
+                                        <SubIcon className="mr-2" /> {child.title}
+                                      </DropdownMenuSubTrigger>
+                                      <DropdownMenuSubContent>
+                                        {child.children.map((subLeaf) => {
+                                          const SubLeafIcon = subLeaf.icon;
+                                          return (
+                                            <DropdownMenuItem key={subLeaf.title} onSelect={() => navigate(subLeaf.href)}>
+                                              <SubLeafIcon className="mr-2" /> {subLeaf.title}
+                                            </DropdownMenuItem>
+                                          );
+                                        })}
+                                      </DropdownMenuSubContent>
+                                    </DropdownMenuSub>
+                                  );
+                                }
+                                return null;
+                              })}
+                            </DropdownMenuContent>
+                          )}
+                        </DropdownMenu>
+
+                        {/* Safe zone buffer between trigger and flyout to reduce accidental closes */}
+                        {sidebarCollapsed && (
+                          <div
+                            className="absolute left-full top-0 h-10 w-3"
+                            onMouseEnter={() => {
+                              if (closeHoverTimer.current) window.clearTimeout(closeHoverTimer.current);
+                              setHoveredSection(section.title);
+                            }}
+                            onMouseLeave={() => {
+                              if (closeHoverTimer.current) window.clearTimeout(closeHoverTimer.current);
+                              closeHoverTimer.current = window.setTimeout(() => {
+                                setHoveredSection((prev) => (prev === section.title ? null : prev));
+                              }, 250);
+                            }}
+                          />
+                        )}
                       </div>
                     )}
                   </div>
@@ -418,6 +653,16 @@ export default function DashboardLayout() {
               </div>
             )}
           </div>
+          {!sidebarCollapsed && (
+            <div className="mt-3 flex items-center justify-between"> 
+              <span className="text-xs text-muted-foreground">Compact mode</span>
+              <Switch
+                checked={compact}
+                onCheckedChange={(v) => setCompact(!!v)}
+                aria-label="Toggle compact mode"
+              />
+            </div>
+          )}
         </div>
       </aside>
 

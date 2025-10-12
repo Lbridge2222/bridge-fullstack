@@ -621,7 +621,7 @@ const LaneA: React.FC<LaneAProps> = ({
                 <SelectTrigger>
                   <SelectValue placeholder="Select disposition" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="z-[60]">
                   <SelectItem value="connected_interested">Connected – Interested</SelectItem>
                   <SelectItem value="connected_not_interested">Connected – Not Interested</SelectItem>
                   <SelectItem value="callback_scheduled">Callback Scheduled</SelectItem>
@@ -652,7 +652,7 @@ const LaneA: React.FC<LaneAProps> = ({
                 <SelectTrigger>
                   <SelectValue placeholder="Select priority" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="z-[60]">
                   <SelectItem value="low">Low</SelectItem>
                   <SelectItem value="medium">Medium</SelectItem>
                   <SelectItem value="high">High</SelectItem>
@@ -669,7 +669,7 @@ const LaneA: React.FC<LaneAProps> = ({
                   <SelectTrigger>
                     <SelectValue placeholder="Select follow-up type" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="z-[60]">
                     <SelectItem value="none">No follow-up needed</SelectItem>
                     <SelectItem value="callback">Callback requested</SelectItem>
                     <SelectItem value="email">Email follow-up</SelectItem>

@@ -6,13 +6,26 @@ from app.schemas.applications import ApplicationCard, StageMoveIn, StageMoveOut
 
 router = APIRouter()
 
-# Unified stage constants
+# Unified stage constants - Comprehensive 18-stage admissions pipeline
 ALLOWED_STAGES = {
     "enquiry": "Enquiry",
-    "applicant": "Application Submitted", 
-    "interview": "Interview",
-    "offer": "Offer Made",
-    "enrolled": "Enrolled"
+    "pre_application": "Pre Application",
+    "application_submitted": "Application Submitted",
+    "fee_status_query": "Fee Status Query",
+    "interview_portfolio": "Interview/Portfolio",
+    "review_in_progress": "Review in Progress",
+    "review_complete": "Review Complete",
+    "director_review_in_progress": "Director Review In Progress",
+    "director_review_complete": "Director Review Complete",
+    "conditional_offer_no_response": "Conditional Offer (No Response)",
+    "unconditional_offer_no_response": "Unconditional Offer (No Response)",
+    "conditional_offer_accepted": "Conditional Offer (Accepted)",
+    "unconditional_offer_accepted": "Unconditional Offer (Accepted)",
+    "ready_to_enrol": "Ready to Enrol",
+    "enrolled": "Enrolled",
+    "rejected": "Rejected",
+    "offer_withdrawn": "Offer Withdrawn",
+    "offer_declined": "Offer Declined"
 }
 
 @router.get("/board", response_model=List[ApplicationCard])
@@ -47,12 +60,18 @@ async def board(
         programme_code,
         campus_name,
         cycle_label,
-        (days_in_pipeline)::int as days_in_pipeline,
+        COALESCE((days_in_pipeline)::int, 0) as days_in_pipeline,
         sla_overdue,
         has_offer,
         has_active_interview,
         last_activity_at,
-        offer_type
+        offer_type,
+        progression_probability,
+        enrollment_probability,
+        next_stage_eta_days,
+        enrollment_eta_days,
+        progression_blockers,
+        recommended_actions
       from vw_board_applications
       where (%s::text is null or stage = %s::text)
         and (%s::uuid is null or assignee_user_id = %s::uuid)
@@ -105,39 +124,8 @@ async def move_stage(
     if from_stage == to_stage:
         raise HTTPException(status_code=409, detail="Stage unchanged")
 
-    # Stage gating validation
-    blockers = []
-    if to_stage == "interview":
-        # Must have email and a pending interview slot
-        row = await fetchrow("""
-          select p.email, exists(select 1 from interviews iv where iv.application_id=%s and (iv.outcome is null or iv.outcome='pending')) as has_iv
-          from applications a join people p on p.id=a.person_id where a.id=%s
-        """, application_id, application_id)
-        if not row or not row.get("email"):
-            blockers.append("Missing email")
-        if not row or not row.get("has_iv"):
-            blockers.append("No scheduled interview")
-    
-    elif to_stage == "offer":
-        # Must have completed interview
-        row = await fetchrow("""
-          select exists(select 1 from interviews iv where iv.application_id=%s and iv.outcome='completed') as has_completed_iv
-          from applications a where a.id=%s
-        """, application_id, application_id)
-        if not row or not row.get("has_completed_iv"):
-            blockers.append("No completed interview")
-    
-    elif to_stage == "enrolled":
-        # Must have accepted offer
-        row = await fetchrow("""
-          select exists(select 1 from offers o where o.application_id=%s and o.status='accepted') as has_accepted_offer
-          from applications a where a.id=%s
-        """, application_id, application_id)
-        if not row or not row.get("has_accepted_offer"):
-            blockers.append("No accepted offer")
-
-    if blockers:
-        raise HTTPException(status_code=422, detail={"blockers": blockers})
+    # No stage validation - allow free movement between all stages
+    # This simplifies the user experience and allows flexible workflow management
 
     # Update stage
     await execute(
@@ -219,21 +207,8 @@ async def bulk_move_stage(payload: Dict[str, Any] = Body(...)):
                 failed.append({"id": app_id, "error": "Stage unchanged"})
                 continue
             
-            # Apply stage gating (simplified for bulk operations)
-            blockers = []
-            if to_stage == "interview":
-                row = await fetchrow("""
-                  select p.email, exists(select 1 from interviews iv where iv.application_id=%s and (iv.outcome is null or iv.outcome='pending')) as has_iv
-                  from applications a join people p on p.id=a.person_id where a.id=%s
-                """, app_id, app_id)
-                if not row or not row.get("email"):
-                    blockers.append("Missing email")
-                if not row or not row.get("has_iv"):
-                    blockers.append("No scheduled interview")
-            
-            if blockers:
-                failed.append({"id": app_id, "error": f"Blockers: {', '.join(blockers)}"})
-                continue
+            # No stage validation - allow free movement between all stages
+            # This simplifies the user experience and allows flexible workflow management
             
             # Update stage
             await execute(
@@ -321,54 +296,73 @@ async def bulk_update_priority(payload: Dict[str, Any] = Body(...)):
 @router.get("/{application_id}/details")
 async def get_application_details(application_id: UUID = Path(...)):
     """Get detailed information for an application including tasks, activity, interviews, offers"""
-    # Get basic application info
-    app_rows = await fetch("""
-        select a.*, p.first_name, p.last_name, p.email, p.phone
-        from applications a
-        join people p on p.id = a.person_id
-        where a.id = %s
-    """, application_id)
-    
-    if not app_rows:
-        raise HTTPException(status_code=404, detail="Application not found")
-    
-    app = app_rows[0]
-    
-    # Get tasks (placeholder - would need application_tasks table)
-    tasks = []
-    
-    # Get activity history
-    activities = await fetch("""
-        select activity_type, activity_title, activity_description, created_at, metadata
-        from lead_activities
-        where person_id = %s
-        order by created_at desc
-        limit 20
-    """, app["person_id"])
-    
-    # Get interviews
-    interviews = await fetch("""
-        select id, scheduled_at, outcome, notes, created_at
-        from interviews
-        where application_id = %s
-        order by scheduled_at desc
-    """, application_id)
-    
-    # Get offers
-    offers = await fetch("""
-        select id, offer_type, status, created_at, accepted_at, notes
-        from offers
-        where application_id = %s
-        order by created_at desc
-    """, application_id)
-    
-    return {
-        "application": app,
-        "tasks": tasks,
-        "activities": activities,
-        "interviews": interviews,
-        "offers": offers
-    }
+    try:
+        # Get basic application info
+        app_rows = await fetch("""
+            select a.*, p.first_name, p.last_name, p.email, p.phone
+            from applications a
+            join people p on p.id = a.person_id
+            where a.id = %s
+        """, application_id)
+        
+        if not app_rows:
+            raise HTTPException(status_code=404, detail="Application not found")
+        
+        app = app_rows[0]
+        
+        # Get tasks (placeholder - would need application_tasks table)
+        tasks = []
+        
+        # Get activity history (with error handling)
+        activities = []
+        try:
+            activities = await fetch("""
+                select activity_type, activity_title, activity_description, created_at, metadata
+                from lead_activities
+                where lead_id = %s
+                order by created_at desc
+                limit 20
+            """, str(app["person_id"]))
+        except Exception as e:
+            print(f"Error fetching activities: {e}")
+            activities = []
+        
+        # Get interviews (with error handling)
+        interviews = []
+        try:
+            interviews = await fetch("""
+                select id, scheduled_start, scheduled_end, outcome, notes, created_at
+                from interviews
+                where application_id = %s
+                order by scheduled_start desc
+            """, application_id)
+        except Exception as e:
+            print(f"Error fetching interviews: {e}")
+            interviews = []
+        
+        # Get offers (with error handling)
+        offers = []
+        try:
+            offers = await fetch("""
+                select id, type, status, issued_at, expires_at, conditions
+                from offers
+                where application_id = %s
+                order by issued_at desc
+            """, application_id)
+        except Exception as e:
+            print(f"Error fetching offers: {e}")
+            offers = []
+        
+        return {
+            "application": app,
+            "tasks": tasks,
+            "activities": activities,
+            "interviews": interviews,
+            "offers": offers
+        }
+    except Exception as e:
+        print(f"Error in get_application_details: {e}")
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 @router.get("/stats")
 async def get_application_stats():
@@ -392,5 +386,198 @@ async def get_application_stats():
         "stuck_over_30_days": stats["stuck_count"] or 0,
         "no_activity_over_7_days": stats["no_activity_count"] or 0
     }
+
+
+# ============================================================================
+# Application Data Update Endpoints (with Audit Logging)
+# ============================================================================
+
+@router.patch("/{application_id}/field")
+async def update_application_field(
+    application_id: UUID = Path(...),
+    field_name: str = Body(...),
+    old_value: Any = Body(None),
+    new_value: Any = Body(...),
+    user_id: Optional[UUID] = Body(None),
+    change_reason: Optional[str] = Body(None)
+):
+    """
+    Update a single field on an application with automatic audit logging.
+    
+    This endpoint is used for inline editing of application data.
+    The database trigger will automatically log the change.
+    """
+    try:
+        # Validate field name (security - only allow specific fields)
+        allowed_fields = [
+            'stage', 'status', 'priority', 'urgency', 'urgency_reason',
+            'source', 'sub_source', 'assignee_user_id', 'programme_id', 
+            'intake_id', 'decision_factors'
+        ]
+        
+        if field_name not in allowed_fields:
+            raise HTTPException(status_code=400, detail=f"Field '{field_name}' is not editable")
+        
+        # Build dynamic update query
+        if field_name == 'decision_factors':
+            # For JSONB fields, merge with existing data
+            query = f"""
+                UPDATE applications
+                SET {field_name} = COALESCE({field_name}, '{{}}'::jsonb) || %s::jsonb,
+                    updated_at = NOW()
+                WHERE id = %s
+                RETURNING *
+            """
+            import json
+            result = await fetchrow(query, json.dumps(new_value), application_id)
+        else:
+            # For regular fields, direct update
+            query = f"""
+                UPDATE applications
+                SET {field_name} = %s,
+                    updated_at = NOW()
+                WHERE id = %s
+                RETURNING *
+            """
+            result = await fetchrow(query, new_value, application_id)
+        
+        if not result:
+            raise HTTPException(status_code=404, detail="Application not found")
+        
+        # Manual audit log entry with user context (trigger handles field-level, this adds context)
+        if user_id:
+            await execute("""
+                INSERT INTO application_audit_log (
+                    application_id,
+                    field_name,
+                    old_value,
+                    new_value,
+                    operation,
+                    changed_by_user_id,
+                    change_reason,
+                    change_source
+                ) VALUES (%s, %s, %s, %s, 'UPDATE', %s, %s, 'api')
+            """, application_id, field_name, 
+                json.dumps(old_value) if old_value is not None else None,
+                json.dumps(new_value),
+                user_id, change_reason)
+        
+        return {
+            "success": True,
+            "application_id": str(application_id),
+            "field_name": field_name,
+            "new_value": new_value,
+            "updated_at": result["updated_at"]
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error updating application field: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to update field: {str(e)}")
+
+
+@router.get("/{application_id}/audit-log")
+async def get_application_audit_log(
+    application_id: UUID = Path(...),
+    limit: int = Query(50, ge=1, le=500),
+    offset: int = Query(0, ge=0)
+):
+    """
+    Get audit log for an application showing all changes made.
+    
+    Returns detailed audit trail with user info and change descriptions.
+    """
+    try:
+        # Get audit log entries
+        audit_entries = await fetch("""
+            SELECT 
+                id,
+                application_id,
+                operation,
+                field_name,
+                old_value,
+                new_value,
+                changed_at,
+                changed_by_user_id,
+                changed_by_user_email,
+                changed_by_user_name,
+                change_reason,
+                change_source,
+                is_sensitive_field,
+                requires_approval,
+                approved_by_user_id,
+                approved_at
+            FROM application_audit_log
+            WHERE application_id = %s
+            ORDER BY changed_at DESC
+            LIMIT %s OFFSET %s
+        """, application_id, limit, offset)
+        
+        # Get total count
+        total_row = await fetchrow("""
+            SELECT COUNT(*) as total
+            FROM application_audit_log
+            WHERE application_id = %s
+        """, application_id)
+        
+        # Get summary stats
+        summary_row = await fetchrow("""
+            SELECT * FROM get_application_audit_summary(%s)
+        """, application_id)
+        
+        return {
+            "audit_entries": audit_entries,
+            "total": total_row["total"] if total_row else 0,
+            "limit": limit,
+            "offset": offset,
+            "summary": dict(summary_row) if summary_row else {}
+        }
+        
+    except Exception as e:
+        print(f"Error fetching audit log: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to fetch audit log: {str(e)}")
+
+
+@router.get("/{application_id}/audit-trail")
+async def get_application_audit_trail(
+    application_id: UUID = Path(...),
+    limit: int = Query(50, ge=1, le=500)
+):
+    """
+    Get human-readable audit trail for an application.
+    
+    Uses the vw_application_audit_trail view for formatted output.
+    """
+    try:
+        audit_trail = await fetch("""
+            SELECT 
+                audit_id,
+                application_id,
+                applicant_name,
+                operation,
+                field_name,
+                change_type,
+                change_description,
+                changed_at,
+                user_full_name,
+                user_email,
+                change_reason,
+                change_source,
+                is_sensitive_field
+            FROM vw_application_audit_trail
+            WHERE application_id = %s
+            ORDER BY changed_at DESC
+            LIMIT %s
+        """, application_id, limit)
+        
+        return {
+            "audit_trail": audit_trail,
+            "total": len(audit_trail)
+        }
+        
+    except Exception as e:
+        print(f"Error fetching audit trail: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to fetch audit trail: {str(e)}")
 
 

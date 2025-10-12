@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 from pydantic.networks import EmailStr
-from typing import Optional
+from typing import Optional, List, Dict, Any
 from datetime import datetime
 from uuid import UUID
 
@@ -22,6 +22,12 @@ class ApplicationCard(BaseModel):
     phone: Optional[str] = None
     lead_score: Optional[int] = None
     conversion_probability: Optional[float] = None
+    progression_probability: Optional[float] = None
+    enrollment_probability: Optional[float] = None
+    next_stage_eta_days: Optional[int] = None
+    enrollment_eta_days: Optional[int] = None
+    progression_blockers: Optional[List[Dict[str, Any]]] = None
+    recommended_actions: Optional[List[Dict[str, Any]]] = None
     programme_name: str
     programme_code: Optional[str] = None
     campus_name: Optional[str] = None

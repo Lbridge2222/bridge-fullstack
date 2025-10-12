@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
-import { activitiesApi, ActivityOut, ActivityCreate } from '@/services/api';
+import { activitiesApi } from '@/services/api';
+import type { ActivityOut, ActivityCreate } from '@/services/api';
 import { Mail, Phone, Video, Globe, RefreshCw, Edit } from 'lucide-react';
 
 export interface ActivityItem {

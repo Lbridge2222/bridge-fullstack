@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { applicationsApi, ApplicationCard, StageMoveRequest, PriorityUpdateRequest } from '../services/api';
+import { applicationsApi, ApplicationCard, StageMoveRequest, PriorityUpdateRequest } from '@/services/api';
 
 export interface ApplicationsFilters {
   stage?: string;

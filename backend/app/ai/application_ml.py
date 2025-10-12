@@ -15,13 +15,29 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 from typing import List, Dict, Optional, Any, Tuple
 from datetime import datetime, timedelta
-from decimal import Decimal
 import json
 import math
+import json
 
 from app.db.db import fetch, fetchrow, execute
 
 router = APIRouter(prefix="/ai/application-intelligence", tags=["Application Intelligence"])
+
+
+# ============================================================================
+# Helpers
+# ============================================================================
+
+def interval_to_days(value: Any) -> float:
+    """Convert Postgres interval/timedelta values to float days."""
+    if value is None:
+        return 0.0
+    if hasattr(value, "total_seconds"):
+        return value.total_seconds() / 86400.0
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return 0.0
 
 
 # ============================================================================
@@ -83,23 +99,70 @@ class ApplicationIntelligence(BaseModel):
 # Stage Configuration
 # ============================================================================
 
-STAGE_SEQUENCE = ['enquiry', 'applicant', 'interview', 'offer', 'enrolled']
+# Comprehensive 18-stage admissions pipeline
+STAGE_SEQUENCE = [
+    'enquiry',
+    'pre_application', 
+    'application_submitted',
+    'fee_status_query',
+    'interview_portfolio',
+    'review_in_progress',
+    'review_complete',
+    'director_review_in_progress',
+    'director_review_complete',
+    'conditional_offer_no_response',
+    'unconditional_offer_no_response',
+    'conditional_offer_accepted',
+    'unconditional_offer_accepted',
+    'ready_to_enrol',
+    'enrolled',
+    'rejected',
+    'offer_withdrawn',
+    'offer_declined'
+]
 
+# Stage transitions for progression logic
 STAGE_TRANSITIONS = {
-    'enquiry': 'applicant',
-    'applicant': 'interview',
-    'interview': 'offer',
-    'offer': 'enrolled',
-    'enrolled': None  # Terminal state
+    'enquiry': 'pre_application',
+    'pre_application': 'application_submitted',
+    'application_submitted': 'fee_status_query',
+    'fee_status_query': 'interview_portfolio',
+    'interview_portfolio': 'review_in_progress',
+    'review_in_progress': 'review_complete',
+    'review_complete': 'director_review_in_progress',
+    'director_review_in_progress': 'director_review_complete',
+    'director_review_complete': 'conditional_offer_no_response',
+    'conditional_offer_no_response': 'conditional_offer_accepted',
+    'unconditional_offer_no_response': 'unconditional_offer_accepted',
+    'conditional_offer_accepted': 'ready_to_enrol',
+    'unconditional_offer_accepted': 'ready_to_enrol',
+    'ready_to_enrol': 'enrolled',
+    'enrolled': None,  # Terminal state
+    'rejected': None,  # Terminal state
+    'offer_withdrawn': None,  # Terminal state
+    'offer_declined': None  # Terminal state
 }
 
 # Typical stage durations in days (based on historical data)
 TYPICAL_STAGE_DURATION = {
-    'enquiry': 14,
-    'applicant': 21,
-    'interview': 7,
-    'offer': 14,
-    'enrolled': 0
+    'enquiry': 7,
+    'pre_application': 14,
+    'application_submitted': 3,
+    'fee_status_query': 5,
+    'interview_portfolio': 14,
+    'review_in_progress': 10,
+    'review_complete': 3,
+    'director_review_in_progress': 7,
+    'director_review_complete': 3,
+    'conditional_offer_no_response': 14,
+    'unconditional_offer_no_response': 14,
+    'conditional_offer_accepted': 7,
+    'unconditional_offer_accepted': 7,
+    'ready_to_enrol': 3,
+    'enrolled': 0,  # Terminal state
+    'rejected': 0,  # Terminal state
+    'offer_withdrawn': 0,  # Terminal state
+    'offer_declined': 0  # Terminal state
 }
 
 
@@ -144,14 +207,14 @@ async def extract_application_features(application_id: str) -> Dict[str, Any]:
             c.name as campus_name,
             
             -- Cycle data
-            i.cycle_label,
-            i.application_deadline,
-            i.decision_deadline,
+            NULL::text as cycle_label,
+            NULL::timestamp as application_deadline,
+            NULL::timestamp as decision_deadline,
             
             -- Time calculations
-            EXTRACT(EPOCH FROM (NOW() - a.created_at)) / 86400.0 as days_in_pipeline,
-            EXTRACT(EPOCH FROM (NOW() - a.updated_at)) / 86400.0 as days_since_last_update,
-            EXTRACT(EPOCH FROM (NOW() - COALESCE(p.last_engagement_date, a.created_at))) / 86400.0 as days_since_engagement,
+            (NOW() - a.created_at) as time_in_pipeline,
+            (NOW() - a.updated_at) as time_since_last_update,
+            (NOW() - COALESCE(p.last_engagement_date, a.created_at)) as time_since_engagement,
             
             -- Related entities checks
             EXISTS(SELECT 1 FROM interviews iv WHERE iv.application_id = a.id) as has_interview,
@@ -161,36 +224,40 @@ async def extract_application_features(application_id: str) -> Dict[str, Any]:
             
             -- Interview data
             (SELECT COUNT(*) FROM interviews iv WHERE iv.application_id = a.id) as interview_count,
-            (SELECT outcome FROM interviews iv WHERE iv.application_id = a.id ORDER BY scheduled_at DESC LIMIT 1) as latest_interview_outcome,
-            (SELECT scheduled_at FROM interviews iv WHERE iv.application_id = a.id ORDER BY scheduled_at DESC LIMIT 1) as latest_interview_date,
+            (SELECT outcome FROM interviews iv WHERE iv.application_id = a.id ORDER BY scheduled_start DESC LIMIT 1) as latest_interview_outcome,
+            (SELECT scheduled_start FROM interviews iv WHERE iv.application_id = a.id ORDER BY scheduled_start DESC LIMIT 1) as latest_interview_date,
             
             -- Offer data
-            (SELECT status FROM offers o WHERE o.application_id = a.id ORDER BY created_at DESC LIMIT 1) as latest_offer_status,
-            (SELECT created_at FROM offers o WHERE o.application_id = a.id ORDER BY created_at DESC LIMIT 1) as latest_offer_date,
+            (SELECT status FROM offers o WHERE o.application_id = a.id ORDER BY o.issued_at DESC LIMIT 1) as latest_offer_status,
+            (SELECT issued_at FROM offers o WHERE o.application_id = a.id ORDER BY o.issued_at DESC LIMIT 1) as latest_offer_date,
             
             -- Activity data
-            (SELECT COUNT(*) FROM lead_activities la WHERE la.person_id = p.id) as total_activities,
-            (SELECT activity_type FROM lead_activities la WHERE la.person_id = p.id ORDER BY created_at DESC LIMIT 1) as latest_activity_type,
-            (SELECT created_at FROM lead_activities la WHERE la.person_id = p.id ORDER BY created_at DESC LIMIT 1) as latest_activity_date,
+            (SELECT COUNT(*) FROM lead_activities la WHERE la.lead_id = a.person_id::text) as total_activities,
+            (SELECT activity_type FROM lead_activities la WHERE la.lead_id = a.person_id::text ORDER BY created_at DESC LIMIT 1) as latest_activity_type,
+            (SELECT created_at FROM lead_activities la WHERE la.lead_id = a.person_id::text ORDER BY created_at DESC LIMIT 1) as latest_activity_date,
             
             -- Email engagement (calculated from activities)
-            (SELECT COUNT(*) FROM lead_activities la WHERE la.person_id = p.id AND la.activity_type IN ('email_sent', 'email_opened', 'email_clicked')) as email_activity_count,
-            (SELECT COUNT(*) FROM lead_activities la WHERE la.person_id = p.id AND la.activity_type = 'email_opened') as email_open_count,
-            (SELECT MAX(created_at) FROM lead_activities la WHERE la.person_id = p.id AND la.activity_type = 'email_opened') as last_email_opened_at,
+            (SELECT COUNT(*) FROM lead_activities la WHERE la.lead_id = a.person_id::text AND la.activity_type IN ('email_sent', 'email_opened', 'email_clicked')) as email_activity_count,
+            (SELECT COUNT(*) FROM lead_activities la WHERE la.lead_id = a.person_id::text AND la.activity_type = 'email_opened') as email_open_count,
+            (SELECT MAX(created_at) FROM lead_activities la WHERE la.lead_id = a.person_id::text AND la.activity_type = 'email_opened') as last_email_opened_at,
             
             -- Document tracking (calculated from custom_values or metadata)
             -- You can track documents via activities or custom properties
-            (SELECT COUNT(*) FROM lead_activities la WHERE la.person_id = p.id AND la.activity_type LIKE '%document%') as document_activity_count,
+            (
+              SELECT COUNT(*)
+              FROM lead_activities la
+              WHERE la.lead_id = a.person_id::text
+                AND la.activity_type ILIKE '%%document%%'
+            ) as document_activity_count,
             
             -- Portal engagement (if tracked in activities)
-            (SELECT COUNT(*) FROM lead_activities la WHERE la.person_id = p.id AND la.activity_type = 'portal_login') as portal_login_count,
-            (SELECT MAX(created_at) FROM lead_activities la WHERE la.person_id = p.id AND la.activity_type = 'portal_login') as last_portal_login_at
+            (SELECT COUNT(*) FROM lead_activities la WHERE la.lead_id = a.person_id::text AND la.activity_type = 'portal_login') as portal_login_count,
+            (SELECT MAX(created_at) FROM lead_activities la WHERE la.lead_id = a.person_id::text AND la.activity_type = 'portal_login') as last_portal_login_at
             
         FROM applications a
         LEFT JOIN people p ON p.id = a.person_id
         LEFT JOIN programmes pr ON pr.id = a.programme_id
-        LEFT JOIN campuses c ON c.id = a.campus_id
-        LEFT JOIN intake_cycles i ON i.id = a.intake_cycle_id
+        LEFT JOIN campuses c ON c.id = pr.campus_id
         WHERE a.id = %s
     """
     
@@ -202,14 +269,20 @@ async def extract_application_features(application_id: str) -> Dict[str, Any]:
     # Convert to feature dictionary
     features = dict(row)
     
+    # Normalize interval/timedelta fields into day counts
+    features['days_in_pipeline'] = interval_to_days(row.get('time_in_pipeline'))
+    features['days_since_last_update'] = interval_to_days(row.get('time_since_last_update'))
+    features['days_since_engagement'] = interval_to_days(row.get('time_since_engagement'))
+
     # Calculate derived features
     features['stage_index'] = STAGE_SEQUENCE.index(row['stage']) if row['stage'] in STAGE_SEQUENCE else -1
-    features['is_responsive'] = (row['days_since_engagement'] or 999) < 7
+    features['is_responsive'] = features['days_since_engagement'] < 7 if features['days_since_engagement'] else False
     features['has_contact_info'] = bool(row['email']) and bool(row['phone'])
     features['engagement_level'] = categorize_engagement(row['engagement_score'])
     features['lead_quality'] = categorize_lead_score(row['lead_score'])
     features['source_quality'] = categorize_source(row['source'])
     features['urgency_score'] = calculate_urgency_score(features)
+    features['gdpr_opt_in'] = False
     
     # NEW: Email engagement metrics (calculated without DB changes)
     features['email_engagement_rate'] = (
@@ -310,9 +383,9 @@ def calculate_urgency_score(features: Dict[str, Any]) -> float:
         score += 0.2
     
     # Time in stage vs typical duration
-    days_in_pipeline = features.get('days_in_pipeline', 0)
-    current_stage = features.get('stage', 'applicant')
-    typical_duration = TYPICAL_STAGE_DURATION.get(current_stage, 14)
+    days_in_pipeline = float(features.get('days_in_pipeline') or 0)
+    current_stage = features.get('stage', 'application_submitted')
+    typical_duration = float(TYPICAL_STAGE_DURATION.get(current_stage, 14))
     
     if days_in_pipeline > typical_duration * 1.5:
         score += 0.3  # Overdue
@@ -320,7 +393,7 @@ def calculate_urgency_score(features: Dict[str, Any]) -> float:
         score += 0.2  # Approaching overdue
     
     # Engagement decay
-    days_since_engagement = features.get('days_since_engagement', 0)
+    days_since_engagement = float(features.get('days_since_engagement') or 0)
     if days_since_engagement > 7:
         score += 0.3
     elif days_since_engagement > 3:
@@ -350,10 +423,20 @@ def predict_stage_progression(features: Dict[str, Any]) -> ProgressionPrediction
     
     # Calculate base probability based on current stage
     base_probabilities = {
-        'enquiry': 0.35,      # 35% enquiries become applicants
-        'applicant': 0.60,    # 60% applicants reach interview
-        'interview': 0.75,    # 75% interviewed get offers
-        'offer': 0.80,        # 80% offers convert to enrollment
+        'enquiry': 0.35,      # 35% enquiries become pre-applicants
+        'pre_application': 0.60,    # 60% pre-applicants submit applications
+        'application_submitted': 0.70,    # 70% submitted applications progress to fee query
+        'fee_status_query': 0.80,    # 80% fee queries progress to interview
+        'interview_portfolio': 0.75,    # 75% interviewed get offers
+        'review_in_progress': 0.85,    # 85% reviews complete
+        'review_complete': 0.90,    # 90% complete reviews go to director review
+        'director_review_in_progress': 0.85,    # 85% director reviews complete
+        'director_review_complete': 0.80,    # 80% director reviews result in offers
+        'conditional_offer_no_response': 0.60,    # 60% conditional offers get response
+        'unconditional_offer_no_response': 0.60,    # 60% unconditional offers get response
+        'conditional_offer_accepted': 0.90,    # 90% accepted conditional offers enroll
+        'unconditional_offer_accepted': 0.90,    # 90% accepted unconditional offers enroll
+        'ready_to_enrol': 0.95,    # 95% ready to enroll actually enroll
     }
     
     base_prob = base_probabilities.get(current_stage, 0.5)
@@ -396,19 +479,19 @@ def predict_stage_progression(features: Dict[str, Any]) -> ProgressionPrediction
         adjustments -= 0.20
     
     # 6. Stage-specific adjustments
-    if current_stage == 'applicant':
+    if current_stage in ['application_submitted', 'fee_status_query']:
         if not features['has_interview']:
             adjustments -= 0.25  # No interview scheduled
         elif features['has_completed_interview']:
             adjustments += 0.20  # Interview completed
     
-    elif current_stage == 'interview':
+    elif current_stage == 'interview_portfolio':
         if features['latest_interview_outcome'] == 'completed':
             adjustments += 0.25
         elif features['latest_interview_outcome'] == 'cancelled':
             adjustments -= 0.30
     
-    elif current_stage == 'offer':
+    elif current_stage in ['conditional_offer_no_response', 'unconditional_offer_no_response', 'conditional_offer_accepted', 'unconditional_offer_accepted']:
         if features['has_offer']:
             offer_age_days = (datetime.now() - features['latest_offer_date']).days if features['latest_offer_date'] else 999
             if offer_age_days < 3:
@@ -448,7 +531,7 @@ def predict_stage_progression(features: Dict[str, Any]) -> ProgressionPrediction
         adjustments += 0.10  # Lots of document activity = committed
     elif doc_level == 'medium':
         adjustments += 0.05
-    elif doc_level == 'none' and current_stage in ['applicant', 'interview']:
+    elif doc_level == 'none' and current_stage in ['application_submitted', 'fee_status_query', 'interview_portfolio']:
         adjustments -= 0.12  # No document activity is a blocker
     
     # Calculate final probability
@@ -456,14 +539,15 @@ def predict_stage_progression(features: Dict[str, Any]) -> ProgressionPrediction
     probability = max(0.05, min(0.95, probability))  # Clamp between 5% and 95%
     
     # Estimate ETA
-    eta_days = estimate_eta_to_next_stage(features, probability)
+    probability_float = float(probability)
+    eta_days = estimate_eta_to_next_stage(features, probability_float)
     
     # Calculate confidence based on data completeness
     confidence = calculate_prediction_confidence(features)
     
     return ProgressionPrediction(
         next_stage=next_stage,
-        progression_probability=round(probability, 3),
+        progression_probability=round(probability_float, 3),
         eta_days=eta_days,
         confidence=round(confidence, 3)
     )
@@ -486,9 +570,19 @@ def predict_enrollment(features: Dict[str, Any], progression_prob: float) -> Enr
     # Base enrollment probabilities from each stage
     base_enrollment_probs = {
         'enquiry': 0.12,      # 12% of enquiries ultimately enroll
-        'applicant': 0.35,    # 35% of applicants ultimately enroll
-        'interview': 0.60,    # 60% of interviewed ultimately enroll
-        'offer': 0.80,        # 80% of offered ultimately enroll
+        'pre_application': 0.25,    # 25% of pre-applicants ultimately enroll
+        'application_submitted': 0.35,    # 35% of applicants ultimately enroll
+        'fee_status_query': 0.45,    # 45% of fee queries ultimately enroll
+        'interview_portfolio': 0.60,    # 60% of interviewed ultimately enroll
+        'review_in_progress': 0.65,    # 65% of reviewed ultimately enroll
+        'review_complete': 0.70,    # 70% of completed reviews ultimately enroll
+        'director_review_in_progress': 0.75,    # 75% of director reviewed ultimately enroll
+        'director_review_complete': 0.80,    # 80% of completed director reviews ultimately enroll
+        'conditional_offer_no_response': 0.60,    # 60% of conditional offers ultimately enroll
+        'unconditional_offer_no_response': 0.60,    # 60% of unconditional offers ultimately enroll
+        'conditional_offer_accepted': 0.90,    # 90% of accepted conditional offers ultimately enroll
+        'unconditional_offer_accepted': 0.90,    # 90% of accepted unconditional offers ultimately enroll
+        'ready_to_enrol': 0.95,    # 95% of ready to enroll ultimately enroll
     }
     
     base_prob = base_enrollment_probs.get(current_stage, 0.3)
@@ -564,26 +658,28 @@ def predict_enrollment(features: Dict[str, Any], progression_prob: float) -> Enr
 def estimate_eta_to_next_stage(features: Dict[str, Any], probability: float) -> Optional[int]:
     """Estimate days until next stage transition"""
     
+    probability = float(probability)
     current_stage = features['stage']
-    typical_duration = TYPICAL_STAGE_DURATION.get(current_stage, 14)
-    days_in_pipeline = features.get('days_in_pipeline', 0)
+    typical_duration = float(TYPICAL_STAGE_DURATION.get(current_stage, 14))
+    days_in_pipeline = float(features.get('days_in_pipeline') or 0)
     
     # If we've exceeded typical duration, ETA is uncertain
     if days_in_pipeline > typical_duration * 1.5:
         return None
     
     # Remaining days in typical duration
-    remaining = max(0, typical_duration - days_in_pipeline)
+    remaining = max(0.0, float(typical_duration) - float(days_in_pipeline))
     
     # Adjust based on probability (higher prob = sooner)
+    remaining = float(remaining)
     if probability > 0.75:
-        eta = int(remaining * 0.8)  # Faster than typical
+        eta = remaining * 0.8  # Faster than typical
     elif probability < 0.40:
-        eta = int(remaining * 1.5)  # Slower than typical
+        eta = remaining * 1.5  # Slower than typical
     else:
-        eta = remaining
+        eta = float(remaining)
     
-    return max(1, eta)  # At least 1 day
+    return max(1, int(round(eta)))  # At least 1 day
 
 
 def calculate_prediction_confidence(features: Dict[str, Any]) -> float:
@@ -649,7 +745,7 @@ async def predict_application_progression(request: ApplicationProgressionRequest
     return ApplicationIntelligence(
         application_id=request.application_id,
         current_stage=features['stage'],
-        days_in_stage=int(features.get('days_in_pipeline', 0)),
+    days_in_stage=int(features.get('days_in_pipeline', 0)),
         progression_prediction=progression,
         enrollment_prediction=enrollment,
         blockers=blockers,
@@ -691,7 +787,7 @@ def detect_blockers(features: Dict[str, Any], progression: ProgressionPrediction
         ))
     
     # Stage-specific blockers
-    if current_stage == 'applicant':
+    if current_stage in ['application_submitted', 'fee_status_query']:
         if not features.get('has_interview'):
             blockers.append(Blocker(
                 type='missing_milestone',
@@ -702,7 +798,7 @@ def detect_blockers(features: Dict[str, Any], progression: ProgressionPrediction
                 estimated_delay_days=7
             ))
     
-    elif current_stage == 'interview':
+    elif current_stage == 'interview_portfolio':
         if not features.get('has_completed_interview'):
             blockers.append(Blocker(
                 type='incomplete_process',
@@ -713,7 +809,7 @@ def detect_blockers(features: Dict[str, Any], progression: ProgressionPrediction
                 estimated_delay_days=7
             ))
     
-    elif current_stage == 'offer':
+    elif current_stage in ['conditional_offer_no_response', 'unconditional_offer_no_response']:
         if not features.get('has_offer'):
             blockers.append(Blocker(
                 type='missing_milestone',
@@ -736,7 +832,7 @@ def detect_blockers(features: Dict[str, Any], progression: ProgressionPrediction
                 ))
     
     # Engagement blockers
-    days_since_engagement = features.get('days_since_engagement', 0)
+    days_since_engagement = float(features.get('days_since_engagement') or 0)
     if days_since_engagement > 7:
         blockers.append(Blocker(
             type='engagement_decay',
@@ -769,6 +865,18 @@ def detect_blockers(features: Dict[str, Any], progression: ProgressionPrediction
             estimated_delay_days=7
         ))
     
+    # Compliance blockers
+    consent_status = str(features.get('consent_status', '') or '').lower()
+    if consent_status in {'', 'none', 'unknown', 'no', 'false', 'opt_out', 'withdrawn'}:
+        blockers.append(Blocker(
+            type='compliance',
+            severity='critical',
+            item='No recorded consent for outreach',
+            impact='Cannot continue outreach until compliant consent is captured',
+            resolution_action='Capture consent through approved channel before proceeding',
+            estimated_delay_days=1
+        ))
+
     # NEW: Email engagement blockers (calculated from activities)
     email_engagement_rate = features.get('email_engagement_rate', 0)
     email_count = features.get('email_activity_count', 0)
@@ -784,7 +892,7 @@ def detect_blockers(features: Dict[str, Any], progression: ProgressionPrediction
     
     # NEW: Portal engagement blocker
     portal_level = features.get('portal_engagement_level', 'none')
-    if portal_level == 'none' and current_stage in ['applicant', 'interview']:
+    if portal_level == 'none' and current_stage in ['application_submitted', 'fee_status_query', 'interview_portfolio']:
         blockers.append(Blocker(
             type='no_portal_engagement',
             severity='medium',
@@ -955,7 +1063,32 @@ async def predict_batch_applications(application_ids: List[str]):
     
     results = []
     
-    for app_id in application_ids[:100]:  # Limit to 100 at a time
+    eligible_ids = [app_id for app_id in application_ids[:100] if app_id]  # Limit to 100 per batch
+
+    if not eligible_ids:
+        return {
+            'total_processed': 0,
+            'successful': 0,
+            'failed': 0,
+            'results': []
+        }
+
+    from app.db.db import fetch
+
+    rows = await fetch(
+        """
+        SELECT id
+        FROM applications
+        WHERE id = ANY(%s::uuid[])
+          AND status = 'open'
+          AND (progression_blockers IS NULL OR jsonb_array_length(progression_blockers) = 0)
+        """,
+        eligible_ids
+    )
+
+    pending_ids = [str(row['id']) for row in rows]
+
+    for app_id in (pending_ids or eligible_ids):
         try:
             prediction = await predict_application_progression(
                 ApplicationProgressionRequest(
@@ -964,6 +1097,26 @@ async def predict_batch_applications(application_ids: List[str]):
                     include_nba=True,
                     include_cohort_analysis=False  # Skip for batch to save time
                 )
+            )
+            await execute(
+                """
+                UPDATE applications
+                SET progression_probability = %s,
+                    enrollment_probability = %s,
+                    next_stage_eta_days = %s,
+                    enrollment_eta_days = %s,
+                    progression_blockers = %s,
+                    recommended_actions = %s,
+                    progression_last_calculated_at = NOW()
+                WHERE id = %s
+                """,
+                prediction.progression_prediction.progression_probability,
+                prediction.enrollment_prediction.enrollment_probability,
+                prediction.progression_prediction.eta_days,
+                prediction.enrollment_prediction.enrollment_eta_days,
+                json.dumps([blocker.dict() for blocker in prediction.blockers]) if prediction.blockers else '[]',
+                json.dumps([action.dict() for action in prediction.next_best_actions]) if prediction.next_best_actions else '[]',
+                app_id
             )
             results.append({
                 'application_id': app_id,

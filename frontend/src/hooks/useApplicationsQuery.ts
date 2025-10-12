@@ -1,5 +1,7 @@
+import { useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { applicationsApi, ApplicationCard, StageMoveRequest, PriorityUpdateRequest } from '@/services/api';
+import { applicationsApi } from '@/services/api';
+import type { ApplicationCard, StageMoveRequest, PriorityUpdateRequest } from '@/services/api';
 
 export interface ApplicationsFilters {
   stage?: string;
@@ -22,8 +24,15 @@ export function useApplicationsQuery(filters: ApplicationsFilters = {}) {
     queryKey: ['applications', 'board', filters],
     queryFn: () => applicationsApi.getBoard(filters),
     staleTime: 30000, // 30 seconds
-    refetchOnWindowFocus: true,
+    // Reduce noisy refetches that can look like "backend loops"
+    refetchOnWindowFocus: false,
   });
+
+  useEffect(() => {
+    if (applications) {
+      console.log('📊 Applications data updated:', applications.length, 'applications');
+    }
+  }, [applications?.length]);
 
   // Mutation for moving stage with optimistic updates
   const moveStageMutation = useMutation({
@@ -31,7 +40,7 @@ export function useApplicationsQuery(filters: ApplicationsFilters = {}) {
       applicationsApi.moveStage(applicationId, payload),
     onMutate: async ({ applicationId, payload }) => {
       // Cancel any outgoing refetches
-      await queryClient.cancelQueries({ queryKey: ['applications', 'board'] });
+      await queryClient.cancelQueries({ queryKey: ['applications', 'board', filters] });
 
       // Snapshot the previous value
       const previousApplications = queryClient.getQueryData<ApplicationCard[]>(['applications', 'board', filters]);
@@ -58,8 +67,9 @@ export function useApplicationsQuery(filters: ApplicationsFilters = {}) {
       console.error('Failed to move application:', err);
     },
     onSettled: () => {
-      // Always refetch after error or success to ensure we have the latest data
-      queryClient.invalidateQueries({ queryKey: ['applications', 'board'] });
+      // Invalidate once; let React Query refetch as needed
+      console.log('🔄 Invalidating queries with key:', ['applications', 'board', filters]);
+      queryClient.invalidateQueries({ queryKey: ['applications', 'board', filters] });
     },
   });
 
@@ -68,7 +78,7 @@ export function useApplicationsQuery(filters: ApplicationsFilters = {}) {
     mutationFn: ({ applicationId, payload }: { applicationId: string; payload: PriorityUpdateRequest }) =>
       applicationsApi.updatePriority(applicationId, payload),
     onMutate: async ({ applicationId, payload }) => {
-      await queryClient.cancelQueries({ queryKey: ['applications', 'board'] });
+      await queryClient.cancelQueries({ queryKey: ['applications', 'board', filters] });
       const previousApplications = queryClient.getQueryData<ApplicationCard[]>(['applications', 'board', filters]);
 
       queryClient.setQueryData<ApplicationCard[]>(['applications', 'board', filters], (old) =>
@@ -88,7 +98,7 @@ export function useApplicationsQuery(filters: ApplicationsFilters = {}) {
       console.error('Failed to move application:', err);
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['applications', 'board'] });
+      queryClient.invalidateQueries({ queryKey: ['applications', 'board', filters] });
     },
   });
 
@@ -96,7 +106,7 @@ export function useApplicationsQuery(filters: ApplicationsFilters = {}) {
   const refreshBoardMutation = useMutation({
     mutationFn: () => applicationsApi.refreshBoard(),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['applications', 'board'] });
+      queryClient.invalidateQueries({ queryKey: ['applications', 'board', filters] });
     },
   });
 
@@ -105,8 +115,15 @@ export function useApplicationsQuery(filters: ApplicationsFilters = {}) {
     try {
       await moveStageMutation.mutateAsync({ applicationId, payload });
       return true;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to move application:', error);
+      // Check if it's a validation error (422) - these are expected and should be handled by the UI
+      if (error?.message?.includes('Blockers:') || error?.message?.includes('HTTP 422')) {
+        // This is a validation error, not a system failure
+        return false;
+      }
+      // For other errors, also return false but log them differently
+      console.error('System error moving application:', error);
       return false;
     }
   };
@@ -126,6 +143,22 @@ export function useApplicationsQuery(filters: ApplicationsFilters = {}) {
       await refreshBoardMutation.mutateAsync();
     } catch (error) {
       console.error('Failed to refresh board:', error);
+    }
+  };
+
+  const refreshProgressionInsights = async (applicationIds: string[]) => {
+    if (!applicationIds || applicationIds.length === 0) {
+      return false;
+    }
+
+    try {
+      await applicationsApi.predictProgressionBatch(applicationIds);
+      await refreshBoardMutation.mutateAsync();
+      queryClient.invalidateQueries({ queryKey: ['applications', 'board'], exact: false });
+      return true;
+    } catch (error) {
+      console.error('Failed to refresh progression insights:', error);
+      return false;
     }
   };
 
@@ -162,6 +195,7 @@ export function useApplicationsQuery(filters: ApplicationsFilters = {}) {
     moveStage,
     updatePriority,
     refreshBoard,
+    refreshProgressionInsights,
     getApplicationsByStage,
     getUniqueStages,
     getPriorityDistribution,

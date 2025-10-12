@@ -1,0 +1,2221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ivy OS - Pre-Seed Investor Deck</title>
+    <style>
+        :root{
+            --brand-forest:#0A1F1A;
+            --brand-red:#E11D1D;
+            --text:#111111;
+            --muted:hsl(220,15%,35%);
+            --muted-2:hsl(220,15%,45%);
+            --bg:#FFFFFF;
+            --bg-soft:hsl(210,25%,99%);
+            --card:rgba(255,255,255,0.82);
+            --border:hsl(215,25%,88%);
+            --radius:12px;
+            --shadow-sm:0 1px 2px rgba(0,0,0,.06);
+            --shadow-md:0 4px 12px rgba(0,0,0,.08);
+        }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Satoshi', 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, var(--bg) 0%, var(--bg-soft) 100%);
+            color: var(--text);
+            overflow-x: hidden;
+            position: relative;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0.015;
+            z-index: 0;
+            pointer-events: none;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+        }
+
+        .slide-container {
+            scroll-snap-type: y mandatory;
+            overflow-y: scroll;
+            height: 100vh;
+            position: relative;
+            z-index: 1;
+            scroll-behavior: smooth;
+            -webkit-overflow-scrolling: touch;
+            overscroll-behavior-y: contain;
+        }
+
+        .slide {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: stretch;
+            padding: 4rem;
+            scroll-snap-align: start;
+            scroll-snap-stop: always;
+            position: relative;
+            background: radial-gradient(ellipse at top right, rgba(10, 31, 26, 0.03) 0%, transparent 60%),
+                        radial-gradient(ellipse at bottom left, rgba(10, 31, 26, 0.02) 0%, transparent 60%),
+                        linear-gradient(to bottom, rgba(255, 255, 255, 0.98), rgba(249, 250, 251, 0.95));
+            animation: slideGlow 20s ease-in-out infinite;
+        }
+
+        /* Centered hero modifier */
+        .slide--center { align-items: center; }
+
+        @keyframes slideGlow {
+            0%, 100% {
+                background: radial-gradient(ellipse at top right, rgba(10, 31, 26, 0.03) 0%, transparent 60%),
+                            radial-gradient(ellipse at bottom left, rgba(10, 31, 26, 0.02) 0%, transparent 60%),
+                            linear-gradient(to bottom, rgba(255, 255, 255, 0.98), rgba(249, 250, 251, 0.95));
+            }
+            50% {
+                background: radial-gradient(ellipse at top right, rgba(10, 31, 26, 0.05) 0%, transparent 60%),
+                            radial-gradient(ellipse at bottom left, rgba(10, 31, 26, 0.03) 0%, transparent 60%),
+                            linear-gradient(to bottom, rgba(255, 255, 255, 0.98), rgba(249, 250, 251, 0.95));
+            }
+        }
+
+        .slide-content {
+            max-width: 1100px;
+            width: 100%;
+            position: relative;
+            z-index: 2;
+            margin: 0 auto;
+            text-align: left;
+            padding: 0 2rem;
+        }
+        .slide-content.narrow { max-width: 900px; }
+
+        /* Brand Colors - from index.css */
+        .primary { 
+            background: linear-gradient(135deg, var(--brand-red) 0%, #B91C1C 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .success { color: var(--brand-forest); } /* Ivy Black - button-forest-bg */
+        .black { color: var(--text); } /* Shadcn Black */
+        .muted { color: var(--muted); } /* Muted text */
+        
+        /* Typography with subtle glow */
+        h1 {
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            line-height: 1.2;
+            color: var(--text);
+            letter-spacing: -0.02em;
+            text-shadow: none;
+        }
+
+        h2 {
+            font-size: 2.25rem;
+            font-weight: 600;
+            margin-bottom: 1.25rem;
+            line-height: 1.3;
+            color: var(--text);
+            text-shadow: none;
+            position: relative;
+            padding-bottom: 1.25rem;
+        }
+
+        h2::after {
+            content: "";
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            width: 100px;
+            height: 3px;
+            background: linear-gradient(90deg, var(--brand-forest), rgba(10,31,26,0));
+            border-radius: 2px;
+        }
+
+        h3 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            color: var(--text);
+        }
+
+        h4 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--text);
+        }
+
+        p {
+            font-size: 1.125rem;
+            line-height: 1.7;
+            margin-bottom: 1rem;
+            color: var(--muted-2);
+            max-width: 75ch;
+        }
+
+        .subtitle {
+            font-size: 1.25rem;
+            color: var(--muted);
+            margin-bottom: 2rem;
+            font-weight: 400;
+            max-width: 70ch;
+        }
+
+        .small-text {
+            font-size: 1rem;
+            color: hsl(215, 20%, 65%);
+        }
+
+        /* Logo with dramatic glow */
+        .logo {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #0A1F1A 0%, #156B4A 50%, #0A1F1A 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 1rem;
+            position: relative;
+            filter: drop-shadow(0 0 18px rgba(10, 31, 26, 0.15));
+        }
+
+        .logo::before {
+            content: '';
+            position: absolute;
+            inset: -10px;
+            background: radial-gradient(circle, rgba(10, 31, 26, 0.1) 0%, transparent 70%);
+            filter: blur(20px);
+            z-index: -1;
+            animation: logoGlow 3s ease-in-out infinite;
+        }
+
+        @keyframes logoGlow {
+            0%, 100% { opacity: 0.5; }
+            50% { opacity: 0.8; }
+        }
+
+        /* Visual aid styles */
+        .visual-diagram {
+            background: var(--card);
+            backdrop-filter: blur(8px);
+            border-radius: var(--radius);
+            padding: 2rem;
+            border: 1px solid var(--border);
+            margin-top: 2rem;
+        }
+
+        .market-bar {
+            display: flex;
+            align-items: center;
+            margin: 1rem 0;
+            gap: 1rem;
+        }
+
+        .market-bar-label {
+            min-width: 120px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #111111;
+        }
+
+        .market-bar-fill {
+            flex: 1;
+            height: 40px;
+            background: linear-gradient(90deg, #0A1F1A, #156B4A);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            padding: 0 1rem;
+            color: white;
+            font-weight: 600;
+            box-shadow: 0 4px 8px rgba(10, 31, 26, 0.2);
+        }
+
+        .architecture-box {
+            background: rgba(249, 250, 251, 0.8);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 0.5rem;
+            text-align: center;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text);
+            transition: all 0.3s ease;
+        }
+
+        .architecture-box:hover {
+            background: rgba(255, 255, 255, 0.9);
+            border-color: #0A1F1A;
+            box-shadow: 0 4px 12px rgba(10, 31, 26, 0.15);
+            transform: scale(1.05);
+        }
+
+        .arrow-connector {
+            color: var(--brand-forest);
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        /* Cards with glassmorphism */
+        .card {
+            background: var(--card);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            padding: 2rem;
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow-sm);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .card-accent {
+            border-left: 4px solid var(--brand-red);
+            box-shadow: 0 4px 6px rgba(255, 8, 0, 0.12), 
+                        0 1px 3px rgba(0, 0, 0, 0.08),
+                        -4px 0 12px rgba(255, 8, 0, 0.15);
+        }
+
+        .card-success {
+            border-left: 4px solid var(--brand-forest);
+            box-shadow: 0 4px 6px rgba(10, 31, 26, 0.12), 
+                        0 1px 3px rgba(0, 0, 0, 0.08),
+                        -4px 0 12px rgba(10, 31, 26, 0.15);
+        }
+
+        .card-glow { position: relative; }
+
+        /* Features Grid */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .feature-card {
+            background: rgba(249, 250, 251, 0.6);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            padding: 1.5rem;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+            transition: transform 0.2s ease, border-color 0.2s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .feature-card::before { display: none; }
+
+        .feature-card:hover {
+            box-shadow: 0 12px 24px rgba(10, 31, 26, 0.12);
+            transform: translateY(-2px);
+            border-color: rgba(10, 31, 26, 0.3);
+        }
+
+        .feature-card:hover::before {
+            left: 100%;
+        }
+
+        .feature-card h3 {
+            color: var(--brand-forest);
+            margin-bottom: 0.5rem;
+            font-size: 1.25rem;
+        }
+
+        .feature-card p {
+            font-size: 1rem;
+            color: var(--muted);
+            margin: 0;
+        }
+
+        /* Stats */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+
+        .stat {
+            text-align: center;
+            padding: 1.5rem;
+            background: rgba(249, 250, 251, 0.6);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+            transition: all 0.3s ease;
+        }
+
+        .stat:hover {
+            box-shadow: 0 8px 16px rgba(10, 31, 26, 0.08);
+            transform: translateY(-2px);
+        }
+
+        .stat-number {
+            font-size: 3rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #0A1F1A 0%, #156B4A 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.5rem;
+            text-shadow: 0 2px 4px rgba(10, 31, 26, 0.1);
+            position: relative;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .stat-number::after {
+            content: attr(data-value);
+            position: absolute;
+            left: 0;
+            top: 0;
+            z-index: -1;
+            filter: blur(20px);
+            opacity: 0.3;
+            color: #0A1F1A;
+        }
+
+        .stat-label {
+            font-size: 1rem;
+            color: hsl(220, 15%, 35%);
+        }
+
+        /* List */
+        ul { list-style: none; margin-top: 1.25rem; }
+        li {
+            font-size: 1.1rem;
+            margin-bottom: 0.9rem;
+            padding-left: 1.25rem;
+            position: relative;
+            color: var(--muted-2);
+            line-height: 1.6;
+        }
+        li::before {
+            content: "";
+            position: absolute;
+            left: 0;
+            top: 0.7rem;
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            background: var(--brand-forest);
+        }
+        li strong { color: var(--text); font-weight: 600; }
+
+        /* CTA Button with glow */
+        .cta-button {
+            display: inline-block;
+            background: var(--brand-forest);
+            color: #FFFFFF;
+            padding: 1rem 2rem;
+            font-size: 1.15rem;
+            font-weight: 600;
+            border-radius: 8px;
+            text-decoration: none;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: var(--shadow-sm);
+            position: relative;
+        }
+
+        .cta-button::before { content: none; }
+
+        .cta-button:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
+        .cta-button:focus-visible { outline: 2px solid var(--brand-forest); outline-offset: 2px; }
+        .cta-button--accent { background: var(--brand-red); }
+
+        .cta-button:hover::before {
+            opacity: 1;
+        }
+
+        /* Two Column Layout */
+        .two-column {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        /* Table */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 2rem;
+        }
+
+        th {
+            background: linear-gradient(135deg, hsl(210, 25%, 98%) 0%, hsl(210, 25%, 96%) 100%);
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            color: var(--text);
+            border-bottom: 1px solid var(--border);
+            font-size: 1rem;
+            position: relative;
+        }
+
+        th:first-child::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background: linear-gradient(180deg, #0A1F1A, transparent);
+        }
+
+        td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border);
+            color: var(--muted-2);
+            font-size: 1rem;
+        }
+
+        tbody tr {
+            transition: all 0.2s ease;
+        }
+
+        tbody tr:nth-child(even) {
+            background: rgba(249, 250, 251, 0.3);
+        }
+
+        tbody tr:hover {
+            background: rgba(10, 31, 26, 0.04);
+        }
+
+        tbody tr td:first-child {
+            font-weight: 600;
+            color: #111111;
+        }
+
+        /* Navigation Dots */
+        .nav-dots {
+            position: fixed;
+            right: 2rem;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 100;
+        }
+
+        .nav-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: hsl(215, 25%, 85%);
+            margin: 0.75rem 0;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            outline: 2px solid transparent;
+            outline-offset: 2px;
+        }
+
+        .nav-dot::before {
+            content: '';
+            position: absolute;
+            inset: -4px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(10, 31, 26, 0.2), transparent);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .nav-dot:hover::before,
+        .nav-dot.active::before {
+            opacity: 1;
+        }
+
+        .nav-dot:hover,
+        .nav-dot.active {
+            background: linear-gradient(135deg, var(--brand-forest), #156B4A);
+            transform: scale(1.2);
+            box-shadow: 0 0 10px rgba(10, 31, 26, 0.35);
+        }
+        .nav-dot:focus-visible { outline: 2px solid var(--brand-forest); }
+
+        /* Slide Number */
+        .slide-number {
+            position: absolute;
+            bottom: 2rem;
+            right: 2rem;
+            font-size: 0.875rem;
+            color: hsl(215, 25%, 50%);
+            font-weight: 600;
+            padding: 0.4rem 0.75rem;
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(8px);
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        }
+
+        /* Pill/Badge */
+        .badge {
+            display: inline-block;
+            padding: 0.375rem 0.75rem;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .badge-success {
+            background: linear-gradient(135deg, rgba(10, 31, 26, 0.1) 0%, rgba(10, 31, 26, 0.15) 100%);
+            color: var(--brand-forest);
+            border: 1px solid rgba(10, 31, 26, 0.2);
+            box-shadow: 0 2px 4px rgba(10, 31, 26, 0.08),
+                        inset 0 1px 0 rgba(255, 255, 255, 0.5);
+        }
+
+        .badge-primary {
+            background: linear-gradient(135deg, #FEE2E2 0%, #FED7D7 100%);
+            color: #991B1B;
+            border: 1px solid rgba(255, 8, 0, 0.2);
+            box-shadow: 0 2px 4px rgba(255, 8, 0, 0.1);
+        }
+
+        /* Highlight box with glow */
+        .highlight-box {
+            background: linear-gradient(135deg, rgba(10, 31, 26, 0.03), rgba(10, 31, 26, 0.01));
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border: 1px solid hsl(215, 25%, 82%);
+            border-radius: 10px;
+            padding: 2rem;
+            margin-top: 2rem;
+            position: relative;
+            box-shadow: 0 10px 35px rgba(17,17,17,0.06);
+            overflow: hidden;
+            padding-left: 1.75rem;
+        }
+
+        .highlight-box::before {
+            content: "";
+            position: absolute;
+            top: 0; left: 0;
+            width: 5px; height: 100%;
+            background: linear-gradient(180deg, var(--brand-forest), rgba(10, 31, 26, 0.3));
+        }
+
+        .highlight-box h3 {
+            color: #0A1F1A;
+        }
+
+        /* Use of Funds visual */
+        .funds-list {
+            margin-top: 2rem;
+        }
+
+        .funds-list li {
+            background: hsl(210, 25%, 98%);
+            padding: 1rem 1rem 1rem 2.5rem;
+            margin-bottom: 0.75rem;
+            border-radius: 8px;
+            border-left: 3px solid var(--brand-forest);
+        }
+
+        /* Print styles for PDF export */
+        @media print {
+            body {
+                background: #FFFFFF;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+
+            .slide-container {
+                overflow: visible !important;
+                height: auto !important;
+                scroll-snap-type: none !important;
+            }
+
+            .slide {
+                min-height: 100vh;
+                height: 100vh;
+                page-break-after: always;
+                page-break-inside: avoid;
+                break-after: page;
+                break-inside: avoid;
+                scroll-snap-align: none;
+                display: flex !important;
+                padding: 3rem !important;
+            }
+
+            .slide:last-child {
+                page-break-after: auto;
+            }
+            
+            .nav-dots,
+            .slide-number {
+                display: none !important;
+            }
+
+            /* Ensure all content is visible */
+            * {
+                overflow: visible !important;
+            }
+            .orb { display: none !important; }
+
+            .card, .feature-card, .highlight-box, .visual-diagram, table {
+                break-inside: avoid;
+                page-break-inside: avoid;
+            }
+        }
+
+        /* Floating orbs for visual interest */
+        .orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(40px);
+            opacity: 0.06;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .orb-green {
+            background: radial-gradient(circle, rgba(10, 31, 26, 0.8), transparent);
+            animation: float 20s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            33% { transform: translate(50px, -50px) scale(1.1); }
+            66% { transform: translate(-50px, 50px) scale(0.9); }
+        }
+
+        /* Add shimmer effect to key elements */
+        @keyframes shimmer {
+            0% { background-position: -1000px 0; }
+            100% { background-position: 1000px 0; }
+        }
+
+        .shimmer { display: none; }
+
+        /* Number badges for visual hierarchy */
+        .number-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 2rem;
+            height: 2rem;
+            background: linear-gradient(135deg, #0A1F1A, #156B4A);
+            border-radius: 50%;
+            color: white;
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin-right: 0.75rem;
+            box-shadow: 0 4px 8px rgba(10, 31, 26, 0.2);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            h1 { font-size: 2.25rem; }
+            h2 { font-size: 1.875rem; }
+            h3 { font-size: 1.25rem; }
+            p, li { font-size: 1rem; }
+            
+            .features-grid,
+            .two-column {
+                grid-template-columns: 1fr;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+                gap: 1.5rem;
+            }
+            
+            .slide {
+                padding: 2rem;
+            }
+
+            @keyframes slideGlow { animation: none; }
+            .slide-container { scroll-snap-type: none; }
+        }
+
+        .card.compact { padding: 0.9rem; }
+        .card.compact h3 { margin-bottom: 0.5rem; font-size: 0.95rem; }
+        .card.compact ul { margin: 0; }
+        .card.compact ul li { margin: 0.15rem 0; }
+        .subtitle.compact { max-width: 900px; }
+        
+        /* Enhanced visual polish */
+        .card.card-glow { transition: transform 0.2s ease, box-shadow 0.2s ease; }
+        .card.card-glow:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+        h2 { position: relative; padding-bottom: 1.25rem; margin-bottom: 0.5rem; }
+        .slide-content h2::after { 
+            content: ""; position: absolute; left: 0; bottom: 0; width: 100px; height: 3px; 
+            background: linear-gradient(90deg, var(--brand-forest), rgba(10,31,26,0)); border-radius: 2px; 
+        }
+        .slide--center .slide-content h2::after { left: 50%; transform: translateX(-50%); }
+        .two-column > .card { 
+            border: 1px solid var(--border); 
+            background: linear-gradient(135deg, rgba(255,255,255,0.95), rgba(249,250,251,0.9));
+        }
+        .highlight-box { 
+            border: 1px solid hsl(215, 25%, 82%); 
+            box-shadow: 0 10px 40px rgba(10, 31, 26, 0.12); 
+            background: linear-gradient(135deg, rgba(10, 31, 26, 0.03), rgba(10, 31, 26, 0.01));
+            position: relative;
+            overflow: hidden;
+            padding-left: 1.75rem;
+        }
+        .highlight-box::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 5px;
+            height: 100%;
+            background: linear-gradient(180deg, var(--brand-forest), rgba(10, 31, 26, 0.3));
+        }
+        
+        /* Table enhancements */
+        table thead tr { background: rgba(10, 31, 26, 0.04); }
+        table tbody tr { transition: background 0.15s ease; }
+        table tbody tr:hover { background: rgba(10, 31, 26, 0.02); }
+        
+        /* Stats grid polish */
+        .stat { 
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            border: 1px solid var(--border);
+        }
+        .stat:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(10, 31, 26, 0.1);
+            border-color: hsl(215, 25%, 85%);
+        }
+        
+        /* Feature card micro-interactions */
+        .feature-card {
+            transition: transform 0.2s ease, border-color 0.2s ease;
+        }
+        .feature-card:hover {
+            transform: translateY(-2px);
+            border-color: var(--brand-forest);
+        }
+        
+        /* Smooth badge and button styling */
+        .slide-content > div[style*="top: 2rem"] {
+            box-shadow: 0 4px 12px rgba(10, 31, 26, 0.15);
+        }
+
+        /* Reduced motion preference */
+        @media (prefers-reduced-motion: reduce){
+            *{animation: none !important; transition: none !important;}
+        }
+
+        /* Print page size */
+        @page{ size: A4 landscape; margin: 12mm; }
+    </style>
+</head>
+<body>
+    <div class="nav-dots" id="navDots"></div>
+    
+    <div class="slide-container" id="slideContainer">
+        <!-- Slide 1: Title / Hook -->
+        <div class="slide slide--center">
+            <!-- Floating orbs -->
+            <div class="orb orb-green" style="width: 400px; height: 400px; top: 10%; right: 10%;"></div>
+            <div class="orb orb-green" style="width: 300px; height: 300px; bottom: 15%; left: 15%; animation-delay: 3s;"></div>
+            
+            <div class="slide-content narrow" style="display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 4rem 2rem; min-height: 100vh;">
+                <!-- Main content centered -->
+                <div style="max-width: 950px; text-align: center;">
+                    <div class="logo" style="margin-bottom: 2.5rem; font-size: 3.5rem; letter-spacing: -0.02em;">Ivy OS</div>
+                    <h1 style="font-size: 3.25rem; line-height: 1.15; margin-bottom: 1.5rem; font-weight: 700; letter-spacing: -0.02em;">The Intelligence Layer<br/>for <span class="success" style="position: relative; display: inline-block;">Higher Education<span style="position: absolute; bottom: -8px; left: 0; right: 0; height: 4px; background: linear-gradient(90deg, #0A1F1A, transparent); border-radius: 2px;"></span></span></h1>
+                    <p class="subtitle" style="max-width: 850px; margin: 0 auto 2rem auto; font-size: 1.15rem; line-height: 1.6; color: hsl(220, 15%, 30%);">AI-native CRM + SIS delivering ±5% forecast accuracy, automated triage, and real-time institutional intelligence, replacing the £40k/year fragmented systems universities currently struggle with.</p>
+                    
+                    <div style="display: inline-block; padding: 1rem 2.5rem; background: var(--brand-forest); border-radius: 8px; box-shadow: var(--shadow-md); margin-bottom: 2rem;">
+                        <p style="margin: 0 0 0.25rem 0; font-weight: 600; color: white; font-size: 0.9rem;">PRE-SEED | RAISING £450k</p>
+                        <p style="margin: 0; font-weight: 500; color: rgba(255, 255, 255, 0.8); font-size: 0.85rem;">£5m cap • 20% discount SAFE</p>
+                    </div>
+                </div>
+                
+                <!-- Founder line positioned at bottom -->
+                <div style="position: absolute; bottom: 2.5rem; left: 50%; transform: translateX(-50%); font-style: italic; color: var(--muted); font-size: 0.95rem; max-width: 700px; text-align: center; padding: 0 2rem;">Built by the Head of Student Recruitment with 5+ years managing live HE pipelines.</div>
+            </div>
+            <div class="slide-number">1</div>
+        </div>
+
+        <!-- Slide 2: The Problem -->
+        <div class="slide">
+            <div class="slide-content">
+                <h2>Universities spend ≈ £40k a year on systems<br/>that still <span class="primary">force them to guess</span></h2>
+                <p class="subtitle">The tools driving modern business growth don't speak Higher Education — and the ones built for HE can't keep up with modern performance needs.</p>
+                
+                <div class="card card-glow" style="margin-top: 2rem;">
+                    <div style="overflow-x: auto;">
+                        <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
+                            <thead>
+                                <tr style="border-bottom: 2px solid #0A1F1A;">
+                                    <th style="text-align: left; padding: 0.75rem; font-weight: 600; color: #0A1F1A;">System</th>
+                                    <th style="text-align: left; padding: 0.75rem; font-weight: 600; color: #0A1F1A;">Typical Cost</th>
+                                    <th style="text-align: left; padding: 0.75rem; font-weight: 600; color: #0A1F1A;">The Reality</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr style="border-bottom: 1px solid hsl(215, 25%, 85%);">
+                                    <td style="padding: 0.75rem; font-weight: 600;">Sales CRMs (HubSpot / Salesforce)</td>
+                                    <td style="padding: 0.75rem; font-weight: 600; color: #0A1F1A;">£20–30k</td>
+                                    <td style="padding: 0.75rem; color: hsl(220, 15%, 45%);">Built for MQL → SQL → Customer. Doesn't map to enquiry → applicant → offer → enrolled — forecasting breaks.</td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid hsl(215, 25%, 85%);">
+                                    <td style="padding: 0.75rem; font-weight: 600;">Legacy SIS (Ellucian / Unit4 / Tribal)</td>
+                                    <td style="padding: 0.75rem; font-weight: 600; color: #0A1F1A;">£50–150k</td>
+                                    <td style="padding: 0.75rem; color: hsl(220, 15%, 45%);">Compliance-first, slow to change, no predictive capability.</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 0.75rem; font-weight: 600;">Spreadsheets + manual workarounds</td>
+                                    <td style="padding: 0.75rem; font-weight: 600; color: #0A1F1A;">£30–50k staff time</td>
+                                    <td style="padding: 0.75rem; color: hsl(220, 15%, 45%);">Brittle, siloed, and reactive — leadership can't see the full picture.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="card card-accent" style="margin-top: 1.5rem;">
+                    <h3 style="margin-bottom: 0.75rem; font-size: 1rem;">Founder insight:</h3>
+                    <p style="margin: 0; font-style: italic; color: hsl(220, 15%, 35%); font-size: 0.95rem; line-height: 1.6;">"I ran admissions and recruitment for five years and lived this daily. The problem isn't capability—it's context. Sales CRMs don't speak Higher Education, and legacy SIS tools can't drive decisions. Ivy OS exists because the sector needs both in one system."</p>
+                </div>
+
+
+            </div>
+            <div class="slide-number">2</div>
+        </div>
+
+        <!-- Slide 3: The Opportunity -->
+        <div class="slide">
+            <div class="slide-content">
+                <h2>A <span class="success">£150M replacement market</span> hiding in plain sight</h2>
+                <p class="subtitle">Every university already pays for CRMs, SIS tools, and spreadsheets — Ivy OS replaces them with one intelligent platform built for Higher Education.</p>
+                
+                <div class="card card-glow" style="margin-top: 2rem;">
+                    <h3 class="success" style="margin-bottom: 1.5rem;">The market reality</h3>
+                    <div style="overflow-x: auto;">
+                        <table style="width: 100%; border-collapse: collapse; font-size: 0.95rem;">
+                            <thead>
+                                <tr style="border-bottom: 2px solid #0A1F1A;">
+                                    <th style="text-align: left; padding: 0.75rem; font-weight: 600; color: #0A1F1A;">Segment</th>
+                                    <th style="text-align: left; padding: 0.75rem; font-weight: 600; color: #0A1F1A;">Institutions</th>
+                                    <th style="text-align: left; padding: 0.75rem; font-weight: 600; color: #0A1F1A;">Typical Current Spend</th>
+                                    <th style="text-align: left; padding: 0.75rem; font-weight: 600; color: #0A1F1A;">Addressable Value</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr style="border-bottom: 1px solid hsl(215, 25%, 85%);">
+                                    <td style="padding: 0.75rem; font-weight: 600;">UK Higher Education</td>
+                                    <td style="padding: 0.75rem;">400+ (OfS register)</td>
+                                    <td style="padding: 0.75rem;">£30–50k each</td>
+                                    <td style="padding: 0.75rem; font-weight: 600; color: #0A1F1A;">≈ £16M SAM</td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid hsl(215, 25%, 85%);">
+                                    <td style="padding: 0.75rem; font-weight: 600;">English-language HE (IE, AU, NZ, CA)</td>
+                                    <td style="padding: 0.75rem;">500+</td>
+                                    <td style="padding: 0.75rem;">£30–40k each</td>
+                                    <td style="padding: 0.75rem; font-weight: 600; color: #0A1F1A;">+£130M</td>
+                                </tr>
+                                <tr style="background: rgba(10, 31, 26, 0.05); font-weight: 600;">
+                                    <td style="padding: 0.75rem; color: #0A1F1A;">Total near-term opportunity</td>
+                                    <td style="padding: 0.75rem;">—</td>
+                                    <td style="padding: 0.75rem;">—</td>
+                                    <td style="padding: 0.75rem; color: #0A1F1A; font-size: 1.1rem;">≈ £150M</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    </div>
+
+                <div class="card card-glow" style="margin-top: 1.5rem;">
+                    <h3 class="primary" style="margin-bottom: 1rem;">The problem behind the spend</h3>
+                    <p style="margin-bottom: 1rem; font-weight: 600;">Every institution already has:</p>
+                    <ul style="margin: 0 0 1.5rem 0;">
+                        <li>A CRM built for business pipelines</li>
+                        <li>A student information system designed for compliance</li>
+                        <li>Teams bridging the gap manually</li>
+                    </ul>
+                    <p style="margin: 0; font-weight: 600; color: #0A1F1A;">They're not under-investing — they're investing in the wrong tools.</p>
+                    </div>
+
+                <div class="card card-glow" style="margin-top: 1.5rem;">
+                    <h3 class="success" style="margin-bottom: 1rem;">The inevitability</h3>
+                    <p style="margin: 0; font-size: 1.1rem; line-height: 1.6;">Within five years, AI-native operational intelligence will be standard across UK universities.</p>
+                    <p style="margin: 1rem 0 0 0; font-weight: 600; color: #0A1F1A;">The question isn't if institutions adopt it — it's who builds the platform that becomes infrastructure.</p>
+                    </div>
+
+                <div style="margin-top: 1.5rem; padding: 0.75rem 1.25rem; background: rgba(10, 31, 26, 0.08); border-radius: 8px; border-left: 4px solid var(--brand-forest);">
+                    <p style="margin: 0; font-size: 0.9rem; color: var(--brand-forest); font-weight: 600;">🧩 Procurement-friendly entry: 3–6 month pilot under departmental thresholds (budget-neutral swap)</p>
+                </div>
+
+                <div class="highlight-box" style="margin-top: 1.5rem;">
+                    <h3><strong>Ivy OS isn't creating a new budget line.</strong><br/>It's replacing fragmented £40k stacks with a unified, AI-native system that actually understands Higher Education.</h3>
+                </div>
+            </div>
+            <div class="slide-number">3</div>
+        </div>
+
+        <!-- Slide 4: The Solution -->
+        <div class="slide">
+            <div class="slide-content">
+                <h2>One system. One truth.<br/>Built around the <span class="success">real student journey</span></h2>
+                <p class="subtitle">Ivy OS unifies CRM, student records, and institutional intelligence across the HE lifecycle — enquiry → application → offer → enrolment → progression → alumni.</p>
+                
+                <div class="card card-glow" style="margin-top: 2rem;">
+                    <h3 class="success" style="margin-bottom: 1rem;">What Ivy OS is</h3>
+                    <p style="margin: 0; font-size: 1.05rem; line-height: 1.6;">The first AI-native operating system for Higher Education, combining the data depth of an SIS with the usability of a modern CRM. It connects every stage of the pipeline and learns continuously from each institution's activity to improve prediction, triage, and decision-making over time.</p>
+                    </div>
+
+                <div class="card card-glow" style="margin-top: 1.5rem;">
+                    <h3 class="success" style="margin-bottom: 1.5rem;">How it works</h3>
+                    <div class="architecture-box" style="margin-bottom: 1rem; border-color: #0A1F1A; background: rgba(10, 31, 26, 0.05);">
+                        <div style="font-weight: 600; color: #0A1F1A; margin-bottom: 0.5rem; text-transform: uppercase; font-size: 0.85rem; letter-spacing: 0.05em;">USER LAYER: HE workflows</div>
+                        <div style="font-size: 0.95rem; color: #111111;">Enquiry → Application → Offer → Enrolment → Progression → Alumni</div>
+                    </div>
+                    <div style="text-align: center; margin: 1rem 0; color: #0A1F1A; font-size: 1.5rem;">↓</div>
+                    <div class="architecture-box" style="margin-bottom: 1rem; border-color: #0A1F1A;">
+                        <div style="font-weight: 600; color: #0A1F1A; margin-bottom: 0.75rem; text-transform: uppercase; font-size: 0.85rem; letter-spacing: 0.05em;">INTELLIGENCE LAYER: AI copilots</div>
+                        <ul style="margin: 0; padding-left: 1.5rem; font-size: 0.95rem;">
+                            <li>Predictive triage & risk scoring</li>
+                            <li>Policy-aware Q&A (UCAS, OfS)</li>
+                            <li>Smart communications composer</li>
+                            <li>Live forecast refinement</li>
+                        </ul>
+                    </div>
+                    <div style="text-align: center; margin: 1rem 0; color: #0A1F1A; font-size: 1.5rem;">↓</div>
+                    <div class="architecture-box" style="border-color: #0A1F1A;">
+                        <div style="font-weight: 600; color: #0A1F1A; margin-bottom: 0.5rem; text-transform: uppercase; font-size: 0.85rem; letter-spacing: 0.05em;">DATA LAYER: Unified CRM + SIS</div>
+                        <div style="font-size: 0.95rem; color: #111111;">Real-time merge of recruitment and student data — single source of truth</div>
+                    </div>
+                </div>
+
+                <div class="card card-glow" style="margin-top: 1.5rem;">
+                    <h3 class="primary" style="margin-bottom: 1rem;">Why it's different</h3>
+                    <p style="margin: 0 0 1rem 0; font-weight: 600; font-size: 1.05rem;">Most platforms bolt AI on top of legacy systems.<br/>Ivy OS is AI-first by design, so intelligence is built into every workflow, not added later.</p>
+                    <ul style="margin: 0; font-size: 0.95rem;">
+                        <li>Data model built for HE from day one</li>
+                        <li>Forecasts and triage scores improve automatically with each cycle</li>
+                        <li>AI copilots act in context — no switching tools or exporting data</li>
+                        <li>One login, one interface, one accurate picture</li>
+                    </ul>
+                </div>
+
+                <div class="highlight-box" style="margin-top: 1.5rem;">
+                    <h3><strong>Ivy OS doesn't make universities better at using generic tools</strong> — it gives them tools actually built for what they do.</h3>
+                </div>
+            </div>
+            <div class="slide-number">4</div>
+        </div>
+
+        <!-- Slide 5: Product in Action -->
+        <div class="slide">
+            <div class="slide-content">
+                <h2>AI copilots that feel native,<br/><span class="success">built into the fabric of the system</span></h2>
+                <p class="subtitle">Real-time prioritisation, insight, and automation purpose-built for Higher Education teams.</p>
+                
+                <div class="card card-glow" style="margin-top: 2rem;">
+                    <h3 class="success" style="margin-bottom: 1rem;">Live today / demo-ready:</h3>
+                    <ul style="margin: 0; font-size: 0.95rem;">
+                        <li style="margin-bottom: 0.5rem;"><strong>AI Triage</strong> — ranks enquiries and applicants by likelihood to progress or require attention</li>
+                        <li style="margin-bottom: 0.5rem;"><strong>Applicant Profiles</strong> — predictive scores, blockers, and next-best actions</li>
+                        <li style="margin-bottom: 0.5rem;"><strong>AI Kanban Board</strong> — shows where applications stall and why</li>
+                        <li style="margin-bottom: 0.5rem;"><strong>Email Copilot</strong> — drafts personalised invites and offer letters from templates</li>
+                        <li style="margin-bottom: 0.5rem;"><strong>RAG Knowledge Base</strong> — retrieves UCAS, OfS, and institutional policy documents with citations</li>
+                    </ul>
+                    </div>
+                    </div>
+
+                <div class="card card-glow" style="margin-top: 1.5rem;">
+                    <h3 class="primary" style="margin-bottom: 1rem;">User Experience:</h3>
+                    <ul style="margin: 0; font-size: 0.95rem;">
+                        <li>One cohesive interface built on React + Tailwind + shadcn/ui</li>
+                        <li>Designed for real HE roles (Admissions, Recruitment, Registry)</li>
+                        <li>AI interactions embedded in context — inline prompts and predictive insights</li>
+                    </ul>
+                    </div>
+
+                <div class="visual-diagram" style="margin-top: 2rem;">
+                    <h3 class="success" style="margin-bottom: 1.5rem; text-align: center;">Live Ivy OS Applications Board</h3>
+                    <div style="background: linear-gradient(135deg, hsl(210, 25%, 98%), hsl(215, 25%, 96%)); border-radius: 10px; padding: 1.5rem; border: 1px solid var(--border);">
+                        <!-- Sticky Glass Header -->
+                        <div style="background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(12px); border: 1px solid var(--border); border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <div>
+                                    <h1 style="font-size: 1.25rem; font-weight: 700; color: #111111; margin-bottom: 0.25rem;">Admissions Pipeline</h1>
+                                    <p style="font-size: 0.75rem; color: hsl(220, 15%, 35%); margin: 0;">CRM → Admissions → Applications</p>
+                    </div>
+                                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                    <!-- Tabs -->
+                                    <div style="display: flex; background: hsl(210, 25%, 95%); border: 1px solid var(--border); border-radius: 6px; padding: 0.125rem;">
+                                        <div style="padding: 0.25rem 0.75rem; background: white; border-radius: 4px; font-size: 0.7rem; font-weight: 600; color: #111111;">📊 Board</div>
+                                        <div style="padding: 0.25rem 0.75rem; font-size: 0.7rem; color: hsl(220, 15%, 35%);">📋 Table</div>
+                    </div>
+                                    <!-- Search -->
+                                    <div style="position: relative; width: 200px;">
+                                        <div style="position: absolute; left: 0.5rem; top: 50%; transform: translateY(-50%); font-size: 0.7rem; color: hsl(220, 15%, 35%);">🔍</div>
+                                        <input type="text" placeholder="Search applications…" style="width: 100%; padding: 0.25rem 0.5rem 0.25rem 1.5rem; border: 1px solid var(--border); border-radius: 6px; font-size: 0.7rem; background: rgba(255, 255, 255, 0.6);">
+                    </div>
+                                    <!-- Filters -->
+                                    <div style="padding: 0.25rem 0.75rem; background: white; border: 1px solid var(--border); border-radius: 6px; font-size: 0.7rem; color: #111111;">🔽 Filters</div>
+                                    <!-- Options -->
+                                    <div style="padding: 0.25rem 0.75rem; background: white; border: 1px solid var(--border); border-radius: 6px; font-size: 0.7rem; color: #111111;">⋯ Options</div>
+                                    <!-- Ask Ivy -->
+                                    <div style="padding: 0.25rem 0.75rem; background: rgba(10, 31, 26, 0.1); border: 1px solid #0A1F1A; border-radius: 6px; font-size: 0.7rem; color: #0A1F1A; font-weight: 600;">✨ Ask Ivy</div>
+                                    <!-- Refresh -->
+                                    <div style="padding: 0.25rem 0.75rem; background: white; border: 1px solid var(--border); border-radius: 6px; font-size: 0.7rem; color: #111111;">🔄 Refresh</div>
+                                    <!-- New Application -->
+                                    <div style="padding: 0.25rem 0.75rem; background: var(--brand-red); color: white; border-radius: 6px; font-size: 0.7rem; font-weight: 600;">➕ New Application</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Summary Cards -->
+                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 0.75rem; margin-bottom: 1.5rem;">
+                            <div style="background: white; border: 1px solid var(--border); border-radius: 8px; padding: 0.75rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                                <div style="font-size: 0.65rem; color: hsl(220, 15%, 35%); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.25rem;">Active Applications</div>
+                                <div style="font-size: 1.5rem; font-weight: 700; color: #111111; margin-bottom: 0.25rem;">100</div>
+                                <div style="font-size: 0.65rem; color: hsl(220, 15%, 35%);">38 high-confidence (≥70%)</div>
+                            </div>
+                            <div style="background: white; border: 1px solid var(--border); border-radius: 8px; padding: 0.75rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                                <div style="font-size: 0.65rem; color: hsl(220, 15%, 35%); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.25rem;">Avg Progression Likelihood</div>
+                                <div style="font-size: 1.5rem; font-weight: 700; color: #0A1F1A; margin-bottom: 0.25rem;">62%</div>
+                                <div style="height: 4px; background: hsl(215, 25%, 92%); border-radius: 2px; overflow: hidden; margin-bottom: 0.25rem;">
+                                    <div style="width: 62%; height: 100%; background: linear-gradient(90deg, #0A1F1A, #156B4A); border-radius: 2px;"></div>
+                                </div>
+                                <div style="font-size: 0.65rem; color: hsl(220, 15%, 35%);">Target ≥ 65% • lift driven by ML progression scores</div>
+                            </div>
+                            <div style="background: white; border: 1px solid var(--border); border-radius: 8px; padding: 0.75rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                                <div style="font-size: 0.65rem; color: hsl(220, 15%, 35%); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.25rem;">At-Risk Applicants</div>
+                                <div style="font-size: 1.5rem; font-weight: 700; color: var(--brand-red); margin-bottom: 0.25rem;">16</div>
+                                <div style="font-size: 0.65rem; color: hsl(220, 15%, 35%);">16% of active pipeline</div>
+                            </div>
+                            <div style="background: white; border: 1px solid var(--border); border-radius: 8px; padding: 0.75rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                                <div style="font-size: 0.65rem; color: hsl(220, 15%, 35%); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.25rem;">Blockers Spotlight</div>
+                                <div style="font-size: 0.75rem; font-weight: 600; color: #111111; margin-bottom: 0.25rem;">No recorded consent for outreach</div>
+                                <div style="font-size: 0.65rem; color: hsl(220, 15%, 35%); margin-bottom: 0.25rem;">81 apps with blockers • 81 mentions</div>
+                                <div style="font-size: 0.65rem; color: hsl(220, 15%, 35%);">289 recommended actions ready</div>
+                            </div>
+                        </div>
+                        
+                        <!-- Kanban Board with Glassmorphism -->
+                        <div style="display: flex; gap: 1rem;">
+                            <!-- Column 1: Director Review In Progress -->
+                            <div style="flex: 1; background: rgba(255, 255, 255, 0.75); backdrop-filter: blur(16px); border: 1px solid rgba(148, 163, 184, 0.4); border-radius: 26px; padding: 1rem; box-shadow: 0 18px 45px -28px rgba(15, 23, 42, 0.75);">
+                                <div style="font-size: 0.75rem; font-weight: 600; margin-bottom: 1rem; color: #111111; display: flex; align-items: center; justify-content: space-between;">
+                                    <span>Director Review In Progress</span>
+                                    <span style="background: hsl(210, 25%, 95%); padding: 0.125rem 0.375rem; border-radius: 4px; font-size: 0.65rem;">(2)</span>
+                                </div>
+                                <!-- Card 1 -->
+                                <div style="background: hsl(210, 25%, 99%); border: 1px solid hsl(215, 25%, 90%); border-radius: 6px; padding: 0.75rem; margin-bottom: 0.75rem; position: relative;">
+                                    <!-- Priority rail -->
+                                    <div style="position: absolute; left: 0; top: 0; bottom: 0; width: 6px; background: hsl(220, 15%, 35%); border-top-left-radius: 6px; border-bottom-left-radius: 6px;"></div>
+                                    <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; padding-left: 0.5rem;">
+                                        <input type="checkbox" style="width: 12px; height: 12px;">
+                                        <div style="font-size: 0.8rem; font-weight: 600; color: #111111;">Adam Roberts</div>
+                                    </div>
+                                    <div style="font-size: 0.65rem; color: hsl(220, 15%, 35%); margin-bottom: 0.5rem; padding-left: 0.5rem;">freya.scott.69@icloud.com</div>
+                                    <div style="font-size: 0.7rem; color: #111111; margin-bottom: 0.5rem; padding-left: 0.5rem;">BMus (Hons) Classical Perfo...</div>
+                                    <div style="display: flex; gap: 0.25rem; flex-wrap: wrap; margin-bottom: 0.5rem; padding-left: 0.5rem;">
+                                        <span style="padding: 0.1rem 0.4rem; background: hsl(210, 25%, 95%); border-radius: 4px; font-size: 0.6rem;">Lead Score 45 (Low)</span>
+                                        <span style="padding: 0.1rem 0.4rem; background: hsl(210, 25%, 95%); border-radius: 4px; font-size: 0.6rem;">Progression 60%</span>
+                                        <span style="padding: 0.1rem 0.4rem; background: hsl(210, 25%, 95%); border-radius: 4px; font-size: 0.6rem;">Enrollment 66%</span>
+                                    </div>
+                                    <div style="font-size: 0.65rem; color: #FF0800; margin-bottom: 0.25rem; padding-left: 0.5rem;">▲ 2 blockers</div>
+                                    <div style="font-size: 0.6rem; color: hsl(220, 15%, 35%); padding-left: 0.5rem;">No recorded consent for outreach, No engagement for 59 days</div>
+                                </div>
+                            </div>
+                            
+                            <!-- Column 2: Director Review Complete -->
+                            <div style="flex: 1; background: rgba(255, 255, 255, 0.75); backdrop-filter: blur(16px); border: 1px solid rgba(148, 163, 184, 0.4); border-radius: 26px; padding: 1rem; box-shadow: 0 18px 45px -28px rgba(15, 23, 42, 0.75);">
+                                <div style="font-size: 0.75rem; font-weight: 600; margin-bottom: 1rem; color: #111111; display: flex; align-items: center; justify-content: space-between;">
+                                    <span>Director Review Complete</span>
+                                    <span style="background: hsl(210, 25%, 95%); padding: 0.125rem 0.375rem; border-radius: 4px; font-size: 0.65rem;">(12)</span>
+                                </div>
+                                <div style="background: hsl(210, 25%, 99%); border: 1px solid hsl(215, 25%, 90%); border-radius: 6px; padding: 0.75rem; margin-bottom: 0.75rem; position: relative;">
+                                    <!-- Priority rail -->
+                                    <div style="position: absolute; left: 0; top: 0; bottom: 0; width: 6px; background: hsl(220, 15%, 35%); border-top-left-radius: 6px; border-bottom-left-radius: 6px;"></div>
+                                    <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; padding-left: 0.5rem;">
+                                        <input type="checkbox" style="width: 12px; height: 12px;">
+                                        <div style="font-size: 0.8rem; font-weight: 600; color: #111111;">Luna Wright</div>
+                                    </div>
+                                    <div style="font-size: 0.65rem; color: hsl(220, 15%, 35%); margin-bottom: 0.5rem; padding-left: 0.5rem;">luna.wright@hotmail.com</div>
+                                    <div style="font-size: 0.7rem; color: #111111; margin-bottom: 0.5rem; padding-left: 0.5rem;">BA (Hons) Professional Musi...</div>
+                                    <div style="display: flex; gap: 0.25rem; flex-wrap: wrap; margin-bottom: 0.5rem; padding-left: 0.5rem;">
+                                        <span style="padding: 0.1rem 0.4rem; background: hsl(210, 25%, 95%); border-radius: 4px; font-size: 0.6rem;">Lead Score 74 (Medium)</span>
+                                        <span style="padding: 0.1rem 0.4rem; background: hsl(210, 25%, 95%); border-radius: 4px; font-size: 0.6rem;">Progression 80%</span>
+                                        <span style="padding: 0.1rem 0.4rem; background: hsl(210, 25%, 95%); border-radius: 4px; font-size: 0.6rem;">Enrollment 78%</span>
+                                    </div>
+                                    <div style="font-size: 0.65rem; color: #FF0800; margin-bottom: 0.25rem; padding-left: 0.5rem;">▲ 1 blocker</div>
+                                    <div style="font-size: 0.6rem; color: hsl(220, 15%, 35%); padding-left: 0.5rem;">No recorded consent for outreach</div>
+                                </div>
+                            </div>
+                            
+                            <!-- Column 3: Conditional Offer (No Response) -->
+                            <div style="flex: 1; background: rgba(255, 255, 255, 0.75); backdrop-filter: blur(16px); border: 1px solid rgba(148, 163, 184, 0.4); border-radius: 26px; padding: 1rem; box-shadow: 0 18px 45px -28px rgba(15, 23, 42, 0.75);">
+                                <div style="font-size: 0.75rem; font-weight: 600; margin-bottom: 1rem; color: #111111; display: flex; align-items: center; justify-content: space-between;">
+                                    <span>Conditional Offer (No Response)</span>
+                                    <span style="background: hsl(210, 25%, 95%); padding: 0.125rem 0.375rem; border-radius: 4px; font-size: 0.65rem;">(8)</span>
+                                </div>
+                                <div style="background: hsl(210, 25%, 99%); border: 1px solid hsl(215, 25%, 90%); border-radius: 6px; padding: 0.75rem; margin-bottom: 0.75rem; position: relative;">
+                                    <!-- Priority rail -->
+                                    <div style="position: absolute; left: 0; top: 0; bottom: 0; width: 6px; background: #FF0800; border-top-left-radius: 6px; border-bottom-left-radius: 6px;"></div>
+                                    <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; padding-left: 0.5rem;">
+                                        <input type="checkbox" style="width: 12px; height: 12px;">
+                                        <div style="font-size: 0.8rem; font-weight: 600; color: #111111;">Noah Thompson</div>
+                                    </div>
+                                    <div style="font-size: 0.65rem; color: hsl(220, 15%, 35%); margin-bottom: 0.5rem; padding-left: 0.5rem;">benjamin.williams.127@gmail.com</div>
+                                    <div style="font-size: 0.7rem; color: #111111; margin-bottom: 0.5rem; padding-left: 0.5rem;">BA (Hons) Songwriting and ...</div>
+                                    <div style="display: flex; gap: 0.25rem; flex-wrap: wrap; margin-bottom: 0.5rem; padding-left: 0.5rem;">
+                                        <span style="padding: 0.1rem 0.4rem; background: hsl(210, 25%, 95%); border-radius: 4px; font-size: 0.6rem;">Lead Score 78 (High)</span>
+                                        <span style="padding: 0.1rem 0.4rem; background: hsl(210, 25%, 95%); border-radius: 4px; font-size: 0.6rem;">Progression 60%</span>
+                                        <span style="padding: 0.1rem 0.4rem; background: hsl(210, 25%, 95%); border-radius: 4px; font-size: 0.6rem;">Enrollment 63%</span>
+                                    </div>
+                                    <div style="font-size: 0.65rem; color: #FF0800; margin-bottom: 0.25rem; padding-left: 0.5rem;">▲ 3 blockers</div>
+                                    <div style="font-size: 0.6rem; color: hsl(220, 15%, 35%); padding-left: 0.5rem;">No formal offer made, No recorded consent for outreach</div>
+                                </div>
+                            </div>
+                            
+                            <!-- Column 4: Unconditional Offer (No Response) -->
+                            <div style="flex: 1; background: rgba(255, 255, 255, 0.75); backdrop-filter: blur(16px); border: 1px solid rgba(148, 163, 184, 0.4); border-radius: 26px; padding: 1rem; box-shadow: 0 18px 45px -28px rgba(15, 23, 42, 0.75);">
+                                <div style="font-size: 0.75rem; font-weight: 600; margin-bottom: 1rem; color: #111111; display: flex; align-items: center; justify-content: space-between;">
+                                    <span>Unconditional Offer (No Response)</span>
+                                    <span style="background: hsl(210, 25%, 95%); padding: 0.125rem 0.375rem; border-radius: 4px; font-size: 0.65rem;">(5)</span>
+                                </div>
+                                <div style="background: hsl(210, 25%, 99%); border: 1px solid hsl(215, 25%, 90%); border-radius: 6px; padding: 0.75rem; margin-bottom: 0.75rem; position: relative;">
+                                    <!-- Priority rail -->
+                                    <div style="position: absolute; left: 0; top: 0; bottom: 0; width: 6px; background: #FF0800; border-top-left-radius: 6px; border-bottom-left-radius: 6px;"></div>
+                                    <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; padding-left: 0.5rem;">
+                                        <input type="checkbox" style="width: 12px; height: 12px;">
+                                        <div style="font-size: 0.8rem; font-weight: 600; color: #111111;">Isla Mitchell</div>
+                                    </div>
+                                    <div style="font-size: 0.65rem; color: hsl(220, 15%, 35%); margin-bottom: 0.5rem; padding-left: 0.5rem;">mason.scott.122@yahoo.com</div>
+                                    <div style="font-size: 0.7rem; color: #111111; margin-bottom: 0.5rem; padding-left: 0.5rem;">MA Music Perform</div>
+                                    <div style="display: flex; gap: 0.25rem; flex-wrap: wrap; margin-bottom: 0.5rem; padding-left: 0.5rem;">
+                                        <span style="padding: 0.1rem 0.4rem; background: hsl(210, 25%, 95%); border-radius: 4px; font-size: 0.6rem;">Lead Score 61 (Med)</span>
+                                        <span style="padding: 0.1rem 0.4rem; background: hsl(210, 25%, 95%); border-radius: 4px; font-size: 0.6rem;">Progression 45%</span>
+                                        <span style="padding: 0.1rem 0.4rem; background: hsl(210, 25%, 95%); border-radius: 4px; font-size: 0.6rem;">Enrollment 52%</span>
+                                    </div>
+                                    <div style="font-size: 0.65rem; color: #FF0800; margin-bottom: 0.25rem; padding-left: 0.5rem;">▲ 2 blockers</div>
+                                    <div style="font-size: 0.6rem; color: hsl(220, 15%, 35%); padding-left: 0.5rem;">No recorded consent for outreach, No engagement for 23 days</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="highlight-box" style="margin-top: 1.5rem;">
+                    <h3>Ivy OS delivers AI-driven triage, insight, and action directly inside live admissions workflows — proving how an AI-native architecture transforms daily operations.</h3>
+                    <div style="margin-top: 1rem; padding: 0.5rem 1rem; background: rgba(10, 31, 26, 0.08); border-radius: 6px; border-left: 3px solid var(--brand-forest);">
+                        <p style="margin: 0; font-size: 0.9rem; color: var(--brand-forest); font-weight: 600;">🛡️ DPIA + security pack ready — built for HE procurement</p>
+                    </div>
+                </div>
+            </div>
+            <div class="slide-number">5</div>
+        </div>
+
+        <!-- Slide 6: Architecture & Tech Stack -->
+        <div class="slide">
+            <div class="slide-content">
+                <h2>Built from the ground up on an<br/><span class="success">AI-native, modular substrate</span></h2>
+                <p class="subtitle">Engineered around an intelligent, flexible core that unifies data, workflows, and automation — and lets institutions scale capability or cost as they grow.</p>
+                
+                <div class="card card-glow" style="margin-top: 1.5rem;">
+                    <h3 class="success" style="margin-bottom: 1rem;">System Architecture</h3>
+                    <div style="display: grid; gap: 1rem; font-size: 0.9rem;">
+                        <div style="padding: 0.75rem; background: rgba(10, 31, 26, 0.03); border-left: 3px solid #0A1F1A; border-radius: 4px;">
+                            <div style="font-weight: 600; color: #111111; margin-bottom: 0.25rem;">1. Frontend (UI Layer)</div>
+                            <div style="color: hsl(220, 15%, 35%); margin-bottom: 0.25rem;">Vite + React + TypeScript + Tailwind + shadcn/ui</div>
+                            <div style="font-size: 0.85rem; color: hsl(220, 15%, 45%);">Fast, modular interface with consumer-grade design • Built for rapid iteration and future white-labelling</div>
+                    </div>
+                        <div style="padding: 0.75rem; background: rgba(10, 31, 26, 0.03); border-left: 3px solid #0A1F1A; border-radius: 4px;">
+                            <div style="font-weight: 600; color: #111111; margin-bottom: 0.25rem;">2. Backend (API Layer)</div>
+                            <div style="color: hsl(220, 15%, 35%); margin-bottom: 0.25rem;">FastAPI + Supabase (PostgreSQL + pgvector)</div>
+                            <div style="font-size: 0.85rem; color: hsl(220, 15%, 45%);">Real-time data sync between CRM, SIS, and AI modules • Row-level security, encrypted storage, RBAC • Scales from pilot to enterprise</div>
+                    </div>
+                        <div style="padding: 0.75rem; background: rgba(10, 31, 26, 0.05); border-left: 3px solid #0A1F1A; border-radius: 4px;">
+                            <div style="font-weight: 600; color: #111111; margin-bottom: 0.25rem;">3. AI Substrate (Modular & Model-Agnostic)</div>
+                            <div style="color: hsl(220, 15%, 35%); margin-bottom: 0.25rem;">LangChain + AI Router</div>
+                            <div style="font-size: 0.85rem; color: hsl(220, 15%, 45%);">Institutions choose preferred LLMs (Claude, Gemini, GPT) balancing performance and cost • AI Router orchestrates retrieval, reasoning, next-best-action • Continuous-learning feedback loops adapt to each institution's data</div>
+                    </div>
+                        <div style="padding: 0.75rem; background: rgba(10, 31, 26, 0.03); border-left: 3px solid #0A1F1A; border-radius: 4px;">
+                            <div style="font-weight: 600; color: #111111; margin-bottom: 0.25rem;">4. Workflow & Automation Layer (Native + Extensible)</div>
+                            <div style="color: hsl(220, 15%, 35%); margin-bottom: 0.25rem;">Built-in engine + optional n8n/API webhooks</div>
+                            <div style="font-size: 0.85rem; color: hsl(220, 15%, 45%);">Native workflow engine for key admissions processes • Optional integrations connect Ivy to wider institutional tools • Self-contained automation or deep interoperability with finance, registry, marketing stacks</div>
+                    </div>
+                        <div style="padding: 0.75rem; background: rgba(10, 31, 26, 0.03); border-left: 3px solid #0A1F1A; border-radius: 4px;">
+                            <div style="font-weight: 600; color: #111111; margin-bottom: 0.25rem;">5. Vector Knowledge Base</div>
+                            <div style="color: hsl(220, 15%, 35%); margin-bottom: 0.25rem;">RAG (Retrieval Augmented Generation)</div>
+                            <div style="font-size: 0.85rem; color: hsl(220, 15%, 45%);">Indexed UCAS, OfS, institutional documents with live citation • Policy-aware responses embedded in every workflow • Auto-updates as regulations change</div>
+                    </div>
+                        <div style="padding: 0.75rem; background: rgba(10, 31, 26, 0.03); border-left: 3px solid #0A1F1A; border-radius: 4px;">
+                            <div style="font-weight: 600; color: #111111; margin-bottom: 0.25rem;">6. Analytics & Forecasting Engine</div>
+                            <div style="color: hsl(220, 15%, 35%); margin-bottom: 0.25rem;">Python ML (XGBoost, Prophet, LightGBM)</div>
+                            <div style="font-size: 0.85rem; color: hsl(220, 15%, 45%);">Predicts outcomes and enrolment with ±5% accuracy • Feeds triage scores and performance dashboards in real time • Retrains continuously on each institution's data</div>
+                    </div>
+                    </div>
+                    </div>
+
+                <div class="card card-glow" style="margin-top: 1.5rem;">
+                    <h3 class="primary" style="margin-bottom: 1rem;">Performance & Security</h3>
+                    <div style="margin-bottom: 1rem; padding: 0.5rem 1rem; background: rgba(10, 31, 26, 0.08); border-radius: 6px; border-left: 3px solid var(--brand-forest);">
+                        <p style="margin: 0; font-size: 0.9rem; color: var(--brand-forest); font-weight: 600;">🇬🇧 UK/EU data residency • WCAG 2.2 AA • Procurement-ready from Day 1</p>
+                    </div>
+                    <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
+                        <thead>
+                            <tr style="border-bottom: 2px solid #0A1F1A;">
+                                <th style="text-align: left; padding: 0.5rem; font-weight: 600; color: #0A1F1A;">Metric</th>
+                                <th style="text-align: left; padding: 0.5rem; font-weight: 600; color: #0A1F1A;">Target</th>
+                                <th style="text-align: left; padding: 0.5rem; font-weight: 600; color: #0A1F1A;">What It Means</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr style="border-bottom: 1px solid hsl(215, 25%, 85%);">
+                                <td style="padding: 0.5rem;">Prediction latency</td>
+                                <td style="padding: 0.5rem; font-weight: 600;">&lt; 200 ms</td>
+                                <td style="padding: 0.5rem; color: hsl(220, 15%, 45%);">Instant triage and forecasts</td>
+                            </tr>
+                            <tr style="border-bottom: 1px solid hsl(215, 25%, 85%);">
+                                <td style="padding: 0.5rem;">RAG query response</td>
+                                <td style="padding: 0.5rem; font-weight: 600;">1–3 s</td>
+                                <td style="padding: 0.5rem; color: hsl(220, 15%, 45%);">Policy answers faster than manual lookup</td>
+                            </tr>
+                            <tr style="border-bottom: 1px solid hsl(215, 25%, 85%);">
+                                <td style="padding: 0.5rem;">Uptime SLA</td>
+                                <td style="padding: 0.5rem; font-weight: 600;">99.5% +</td>
+                                <td style="padding: 0.5rem; color: hsl(220, 15%, 45%);">Mission-critical reliability</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 0.5rem;">Compliance</td>
+                                <td style="padding: 0.5rem; font-weight: 600;">GDPR + OfS-ready</td>
+                                <td style="padding: 0.5rem; color: hsl(220, 15%, 45%);">UK/EU data residency & DPA templates included</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="highlight-box" style="margin-top: 1.5rem;">
+                    <h3>Ivy OS gives universities an AI-native foundation with the flexibility to choose their own models, workflows, and integrations — without sacrificing speed, security, or predictive accuracy.</h3>
+                </div>
+            </div>
+            <div class="slide-number">6</div>
+        </div>
+
+        <!-- Slide 7: Competitive Landscape -->
+        <div class="slide">
+            <div class="slide-content">
+                <h2>Why incumbents can't move fast enough —<br/>and <span class="success">new entrants can't go deep enough</span></h2>
+                <p class="subtitle">Ivy OS combines five years of Higher Education operations experience with a modern AI-native foundation that legacy vendors can't rebuild and startups can't replicate.</p>
+                
+                <div class="card card-glow" style="margin-top: 1.5rem;">
+                    <h3 class="success" style="margin-bottom: 1rem;">Market Positioning</h3>
+                    <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
+                        <thead>
+                            <tr style="border-bottom: 2px solid #0A1F1A;">
+                                <th style="text-align: left; padding: 0.5rem; font-weight: 600; color: #0A1F1A;">Player</th>
+                                <th style="text-align: left; padding: 0.5rem; font-weight: 600; color: #0A1F1A;">Built For</th>
+                                <th style="text-align: left; padding: 0.5rem; font-weight: 600; color: #0A1F1A;">Core Limitation</th>
+                                <th style="text-align: left; padding: 0.5rem; font-weight: 600; color: #0A1F1A;">Ivy OS Edge</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr style="border-bottom: 1px solid hsl(215, 25%, 85%);">
+                                <td style="padding: 0.5rem; font-weight: 600;">HubSpot / Salesforce</td>
+                                <td style="padding: 0.5rem;">B2B sales funnels (MQL → SQL → Customer)</td>
+                                <td style="padding: 0.5rem; color: hsl(220, 15%, 45%);">Wrong data model for HE; pipelines, not admissions lifecycles</td>
+                                <td style="padding: 0.5rem; color: #0A1F1A; font-weight: 600;">Native HE data model (enquiry → offer → enrolment → alumni)</td>
+                            </tr>
+                            <tr style="border-bottom: 1px solid hsl(215, 25%, 85%);">
+                                <td style="padding: 0.5rem; font-weight: 600;">Ellucian / Unit4 / Tribal</td>
+                                <td style="padding: 0.5rem;">Compliance and record-keeping</td>
+                                <td style="padding: 0.5rem; color: hsl(220, 15%, 45%);">Legacy monoliths with bolt-on AI; slow innovation; poor UX</td>
+                                <td style="padding: 0.5rem; color: #0A1F1A; font-weight: 600;">Modern, modular, AI-first with consumer-grade interface</td>
+                            </tr>
+                            <tr style="border-bottom: 1px solid hsl(215, 25%, 85%);">
+                                <td style="padding: 0.5rem; font-weight: 600;">Point Solutions / Chatbots</td>
+                                <td style="padding: 0.5rem;">Isolated features (lead scoring, chat)</td>
+                                <td style="padding: 0.5rem; color: hsl(220, 15%, 45%);">No end-to-end workflow or data layer; low institutional trust</td>
+                                <td style="padding: 0.5rem; color: #0A1F1A; font-weight: 600;">Unified OS connecting CRM, SIS, and forecasting</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 0.5rem; font-weight: 600;">University IT / Internal Builds</td>
+                                <td style="padding: 0.5rem;">Bespoke internal tools</td>
+                                <td style="padding: 0.5rem; color: hsl(220, 15%, 45%);">Limited resources, high maintenance, no ML expertise</td>
+                                <td style="padding: 0.5rem; color: #0A1F1A; font-weight: 600;">Product-level R&D shared across institutions</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    </div>
+
+                <div class="card card-glow" style="margin-top: 1.5rem;">
+                    <h3 class="primary" style="margin-bottom: 1rem;">Why Our Lead Compounds Over Time</h3>
+                    <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
+                        <thead>
+                            <tr style="border-bottom: 2px solid #0A1F1A;">
+                                <th style="text-align: left; padding: 0.5rem; font-weight: 600; color: #0A1F1A;">Year</th>
+                                <th style="text-align: left; padding: 0.5rem; font-weight: 600; color: #0A1F1A;">Ivy OS Position</th>
+                                <th style="text-align: left; padding: 0.5rem; font-weight: 600; color: #0A1F1A;">Competitor Position</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr style="border-bottom: 1px solid hsl(215, 25%, 85%);">
+                                <td style="padding: 0.5rem; font-weight: 600;">Now</td>
+                                <td style="padding: 0.5rem; color: #0A1F1A;">Product built on five years of real admissions experience — working MVP with live forecasting and AI triage</td>
+                                <td style="padding: 0.5rem; color: hsl(220, 15%, 45%);">No AI-native HE platform in production; still defining problem space</td>
+                            </tr>
+                            <tr style="border-bottom: 1px solid hsl(215, 25%, 85%);">
+                                <td style="padding: 0.5rem; font-weight: 600;">+12 months</td>
+                                <td style="padding: 0.5rem; color: #0A1F1A;">3 institutional pilots → 6,000+ applications in dataset</td>
+                                <td style="padding: 0.5rem; color: hsl(220, 15%, 45%);">Early prototypes, no institutional data</td>
+                            </tr>
+                            <tr style="border-bottom: 1px solid hsl(215, 25%, 85%);">
+                                <td style="padding: 0.5rem; font-weight: 600;">+24 months</td>
+                                <td style="padding: 0.5rem; color: #0A1F1A;">10 institutions → 20,000+ applications feeding model refinement</td>
+                                <td style="padding: 0.5rem; color: hsl(220, 15%, 45%);">1-2 pilots, no UCAS/OfS integrations</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 0.5rem; font-weight: 600;">+36 months</td>
+                                <td style="padding: 0.5rem; color: #0A1F1A;">25+ institutions → 50,000+ applications, integration ecosystem established</td>
+                                <td style="padding: 0.5rem; color: hsl(220, 15%, 45%);">Too late: switching costs + data moat locked in</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div style="margin-top: 1rem; padding: 1rem; background: rgba(10, 31, 26, 0.05); border-radius: 8px; border-left: 4px solid #0A1F1A;">
+                        <p style="margin: 0; font-weight: 600; color: #111111;">The Moat:</p>
+                        <p style="margin: 0.5rem 0 0 0; font-size: 0.95rem; color: hsl(220, 15%, 35%);">Operational expertise → Better design → Faster adoption → Better data → Better outcomes → More customers.<br/>Each admissions cycle compounds the advantage.</p>
+                    </div>
+                    </div>
+
+                <div class="highlight-box" style="margin-top: 1.5rem;">
+                    <h3>This isn't a "best features" race — it's a <strong>best understanding</strong> race.<br/>Ivy OS was built from inside the problem, not around it.</h3>
+                </div>
+            </div>
+            <div class="slide-number">7</div>
+        </div>
+
+        <!-- Slide 8: Traction / Proof Point -->
+        <div class="slide">
+            <div class="slide-content">
+                <h2>Proven in production:<br/><span class="success">±5% forecast accuracy in real Higher Education admissions</span></h2>
+                <p class="subtitle">Ivy OS evolved from five years of live operational systems, not a prototype.</p>
+                
+                <div class="card card-success card-glow" style="margin-top: 1.5rem;">
+                    <p style="font-size: 1.05rem; font-style: italic; margin: 0;">"Over several years leading student recruitment and admissions at WaterBear College of Music, I rebuilt our data infrastructure from the ground up — exporting from HubSpot into Supabase, modelling conversion rates with XGBoost and Prophet, and designing SQL pipelines to track performance in real time. What began as an internal rebuild became the foundation for Ivy OS."</p>
+                    <p style="font-size: 0.95rem; margin: 1rem 0 0 0; text-align: right; font-style: normal; color: #0A1F1A; font-weight: 600;">— Laurance Bridge, Founder</p>
+                </div>
+
+                <div class="card card-glow" style="margin-top: 1.5rem;">
+                    <h3 class="success" style="margin-bottom: 1rem;">What's Proven</h3>
+                    <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
+                        <thead>
+                            <tr style="border-bottom: 2px solid #0A1F1A;">
+                                <th style="text-align: left; padding: 0.5rem; font-weight: 600; color: #0A1F1A;">Area</th>
+                                <th style="text-align: left; padding: 0.5rem; font-weight: 600; color: #0A1F1A;">Before</th>
+                                <th style="text-align: left; padding: 0.5rem; font-weight: 600; color: #0A1F1A;">After Ivy OS Foundations</th>
+                                <th style="text-align: left; padding: 0.5rem; font-weight: 600; color: #0A1F1A;">Impact</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr style="border-bottom: 1px solid hsl(215, 25%, 85%);">
+                                <td style="padding: 0.5rem; font-weight: 600;">Forecast accuracy</td>
+                                <td style="padding: 0.5rem; color: hsl(220, 15%, 45%);">±15–20% error</td>
+                                <td style="padding: 0.5rem; color: #0A1F1A; font-weight: 600;">±5% of final enrolments</td>
+                                <td style="padding: 0.5rem;">Confident, early budget planning</td>
+                            </tr>
+                            <tr style="border-bottom: 1px solid hsl(215, 25%, 85%);">
+                                <td style="padding: 0.5rem; font-weight: 600;">Manual triage time</td>
+                                <td style="padding: 0.5rem; color: hsl(220, 15%, 45%);">12 hrs/week</td>
+                                <td style="padding: 0.5rem; color: #0A1F1A; font-weight: 600;">4–5 hrs/week</td>
+                                <td style="padding: 0.5rem;">60% time saving for admissions staff</td>
+                            </tr>
+                            <tr style="border-bottom: 1px solid hsl(215, 25%, 85%);">
+                                <td style="padding: 0.5rem; font-weight: 600;">Reporting</td>
+                                <td style="padding: 0.5rem; color: hsl(220, 15%, 45%);">Ad-hoc, Excel-based</td>
+                                <td style="padding: 0.5rem; color: #0A1F1A; font-weight: 600;">Live dashboards</td>
+                                <td style="padding: 0.5rem;">Instant visibility across the pipeline</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 0.5rem; font-weight: 600;">Decision confidence</td>
+                                <td style="padding: 0.5rem; color: hsl(220, 15%, 45%);">Reactive and uncertain</td>
+                                <td style="padding: 0.5rem; color: #0A1F1A; font-weight: 600;">Data-backed, real-time</td>
+                                <td style="padding: 0.5rem;">Leadership planning months earlier</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="two-column" style="margin-top: 1.5rem; gap: 1.5rem;">
+                    <div class="card card-glow compact">
+                        <h3 class="primary" style="margin-bottom: 0.75rem; font-size: 1rem;">What This Demonstrates</h3>
+                        <ul style="margin: 0; font-size: 0.9rem;">
+                            <li>Live-proven models with measurable ROI (accuracy + time saved)</li>
+                            <li>Workflows mirror real HE operations — not theory</li>
+                        </ul>
+                    </div>
+                    <div class="card card-glow">
+                        <h3 class="success" style="margin-bottom: 0.75rem; font-size: 1rem;">Early Interest</h3>
+                        <p style="margin: 0 0 0.5rem 0; font-size: 0.85rem; color: hsl(220, 15%, 35%); font-weight: 600;">Warm institutions in active discussion:</p>
+                        <ul style="margin: 0; font-size: 0.85rem; line-height: 1.5;">
+                            <li><strong>WaterBear College of Music</strong> — source institution and live dataset foundation</li>
+                            <li><strong>BIMM Group</strong> — strong founder relationship with Group CMO; interest in multi-campus AI tools</li>
+                            <li><strong>Falmouth University</strong> — constructive conversation with Head of Digital Marketing highlighting shared pain points</li>
+                        </ul>
+                        <p style="margin: 1rem 0 0 0; font-size: 0.9rem; font-style: italic; color: #0A1F1A;">"We're trying to make HubSpot work for admissions — it just doesn't fit."</p>
+                    </div>
+                </div>
+
+                <div class="highlight-box" style="margin-top: 1.5rem;">
+                    <h3>Ivy OS isn't a concept — it's the commercialisation of a proven, working model that has already delivered measurable results inside Higher Education admissions.</h3>
+                </div>
+
+                <div style="margin-top: 1.5rem; padding: 0.75rem 1.25rem; background: rgba(10, 31, 26, 0.08); border-radius: 8px; border-left: 4px solid var(--brand-forest);">
+                    <p style="margin: 0; font-size: 0.9rem; color: var(--brand-forest); font-weight: 600;">🧩 Next step: converting warm institutional interest into pilots under departmental thresholds (3–6 month, budget-neutral entry)</p>
+                </div>
+            </div>
+            <div class="slide-number">8</div>
+        </div>
+
+        <!-- Slide 9: Business Model & Pricing -->
+        <div class="slide">
+            <div class="slide-content">
+                <h2>Predictable, <span class="success">budget-neutral pricing</span><br/>designed for Higher Education</h2>
+                <p class="subtitle">Replaces multiple fragmented systems with one AI-native platform — same budget, higher performance.</p>
+                
+                <div class="card card-glow" style="margin-top: 1.5rem;">
+                    <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
+                        <thead>
+                            <tr style="border-bottom: 2px solid #0A1F1A;">
+                                <th style="text-align: left; padding: 0.75rem; font-weight: 600; color: #0A1F1A;">Tier</th>
+                                <th style="text-align: left; padding: 0.75rem; font-weight: 600; color: #0A1F1A;">Institution Type</th>
+                                <th style="text-align: left; padding: 0.75rem; font-weight: 600; color: #0A1F1A;">Students (FTE)</th>
+                                <th style="text-align: left; padding: 0.75rem; font-weight: 600; color: #0A1F1A;">Annual Fee</th>
+                                <th style="text-align: left; padding: 0.75rem; font-weight: 600; color: #0A1F1A;">Includes</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr style="border-bottom: 1px solid hsl(215, 25%, 85%);">
+                                <td style="padding: 0.75rem; font-weight: 600;">Starter</td>
+                                <td style="padding: 0.75rem;">Specialist college / private provider</td>
+                                <td style="padding: 0.75rem;">≤ 500</td>
+                                <td style="padding: 0.75rem; font-weight: 600; color: #0A1F1A;">£18k</td>
+                                <td style="padding: 0.75rem;">Full CRM + SIS-lite + AI Comms + reporting</td>
+                            </tr>
+                            <tr style="border-bottom: 1px solid hsl(215, 25%, 85%);">
+                                <td style="padding: 0.75rem; font-weight: 600;">Growth</td>
+                                <td style="padding: 0.75rem;">Mid-size university / FE HE arm</td>
+                                <td style="padding: 0.75rem;">501–3,000</td>
+                                <td style="padding: 0.75rem; font-weight: 600; color: #0A1F1A;">£32k</td>
+                                <td style="padding: 0.75rem;">Adds Compliance Analytics + Multi-Campus</td>
+                            </tr>
+                            <tr style="border-bottom: 1px solid hsl(215, 25%, 85%);">
+                                <td style="padding: 0.75rem; font-weight: 600;">Enterprise</td>
+                                <td style="padding: 0.75rem;">Post-92 / large HEI</td>
+                                <td style="padding: 0.75rem;">3,001–10,000+</td>
+                                <td style="padding: 0.75rem; font-weight: 600; color: #0A1F1A;">£55k</td>
+                                <td style="padding: 0.75rem;">Full OS suite + Automation + Integrations</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 0.75rem; font-weight: 600;">Group / System</td>
+                                <td style="padding: 0.75rem;">Franchises / university groups</td>
+                                <td style="padding: 0.75rem;">—</td>
+                                <td style="padding: 0.75rem; font-weight: 600; color: #0A1F1A;">from £80k</td>
+                                <td style="padding: 0.75rem;">Multi-tenant data lake + Custom SSO</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div style="margin-top: 1rem; padding: 0.5rem 1rem; background: rgba(10, 31, 26, 0.08); border-radius: 6px; border-left: 3px solid var(--brand-forest);">
+                        <p style="margin: 0; font-size: 0.85rem; color: var(--brand-forest); font-weight: 600;">🕒 Pilot (≤ 6 months) • Half fee • Converts on success</p>
+                    </div>
+                    </div>
+
+                <div class="two-column" style="margin-top: 1.5rem; gap: 1.5rem;">
+                    <div class="card card-glow">
+                        <h3 class="success" style="margin-bottom: 0.75rem; font-size: 1rem;">Pricing Philosophy</h3>
+                        <ul style="margin: 0; font-size: 0.9rem; list-style: none; padding: 0;">
+                            <li style="margin-bottom: 0.5rem;">✅ <strong>Budget-neutral</strong> — replaces 3–4 existing tools</li>
+                            <li style="margin-bottom: 0.5rem;">✅ <strong>Procurement-friendly</strong> — flat annual fee</li>
+                            <li style="margin-bottom: 0.5rem;">✅ <strong>Scalable</strong> — simple growth by FTE</li>
+                            <li>✅ <strong>Low risk</strong> — pilot option (3–6 months at 50% annual fee)</li>
+                        </ul>
+                    </div>
+                    <div class="card card-success card-glow">
+                        <p style="font-size: 1.05rem; font-style: italic; margin: 0 0 1rem 0;">"Universities already spend £30–50k on HubSpot, timetabling, and spreadsheets just to keep admissions running. Ivy OS delivers all of that — plus AI-powered forecasting and automation — for the same spend, built for education from day one."</p>
+                    </div>
+                    </div>
+
+                <div class="highlight-box" style="margin-top: 1.5rem;">
+                    <h3><strong>One institutional subscription covering everything needed for modern HE operations — procurement-ready and budget-neutral.</strong></h3>
+                </div>
+            </div>
+            <div class="slide-number">9</div>
+        </div>
+
+        <!-- Slide 10: Revenue Model & Path to £1M ARR -->
+        <div class="slide">
+            <div class="slide-content">
+                <h2><span class="success">Capital-efficient growth</span><br/>to category leadership</h2>
+                <p class="subtitle">A focused 24-month plan from pilot validation to £1M+ ARR, built on realistic pricing, high margins, and disciplined scaling.</p>
+                
+                <div class="card card-glow" style="margin-top: 1.5rem;">
+                    <h3 class="success" style="margin-bottom: 1rem;">ARR Path (Conservative Projections)</h3>
+                    <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
+                        <thead>
+                            <tr style="border-bottom: 2px solid #0A1F1A;">
+                                <th style="text-align: left; padding: 0.5rem; font-weight: 600; color: #0A1F1A;">Milestone</th>
+                                <th style="text-align: left; padding: 0.5rem; font-weight: 600; color: #0A1F1A;">Customers</th>
+                                <th style="text-align: left; padding: 0.5rem; font-weight: 600; color: #0A1F1A;">Blended ACV (£)</th>
+                                <th style="text-align: left; padding: 0.5rem; font-weight: 600; color: #0A1F1A;">ARR (£)</th>
+                                <th style="text-align: left; padding: 0.5rem; font-weight: 600; color: #0A1F1A;">Timeline</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr style="border-bottom: 1px solid hsl(215, 25%, 85%);">
+                                <td style="padding: 0.5rem; font-weight: 600;">Initial traction</td>
+                                <td style="padding: 0.5rem;">3 pilots</td>
+                                <td style="padding: 0.5rem;">25,000 (discounted)</td>
+                                <td style="padding: 0.5rem; font-weight: 600; color: #0A1F1A;">75,000</td>
+                                <td style="padding: 0.5rem;">Month 12</td>
+                            </tr>
+                            <tr style="border-bottom: 1px solid hsl(215, 25%, 85%);">
+                                <td style="padding: 0.5rem; font-weight: 600;">Product-market fit</td>
+                                <td style="padding: 0.5rem;">10 paying institutions</td>
+                                <td style="padding: 0.5rem;">35,000 (mixed tiers)</td>
+                                <td style="padding: 0.5rem; font-weight: 600; color: #0A1F1A;">350,000</td>
+                                <td style="padding: 0.5rem;">Month 18</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 0.5rem; font-weight: 600;">Scale momentum</td>
+                                <td style="padding: 0.5rem;">25 institutions</td>
+                                <td style="padding: 0.5rem;">42,000 (mature mix)</td>
+                                <td style="padding: 0.5rem; font-weight: 600; color: #0A1F1A;">1.05M</td>
+                                <td style="padding: 0.5rem;">Month 30</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="two-column" style="margin-top: 1.5rem; gap: 1.5rem;">
+                    <div class="card card-glow">
+                        <h3 class="primary" style="margin-bottom: 0.75rem; font-size: 1rem;">Unit Economics (Mature State)</h3>
+                        <table style="width: 100%; font-size: 0.85rem;">
+                            <tbody>
+                                <tr style="border-bottom: 1px solid hsl(215, 25%, 90%);">
+                                    <td style="padding: 0.4rem 0; font-weight: 600;">Blended ACV</td>
+                                    <td style="padding: 0.4rem 0; text-align: right; color: #0A1F1A; font-weight: 600;">£42,000</td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid hsl(215, 25%, 90%);">
+                                    <td style="padding: 0.4rem 0; font-weight: 600;">Gross Margin</td>
+                                    <td style="padding: 0.4rem 0; text-align: right; color: #0A1F1A; font-weight: 600;">92%</td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid hsl(215, 25%, 90%);">
+                                    <td style="padding: 0.4rem 0; font-weight: 600;">CAC</td>
+                                    <td style="padding: 0.4rem 0; text-align: right; color: #0A1F1A; font-weight: 600;">£15,000</td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid hsl(215, 25%, 90%);">
+                                    <td style="padding: 0.4rem 0; font-weight: 600;">Payback Period</td>
+                                    <td style="padding: 0.4rem 0; text-align: right; color: #0A1F1A; font-weight: 600;">13 months</td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid hsl(215, 25%, 90%);">
+                                    <td style="padding: 0.4rem 0; font-weight: 600;">LTV</td>
+                                    <td style="padding: 0.4rem 0; text-align: right; color: #0A1F1A; font-weight: 600;">£150,000+</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 0.4rem 0; font-weight: 600;">LTV:CAC</td>
+                                    <td style="padding: 0.4rem 0; text-align: right; color: #0A1F1A; font-weight: 600; font-size: 1.1rem;">10:1</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="card card-glow">
+                        <h3 class="success" style="margin-bottom: 0.75rem; font-size: 1rem;">Year-by-Year Build</h3>
+                        <div style="font-size: 0.85rem; line-height: 1.6;">
+                            <p style="margin: 0 0 0.75rem 0;"><strong style="color: #0A1F1A;">Year 1 – Pilot Phase</strong><br/>
+                            3–5 customers at 30–50% pilot discount<br/>
+                            Target: <span style="font-weight: 600; color: #0A1F1A;">£75–125k ARR</span></p>
+                            
+                            <p style="margin: 0 0 0.75rem 0;"><strong style="color: #0A1F1A;">Year 2 – Early Growth</strong><br/>
+                            Convert pilots + 7–12 new customers<br/>
+                            Target: <span style="font-weight: 600; color: #0A1F1A;">£350–500k ARR</span></p>
+                            
+                            <p style="margin: 0;"><strong style="color: #0A1F1A;">Year 3 – Scale Momentum</strong><br/>
+                            25–40 total customers, mostly Growth/Enterprise<br/>
+                            Target: <span style="font-weight: 600; color: #0A1F1A;">£1–1.5M ARR</span></p>
+                    </div>
+                    </div>
+                </div>
+
+                <div class="highlight-box" style="margin-top: 1.5rem;">
+                    <h3>A capital-efficient, 24-month path from £75k to £1M+ ARR, built on high-margin SaaS economics, realistic conversion assumptions, and an addressable UK market hiding in plain sight.</h3>
+                </div>
+            </div>
+            <div class="slide-number">10</div>
+        </div>
+
+        <!-- Slide 11: Why Now / The AI Edge -->
+        <div class="slide">
+            <div class="slide-content">
+                <h2>The sector is under pressure,<br/>the technology is ready, and <span class="success">incumbents can't move fast enough</span></h2>
+                <p class="subtitle">Ivy OS arrives at the exact moment when Higher Education needs to modernise operations — and AI finally makes it possible.</p>
+                
+                <div class="card card-glow" style="margin-top: 1.5rem;">
+                    <h3 class="primary" style="margin-bottom: 0.75rem; font-size: 1rem;">1. Sector Pressure Is Reaching Breaking Point</h3>
+                    <ul style="margin: 0; font-size: 0.9rem; line-height: 1.6;">
+                        <li>OfS and compliance expectations are rising: universities must now evidence recruitment ROI, retention, and progression through verifiable data</li>
+                        <li><strong>Franchise and partner colleges above ~300 students will soon be required to apply for OfS registration themselves</strong> — adding new regulatory and reporting burdens to smaller institutions without dedicated data infrastructure</li>
+                        <li>Budgets are tightening: recruitment and admissions teams must deliver more with less while juggling fragmented systems</li>
+                        <li>Leadership urgency: Vice-Chancellors, Marketing, and Registry teams need real-time visibility and audit-ready data</li>
+                    </ul>
+                    <p style="margin: 1rem 0 0 0; font-weight: 600; color: #0A1F1A; font-style: italic;">In short: operational compliance and performance accountability are converging — creating a perfect storm Ivy OS is built to solve.</p>
+                </div>
+
+                <div class="two-column" style="margin-top: 1.5rem; gap: 1.5rem;">
+                    <div class="card card-glow compact">
+                        <h3 class="success" style="margin-bottom: 0.75rem; font-size: 1rem;">2. Technology Has Finally Caught Up</h3>
+                        <ul style="margin: 0; font-size: 0.85rem; line-height: 1.5;">
+                            <li>LLMs (GPT-4, Gemini, Claude) reliable enough for production with stable APIs</li>
+                            <li>RAG architecture enables policy-aware copilots referencing UCAS and OfS guidance</li>
+                            <li>Modern stack (Supabase, pgvector, LangChain) makes AI SaaS fast, secure, affordable</li>
+                        </ul>
+                    </div>
+                    <div class="card card-glow compact">
+                        <h3 class="success" style="margin-bottom: 0.75rem; font-size: 1rem;">3. Incumbents Are Structurally Stuck</h3>
+                        <table style="width: 100%; font-size: 0.75rem; line-height: 1.4;">
+                            <tbody>
+                                <tr style="border-bottom: 1px solid hsl(215, 25%, 90%);">
+                                    <td style="padding: 0.4rem; font-weight: 600;">Sales CRMs</td>
+                                    <td style="padding: 0.4rem; color: hsl(220, 15%, 45%);">Wrong data model — would need full rebuild</td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid hsl(215, 25%, 90%);">
+                                    <td style="padding: 0.4rem; font-weight: 600;">Legacy SIS</td>
+                                    <td style="padding: 0.4rem; color: hsl(220, 15%, 45%);">20-year-old architecture, too much tech debt</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 0.4rem; font-weight: 600;">Horizontal AI</td>
+                                    <td style="padding: 0.4rem; color: hsl(220, 15%, 45%);">No domain context → low operational value</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="card card-glow" style="margin-top: 1.5rem;">
+                    <h3 class="primary" style="margin-bottom: 0.75rem; font-size: 1rem;">Timing Advantage</h3>
+                    <div style="display: flex; gap: 1rem; font-size: 0.85rem;">
+                        <div style="flex: 1;">
+                            <p style="margin: 0 0 0.5rem 0;"><strong style="color: #0A1F1A;">18-month head start:</strong> working AI triage, forecasting, and CRM features already in production</p>
+                            <p style="margin: 0;"><strong style="color: #0A1F1A;">Warm pipeline:</strong> active discussions with WaterBear, BIMM, and Falmouth</p>
+                        </div>
+                        <div style="flex: 1;">
+                            <p style="margin: 0 0 0.5rem 0;"><strong style="color: #0A1F1A;">Market gap:</strong> no credible AI-native HE operating system exists yet</p>
+                            <p style="margin: 0;"><strong style="color: #0A1F1A;">Window:</strong> measured in quarters, not years — before incumbents adapt</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="highlight-box" style="margin-top: 1.5rem;">
+                    <h3>Regulatory pressure, technical readiness, and incumbent inertia have aligned.<br/><strong>Ivy OS is positioned to define the category of AI-native Higher Education operations software — and the window is open now.</strong></h3>
+                    <div style="margin-top: 1rem; padding: 0.5rem 1rem; background: rgba(10, 31, 26, 0.08); border-radius: 6px; border-left: 3px solid var(--brand-forest);">
+                        <p style="margin: 0; font-size: 0.9rem; color: var(--brand-forest); font-weight: 600;">⚡ Framework-ready product: cuts typical HE procurement from 9 months → 6 weeks</p>
+                    </div>
+                </div>
+            </div>
+            <div class="slide-number">11</div>
+        </div>
+
+        <!-- Slide 12: The Raise / Use of Funds -->
+        <div class="slide">
+            <!-- Subtle orb for raise slide -->
+            <div class="orb orb-green" style="width: 500px; height: 500px; top: 50%; left: 50%; transform: translate(-50%, -50%); opacity: 0.06;"></div>
+            
+            <div class="slide-content">
+                <h2><span class="primary">£450k</span> to prove <span class="success">category leadership</span> within 24 months</h2>
+                <p class="subtitle">A focused, capital-efficient plan turning Ivy OS from a working product into a trusted system used by 10 UK institutions and generating £400k ARR.</p>
+                
+                <div class="card card-accent card-glow" style="margin-top: 1.5rem; padding: 1.25rem;">
+                    <h3 style="margin-bottom: 1rem; font-size: 1rem;">Round Structure</h3>
+                    <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
+                        <thead>
+                            <tr style="border-bottom: 2px solid rgba(0, 0, 0, 0.2);">
+                                <th style="text-align: left; padding: 0.5rem; font-weight: 600;">Instrument</th>
+                                <th style="text-align: left; padding: 0.5rem; font-weight: 600;">Valuation Cap</th>
+                                <th style="text-align: left; padding: 0.5rem; font-weight: 600;">Discount</th>
+                                <th style="text-align: left; padding: 0.5rem; font-weight: 600;">Raise Size</th>
+                                <th style="text-align: left; padding: 0.5rem; font-weight: 600;">Runway</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td style="padding: 0.5rem; font-weight: 600;">SAFE</td>
+                                <td style="padding: 0.5rem;">£5 million</td>
+                                <td style="padding: 0.5rem;">20%</td>
+                                <td style="padding: 0.5rem; font-weight: 600; color: #111111;">£450,000</td>
+                                <td style="padding: 0.5rem; font-weight: 600;">24 months</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="card card-glow" style="margin-top: 1.5rem;">
+                    <h3 class="success" style="margin-bottom: 1rem; font-size: 1rem;">Capital Allocation</h3>
+                    <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
+                        <thead>
+                            <tr style="border-bottom: 2px solid #0A1F1A;">
+                                <th style="text-align: left; padding: 0.5rem; font-weight: 600; color: #0A1F1A;">Category</th>
+                                <th style="text-align: left; padding: 0.5rem; font-weight: 600; color: #0A1F1A;">Amount (£)</th>
+                                <th style="text-align: left; padding: 0.5rem; font-weight: 600; color: #0A1F1A;">Purpose</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr style="border-bottom: 1px solid hsl(215, 25%, 85%);">
+                                <td style="padding: 0.5rem; font-weight: 600;">Founder Salary</td>
+                                <td style="padding: 0.5rem; font-weight: 600; color: #0A1F1A;">85,000</td>
+                                <td style="padding: 0.5rem; color: hsl(220, 15%, 45%);">Full-time focus; sustainable, lean leadership</td>
+                            </tr>
+                            <tr style="border-bottom: 1px solid hsl(215, 25%, 85%);">
+                                <td style="padding: 0.5rem; font-weight: 600;">Fractional Principal Engineer + QA</td>
+                                <td style="padding: 0.5rem; font-weight: 600; color: #0A1F1A;">140,000</td>
+                                <td style="padding: 0.5rem; color: hsl(220, 15%, 45%);">Architecture, security, AI infrastructure scaling</td>
+                            </tr>
+                            <tr style="border-bottom: 1px solid hsl(215, 25%, 85%);">
+                                <td style="padding: 0.5rem; font-weight: 600;">GTM & RevOps Support</td>
+                                <td style="padding: 0.5rem; font-weight: 600; color: #0A1F1A;">70,000</td>
+                                <td style="padding: 0.5rem; color: hsl(220, 15%, 45%);">Pilot delivery, onboarding, early customer success</td>
+                            </tr>
+                            <tr style="border-bottom: 1px solid hsl(215, 25%, 85%);">
+                                <td style="padding: 0.5rem; font-weight: 600;">Infrastructure & AI Compute</td>
+                                <td style="padding: 0.5rem; font-weight: 600; color: #0A1F1A;">55,000</td>
+                                <td style="padding: 0.5rem; color: hsl(220, 15%, 45%);">Supabase, model hosting, vector storage, usage costs</td>
+                            </tr>
+                            <tr style="border-bottom: 1px solid hsl(215, 25%, 85%);">
+                                <td style="padding: 0.5rem; font-weight: 600;">Legal & Procurement</td>
+                                <td style="padding: 0.5rem; font-weight: 600; color: #0A1F1A;">40,000</td>
+                                <td style="padding: 0.5rem; color: hsl(220, 15%, 45%);">Procurement docs, DPAs, OfS alignment, contracts</td>
+                            </tr>
+                            <tr style="background: rgba(10, 31, 26, 0.05);">
+                                <td style="padding: 0.5rem; font-weight: 600;">Contingency / R&D Buffer</td>
+                                <td style="padding: 0.5rem; font-weight: 600; color: #0A1F1A;">60,000</td>
+                                <td style="padding: 0.5rem; color: hsl(220, 15%, 45%);">Pilot extensions + unforeseen development</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="two-column" style="margin-top: 1.5rem; gap: 1.5rem;">
+                    <div class="card card-glow">
+                        <h3 class="primary" style="margin-bottom: 0.75rem; font-size: 1rem;">What 24 Months Delivers</h3>
+                        <div style="font-size: 0.8rem; line-height: 1.5;">
+                            <p style="margin: 0 0 0.75rem 0;"><strong style="color: #0A1F1A;">Month 6</strong><br/>
+                            ✓ 2 paid pilots live<br/>
+                            ✓ Product hardened from institutional feedback</p>
+                            
+                            <p style="margin: 0 0 0.75rem 0;"><strong style="color: #0A1F1A;">Month 12</strong><br/>
+                            ✓ 3 total pilots • 2 converted to annual<br/>
+                            ✓ £60–90k ARR achieved</p>
+                            
+                            <p style="margin: 0 0 0.75rem 0;"><strong style="color: #0A1F1A;">Month 18</strong><br/>
+                            ✓ 7–8 paying customers<br/>
+                            ✓ £200–250k ARR • Sales playbook validated</p>
+                            
+                            <p style="margin: 0;"><strong style="color: #0A1F1A;">Month 24</strong><br/>
+                            ✓ 10 institutions in production<br/>
+                            ✓ £300–400k ARR with path to £1M+<br/>
+                            ✓ Ready for £1.5M Seed round</p>
+                        </div>
+                    </div>
+                    <div class="card card-glow">
+                        <h3 class="success" style="margin-bottom: 0.75rem; font-size: 1rem;">Risk Mitigation & Capital Efficiency</h3>
+                        <div style="font-size: 0.8rem; line-height: 1.6;">
+                            <p style="margin: 0 0 0.5rem 0;"><strong>Technical Risk →</strong> Mitigated by fractional principal engineer, modern stack</p>
+                            <p style="margin: 0 0 0.5rem 0;"><strong>Market Risk →</strong> Mitigated by warm pipeline, pilot structure for rapid feedback</p>
+                            <p style="margin: 0 0 1rem 0;"><strong>Execution Risk →</strong> Mitigated by 5 years domain experience, 24-month runway</p>
+                            <hr style="border: none; border-top: 1px solid hsl(215, 25%, 85%); margin: 1rem 0;" />
+                            <p style="margin: 0; font-weight: 600; color: #0A1F1A;">Capital Efficiency:</p>
+                            <p style="margin: 0.25rem 0 0 0;">£450k → £400k ARR = ~<strong>£1,100 cost per £1 ARR</strong><br/>
+                            <span style="color: hsl(220, 15%, 45%);">Top-quartile B2B SaaS efficiency</span></p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="highlight-box" style="margin-top: 1.5rem;">
+                    <h3>This raise funds a disciplined 24-month execution plan to turn a working AI-native platform into a <strong>category leader with 10 institutional customers</strong> and clear path to £1M ARR — while building a technical and data moat before incumbents can react.</h3>
+                </div>
+            </div>
+            <div class="slide-number">12</div>
+        </div>
+
+        <!-- Slide 13: Team & Advisors -->
+        <div class="slide">
+            <div class="slide-content">
+                <h2>Built by the operator<br/>who <span class="success">already solved the problem</span></h2>
+                <p class="subtitle">Ivy OS was born from five years inside Higher Education recruitment, rebuilding the systems universities now need.</p>
+                
+                <div class="card card-success card-glow" style="margin-top: 1.5rem;">
+                    <h3 style="margin-bottom: 0.5rem; font-size: 1.1rem;">Laurance Bridge — Founder & CEO</h3>
+                    <p style="margin: 0 0 1rem 0; font-style: italic; color: hsl(220, 15%, 35%);">Head of Student Recruitment, WaterBear College of Music (2019–Present)</p>
+                    
+                    <div style="font-size: 0.88rem; line-height: 1.6;">
+                        <p style="margin: 0 0 0.75rem 0; font-weight: 600; color: #0A1F1A;">Track Record:</p>
+                        <ul style="margin: 0; list-style-position: outside; padding-left: 1.25rem;">
+                            <li style="margin-bottom: 0.5rem;">Delivered live 90-day forecasts with <strong>±3–5% accuracy</strong> across six admission cycles</li>
+                            <li style="margin-bottom: 0.5rem;">Scaled annual intake from <strong>52 to 750+ students</strong> and ARR to ~£11M</li>
+                            <li style="margin-bottom: 0.5rem;">Rebuilt full data infrastructure: Supabase/Postgres warehouse + XGBoost/LightGBM models</li>
+                            <li style="margin-bottom: 0;">Improved offer-to-enrol conversion from <strong>41% → 48%</strong>, cut reporting time by 30%</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="card card-glow" style="margin-top: 1.5rem;">
+                    <h3 class="primary" style="margin-bottom: 0.75rem; font-size: 1rem;">Why It Matters</h3>
+                    <p style="margin: 0; font-size: 0.95rem; line-height: 1.6;">Most EdTech founders either understand education or can build software — <strong>few have rebuilt an institution's RevOps stack end to end while running admissions at scale.</strong> Laurance has done exactly that, translating five years of live operational problem-solving into a scalable, AI-native platform.</p>
+                </div>
+
+                <div class="two-column" style="margin-top: 1.5rem; gap: 1.5rem;">
+                    <div class="card card-glow">
+                        <h3 class="success" style="margin-bottom: 0.75rem; font-size: 1rem;">Fractional Team (Funded in this Round)</h3>
+                        <table style="width: 100%; font-size: 0.8rem; line-height: 1.5;">
+                            <tbody>
+                                <tr style="border-bottom: 1px solid hsl(215, 25%, 90%);">
+                                    <td style="padding: 0.5rem 0; font-weight: 600; vertical-align: top;">Principal Engineer</td>
+                                    <td style="padding: 0.5rem 0; color: hsl(220, 15%, 45%);">AI infrastructure, architecture, code review — ensures scalability, performance, security</td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid hsl(215, 25%, 90%);">
+                                    <td style="padding: 0.5rem 0; font-weight: 600; vertical-align: top;">QA / Security</td>
+                                    <td style="padding: 0.5rem 0; color: hsl(220, 15%, 45%);">Continuous testing and penetration audits — de-risks enterprise adoption</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 0.5rem 0; font-weight: 600; vertical-align: top;">RevOps / GTM</td>
+                                    <td style="padding: 0.5rem 0; color: hsl(220, 15%, 45%);">Pilot delivery, onboarding, reporting — converts early partners into case studies</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="card card-glow">
+                        <h3 class="success" style="margin-bottom: 0.75rem; font-size: 1rem;">Advisory Network (In Development)</h3>
+                        <table style="width: 100%; font-size: 0.8rem; line-height: 1.5;">
+                            <tbody>
+                                <tr style="border-bottom: 1px solid hsl(215, 25%, 90%);">
+                                    <td style="padding: 0.5rem 0; font-weight: 600; vertical-align: top;">HE Admissions Leader</td>
+                                    <td style="padding: 0.5rem 0; color: hsl(220, 15%, 45%);">Validates messaging, opens doors across AUA / HEIST network</td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid hsl(215, 25%, 90%);">
+                                    <td style="padding: 0.5rem 0; font-weight: 600; vertical-align: top;">HE Data & Compliance</td>
+                                    <td style="padding: 0.5rem 0; color: hsl(220, 15%, 45%);">Ensures OfS / UCAS alignment and DPA readiness</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 0.5rem 0; font-weight: 600; vertical-align: top;">AI Systems Architect</td>
+                                    <td style="padding: 0.5rem 0; color: hsl(220, 15%, 45%);">Guides model optimisation and infrastructure cost efficiency</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="highlight-box" style="margin-top: 1.5rem;">
+                    <h3>A founder-operator with rare crossover between Higher Education, data systems, and AI — supported by senior fractional specialists to keep burn low and velocity high.</h3>
+                </div>
+            </div>
+            <div class="slide-number">13</div>
+        </div>
+
+        <!-- Slide 14: Vision / Closing -->
+        <div class="slide">
+            <!-- Floating orbs for closing -->
+            <div class="orb orb-green" style="width: 500px; height: 500px; top: 20%; left: 5%;"></div>
+            <div class="orb orb-green" style="width: 350px; height: 350px; bottom: 20%; right: 5%; animation-delay: 5s;"></div>
+            
+            <div class="slide-content">
+                <h2>From fixing admissions to<br/><span class="success">powering the future of Higher Education</span></h2>
+                <p class="subtitle">Ivy OS begins with student recruitment but grows into the intelligent operating system that will run every Higher Education institution.</p>
+                
+                <div class="card card-glow" style="margin-top: 1.5rem;">
+                    <h3 class="success" style="margin-bottom: 1rem; font-size: 1rem;">The 5-Year Build</h3>
+                    <div style="display: grid; gap: 1rem; font-size: 0.85rem;">
+                        <div style="display: flex; gap: 1rem; padding: 0.75rem; background: rgba(10, 31, 26, 0.03); border-left: 3px solid #0A1F1A; border-radius: 4px;">
+                            <div style="flex-shrink: 0; width: 32px; height: 32px; border-radius: 50%; background: #0A1F1A; color: white; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 0.85rem;">1</div>
+                            <div style="flex: 1;">
+                                <p style="margin: 0 0 0.25rem 0; font-weight: 600; color: #111111;">Admissions Intelligence (Now → Year 2)</p>
+                                <p style="margin: 0; color: hsl(220, 15%, 40%); line-height: 1.5;">Replace fragmented CRMs with proven ±5% forecast accuracy and AI triage across 10 institutions</p>
+                            </div>
+                        </div>
+                        
+                        <div style="display: flex; gap: 1rem; padding: 0.75rem; background: rgba(10, 31, 26, 0.02); border-left: 3px solid rgba(10, 31, 26, 0.5); border-radius: 4px;">
+                            <div style="flex-shrink: 0; width: 32px; height: 32px; border-radius: 50%; background: rgba(10, 31, 26, 0.15); color: #0A1F1A; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 0.85rem;">2</div>
+                            <div style="flex: 1;">
+                                <p style="margin: 0 0 0.25rem 0; font-weight: 600; color: #111111;">Student Records & Retention (Year 2 → 3)</p>
+                                <p style="margin: 0; color: hsl(220, 15%, 40%); line-height: 1.5;">Integrate student data, predict at-risk learners, shift from reactive to proactive student success</p>
+                            </div>
+                        </div>
+                        
+                        <div style="display: flex; gap: 1rem; padding: 0.75rem; background: rgba(10, 31, 26, 0.02); border-left: 3px solid rgba(10, 31, 26, 0.3); border-radius: 4px;">
+                            <div style="flex-shrink: 0; width: 32px; height: 32px; border-radius: 50%; background: rgba(10, 31, 26, 0.1); color: #0A1F1A; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 0.85rem;">3</div>
+                            <div style="flex: 1;">
+                                <p style="margin: 0 0 0.25rem 0; font-weight: 600; color: #111111;">Full Operational OS (Year 3 → 5)</p>
+                                <p style="margin: 0; color: hsl(220, 15%, 40%); line-height: 1.5;">Add timetabling, compliance, alumni layers — become default infrastructure for intelligent universities</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="two-column" style="margin-top: 1.5rem; gap: 1.5rem;">
+                    <div class="card card-glow">
+                        <h3 class="primary" style="margin-bottom: 0.75rem; font-size: 1rem;">The Inevitability</h3>
+                        <p style="margin: 0 0 1rem 0; font-size: 0.9rem; line-height: 1.6;">Within five years, every UK university will operate on AI-native systems. Manual spreadsheets and disconnected CRMs will feel as outdated as paper timetables.</p>
+                        <p style="margin: 0 0 0.75rem 0; font-weight: 600; color: #0A1F1A; font-size: 0.9rem;">First-mover advantage is decisive:</p>
+                        <ul style="margin: 0; font-size: 0.85rem; line-height: 1.5;">
+                            <li>Data network effects — more institutions = smarter models</li>
+                            <li>Integration depth (UCAS, OfS, EventMAP) competitors can't replicate quickly</li>
+                        </ul>
+                    </div>
+                    <div class="card card-success card-glow">
+                        <h3 style="margin-bottom: 1rem; font-size: 1rem;">The Investment</h3>
+                        <div style="text-align: center; margin-bottom: 1rem;">
+                            <div style="font-size: 2rem; font-weight: 700; color: #111111;">£450,000</div>
+                            <div style="font-size: 0.9rem; color: hsl(220, 15%, 45%); margin-top: 0.25rem;">£5M cap • 20% discount SAFE</div>
+                        </div>
+                        <p style="margin: 0 0 0.5rem 0; font-weight: 600; font-size: 0.9rem;">Funds a disciplined 24-month plan:</p>
+                        <div style="font-size: 0.85rem; line-height: 1.6;">
+                            <p style="margin: 0;">✅ 10 institutions live in production</p>
+                            <p style="margin: 0;">✅ £300–400k ARR with path to £1M</p>
+                            <p style="margin: 0;">✅ Proven category leadership in AI-native HE ops</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="highlight-box" style="margin-top: 1.5rem;">
+                    <h3>Ivy OS isn't another SaaS product — it's the <strong>infrastructure layer that lets Higher Education finally run on intelligence, not intuition.</strong><br/>The window is open. Let's build the system universities have been waiting for.</h3>
+                </div>
+            </div>
+            <div class="slide-number">14</div>
+        </div>
+
+        <!-- Slide 15: Investor Thesis / Summary -->
+        <div class="slide">
+            <div class="slide-content">
+                <h2>Why Ivy OS is a <span class="success">top-quartile pre-seed investment</span></h2>
+                
+                <div style="display: grid; gap: 0.9rem; margin-top: 1.5rem;">
+                    <div class="card card-glow compact" style="padding: 1rem;">
+                        <h3 class="success" style="margin-bottom: 0.5rem; font-size: 0.95rem;">1 • Large and Inevitable Market</h3>
+                        <ul style="margin: 0; font-size: 0.8rem; line-height: 1.5;">
+                            <li>£150M near-term SAM hidden in existing HE budgets — no new spend required</li>
+                            <li>400 UK institutions already pay £30–50k for fragmented CRM + SIS stacks</li>
+                            <li>Replacement market with zero budget friction → fast adoption</li>
+                            <li>Global TAM ≈ $10B education CRM + SIS market by 2030</li>
+                        </ul>
+                    </div>
+
+                    <div class="card card-glow compact" style="padding: 1rem;">
+                        <h3 class="success" style="margin-bottom: 0.5rem; font-size: 0.95rem;">2 • Proven Product & Demand</h3>
+                        <ul style="margin: 0; font-size: 0.8rem; line-height: 1.5;">
+                            <li>5 years of production proof at WaterBear (±5% forecast accuracy, 60% time saved)</li>
+                            <li>Working AI-native CRM + SIS stack live today — not concept</li>
+                            <li>Early interest from Falmouth University, BIMM Group, and WaterBear College</li>
+                            <li>Warm pipeline validates pain and budget fit</li>
+                        </ul>
+                    </div>
+
+                    <div class="card card-glow compact" style="padding: 1rem;">
+                        <h3 class="success" style="margin-bottom: 0.5rem; font-size: 0.95rem;">3 • Defensible Moat</h3>
+                        <ul style="margin: 0; font-size: 0.8rem; line-height: 1.5;">
+                            <li>18-month technical lead ahead of any AI HE entrant</li>
+                            <li>Compounding data moat — more institutions → smarter models → better forecasts</li>
+                            <li>Deep integrations (UCAS, OfS, EventMAP) create high switching costs</li>
+                            <li>Incumbents can't pivot (legacy architecture + wrong incentives)</li>
+                        </ul>
+                    </div>
+
+                    <div class="card card-glow compact" style="padding: 1rem;">
+                        <h3 class="success" style="margin-bottom: 0.5rem; font-size: 0.95rem;">4 • Exceptional Founder</h3>
+                        <p style="margin: 0; font-size: 0.8rem; line-height: 1.5;">Laurance Bridge, Head of Student Recruitment at WaterBear, rebuilt the entire admissions data stack while scaling student numbers 52 → 750+. Combines rare domain expertise + technical execution — has already solved the problem Ivy OS commercialises. Supported by fractional principal engineer, QA/security, and RevOps specialists to scale capital-efficiently.</p>
+                    </div>
+
+                    <div class="card card-glow compact" style="padding: 1rem;">
+                        <h3 class="success" style="margin-bottom: 0.75rem; font-size: 0.95rem;">5 • Capital-Efficient Return Profile</h3>
+                        <table style="width: 100%; margin-bottom: 1rem; font-size: 0.75rem; border-collapse: collapse;">
+                            <thead>
+                                <tr style="border-bottom: 1px solid #0A1F1A;">
+                                    <th style="text-align: left; padding: 0.25rem; font-weight: 600; color: #0A1F1A;">Milestone</th>
+                                    <th style="text-align: left; padding: 0.25rem; font-weight: 600; color: #0A1F1A;">Customers</th>
+                                    <th style="text-align: left; padding: 0.25rem; font-weight: 600; color: #0A1F1A;">ARR</th>
+                                    <th style="text-align: left; padding: 0.25rem; font-weight: 600; color: #0A1F1A;">Timeline</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr style="border-bottom: 1px solid hsl(215, 25%, 90%);">
+                                    <td style="padding: 0.25rem;">Initial traction</td>
+                                    <td style="padding: 0.25rem;">3 pilots</td>
+                                    <td style="padding: 0.25rem; font-weight: 600; color: #0A1F1A;">£75k</td>
+                                    <td style="padding: 0.25rem;">Month 12</td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid hsl(215, 25%, 90%);">
+                                    <td style="padding: 0.25rem;">Product-market fit</td>
+                                    <td style="padding: 0.25rem;">10 customers</td>
+                                    <td style="padding: 0.25rem; font-weight: 600; color: #0A1F1A;">£350k</td>
+                                    <td style="padding: 0.25rem;">Month 18</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 0.25rem;">Scale momentum</td>
+                                    <td style="padding: 0.25rem;">25 customers</td>
+                                    <td style="padding: 0.25rem; font-weight: 600; color: #0A1F1A;">£1M</td>
+                                    <td style="padding: 0.25rem;">Month 30</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <ul style="margin: 0; font-size: 0.75rem; line-height: 1.5;">
+                            <li>£450k → £400k ARR = <£1,200 per £1 ARR (top-quartile efficiency)</li>
+                            <li>90%+ gross margins and 10:1 LTV:CAC ratio at scale</li>
+                            <li>Path to profitability by ~20 customers</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="card card-accent card-glow" style="margin-top: 1.5rem; padding: 1.5rem;">
+                    <h3 style="margin-bottom: 1rem; font-size: 1rem; text-align: center;">The Investment</h3>
+                    <div style="text-align: center; font-size: 0.95rem; line-height: 1.8;">
+                        <p style="margin: 0 0 0.75rem 0;"><strong>Raise:</strong> £450k Pre-Seed | <strong>Cap:</strong> £5M | <strong>Discount:</strong> 20% SAFE | <strong>Runway:</strong> 24 months</p>
+                        <p style="margin: 0 0 0.75rem 0; font-size: 0.85rem; color: hsl(220, 15%, 35%);">Use: Full-time founder focus • Fractional engineering & QA • GTM execution • Compute & compliance budget</p>
+                        <p style="margin: 0; font-weight: 600; color: #0A1F1A;">Outcome: 10 paying institutions, £400k ARR, and clear category leadership within two years.</p>
+                    </div>
+                </div>
+
+                <div class="highlight-box" style="margin-top: 1.5rem;">
+                    <h3>Ivy OS isn't a bet on AI in education — it's the platform that makes AI operational in Higher Education.<br/><strong>The window is open now — the first to build wins.</strong></h3>
+                </div>
+            </div>
+            <div class="slide-number">15</div>
+        </div>
+    </div>
+
+    <script>
+        // Navigation dots
+        const slideContainer = document.getElementById('slideContainer');
+        const slides = document.querySelectorAll('.slide');
+        const navDots = document.getElementById('navDots');
+
+        // Create navigation dots
+        slides.forEach((slide, index) => {
+            const dot = document.createElement('div');
+            dot.className = 'nav-dot';
+            dot.setAttribute('aria-label', `Go to slide ${index + 1}`);
+            dot.addEventListener('click', () => {
+                slides[index].scrollIntoView({ behavior: 'smooth', block: 'start' });
+            });
+            navDots.appendChild(dot);
+        });
+
+        // Update active dot on scroll
+        const updateActiveDot = () => {
+            const scrollTop = slideContainer.scrollTop;
+            const containerMid = scrollTop + slideContainer.clientHeight / 2;
+            let activeIndex = 0;
+            let minDelta = Infinity;
+
+            slides.forEach((slide, index) => {
+                const top = slide.offsetTop;
+                const bottom = top + slide.offsetHeight;
+                const slideMid = top + (bottom - top) / 2;
+                const delta = Math.abs(slideMid - containerMid);
+                if (delta < minDelta) {
+                    minDelta = delta;
+                    activeIndex = index;
+                }
+            });
+            
+            document.querySelectorAll('.nav-dot').forEach((dot, index) => {
+                const isActive = index === activeIndex;
+                dot.classList.toggle('active', isActive);
+                if (isActive) {
+                    dot.setAttribute('aria-current', 'step');
+                } else {
+                    dot.removeAttribute('aria-current');
+                }
+            });
+        };
+
+        slideContainer.addEventListener('scroll', updateActiveDot);
+        updateActiveDot(); // Initial call
+
+        // Keyboard navigation
+        let getCurrentSlideIndex = () => {
+            const scrollTop = slideContainer.scrollTop;
+            const containerMid = scrollTop + slideContainer.clientHeight / 2;
+            let activeIndex = 0;
+            let minDelta = Infinity;
+
+            slides.forEach((slide, index) => {
+                const top = slide.offsetTop;
+                const bottom = top + slide.offsetHeight;
+                const slideMid = top + (bottom - top) / 2;
+                const delta = Math.abs(slideMid - containerMid);
+                if (delta < minDelta) {
+                    minDelta = delta;
+                    activeIndex = index;
+                }
+            });
+            return activeIndex;
+        };
+
+        document.addEventListener('keydown', (e) => {
+            const currentSlide = getCurrentSlideIndex();
+
+            if (e.key === 'ArrowDown' || e.key === 'ArrowRight' || e.key === 'PageDown') {
+                e.preventDefault();
+                if (currentSlide < slides.length - 1) {
+                    slides[currentSlide + 1].scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            } else if (e.key === 'ArrowUp' || e.key === 'ArrowLeft' || e.key === 'PageUp') {
+                e.preventDefault();
+                if (currentSlide > 0) {
+                    slides[currentSlide - 1].scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            } else if (e.key === ' ') {
+                e.preventDefault();
+                if (e.shiftKey) {
+                    // Shift + Space = previous slide
+                    if (currentSlide > 0) {
+                        slides[currentSlide - 1].scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }
+                } else {
+                    // Space = next slide
+                    if (currentSlide < slides.length - 1) {
+                        slides[currentSlide + 1].scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }
+                }
+            } else if (e.key === 'Home') {
+                e.preventDefault();
+                slides[0].scrollIntoView({ behavior: 'smooth', block: 'start' });
+            } else if (e.key === 'End') {
+                e.preventDefault();
+                slides[slides.length - 1].scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        });
+
+        // Print instructions
+        console.log('IvyOS Pitch Deck');
+        console.log('Navigation: Arrow keys, scroll, or click dots');
+        console.log('To export to PDF: Cmd/Ctrl + P → Save as PDF');
+        console.log('For best results: Use landscape orientation and remove headers/footers');
+    </script>
+</body>
+</html>
+

@@ -33,7 +33,7 @@ async def check_activity_coverage():
             COUNT(*) as count,
             MIN(created_at) as first_seen,
             MAX(created_at) as last_seen,
-            COUNT(DISTINCT person_id) as unique_people
+            COUNT(DISTINCT lead_id) as unique_people
         FROM lead_activities
         WHERE created_at > NOW() - INTERVAL '90 days'
         GROUP BY activity_type
@@ -124,7 +124,7 @@ async def check_activity_coverage():
             COUNT(*) as total_activities,
             MAX(la.created_at) as last_activity
         FROM people p
-        JOIN lead_activities la ON la.person_id = p.id
+        JOIN lead_activities la ON la.lead_id = p.id::text
         WHERE la.created_at > NOW() - INTERVAL '90 days'
         GROUP BY p.id, p.first_name, p.last_name
         ORDER BY total_activities DESC

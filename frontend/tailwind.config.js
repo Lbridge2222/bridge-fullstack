@@ -113,7 +113,12 @@ export default {
           600: 'hsl(var(--slate-600))',
           700: 'hsl(var(--slate-700))',
           800: 'hsl(var(--slate-800))',
-          900: 'hsl(var(--slate-900))'
+          900: 'hsl(var(--slate-900))',
+          950: 'hsl(var(--slate-950))'
+        },
+        zinc: {
+          800: 'hsl(var(--zinc-800))',
+          900: 'hsl(var(--zinc-900))'
         },
         red: {
           50: 'hsl(var(--red-50))',

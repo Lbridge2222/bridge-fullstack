@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { PersonEnriched } from '../../services/api';
+import type { PersonEnriched } from '@/services/api';
 import { useLeadUpdates } from '../../hooks/useLeadUpdates';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';

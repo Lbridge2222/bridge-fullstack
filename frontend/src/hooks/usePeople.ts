@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { peopleApi, PersonEnriched } from '../services/api';
+import { peopleApi, type PersonEnriched } from '@/services/api';
 
 export interface PeopleFilters {
   q?: string;

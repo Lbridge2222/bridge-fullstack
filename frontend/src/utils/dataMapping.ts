@@ -1,16 +1,128 @@
-import { ApplicationCard, PersonEnriched } from '../services/api';
+import type { ApplicationCard, PersonEnriched } from '@/services/api';
 
 // Map backend stage to frontend display stage
 export function mapStageToDisplay(stage: string): string {
   const stageMap: Record<string, string> = {
     'enquiry': 'Enquiry',
-    'applicant': 'Application Submitted',
-    'interview': 'Interview',
-    'offer': 'Offer Made',
+    'pre_application': 'Pre Application',
+    'application_submitted': 'Application Submitted',
+    'fee_status_query': 'Fee Status Query',
+    'interview_portfolio': 'Interview/Portfolio',
+    'review_in_progress': 'Review in Progress',
+    'review_complete': 'Review Complete',
+    'director_review_in_progress': 'Director Review In Progress',
+    'director_review_complete': 'Director Review Complete',
+    'conditional_offer_no_response': 'Conditional Offer (No Response)',
+    'unconditional_offer_no_response': 'Unconditional Offer (No Response)',
+    'conditional_offer_accepted': 'Conditional Offer (Accepted)',
+    'unconditional_offer_accepted': 'Unconditional Offer (Accepted)',
+    'ready_to_enrol': 'Ready to Enrol',
     'enrolled': 'Enrolled',
+    'rejected': 'Rejected',
+    'offer_withdrawn': 'Offer Withdrawn',
+    'offer_declined': 'Offer Declined',
   };
   
   return stageMap[stage] || stage;
+}
+
+// Map backend stage to frontend stage ID for Kanban grouping
+export function mapStageToFrontendStage(stage: string): string {
+  // Normalise incoming values to be resilient to API differences
+  const norm = (s: string) =>
+    (s || "")
+      .toLowerCase()
+      .trim()
+      // unify American/British spelling
+      .replace(/enroll/g, "enrol")
+      // remove parentheses
+      .replace(/[()]/g, "")
+      // spaces or hyphens to underscores
+      .replace(/[\s-]+/g, "_");
+
+  const n = norm(stage);
+  const normalised = (() => {
+    if (n === 'enroled' || n === 'enrollment') return 'enrolled';
+    if (n === 'ready_to_enrollment' || n === 'ready_to_enrolled' || n === 'ready_to_enrolment') return 'ready_to_enrol';
+    if (n === 'ready_to_enrolled_students') return 'ready_to_enrol';
+    return n;
+  })();
+
+  const stageMapping: Record<string, string> = {
+    // Enquiry stage
+    'enquiry': 'enquiry',
+    
+    // Pre Application stage
+    'pre_application': 'pre_application',
+    
+    // Application Submitted stage
+    'applicant': 'application_submitted',
+    'submitted': 'application_submitted',
+    'application_submitted': 'application_submitted',
+    
+    // Fee Status Query stage
+    'fee_status_query': 'fee_status_query',
+    
+    // Interview/Portfolio stage
+    'interview': 'interview_portfolio',
+    'interview_scheduled': 'interview_portfolio',
+    'interview_portfolio': 'interview_portfolio',
+    
+    // Review stages
+    'review': 'review_in_progress',
+    'review_in_progress': 'review_in_progress',
+    'reviewcomplete': 'review_complete',
+    'review_complete': 'review_complete',
+    
+    // Director Review stages
+    'director_review_in_progress': 'director_review_in_progress',
+    'director_review_complete': 'director_review_complete',
+    
+    // Offer stages
+    'offer': 'conditional_offer_no_response',
+    'offer_made': 'conditional_offer_no_response',
+    'conditional_offer_no_response': 'conditional_offer_no_response',
+    'unconditional_offer_no_response': 'unconditional_offer_no_response',
+    'conditional_offer_accepted': 'conditional_offer_accepted',
+    'unconditional_offer_accepted': 'unconditional_offer_accepted',
+    'offer_accepted': 'unconditional_offer_accepted',
+    
+    // Enrollment stages
+    'ready_to_enrol': 'ready_to_enrol',
+    'ready_to_enroll': 'ready_to_enrol',
+    'enrolled': 'enrolled',
+    'accepted': 'enrolled',
+    
+    // Rejection stages
+    'rejected': 'rejected',
+    'offer_withdrawn': 'offer_withdrawn',
+    'offer_declined': 'offer_declined',
+  };
+
+  // If the normalised input already matches a known frontend stage id, return it
+  const allowed: Record<string, true> = {
+    enquiry: true,
+    pre_application: true,
+    application_submitted: true,
+    fee_status_query: true,
+    interview_portfolio: true,
+    review_in_progress: true,
+    review_complete: true,
+    director_review_in_progress: true,
+    director_review_complete: true,
+    conditional_offer_no_response: true,
+    unconditional_offer_no_response: true,
+    conditional_offer_accepted: true,
+    unconditional_offer_accepted: true,
+    ready_to_enrol: true,
+    enrolled: true,
+    rejected: true,
+    offer_withdrawn: true,
+    offer_declined: true,
+  };
+
+  if (allowed[normalised]) return normalised;
+  return stageMapping[normalised] || 'enquiry';
 }
 
 // Map backend priority to frontend display priority
@@ -119,6 +231,10 @@ export function formatDaysInPipeline(days: number | undefined): string {
 
 // Get application card display data
 export function getApplicationCardDisplay(app: ApplicationCard) {
+  const recommendedActions = Array.isArray(app.recommended_actions) ? app.recommended_actions : [];
+  const primaryAction = recommendedActions[0]?.action;
+  const progressionProbability = app.progression_probability ?? app.conversion_probability;
+
   return {
     id: app.application_id,
     studentName: `${app.first_name || ''} ${app.last_name || ''}`.trim() || 'Unknown',
@@ -128,18 +244,22 @@ export function getApplicationCardDisplay(app: ApplicationCard) {
     urgency: mapUrgencyToDisplay(app.urgency || 'medium'),
     leadScore: formatLeadScore(app.lead_score),
     conversionProbability: formatConversionProbability(app.conversion_probability),
-    nextAction: app.urgency_reason || 'No action required',
+    progressionProbability: progressionProbability !== undefined ? formatConversionProbability(progressionProbability) : 'N/A',
+    nextAction: primaryAction || app.urgency_reason || 'No action queued',
     lastActivity: app.last_activity_at ? new Date(app.last_activity_at).toLocaleDateString() : 'N/A',
     nextFollowUp: app.days_in_pipeline ? `Due in ${formatDaysInPipeline(app.days_in_pipeline)}` : 'No follow-up',
+    recommendedActions,
+    blockerCount: Array.isArray(app.progression_blockers) ? app.progression_blockers.length : 0,
     tags: [
       app.priority && `Priority: ${app.priority}`,
       app.urgency && `Urgency: ${app.urgency}`,
       app.campus_name && `Campus: ${app.campus_name}`,
     ].filter(Boolean) as string[],
     aiInsights: [
-      app.conversion_probability && `Conversion probability: ${formatConversionProbability(app.conversion_probability)}`,
-      app.lead_score && `Lead score: ${formatLeadScore(app.lead_score)}`,
-      app.days_in_pipeline && `Days in pipeline: ${formatDaysInPipeline(app.days_in_pipeline)}`,
+      progressionProbability !== undefined && `Progression: ${formatConversionProbability(progressionProbability)}`,
+      app.conversion_probability !== undefined && `Conversion: ${formatConversionProbability(app.conversion_probability)}`,
+      app.lead_score !== undefined && `Lead score: ${formatLeadScore(app.lead_score)}`,
+      app.days_in_pipeline !== undefined && `Days in pipeline: ${formatDaysInPipeline(app.days_in_pipeline)}`,
     ].filter(Boolean) as string[],
   };
 }

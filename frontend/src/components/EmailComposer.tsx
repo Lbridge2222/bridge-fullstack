@@ -57,6 +57,7 @@ interface EmailComposerProps {
   isOpen: boolean;
   onClose: () => void;
   lead: Lead | null;
+  forceFullscreen?: boolean;
   onSendEmail?: (emailData: EmailComposerData) => Promise<void>;
 }
 
@@ -192,9 +193,11 @@ const EmailComposer: React.FC<EmailComposerProps> = ({
   isOpen,
   onClose,
   lead,
+  forceFullscreen = false,
   onSendEmail
 }) => {
   const { push: toast } = useToast();
+  
   const [emailComposerData, setEmailComposerData] = useState<EmailComposerData>({
     lead,
     subject: "",
@@ -214,6 +217,8 @@ const EmailComposer: React.FC<EmailComposerProps> = ({
   const [showMergeMenu, setShowMergeMenu] = useState(false);
   const [previewOn, setPreviewOn] = useState(false);
   const [mode, setMode] = useState<DisplayMode>("floating");
+  const effectiveMode = forceFullscreen ? "fullscreen" : mode;
+  
   const [viewMode, setViewMode] = useState<ViewMode>("edit");
   const subjectRef = useRef<HTMLInputElement>(null);
   const messageRef = useRef<HTMLTextAreaElement>(null);
@@ -223,12 +228,59 @@ const EmailComposer: React.FC<EmailComposerProps> = ({
   // Drag and resize state
   const [isDragging, setIsDragging] = useState(false);
   const [isResizing, setIsResizing] = useState(false);
-  const [position, setPosition] = useState({ x: window.innerWidth - 900, y: 20 });
-  const [size, setSize] = useState({ width: 800, height: Math.round(window.innerHeight * 0.7) });
+  // DEBUG: Better initial positioning with proper viewport detection
+  const getViewportDimensions = () => {
+    // Use multiple methods to get accurate viewport dimensions
+    const width = Math.max(
+      window.innerWidth || 0,
+      document.documentElement.clientWidth || 0,
+      document.body.clientWidth || 0
+    );
+    const height = Math.max(
+      window.innerHeight || 0,
+      document.documentElement.clientHeight || 0,
+      document.body.clientHeight || 0
+    );
+    return { width, height };
+  };
+  
+  const viewport = getViewportDimensions();
+  // DEBUG: Center the modal on screen instead of off-screen positioning
+  const initialX = Math.max(20, Math.min(viewport.width - 820, (viewport.width - 800) / 2));
+  const initialY = Math.max(20, Math.min(viewport.height - 420, (viewport.height - 400) / 2));
+  const initialWidth = Math.min(800, viewport.width - 40);
+  const initialHeight = Math.max(400, Math.min(600, Math.round(viewport.height * 0.7)));
+  
+  
+  const [position, setPosition] = useState({ x: initialX, y: initialY });
+  const [size, setSize] = useState({ width: initialWidth, height: initialHeight });
   const [isMinimized, setIsMinimized] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [resizeStart, setResizeStart] = useState({ x: 0, y: 0, width: 0, height: 0 });
   const containerRef = useRef<HTMLDivElement>(null);
+  
+  // Recalculate positioning on window resize
+  useEffect(() => {
+    const handleResize = () => {
+      const newViewport = getViewportDimensions();
+      const newX = Math.max(20, Math.min(newViewport.width - 820, newViewport.width - 900));
+      const newY = Math.max(20, Math.min(position.y, newViewport.height - 200));
+      const newWidth = Math.min(800, newViewport.width - 40);
+      const newHeight = Math.max(400, Math.min(600, Math.round(newViewport.height * 0.7)));
+      
+      setPosition(prev => ({
+        x: Math.min(prev.x, newX),
+        y: Math.min(prev.y, newY)
+      }));
+      setSize(prev => ({
+        width: Math.min(prev.width, newWidth),
+        height: Math.min(prev.height, newHeight)
+      }));
+    };
+    
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
   
   // Live refs for 60fps drag/resize without re-renders
   const positionRef = useRef(position);
@@ -1027,16 +1079,42 @@ const EmailComposer: React.FC<EmailComposerProps> = ({
     const el = containerRef.current;
     if (!el) return;
 
-    if (mode !== "floating") {
+    if (effectiveMode !== "floating") {
       setIsDragging(false);
       el.style.transition = "";
       el.style.transform = ""; // let CSS positions take over
       document.body.style.userSelect = "";
     } else {
-      // ensure transform reflects current position
-      el.style.transform = `translate3d(${positionRef.current.x}px, ${positionRef.current.y}px, 0)`;
+        // Apply transform for floating mode
+        if (effectiveMode === "floating") {
+          el.style.transform = `translate3d(${positionRef.current.x}px, ${positionRef.current.y}px, 0)`;
+        }
     }
   }, [mode]);
+
+  // Initialize positioning for floating mode
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    
+    if (effectiveMode === "floating") {
+      // Calculate center position
+      const viewport = getViewportDimensions();
+      const centerX = (viewport.width - sizeLiveRef.current.width) / 2;
+      const centerY = (viewport.height - sizeLiveRef.current.height) / 2;
+      
+      // Set position immediately
+      positionRef.current = { x: centerX, y: centerY };
+      setPosition(positionRef.current);
+      
+      // Apply positioning directly with transform-based approach
+      el.style.position = 'fixed';
+      el.style.top = '0';
+      el.style.left = '0';
+      el.style.transform = `translate3d(${centerX}px, ${centerY}px, 0)`;
+      el.style.zIndex = '10000';
+    }
+  }, [isOpen, effectiveMode]);
 
   const insertLineBreak = () => {
     const element = messageRef.current;
@@ -1112,7 +1190,7 @@ const EmailComposer: React.FC<EmailComposerProps> = ({
   // Drag and resize handlers
   const SAFE_MARGIN = 8;
   const MIN_VISIBLE = 120;
-  const draggingEnabled = mode === "floating";
+  const draggingEnabled = effectiveMode === "floating";
   
   // Compute bounds so at least MIN_VISIBLE px stay visible on each edge
   const getClampBounds = useCallback((width: number, height: number) => {
@@ -1179,9 +1257,11 @@ const EmailComposer: React.FC<EmailComposerProps> = ({
       positionRef.current = { x, y };
       setPosition(positionRef.current);
       if (containerRef.current) {
-        containerRef.current.style.transform = `translate3d(${x}px, ${y}px, 0)`;
-        containerRef.current.style.width = `${width}px`;
-        containerRef.current.style.height = `${height}px`;
+        // Apply resize for floating mode
+        if (effectiveMode === "floating") {
+          containerRef.current.style.width = `${width}px`;
+          containerRef.current.style.height = `${height}px`;
+        }
       }
     };
     window.addEventListener('resize', handleResize);
@@ -1190,6 +1270,7 @@ const EmailComposer: React.FC<EmailComposerProps> = ({
 
   const handleMouseDown = useCallback((e: React.MouseEvent, type: 'drag' | 'resize') => {
     if (!containerRef.current) return;
+    if (type === 'drag' && !draggingEnabled) return;
     containerRef.current.style.transition = 'none';
     document.body.style.userSelect = 'none';
     if (type === 'drag') {
@@ -1204,7 +1285,7 @@ const EmailComposer: React.FC<EmailComposerProps> = ({
         height: sizeLiveRef.current.height 
       });
     }
-  }, []);
+  }, [draggingEnabled]);
 
   const safeDragMouseDown = useCallback((e: React.MouseEvent) => {
     if (!draggingEnabled) return;
@@ -1229,7 +1310,7 @@ const EmailComposer: React.FC<EmailComposerProps> = ({
       setIsResizing(true);
       setResizeStart({ x: p.clientX, y: p.clientY, width: sizeLiveRef.current.width, height: sizeLiveRef.current.height });
     }
-  }, []);
+  }, [draggingEnabled]);
 
   useEffect(() => {
     const applyFrame = () => {
@@ -1240,7 +1321,10 @@ const EmailComposer: React.FC<EmailComposerProps> = ({
         const { minX, maxX, minY, maxY } = getClampBounds(sizeLiveRef.current.width, sizeLiveRef.current.height);
         const x = Math.min(Math.max(dragLatestRef.current.x, minX), maxX);
         const y = Math.min(Math.max(dragLatestRef.current.y, minY), maxY);
-        el.style.transform = `translate3d(${x}px, ${y}px, 0)`;
+        // Apply transform for floating mode
+        if (effectiveMode === "floating") {
+          el.style.transform = `translate3d(${x}px, ${y}px, 0)`;
+        }
         positionRef.current = { x, y };
       }
       if (resizeLatestRef.current) {
@@ -1326,15 +1410,17 @@ const EmailComposer: React.FC<EmailComposerProps> = ({
     return () => window.removeEventListener('email.prefill', onPrefill as EventListener);
   }, [viewMode]);
 
-  if (!lead || !isOpen) return null;
+  if (!isOpen || !lead) return null;
+  
+  
 
   // Minimized view
   if (isMinimized) {
   return (
       <div 
-        className="fixed z-50 bg-card border border-border rounded-lg shadow-lg cursor-pointer transition-all duration-300"
+        className="fixed z-[10000] bg-card border border-border rounded-lg shadow-lg cursor-pointer transition-all duration-300"
         style={{ 
-          transform: `translate3d(${positionRef.current.x}px, ${positionRef.current.y}px, 0)`,
+        transform: `translate3d(${positionRef.current.x}px, ${positionRef.current.y}px, 0)`,
           width: '300px',
           height: '60px'
         }}
@@ -1366,38 +1452,32 @@ const EmailComposer: React.FC<EmailComposerProps> = ({
     );
   }
 
+  
   return (
     <>
+      
       <div 
         ref={containerRef}
-        className={`bg-card border border-border rounded-2xl shadow-2xl overflow-hidden grid grid-rows-[auto_1fr] transition-all duration-300 ${
-          mode === "floating" ? `fixed z-50 ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}` :
-          mode === "docked" ? "fixed right-4 top-[72px] z-40" :
-          "fixed inset-0 z-50 rounded-none"
-        }`}
-        style={{
-          willChange: mode === "floating" ? "transform" : undefined,
-          transform: mode === "floating" ? `translate3d(${positionRef.current.x}px, ${positionRef.current.y}px, 0)` : undefined,
-          width: mode === "floating" ? sizeLiveRef.current.width :
-                 mode === "docked" ? Math.min(640, Math.round(window.innerWidth * 0.38)) :
-                 "100%",
-          height: mode === "floating" ? sizeLiveRef.current.height :
-                  mode === "docked" ? Math.round(window.innerHeight - 96) :
-                  "100%"
+        className="fixed z-[10000] bg-card border border-border rounded-lg shadow-lg transition-all duration-300 overflow-hidden"
+        style={{ 
+          zIndex: 10000,
+          position: 'fixed',
+          top: '50vh',
+          left: '50vw',
+          transform: 'translate(-50%, -50%)',
+          width: '800px',
+          height: '600px',
+          maxWidth: '90vw',
+          maxHeight: '90vh'
         }}
       >
-        {/* Accessibility: Screen reader only title and description */}
-        <div className="sr-only">
-          <h1>AI-Powered Email Composer</h1>
-          <p>Compose and send emails to leads with AI assistance</p>
-        </div>
         {/* Header with drag handle */}
         <div
-          className={`flex items-center justify-between p-4 border-b border-border bg-background select-none ${mode === "floating" ? (isDragging ? "cursor-grabbing" : "cursor-grab") : ""}`}
+          className={`flex items-center justify-between p-4 border-b border-border bg-background select-none ${effectiveMode === "floating" ? (isDragging ? "cursor-grabbing" : "cursor-grab") : ""}`}
           onDragStart={(e) => e.preventDefault()}
           draggable={false}
           onPointerDown={(e) => {
-            if (mode !== "floating") return;
+            if (effectiveMode !== "floating") return;
             // Allow drag from anywhere on header EXCEPT interactive elements
             const t = e.target as HTMLElement;
             if (t.closest('button,[role="button"],input,textarea,select,[contenteditable],a,[data-no-drag]')) return;
@@ -1492,9 +1572,9 @@ const EmailComposer: React.FC<EmailComposerProps> = ({
           </div>
         </div>
 
-        <div className="flex min-h-0 h-full">
+        <div className="flex flex-1 overflow-hidden" style={{ height: 'calc(100% - 60px)' }}>
           {/* Left Sidebar - AI Tools & Intent Selection */}
-          <div className="w-80 border-r border-border bg-muted/20 p-6 overflow-y-auto overscroll-contain flex-shrink-0">
+          <div className="w-80 border-r border-border bg-muted/20 p-6 overflow-y-auto overscroll-contain flex-shrink-0" style={{ height: '100%' }}>
             {/* AI Status */}
             {isGenerating && (
               <div className="mb-6 p-4 accent-bg accent-border rounded-lg" aria-live="polite">
@@ -1768,7 +1848,7 @@ const EmailComposer: React.FC<EmailComposerProps> = ({
                       </div>
 
           {/* Right Side - Email Composition */}
-          <div className="flex-1 p-6 min-h-0 flex flex-col overflow-hidden">
+          <div className="flex-1 p-6 flex flex-col overflow-y-auto" style={{ height: '100%' }}>
             {/* Subject Line */}
             <div className="mb-6 flex-shrink-0">
               <div className="flex items-center justify-between mb-2">
@@ -1979,7 +2059,7 @@ const EmailComposer: React.FC<EmailComposerProps> = ({
         </div>
 
         {/* Resize handle - only in floating mode */}
-        {mode === "floating" && (
+        {effectiveMode === "floating" && (
           <div
             className="absolute bottom-0 right-0 w-6 h-6 cursor-se-resize bg-transparent"
             onMouseDown={(e) => handleMouseDown(e, 'resize')}

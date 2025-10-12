@@ -1,6 +1,5 @@
 import { useState, useCallback } from 'react';
-import { peopleApi } from '../services/api';
-import { PersonEnriched } from '../services/api';
+import { peopleApi, type PersonEnriched } from '@/services/api';
 
 interface LeadUpdateData {
   lead_score?: number;

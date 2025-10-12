@@ -13,6 +13,7 @@ type Props = {
   badge?: number;
   variant?: "primary" | "secondary";
   size?: "md" | "sm";
+  dense?: boolean;
 };
 
 export function NavLink({
@@ -24,6 +25,7 @@ export function NavLink({
   badge,
   variant = "primary",
   size = "md",
+  dense = false,
 }: Props) {
   return (
     <RRNavLink
@@ -32,7 +34,9 @@ export function NavLink({
         cn(
           "group relative flex items-center rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-2",
           collapsed ? "justify-center w-10 h-10" : "w-full",
-          size === "md" ? "px-4 py-2.5 text-sm font-semibold" : "px-4 py-2 text-xs font-medium",
+          size === "md"
+            ? cn(dense ? "px-3 py-2 text-sm font-semibold" : "px-4 py-2.5 text-sm font-semibold")
+            : cn(dense ? "px-3 py-1.5 text-xs font-medium" : "px-4 py-2 text-xs font-medium"),
           variant === "primary"
             ? cn(
                 isActive

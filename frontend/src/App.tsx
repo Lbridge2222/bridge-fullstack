@@ -16,12 +16,14 @@ import ApplicationsBoard from "@/pages/crm/ApplicationsBoard";
 import OffersPage from "@/pages/crm/Offers";  
 import StudentRecordOverview from "@/pages/studentrecord/studentrecord";
 import PersonDetailPage from "@/pages/people/contact-page";
+import ApplicationDetailPage from "@/pages/applications/application-page";
 import Directory from "@/pages/Directory";
 import CohortAnalysisPage from "@/pages/analytics/CohortAnalysis";
 import CommsHub from "./pages/CommsHub";
 import Labs from "./pages/settings/Labs";
 import IntegrationsPage from "@/pages/workflows/Integrations";
 import WorkflowStudioPage from "@/pages/workflows/Workflowstudio";
+import IvyHome from "@/pages/IvyHome";
 
 // Lazy load heavy AI components
 const ForecastingPage = lazy(() => import("@/pages/ai/Forecasting"));
@@ -46,6 +48,9 @@ export default function App() {
   return (
     <ToasterProvider>
     <Routes>
+      {/* Marketing site route (outside app chrome) */}
+      <Route path="/ivy" element={<IvyHome />} />
+
       {/* All app routes go through the DashboardLayout */}
       <Route element={<DashboardLayout />}>
         {/* Default redirect */}
@@ -59,6 +64,7 @@ export default function App() {
           <Route path="conversations" element={<ConversationsPage />} />
           <Route path="interviews" element={<InterviewsPage />} />
           <Route path="applications" element={<ApplicationsBoard />} />
+          <Route path="applications/:applicationId" element={<ApplicationDetailPage />} />
           <Route path="offers" element={<OffersPage />} />
           <Route path="enrolments" element={<div>Enrolments — coming soon</div>} />
         </Route>

@@ -123,7 +123,18 @@ export function apiFetch(endpoint: string, options: (RequestInit & { returnType:
 export function apiFetch<T>(endpoint: string, options?: (RequestInit & { returnType?: 'json' })): Promise<T>;
 export async function apiFetch<T>(endpoint: string, options?: RequestInit & { returnType?: 'json' | 'void' }): Promise<T | void> {
   const fullUrl = `${API_BASE}${endpoint}`;
-  console.log(`API Fetch: ${options?.method || 'GET'} ${fullUrl}`, options?.body ? JSON.parse(options.body as string) : '');
+
+  if (options?.body) {
+    let parsedBody: unknown = options.body;
+    try {
+      parsedBody = JSON.parse(options.body as string);
+    } catch {
+      parsedBody = options.body;
+    }
+    console.log(`API Fetch: ${options?.method || 'GET'} ${fullUrl}`, parsedBody);
+  } else {
+    console.log(`API Fetch: ${options?.method || 'GET'} ${fullUrl}`);
+  }
   
   const response = await fetch(fullUrl, {
     headers: {
@@ -138,7 +149,15 @@ export async function apiFetch<T>(endpoint: string, options?: RequestInit & { re
     let message = `HTTP ${response.status}`;
     try {
       const error: ApiError = await response.json();
-      message = error?.detail || message;
+        if (error?.detail) {
+          if (typeof error.detail === 'object' && error.detail && 'blockers' in error.detail && Array.isArray(error.detail.blockers)) {
+            message = `Blockers: ${error.detail.blockers.join(', ')}`;
+          } else if (typeof error.detail === 'string') {
+            message = error.detail;
+          } else {
+            message = JSON.stringify(error.detail);
+          }
+        }
     } catch (_) {
       try {
         const text = await response.text();
@@ -216,6 +235,37 @@ export const applicationsApi = {
   // Get application details
   getDetails: (applicationId: string): Promise<any> => {
     return apiFetch(`/applications/${applicationId}/details`);
+  },
+
+  // Update a single application field (with audit logging)
+  updateField: (
+    applicationId: string, 
+    fieldName: string, 
+    oldValue: any, 
+    newValue: any,
+    userId?: string,
+    changeReason?: string
+  ): Promise<any> => {
+    return apiFetch(`/applications/${applicationId}/field`, {
+      method: 'PATCH',
+      body: JSON.stringify({
+        field_name: fieldName,
+        old_value: oldValue,
+        new_value: newValue,
+        user_id: userId,
+        change_reason: changeReason
+      }),
+    });
+  },
+
+  // Get audit log for an application
+  getAuditLog: (applicationId: string, limit: number = 50, offset: number = 0): Promise<any> => {
+    return apiFetch(`/applications/${applicationId}/audit-log?limit=${limit}&offset=${offset}`);
+  },
+
+  // Get human-readable audit trail
+  getAuditTrail: (applicationId: string, limit: number = 50): Promise<any> => {
+    return apiFetch(`/applications/${applicationId}/audit-trail?limit=${limit}`);
   },
 
   // Get application statistics
@@ -501,6 +551,9 @@ export const api = {
   applications: applicationsApi,
   people: peopleApi,
 };
+
+// Re-export commonly used types for easier importing
+export type { ApplicationCard, StageMoveRequest, PriorityUpdateRequest, PersonEnriched, Blocker, NextBestAction, ActivityCreate, ActivityOut };
 
 export default api;
 

@@ -1,4 +1,4 @@
-# IP Ownership Declaration – Ivy – The Higher Education OS
+# IP Ownership Declaration – IvyOS
 
 **Date:** Monday, 4 August 2025  
 **Author:** Laurance Bridge  
@@ -8,7 +8,7 @@
 
 ## Declaration
 
-I, **Laurance Bridge**, confirm that all source code, product design, documentation, and data infrastructure developed under the project name “**Ivy – The Higher Education OS**” are my original intellectual property.
+I, **Laurance Bridge**, confirm that all source code, product design, documentation, and data infrastructure developed under the project name "**IvyOS**" are my original intellectual property.
 
 This work was:
 - Conceived, initiated, and authored independently.
@@ -16,7 +16,7 @@ This work was:
 - Written using **personal developer accounts** (GitHub: `Lbridge2222`, email: `laurancebridge1@gmail.com`).
 - Created **outside of employer time**, and **without the use of employer software, platforms, resources, data, or direction**.
 
-I hereby assert that no IP developed for Ivy is subject to any employment agreement, including but not limited to clauses regarding work-for-hire, employer ownership of derivative tools, or obligation to disclose side projects.
+I hereby assert that no IP developed for IvyOS is subject to any employment agreement, including but not limited to clauses regarding work-for-hire, employer ownership of derivative tools, or obligation to disclose side projects.
 
 ---
 
