@@ -18,19 +18,28 @@
     
     <style>
         :root {
-            --brand-forest: #0A1F1A;
-            --brand-ivy: #156B4A;
-            --brand-red: #E11D1D;
-            --text: #111111;
-            --muted: hsl(220,15%,18%);
-            --muted-2: hsl(220,15%,14%);
-            --bg: #FFFFFF;
-            --bg-soft: hsl(210,25%,99%);
-            --card: rgba(255,255,255,0.82);
-            --border: hsl(215,25%,88%);
-            --radius: 12px;
-            --shadow-sm: 0 1px 2px rgba(0,0,0,.06);
-            --shadow-md: 0 4px 12px rgba(0,0,0,.08);
+            /* Brand Colors - Matching your design system */
+            --brand-primary: 0 0% 7%;          /* Shadcn Black #111111 */
+            --brand-accent: 0 100% 50%;        /* Candy Apple Red #FF0800 */
+            --brand-secondary: 150 60% 8%;     /* Darker Ivy Green #1A3D2A */
+            --forest-green: 150 60% 8%;        /* Ivy Green #2D6B4A */
+            --forest-green-foreground: 0 0% 100%; /* White #FFFFFF */
+            
+            /* Surface Colors */
+            --surface-primary: 0 0% 100%;      /* Pure white #FFFFFF */
+            --surface-secondary: 0 0% 96%;     /* Light Gray #F5F5F5 */
+            
+            /* Text Colors */
+            --text-primary: 0 0% 7%;          /* Shadcn Black #111111 */
+            --text-secondary: 215 20% 45%;     /* Secondary text */
+            --text-foreground: 0 0% 7%;        /* Shadcn Black #111111 */
+            
+            /* Background */
+            --background: 0 0% 100%;           /* White #FFFFFF */
+            --border: 215 25% 90%;             /* Light border */
+            
+            /* Utilities */
+            --radius: 0.5rem;
         }
 
         * {
@@ -428,6 +437,55 @@
             width: 14rem;
         }
 
+        /* Button Styles - Matching your design system */
+        .btn-forest {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: var(--radius);
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: all 0.2s;
+            text-decoration: none;
+            border: none;
+            cursor: pointer;
+            padding: 0.5rem 1rem;
+            background-color: hsl(var(--forest-green));
+            color: hsl(var(--forest-green-foreground));
+            border: 0;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        .btn-forest:hover {
+            background-color: hsl(var(--forest-green) / 0.9);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        .btn-outline-forest {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: var(--radius);
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: all 0.2s;
+            text-decoration: none;
+            cursor: pointer;
+            padding: 0.5rem 1rem;
+            background-color: transparent;
+            color: hsl(var(--forest-green));
+            border: 1px solid hsl(var(--forest-green));
+        }
+
+        .btn-outline-forest:hover {
+            background-color: hsl(var(--forest-green));
+            color: hsl(var(--forest-green-foreground));
+        }
+
+        .forest-bg {
+            background-color: hsl(var(--forest-green) / 0.05);
+        }
+
         @media (min-width: 768px) {
             .md\\:text-7xl {
                 font-size: 4.5rem;
@@ -474,8 +532,8 @@
     </style>
 </head>
 <body>
-    <div class="min-h-screen bg-surface-primary text-text-primary">
-        <!-- Header -->
+    <div class="min-h-screen bg-surface-primary text-text-primary" style="--radius: 0.5rem;">
+        <!-- Header (glass with subtle green accents) -->
         <header class="relative bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60 border-b border-border/60 overflow-hidden">
             <div aria-hidden="true" class="pointer-events-none absolute -top-20 -right-24 h-40 w-40 rounded-full blur-2xl glow-white"></div>
             <div aria-hidden="true" class="pointer-events-none absolute -bottom-24 -left-20 h-56 w-56 rounded-full blur-2xl glow-green"></div>
@@ -489,20 +547,14 @@
                     </div>
                     <div class="font-semibold tracking-tight">IvyOS</div>
                 </div>
-                <nav class="flex items-center gap-6">
-                    <a href="#about" class="nav-link">About</a>
-                    <a href="#features" class="nav-link">Features</a>
-                    <a href="pitch-deck.html" class="nav-link">Pitch Deck</a>
-                    <a href="mailto:hello@ivy.so" class="nav-link">Contact</a>
-                </nav>
             </div>
         </header>
 
-        <!-- Hero Section -->
+        <!-- Hero (coming soon) -->
         <section>
             <div class="mx-auto max-w-7xl px-6 py-20 lg:py-28">
                 <div class="max-w-3xl">
-                    <div class="inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-medium forest-bg text-white border border-border">
+                    <div class="inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-medium forest-bg text-text-secondary border border-border">
                         Coming soon
                     </div>
                     <div class="mt-3 text-5xl md:text-7xl font-900 tracking-[-0.02em] text-foreground">
@@ -521,87 +573,24 @@
                     <p class="mt-3 text-text-secondary">Minimal, decisive, and built for outcomes.</p>
                     <p class="mt-3 text-sm text-text-secondary">MVP Preview: Applications Board · Conversations · Forecasting</p>
                     <div class="mt-8 flex flex-wrap gap-3">
-                        <a href="mailto:hello@ivy.so" class="button button-forestAccent">
-                            Join waitlist
-                            <svg class="ml-1" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M5 12h14"/>
-                                <path d="M12 5l7 7-7 7"/>
-                            </svg>
+                        <a href="mailto:hello@ivy.so">
+                            <button class="btn-forest">
+                                Join waitlist
+                                <svg class="ml-1" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M5 12h14"/>
+                                    <path d="M12 5l7 7-7 7"/>
+                                </svg>
+                            </button>
                         </a>
-                        <a href="pitch-deck.html" class="button button-forest">View Pitch Deck</a>
+                        <a href="mailto:hello@ivy.so">
+                            <button class="btn-outline-forest">Contact</button>
+                        </a>
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- Features Section -->
-        <section id="features" class="py-20 bg-bg-soft">
-            <div class="mx-auto max-w-7xl px-6">
-                <div class="text-center mb-16">
-                    <h2 class="text-3xl font-700 text-foreground mb-4">Built for Higher Education</h2>
-                    <p class="text-lg text-text-secondary max-w-2xl mx-auto">
-                        Three core modules that transform how institutions manage the student journey
-                    </p>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                    <div class="bg-card p-8 rounded-lg border border-border">
-                        <div class="w-12 h-12 bg-forest-green rounded-lg flex items-center justify-center mb-4">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
-                                <circle cx="9" cy="7" r="4"/>
-                                <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
-                                <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-                            </svg>
-                        </div>
-                        <h3 class="text-xl font-600 mb-2">Applications Board</h3>
-                        <p class="text-text-secondary">Visual pipeline management with AI-powered insights and automated workflows for admissions teams.</p>
-                    </div>
-                    <div class="bg-card p-8 rounded-lg border border-border">
-                        <div class="w-12 h-12 bg-forest-green rounded-lg flex items-center justify-center mb-4">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-                            </svg>
-                        </div>
-                        <h3 class="text-xl font-600 mb-2">Conversations</h3>
-                        <p class="text-text-secondary">Unified communication hub with AI-powered conversation intelligence and automated follow-ups.</p>
-                    </div>
-                    <div class="bg-card p-8 rounded-lg border border-border">
-                        <div class="w-12 h-12 bg-forest-green rounded-lg flex items-center justify-center mb-4">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M3 3v18h18"/>
-                                <path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3"/>
-                            </svg>
-                        </div>
-                        <h3 class="text-xl font-600 mb-2">Forecasting</h3>
-                        <p class="text-text-secondary">Predictive analytics and ML models to forecast enrollment, identify at-risk students, and optimize outcomes.</p>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- About Section -->
-        <section id="about" class="py-20">
-            <div class="mx-auto max-w-7xl px-6">
-                <div class="max-w-3xl">
-                    <h2 class="text-3xl font-700 text-foreground mb-6">Why IvyOS?</h2>
-                    <p class="text-lg text-text-secondary mb-6">
-                        Higher education institutions are drowning in fragmented systems. CRMs that don't understand admissions. 
-                        Student information systems that can't predict outcomes. Communication tools that create silos instead of connections.
-                    </p>
-                    <p class="text-lg text-text-secondary mb-6">
-                        IvyOS changes that. Built by people who've lived the pain points, it's the first platform designed 
-                        specifically for higher education outcomes - not just data management.
-                    </p>
-                    <div class="bg-card p-6 rounded-lg border border-border">
-                        <p class="text-text-secondary italic">
-                            "We're not building another CRM. We're building the operating system that higher education has been waiting for."
-                        </p>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Footer -->
+        <!-- Footer (minimal contact) -->
         <footer id="contact" class="border-t border-border">
             <div class="mx-auto max-w-7xl px-6 py-8 text-sm text-text-secondary flex flex-col md:flex-row items-center justify-between gap-3">
                 <div>© 2025 IvyOS — Higher Education OS</div>
