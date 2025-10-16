@@ -1,6 +1,6 @@
 {
-  "buildCommand": "echo 'Static site - no build required'",
-  "outputDirectory": ".",
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
   "rewrites": [
     {
       "source": "/((?!pitch-deck\\.html).*)",
