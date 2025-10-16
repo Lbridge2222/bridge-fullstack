@@ -38,7 +38,7 @@ async def llm_health() -> Dict[str, Any]:
         llm = LLMCtx()
         
         start_time = datetime.utcnow()
-        response = await llm.ainvoke("Test", timeout_ms=3000)
+        response = await llm.ainvoke("Test")
         latency_ms = (datetime.utcnow() - start_time).total_seconds() * 1000
         
         return {

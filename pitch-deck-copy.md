@@ -20,19 +20,19 @@
 
 **Headline:** Universities spend ≈ £40k a year on systems that still force them to guess.
 
-**Sub-headline:** The tools driving modern business growth don't speak Higher Education — and the ones built for HE can't keep up with modern performance needs.
+**Sub-headline:** The tools that drive modern business growth don't speak Higher Education - and the ones built for HE can't keep up with modern performance needs.
 
 **Problem Table:**
 
 | System | Typical Cost | The Reality |
 |--------|-------------|-------------|
-| Sales CRMs (HubSpot / Salesforce) | £20–30k | Built for MQL → SQL → Customer. Doesn't map to enquiry → applicant → offer → enrolled — forecasting breaks. |
+| Sales CRMs (HubSpot / Salesforce) | £20–30k | Built for MQL → SQL → Customer. Doesn't map to enquiry → applicant → offer → enrolled - forecasting breaks. |
 | Legacy SIS (Ellucian / Unit4 / Tribal) | £50–150k | Compliance-first, slow to change, no predictive capability. |
-| Spreadsheets + manual workarounds | £30–50k staff time | Brittle, siloed, and reactive — leadership can't see the full picture. |
+| Spreadsheets + manual workarounds | £30–50k staff time | Brittle, siloed, and reactive - leadership can't see the full picture. |
 
 **Founder insight:**
 
-"I ran admissions and recruitment for five years and lived this daily. The problem isn't capability—it's context. Sales CRMs don't speak Higher Education, and legacy SIS tools can't drive decisions. Ivy OS exists because the sector needs both in one system."
+"I ran admissions and recruitment for five years and lived this daily. The problem isn't capability - it's context. Sales CRMs don't speak Higher Education, and legacy SIS tools can't drive decisions. Ivy OS exists because the sector needs both in one system."
 
 ---
 
@@ -40,33 +40,31 @@
 
 **Headline:** A £150M replacement market hiding in plain sight
 
-**Subtext:** Every university already pays for CRMs, SIS tools, and spreadsheets — Ivy OS replaces them with one intelligent platform built for Higher Education.
+**Sub-headline:** Universities already pay for CRMs, SIS tools, and spreadsheets. Ivy OS replaces them with one intelligent platform built for Higher Education.
 
-**The market reality**
-| Segment | Institutions | Typical Current Spend | Addressable Value |
-|---------|-------------|---------------------|-------------------|
-| UK Higher Education | 400+ (OfS register) | £30–50k each | ≈ £16M SAM |
-| English-language HE (IE, AU, NZ, CA) | 500+ | £30–40k each | +£130M |
-| **Total near-term opportunity** | — | — | **≈ £150M** |
+**Market snapshot (UK + English-language HE):**
+- 400+ UK providers (OfS register)
+- ≈ 3M applications processed annually via UCAS
+- Typical current spend: £30–50k per institution
+- UK SAM: ~£16M (400 × ~£40k)
+- Expansion (IE, AU, NZ, CA): +£130M
+- **Near-term total: ≈ £150M**
 
-**The problem behind the spend**
-Every institution already has:
-- A CRM built for business pipelines
-- A student information system designed for compliance
-- Teams bridging the gap manually
+**Procurement-friendly entry:** 3–6 month pilot under departmental thresholds (budget-neutral swap).
 
-They're not under-investing — they're investing in the wrong tools.
+**What's behind that spend - and why it's wasted:**
+- Sales CRMs built for MQL → SQL, not enquiry → offer → enrolment
+- Legacy SIS designed for compliance, not decisions
+- People + spreadsheets bridging the gaps manually
 
-**The inevitability**
+They're not under-investing, they're investing in the wrong tools.
+Ivy OS unifies those fragmented £40k stacks into one AI-native system.
+
+**The inevitability:**
+
 Within five years, AI-native operational intelligence will be standard across UK universities.
 
-The question isn't if institutions adopt it — it's who builds the platform that becomes infrastructure.
-
-🧱 **Procurement-friendly entry: 3–6 month pilot under departmental thresholds**
-
-**Highlight:**
-
-Ivy OS isn't creating a new budget line. It's replacing fragmented £40k stacks with a unified, AI-native system that actually understands Higher Education.
+The question isn't if they adopt it, it's who builds the platform that becomes infrastructure.
 
 ---
 
@@ -74,49 +72,45 @@ Ivy OS isn't creating a new budget line. It's replacing fragmented £40k stacks 
 
 **Headline:** One system. One truth. Built around the real student journey.
 
-**Sub-headline:** Ivy OS unifies CRM, student records, and institutional intelligence around the Higher Education lifecycle — enquiry → application → offer → enrolment → progression → alumni.
-
-**What Ivy OS is**
-
-The first AI-native operating system for Higher Education, combining the data depth of an SIS with the usability of a modern CRM. It connects every stage of the pipeline and learns continuously from each institution's activity to improve prediction, triage, and decision-making over time.
+**Sub-headline:** Ivy OS unifies CRM, student records, and institutional intelligence around the Higher Education lifecycle - from enquiry to alumni.
 
 **How it works**
 
 ```
 ┌────────────────────────────────────┐
-│  USER LAYER: HE workflows          │
+│  USER LAYER: HE Workflows          │
 │  Enquiry → Application → Offer →   │
 │  Enrolment → Progression → Alumni  │
 └────────────────────────────────────┘
                  ↓
 ┌────────────────────────────────────┐
-│  INTELLIGENCE LAYER: AI copilots   │
+│  INTELLIGENCE LAYER: AI Copilots   │
 │  • Predictive triage & risk scoring│
 │  • Policy-aware Q&A (UCAS, OfS)    │
-│  • Smart communications composer   │
+│  • Smart comms & follow-up logic   │
 │  • Live forecast refinement        │
 └────────────────────────────────────┘
                  ↓
 ┌────────────────────────────────────┐
 │  DATA LAYER: Unified CRM + SIS     │
-│  Real-time merge of recruitment and│
-│  student data — single source of   │
+│  Real-time merge of recruitment &  │
+│  student data - single source of   │
 │  truth                             │
 └────────────────────────────────────┘
 ```
 
 **Why it's different**
 
-Most platforms bolt AI on top of legacy systems.
-Ivy OS is AI-first by design, so intelligence is built into every workflow, not added later.
+Most platforms bolt AI onto legacy stacks. Ivy OS is AI-first by design, so intelligence lives inside every workflow.
+
 - Data model built for HE from day one
-- Forecasts and triage scores improve automatically with each cycle
-- AI copilots act in context — no switching tools or exporting data
-- One login, one interface, one accurate picture
+- Forecasts improve each cycle
+- AI acts in context - no switching tools
+- One interface, one accurate picture
 
-**Bottom line:**
+**Highlight:**
 
-Ivy OS doesn't make universities better at using generic tools — it gives them tools actually built for what they do.
+Ivy OS doesn't make universities better at using generic tools - it gives them tools actually built for what they do.
 
 ---
 
@@ -126,24 +120,23 @@ Ivy OS doesn't make universities better at using generic tools — it gives them
 
 **Sub-headline:** Real-time prioritisation, insight, and automation purpose-built for Higher Education teams.
 
-**Live Today / Demo-Ready Capabilities:**
-- **AI Triage** — ranks enquiries and applicants by likelihood to progress or require attention
-- **Applicant Profiles** — predictive scores, blockers, and next-best-action recommendations per application
-- **AI Kanban Board** — shows where applications stall and why
-- **Email Copilot** — drafts personalised invites, reminders, and offer letters from institutional templates
-- **RAG Knowledge Base** — retrieves UCAS, OfS, and institutional policy documents with citations
-- **Meeting Booker** — one-click scheduling and automated reminders
+**Live today / demo-ready:**
+- **AI Triage** — ranks enquiries and applicants by likelihood to progress or need attention
+- **Applicant Profiles** — predictive scores, blockers, and next-best-action recommendations
+- **AI Kanban Board** — visual pipeline showing exactly where applications stall and why
+- **Email Copilot** — drafts personalised invites, reminders, and offers from institutional templates
+- **RAG Knowledge Base** — retrieves UCAS, OfS, and internal policy docs with citations
 
-**User Experience Design:**
-- One cohesive interface built on React + Tailwind + shadcn/ui
-- Designed for real HE roles: Admissions, Recruitment, Marketing, Registry
-- AI interactions embedded in context: inline prompts, predictive insights, and summaries inside each workflow
+**User experience:**
+- Single cohesive interface built on React + Tailwind + shadcn/ui
+- Designed for HE roles: Admissions, Recruitment, Marketing, Registry
+- AI interactions appear inline — prompts, predictions, and summaries inside each workflow
 
 **Highlight:**
 
-Ivy OS delivers AI-driven triage, insight, and action directly inside live admissions workflows — proving how an AI-native architecture transforms everyday Higher Education operations.
+Ivy OS delivers AI-driven triage, insight, and action directly inside live admissions workflows - proving how an AI-native architecture transforms everyday Higher Education operations.
 
-🛡️ **DPIA + security pack ready — built for HE procurement**
+**DPIA & security pack ready - procurement-compliant from day one**
 
 ---
 

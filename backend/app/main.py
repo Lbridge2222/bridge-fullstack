@@ -229,6 +229,33 @@ except Exception as e:
     print(f"❌ Failed to load natural language router: {e}")
     pass
 
+# RAG Streaming router (Performance Optimization)
+try:
+    from app.routers.rag_streaming import router as rag_streaming_router
+    app.include_router(rag_streaming_router)
+    print("✅ RAG Streaming router loaded successfully")
+except Exception as e:
+    print(f"❌ Failed to load RAG streaming router: {e}")
+    pass
+
+# People Optimized router (Contact Loading Performance)
+try:
+    from app.routers.people_optimized import router as people_optimized_router
+    app.include_router(people_optimized_router, prefix="/people", tags=["people-optimized"])
+    print("✅ People Optimized router loaded successfully")
+except Exception as e:
+    print(f"❌ Failed to load People Optimized router: {e}")
+    pass
+
+# Applications Optimized router (Application Page Performance)
+try:
+    from app.routers.applications_optimized import router as applications_optimized_router
+    app.include_router(applications_optimized_router, prefix="/applications", tags=["applications-optimized"])
+    print("✅ Applications Optimized router loaded successfully")
+except Exception as e:
+    print(f"❌ Failed to load Applications Optimized router: {e}")
+    pass
+
 # Advanced ML router (Phase 4.2) - Hardened Version (mounted first)
 try:
     from app.ai.advanced_ml_hardened import router as advanced_ml_hardened_router
