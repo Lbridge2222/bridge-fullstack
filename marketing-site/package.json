@@ -1,0 +1,14 @@
+{
+  "name": "ivyos-marketing",
+  "version": "1.0.0",
+  "description": "IvyOS Marketing Site - Homepage and Pitch Deck",
+  "private": true,
+  "scripts": {
+    "dev": "python -m http.server 3000",
+    "build": "echo 'Static site - no build required'",
+    "preview": "python -m http.server 3000"
+  },
+  "keywords": ["higher-education", "saas", "crm", "ai", "marketing"],
+  "author": "IvyOS",
+  "license": "UNLICENSED"
+}

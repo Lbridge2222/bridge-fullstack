@@ -43,6 +43,8 @@
             box-sizing: border-box;
         }
 
+        html { overflow-x: hidden; }
+
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Satoshi', 'Segoe UI', Roboto, sans-serif;
             background: linear-gradient(135deg, var(--bg) 0%, var(--bg-soft) 100%);
@@ -69,6 +71,7 @@
         .slide-container {
             scroll-snap-type: y proximity;
             overflow-y: scroll;
+            overflow-x: hidden; /* prevent horizontal scroll bar */
             height: 100vh;
             position: relative;
             z-index: 1;
@@ -84,6 +87,7 @@
             justify-content: center;
             align-items: stretch;
             padding: 4rem;
+            overflow-x: hidden; /* clip any off-canvas decorative elements */
             scroll-snap-align: start;
             scroll-snap-stop: always;
             position: relative;
@@ -1106,6 +1110,7 @@
         .screenshot-track::-webkit-scrollbar-thumb { background: rgba(10,31,26,0.25); border-radius: 4px; }
         .shot { flex: 0 0 100%; max-width: 100%; scroll-snap-align: center; position: relative; border: 1px solid var(--border); border-radius: 12px; overflow: hidden; background: linear-gradient(135deg, rgba(255,255,255,0.9), rgba(249,250,251,0.85)); box-shadow: 0 18px 40px rgba(2,6,23,0.12); }
         /* Ensure entire screenshot is visible regardless of aspect ratio */
+        .screenshot-carousel{ overflow: hidden; }
         .shot img { 
             display: block; 
             max-width: 100%; 
@@ -1258,6 +1263,7 @@
         .slide--raise .donut-legend li{ position: static; padding-left: 0; display:flex; align-items:center; justify-content: space-between; gap:0.5rem; font-size: 0.85rem; color: var(--muted-2); padding: 0.15rem 0; }
         .slide--raise .donut-legend li::before{ content: none !important; }
         .slide--raise .donut-legend .swatch{ display:inline-block; width:10px; height:10px; border-radius:3px; margin-right: 0.5rem; }
+        .slide--raise .donut-legend .legend-key{ display:inline-grid; place-items:center; width:16px; height:16px; border-radius:50%; background: rgba(10,31,26,0.12); color:#0A1F1A; font-size: 0.7rem; font-weight:700; margin-right: 0.35rem; }
         .slide--raise .donut-legend .c1{ background:#156B4A; }
         .slide--raise .donut-legend .c2{ background:#0F3C2F; }
         .slide--raise .donut-legend .c3{ background:#1B7A57; }
@@ -1289,6 +1295,50 @@
         .slide--vision .investment-list .label{ margin: 0 0 0.25rem 0; text-align:left; }
         .slide--vision .target-list{ margin: 0.35rem 0 0 0; padding-left: 1.1rem; line-height:1.6; font-size: var(--fs-sm); }
 
+        /* Slide 14: full‑width Deal Terms strip */
+        .slide--vision .deal-strip{
+            margin-top: 1rem;
+            padding: 1rem 1.25rem;
+            width: 100%;
+            border-radius: 12px;
+            background: linear-gradient(135deg, var(--brand-forest), #156B4A);
+            box-shadow: 0 8px 20px rgba(2,6,23,0.14);
+            color: #FFFFFF;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem 1rem;
+            flex-wrap: wrap;
+            text-align: center;
+        }
+        .slide--vision .deal-strip .ds-title{
+            font-size: 0.9rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: rgba(255,255,255,0.92);
+        }
+        .slide--vision .deal-strip .ds-figure{
+            font-size: 1.6rem;
+            font-weight: 800;
+            letter-spacing: -0.01em;
+            color: #FFFFFF;
+        }
+        .slide--vision .deal-strip .ds-terms{
+            font-size: 1rem;
+            color: rgba(255,255,255,0.95);
+        }
+        @media (max-width: 900px){
+            .slide--vision .deal-strip .ds-figure{ font-size: 1.4rem; }
+            .slide--vision .deal-strip .ds-terms{ font-size: 0.95rem; }
+        }
+
+        /* Slide 14: full-width deal strip */
+        .slide--vision .deal-strip{ margin-top: 1rem; width: 100%; border-radius: 12px; background: linear-gradient(135deg, var(--brand-forest), #156B4A); box-shadow: 0 10px 24px rgba(2,6,23,0.14); color:#FFFFFF; display:flex; flex-direction:column; align-items:center; gap: 0.3rem; padding: 1rem 1.25rem; }
+        .slide--vision .deal-strip .ds-title{ font-weight: 800; font-size: 1rem; letter-spacing: -0.01em; }
+        .slide--vision .deal-strip .ds-figure{ font-size: 2rem; font-weight: 800; letter-spacing: -0.01em; line-height: 1; }
+        .slide--vision .deal-strip .ds-terms{ font-size: 0.95rem; color: rgba(255,255,255,0.92); }
+
         /* Slide 15: Summary */
         .slide--summary .summary-grid{ display:grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; }
         @media (max-width: 900px){ .slide--summary .summary-grid{ grid-template-columns: 1fr; } }
@@ -1299,6 +1349,10 @@
         .slide--summary .mini-table{ width:100%; margin-bottom: 0.75rem; font-size: var(--fs-xs); border-collapse: collapse; background: linear-gradient(135deg, rgba(255,255,255,0.98), rgba(249,250,251,0.94)); border:1px solid var(--border); border-radius:8px; overflow:hidden; }
         .slide--summary .mini-table th{ text-align:left; padding: 0.4rem 0.5rem; font-weight:700; color:#0A1F1A; background: rgba(10,31,26,0.06); }
         .slide--summary .mini-table td{ padding: 0.35rem 0.5rem; border-top:1px solid hsl(215,25%,90%); }
+        .slide--summary .investment-panel{ display:flex; flex-direction:column; align-items:center; gap:0.35rem; padding: 1.15rem 1.35rem; border-radius:12px; background: linear-gradient(135deg, var(--brand-forest), #156B4A); box-shadow: 0 10px 24px rgba(2,6,23,0.16); color:#FFFFFF; text-align:center; }
+        .slide--summary .investment-panel .inv-title{ font-weight:800; font-size: 1.15rem; letter-spacing:-0.01em; color:#FFFFFF; }
+        .slide--summary .investment-panel .inv-row{ color:#FFFFFF; font-size: 1.05rem; letter-spacing:-0.005em; }
+        .slide--summary .investment-panel .inv-row .inv-label{ color:#FFFFFF; font-weight:700; margin-right: 0.25rem; }
 
         /* Slide 11: Why Now / Edge styling */
         .slide--edge .card-rail{ position: relative; }
@@ -1310,7 +1364,8 @@
         .slide--edge .kv-table td:last-child{ color: var(--muted-2); }
         .slide--edge .timing-grid{ display:grid; grid-template-columns: repeat(2,1fr); gap: 1rem; }
         .slide--edge .timing-list{ margin:0; }
-        .slide--edge .timing-list li{ margin: 0 0 0.45rem 0; }
+        .slide--edge .timing-list li{ margin: 0 0 0.45rem 0; position: relative; padding-left: 0.75rem; }
+        .slide--edge .timing-list li::before{ content:""; position:absolute; left:0; top:0.55rem; width:5px; height:5px; border-radius:50%; background: var(--brand-ivy); opacity: 0.9; }
         @media (max-width: 900px){ .slide--edge .timing-grid{ grid-template-columns: 1fr; } }
 
         /* Slide 11: tighten list spacing and paragraph rhythm */
@@ -1318,6 +1373,17 @@
         .slide--edge .card ul { margin-top: 0.4rem; }
         .slide--edge .card li { margin-bottom: 0.45rem; }
         .slide--edge .card p { margin-top: 0.75rem; }
+
+        /* Normalize list sizing/spacing across deck where used */
+        /* Unified green bullets (Slide 5 style) for normal lists */
+        .bullet-list { list-style: none; padding-left: 0.9rem; margin: 0.5rem 0 0 0; }
+        .bullet-list li { line-height: 1.58; margin-bottom: 0.45rem; font-size: var(--fs-sm); position: relative; padding-left: 0.9rem; }
+        .bullet-list li::before { content: ""; position: absolute; left: 0; top: 0.55rem; width: 6px; height: 6px; border-radius: 50%; background: var(--brand-ivy); opacity: 0.95; }
+        /* Compact lists keep compact sizing */
+        /* Compact lists keep smaller spacing but same green dot */
+        .list-compact { list-style: none; padding-left: 0.9rem; }
+        .list-compact li { line-height: 1.5; margin-bottom: 0.35rem; position: relative; padding-left: 0.85rem; }
+        .list-compact li::before { content: ""; position: absolute; left: 0; top: 0.55rem; width: 5px; height: 5px; border-radius: 50%; background: var(--brand-ivy); opacity: 0.95; }
 
         /* Slide 13: Team & advisors */
         .slide--team .card-rail{ position: relative; }
@@ -1356,7 +1422,7 @@
 
         /* Hero: ensure title is the largest, even with inline sizes present */
         .slide--center h1 { font-size: clamp(2.25rem, 2.4vw + 1rem, 3.25rem) !important; }
-
+        
         /* Mobile caps that win over inline style mappings */
         @media (max-width: 768px) {
           .slide--center h1,
@@ -1375,6 +1441,9 @@
         .slide--compact .layer-panel p { font-size: var(--fs-sm2) !important; }
         .slide--compact .card p,
         .slide--compact .card ul { font-size: var(--fs-base) !important; }
+
+        /* Hero: ensure brand mark (Ivy OS) stands out */
+        .slide--center .logo { font-size: clamp(2.8rem, 3.5vw + 1rem, 3.8rem) !important; margin-bottom: 2rem; }
 
         /* Semantic normalization across the whole deck */
         /* Card titles should be consistent across slides */
@@ -1413,6 +1482,7 @@
                         <p style="margin: 0 0 0.25rem 0; font-weight: 600; color: white; font-size: 0.9rem;">PRE-SEED | RAISING £450k</p>
                         <p style="margin: 0; font-weight: 500; color: rgba(255, 255, 255, 0.8); font-size: 0.85rem;">£5m cap • 20% discount SAFE</p>
                 </div>
+
                 </div>
                 
                 <!-- Founder line positioned at bottom -->
@@ -1479,41 +1549,37 @@
                     <!-- Box 1: Market Snapshot -->
                     <div class="card card-glow" style="border-left: 4px solid #0A1F1A;">
                         <h3 class="success" style="margin-bottom: 1rem; font-size: 1.1rem;">Market snapshot</h3>
-                        <ul style="margin: 0; font-size: 0.9rem; line-height: 1.6; color: hsl(220, 15%, 15%);">
-                            <li style="margin-bottom: 0.4rem;"><strong style="color: hsl(0, 0%, 7%);">400+</strong> UK providers (OfS register)</li>
-                            <li style="margin-bottom: 0.4rem;"><strong style="color: hsl(0, 0%, 7%);">≈3M</strong> applications processed annually via UCAS</li>
-                            <li style="margin-bottom: 0.4rem;">Typical current spend: <strong style="color: #0A1F1A;">£30–50k</strong> per institution</li>
-                            <li style="margin-bottom: 0.4rem;">UK SAM: <strong style="color: #0A1F1A;">~£16M</strong> (400 × ~£40k)</li>
-                            <li style="margin-bottom: 0.4rem;">Expansion (IE, AU, NZ, CA): <strong style="color: #0A1F1A;">+£130M</strong></li>
+                        <ul class="bullet-list" style="margin: 0;">
+                            <li><strong style="color: hsl(0, 0%, 7%);">400+</strong> UK providers (OfS register)</li>
+                            <li><strong style="color: hsl(0, 0%, 7%);">≈3M</strong> applications processed annually via UCAS</li>
+                            <li>Typical current spend: <strong style="color: #0A1F1A;">£30–50k</strong> per institution</li>
+                            <li>UK SAM: <strong style="color: #0A1F1A;">~£16M</strong> (400 × ~£40k)</li>
+                            <li>Expansion (IE, AU, NZ, CA): <strong style="color: #0A1F1A;">+£130M</strong></li>
                         </ul>
                         
-                        <!-- Total as a clean divider -->
-                        <div style="margin-top: 1rem; padding: 0.75rem 1rem; background: #0A1F1A; border-radius: 6px;">
+                        <!-- Total as a clean divider (match green banner aesthetic) -->
+                        <div style="margin-top: 1rem; padding: 0.75rem 1rem; background: linear-gradient(135deg, var(--brand-forest), #156B4A); border-radius: 6px; box-shadow: 0 6px 16px rgba(2,6,23,0.14);">
                             <p style="margin: 0; font-size: 0.85rem; color: rgba(255, 255, 255, 0.8); font-weight: 600;">Near-term total addressable market</p>
                             <p style="margin: 0.25rem 0 0 0; font-size: 1.5rem; color: white; font-weight: 700; letter-spacing: -0.02em;">≈ £150M</p>
                         </div>
                         
-                        <!-- Procurement note - cleaner styling -->
-                        <div style="margin-top: 1.25rem; padding: 0.875rem 1rem; background: linear-gradient(135deg, rgba(10, 31, 26, 0.05), rgba(10, 31, 26, 0.12)); border-radius: 8px; border: 1px solid rgba(10, 31, 26, 0.2);">
-                            <p style="margin: 0; font-size: 0.825rem; color: #0A1F1A; font-weight: 600; line-height: 1.5;">
-                                <span style="opacity: 0.7;">↳</span> Procurement-friendly entry: 3–6 month pilot under departmental thresholds (budget-neutral swap).
-                            </p>
-                        </div>
+                        <!-- Procurement note as subtle caption -->
+                        <p class="footnote" style="margin-top: 0.6rem; font-size: 0.8rem; color: hsl(220,15%,30%); font-style: italic;">Procurement‑friendly entry: 3–6 month pilot under departmental thresholds (budget‑neutral swap).</p>
                     </div>
 
                     <!-- Box 2: What's Behind the Spend -->
-                    <div class="card card-glow" style="border-left: 4px solid #E11D1D;">
+                    <div class="card card-glow" style="border-left: 4px solid var(--brand-ivy);">
                         <h3 class="primary" style="margin-bottom: 1rem; font-size: 1.1rem;">What's behind that spend</h3>
-                        <ul style="margin: 0 0 1.25rem 0; font-size: 0.9rem; line-height: 1.6; color: hsl(220, 15%, 15%);">
-                            <li style="margin-bottom: 0.4rem;">Sales CRMs built for MQL → SQL, not enquiry → offer → enrolment</li>
-                            <li style="margin-bottom: 0.4rem;">Legacy SIS designed for compliance, not decisions</li>
-                            <li style="margin-bottom: 0.4rem;">People + spreadsheets bridging the gaps manually</li>
+                        <ul class="bullet-list" style="margin: 0 0 1.1rem 0;">
+                            <li>Sales CRMs built for MQL → SQL, not enquiry → offer → enrolment</li>
+                            <li>Legacy SIS designed for compliance, not decisions</li>
+                            <li>People + spreadsheets bridging the gaps manually</li>
                         </ul>
                         
-                        <!-- Single unified insight box -->
-                        <div style="padding: 1rem; background: linear-gradient(135deg, rgba(10, 31, 26, 0.05), rgba(10, 31, 26, 0.12)); border-radius: 8px; border-left: 3px solid #0A1F1A;">
-                            <p style="margin: 0 0 0.5rem 0; font-size: 0.9rem; font-weight: 600; color: hsl(220, 15%, 15%); line-height: 1.5;">They're not under-investing, they're investing in the wrong tools.</p>
-                            <p style="margin: 0; font-size: 0.95rem; font-weight: 700; color: #0A1F1A; line-height: 1.5;">Ivy OS unifies those fragmented £40k stacks into one AI-native system.</p>
+                        <!-- Single unified insight box (standardized) -->
+                        <div class="highlight-box" style="border-left: 4px solid var(--brand-ivy);">
+                            <p style="margin: 0 0 0.35rem 0;">They're not under‑investing - they're investing in the wrong tools.</p>
+                            <p style="margin: 0; font-weight: 700; color: #0A1F1A;">Ivy OS unifies those fragmented £40k stacks into one AI‑native system.</p>
                         </div>
                     </div>
                 </div>
@@ -1613,11 +1679,11 @@
                     <div class="card card-glow">
                         <h3 class="success" style="margin-bottom: 0.875rem; font-size: 1rem;">Live today / demo-ready</h3>
                         <ul style="margin: 0; font-size: 0.825rem; line-height: 1.5;">
-                            <li style="margin-bottom: 0.4rem;"><strong>AI Triage</strong> — ranks enquiries and applicants by likelihood to progress or need attention</li>
-                            <li style="margin-bottom: 0.4rem;"><strong>Applicant Profiles</strong> — predictive scores, blockers, and next-best-action recommendations</li>
-                            <li style="margin-bottom: 0.4rem;"><strong>AI Kanban Board</strong> — visual pipeline showing exactly where applications stall and why</li>
-                            <li style="margin-bottom: 0.4rem;"><strong>Email Copilot</strong> — drafts personalised invites, reminders, and offers from institutional templates</li>
-                            <li style="margin-bottom: 0;"><strong>RAG Knowledge Base</strong> — retrieves UCAS, OfS, and internal policy docs with citations</li>
+                            <li style="margin-bottom: 0.4rem;"><strong>AI Triage</strong> - ranks enquiries and applicants by likelihood to progress or need attention</li>
+                            <li style="margin-bottom: 0.4rem;"><strong>Applicant Profiles</strong> - predictive scores, blockers, and next-best-action recommendations</li>
+                            <li style="margin-bottom: 0.4rem;"><strong>AI Kanban Board</strong> - visual pipeline showing exactly where applications stall and why</li>
+                            <li style="margin-bottom: 0.4rem;"><strong>Email Copilot</strong> - drafts personalised invites, reminders, and offers from institutional templates</li>
+                            <li style="margin-bottom: 0;"><strong>RAG Knowledge Base</strong> - retrieves UCAS, OfS, and internal policy docs with citations</li>
                         </ul>
                     </div>
 
@@ -1627,7 +1693,7 @@
                         <ul style="margin: 0; font-size: 0.825rem; line-height: 1.6;">
                             <li style="margin-bottom: 0.4rem;">Single cohesive interface built on React + Tailwind + shadcn/ui</li>
                             <li style="margin-bottom: 0.4rem;">Designed for HE roles: Admissions, Recruitment, Marketing, Registry</li>
-                            <li>AI interactions appear inline — prompts, predictions, and summaries inside each workflow</li>
+                            <li>AI interactions appear inline - prompts, predictions, and summaries inside each workflow</li>
                         </ul>
                     </div>
                 </div>
@@ -1645,21 +1711,21 @@
                                     <source srcset="/Screenshots/board-01.webp" type="image/webp" />
                                     <img loading="lazy" src="/Screenshots/board-01.png" alt="Applications board overview" />
                                 </picture>
-                                <div class="shot-caption">Applications board — overview</div>
+                            <div class="shot-caption">Applications board - overview</div>
                             </div>
                             <div class="shot">
                                 <picture>
                                     <source srcset="/Screenshots/board-02.webp" type="image/webp" />
-                                    <img loading="lazy" src="/Screenshots/board-02.png" alt="All Enquiries — list view" />
+                                    <img loading="lazy" src="/Screenshots/board-02.png" alt="All Enquiries - list view" />
                                 </picture>
-                                <div class="shot-caption">All Enquiries — list view</div>
+                                <div class="shot-caption">All Enquiries - list view</div>
                             </div>
                             <div class="shot">
                                 <picture>
                                     <source srcset="/Screenshots/board-03.webp" type="image/webp" />
-                                    <img loading="lazy" src="/Screenshots/board-03.png" alt="Explain with AI — insights" />
+                                    <img loading="lazy" src="/Screenshots/board-03.png" alt="Explain with AI - insights" />
                                 </picture>
-                                <div class="shot-caption">Explain with AI — insights</div>
+                                <div class="shot-caption">Explain with AI - insights</div>
                             </div>
                             <div class="shot">
                                 <picture>
@@ -1671,9 +1737,9 @@
                             <div class="shot">
                                 <picture>
                                     <source srcset="/Screenshots/board-05.webp" type="image/webp" />
-                                    <img loading="lazy" src="/Screenshots/board-05.png" alt="Person detail — Ivy panel" />
+                                    <img loading="lazy" src="/Screenshots/board-05.png" alt="Person detail - Ivy panel" />
                                 </picture>
-                                <div class="shot-caption">Person detail — Ivy panel</div>
+                                <div class="shot-caption">Person detail - Ivy panel</div>
                             </div>
                         </div>
                         <button class="carousel-btn carousel-next" aria-label="Next" data-carousel-next>
@@ -1923,15 +1989,15 @@
         <div class="slide">
             <div class="slide-content">
                 <h2>Built from the ground up on an<br/><span class="success">AI-native, modular substrate</span></h2>
-                <p class="subtitle">Engineered around an intelligent, flexible core that unifies data, workflows, and automation — and lets institutions scale capability or cost as they grow.</p>
+                <p class="subtitle">Engineered around an intelligent, flexible core that unifies data, workflows, and automation - and lets institutions scale capability or cost as they grow.</p>
                 
                 <div class="card card-glow" style="margin-top: 1rem;">
                     <h3 class="success" style="margin-bottom: 1rem;">System Architecture</h3>
                     <div class="arch-grid">
                         <div class="arch-card reveal-up"><div class="badge-num">1</div>
                             <h4>Frontend (UI Layer)</h4>
-                            <p>Vite + React + TypeScript + Tailwind + shadcn/ui</p>
-                            <p>Fast, modular interface with consumer-grade design • Built for rapid iteration and future white-labelling</p>
+                            <p>React + TypeScript + Tailwind</p>
+                            <p>Fast, modular interface • Rapid iteration • White‑label ready</p>
                         </div>
                         <div class="arch-card reveal-up"><div class="badge-num">2</div>
                             <h4>Backend (API Layer)</h4>
@@ -1939,9 +2005,9 @@
                             <p>Real-time data sync between CRM, SIS, and AI modules • RLS, encrypted storage, RBAC • Scales from pilot to enterprise</p>
                         </div>
                         <div class="arch-card reveal-up"><div class="badge-num">3</div>
-                            <h4>AI Substrate (Model-Agnostic)</h4>
-                            <p>LangChain + AI Router</p>
-                            <p>Choose LLMs (Claude, Gemini, GPT) balancing performance/cost • Retrieval, reasoning, next-best-action with continuous learning</p>
+                            <h4>AI Substrate (Model‑Agnostic)</h4>
+                            <p>Model router + retrieval pipeline</p>
+                            <p>Balance performance/cost • Retrieval, reasoning, and next‑best‑action with continuous learning</p>
                         </div>
                         <div class="arch-card reveal-up"><div class="badge-num">4</div>
                             <h4>Workflow & Automation</h4>
@@ -1996,7 +2062,7 @@
                 </div>
 
                 <div class="highlight-box" style="margin-top: 1.5rem; border-left: 4px solid #0A1F1A;">
-                    <h3>Ivy OS gives universities an AI-native foundation with the flexibility to choose their own models, workflows, and integrations — without sacrificing speed, security, or predictive accuracy.</h3>
+                    <h3>Ivy OS gives universities an AI-native foundation with the flexibility to choose their own models, workflows, and integrations - without sacrificing speed, security, or predictive accuracy.</h3>
                 </div>
             </div>
             <div class="slide-number">6</div>
@@ -2005,7 +2071,7 @@
         <!-- Slide 7: Competitive Landscape -->
         <div class="slide slide--comp">
             <div class="slide-content">
-                <h2>Why incumbents can't move fast enough —<br/>and <span class="success">new entrants can't go deep enough</span></h2>
+                <h2>Why incumbents can't move fast enough -<br/>and <span class="success">new entrants can't go deep enough</span></h2>
                 <p class="subtitle">Ivy OS is 18 months ahead, combining deep domain insight with a modern AI-native foundation that legacy vendors can't rebuild and startups can't replicate.</p>
                 
                 <div class="card card-glow" style="margin-top: 1.5rem;">
@@ -2129,7 +2195,7 @@
                     </div>
 
                 <div class="highlight-box" style="margin-top: 1.5rem; border-left: 4px solid #0A1F1A;">
-                    <h3>This isn't a "best features" race — it's a <strong>best dataset</strong> race.<br/>Ivy OS's 18-month head start and deep HE data foundation make its competitive advantage self-reinforcing.</h3>
+                    <h3>This isn't a "best features" race - it's a <strong>best dataset</strong> race.<br/>Ivy OS's 18-month head start and deep HE data foundation make its competitive advantage self-reinforcing.</h3>
                 </div>
             </div>
             <div class="slide-number">7</div>
@@ -2174,8 +2240,8 @@
                 </div>
                 
                 <div class="card card-success card-glow" style="margin-top: 1.5rem;">
-                    <p style="font-size: 1.05rem; font-style: italic; margin: 0;">"Over several years leading student recruitment and admissions at WaterBear College of Music, I rebuilt our data infrastructure from the ground up — exporting from HubSpot into Supabase, modelling conversion rates with XGBoost and Prophet, and designing SQL pipelines to track performance in real time. What began as an internal rebuild became the foundation for Ivy OS."</p>
-                    <p style="font-size: 0.95rem; margin: 1rem 0 0 0; text-align: right; font-style: normal; color: #0A1F1A; font-weight: 600;">— Laurance Bridge, Founder</p>
+                    <p style="font-size: 1.05rem; font-style: italic; margin: 0;">"Over several years leading student recruitment and admissions at WaterBear College of Music, I rebuilt our data infrastructure from the ground up - exporting from HubSpot into Supabase, modelling conversion rates with XGBoost and Prophet, and designing SQL pipelines to track performance in real time. What began as an internal rebuild became the foundation for Ivy OS."</p>
+                    <p style="font-size: 0.95rem; margin: 1rem 0 0 0; text-align: right; font-style: normal; color: #0A1F1A; font-weight: 600;">- Laurance Bridge, Founder</p>
                 </div>
 
                 <div class="card card-glow" style="margin-top: 1.5rem;">
@@ -2223,13 +2289,13 @@
                         <p>What this demonstrates</p>
                         <ul>
                             <li>Live-proven models with measurable ROI (accuracy + time saved)</li>
-                            <li>Workflows mirror real HE operations — not theory</li>
+                            <li>Workflows mirror real HE operations - not theory</li>
                         </ul>
                     </div>
                 </div>
 
                 <div class="highlight-box" style="margin-top: 1.25rem; border-left: 4px solid #0A1F1A;">
-                    <h3>Ivy OS is not a concept — it's the commercialisation of a proven system that has already delivered measurable results inside Higher Education admissions.</h3>
+                    <h3>Ivy OS is not a concept - it's the commercialisation of a proven system that has already delivered measurable results inside Higher Education admissions.</h3>
                 </div>
             </div>
             <div class="slide-number">8</div>
@@ -2239,7 +2305,7 @@
         <div class="slide slide--pricing">
             <div class="slide-content">
                 <h2>Predictable, <span class="success">budget-neutral pricing</span><br/>designed for Higher Education</h2>
-                <p class="subtitle">Ivy OS replaces multiple fragmented systems with one AI-native platform — delivering institutional-grade capability for the same annual spend most universities already make on HubSpot, spreadsheets, and timetabling tools.</p>
+                <p class="subtitle">Ivy OS replaces multiple fragmented systems with one AI-native platform - delivering institutional-grade capability for the same annual spend most universities already make on HubSpot, spreadsheets, and timetabling tools.</p>
                 
                 <div class="card card-glow" style="margin-top: 0.1rem; padding: 0.75rem 1rem;">
                     <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
@@ -2277,7 +2343,7 @@
                             <tr>
                                 <td style="padding: 0.75rem; font-weight: 600;">Group / System</td>
                                 <td style="padding: 0.75rem;">University groups / franchises</td>
-                                <td style="padding: 0.75rem;">—</td>
+                                <td style="padding: 0.75rem;">-</td>
                                 <td style="padding: 0.75rem; font-weight: 600; color: #0A1F1A;">from 80,000/yr</td>
                                 <td style="padding: 0.75rem;">Multi-tenant data lake + Custom SSO + API priority</td>
                             </tr>
@@ -2291,15 +2357,15 @@
                 <div class="card card-glow" style="margin-top: 1rem;">
                     <h3 class="success" style="margin-bottom: 0.75rem;">Pricing Philosophy</h3>
                     <ul class="philosophy-list" style="margin: 0;">
-                        <li><strong>Budget-neutral</strong> — replaces 3–4 existing tools</li>
-                        <li><strong>Procurement-friendly</strong> — flat annual fee</li>
-                        <li><strong>Scalable</strong> — simple growth by FTE</li>
-                        <li><strong>Low risk</strong> — pilot option (3–6 months at 50% annual fee)</li>
+                        <li><strong>Budget-neutral</strong> - replaces 3–4 existing tools</li>
+                        <li><strong>Procurement-friendly</strong> - flat annual fee</li>
+                        <li><strong>Scalable</strong> - simple growth by FTE</li>
+                        <li><strong>Low risk</strong> - pilot option (3–6 months at 50% annual fee)</li>
                     </ul>
                 </div>
 
                 <div class="highlight-box" style="margin-top: 1.5rem; border-left: 4px solid #0A1F1A;">
-                    <h3><strong>One clear institutional subscription. One operating system for Higher Education.</strong><br/>Built to slot into existing budgets, not add to them. Future expansion will come through deeper integrations — connecting timetabling, communications, and analytics natively within Ivy OS as institutions scale.</h3>
+                    <h3><strong>One clear institutional subscription. One operating system for Higher Education.</strong><br/>Built to slot into existing budgets, not add to them. Future expansion will come through deeper integrations - connecting timetabling, communications, and analytics natively within Ivy OS as institutions scale.</h3>
                 </div>
             </div>
             <div class="slide-number">9</div>
@@ -2347,6 +2413,7 @@
                             </tr>
                         </tbody>
                     </table>
+                    <p class="footnote" style="margin-top: 0.5rem; font-size: 0.75rem; color: hsl(220,15%,30%);">Assumptions: blended ACV mixes tiers; discount rate applied during pilots; win‑rate 20–25%; 3–6 month cycles.</p>
                 </div>
 
                 <div class="two-column" style="margin-top: 1.5rem; gap: 1.5rem;">
@@ -2387,7 +2454,7 @@
                             <div class="t-item">
                                 <div class="t-dot">1</div>
                                 <div class="t-body">
-                                    <p class="t-title">Year 1 — Pilot Phase</p>
+                                    <p class="t-title">Year 1 - Pilot Phase</p>
                                     <p class="t-desc">3–5 customers at 30–50% pilot discount</p>
                                     <p class="t-desc">Target: £75–125k ARR</p>
                                 </div>
@@ -2395,7 +2462,7 @@
                             <div class="t-item">
                                 <div class="t-dot">2</div>
                                 <div class="t-body">
-                                    <p class="t-title">Year 2 — Early Growth</p>
+                                    <p class="t-title">Year 2 - Early Growth</p>
                                     <p class="t-desc">Convert pilots + 7–12 new customers</p>
                                     <p class="t-desc">Target: £350–500k ARR</p>
                                 </div>
@@ -2403,7 +2470,7 @@
                             <div class="t-item">
                                 <div class="t-dot">3</div>
                                 <div class="t-body">
-                                    <p class="t-title">Year 3 — Scale Momentum</p>
+                                    <p class="t-title">Year 3 - Scale Momentum</p>
                                     <p class="t-desc">25–40 total customers, mostly Growth/Enterprise</p>
                                     <p class="t-desc">Target: £1–1.5M ARR</p>
                                 </div>
@@ -2423,17 +2490,17 @@
         <div class="slide slide--edge">
             <div class="slide-content">
                 <h2>The sector is under pressure,<br/>the technology is ready, and <span class="success">incumbents can't move fast enough</span></h2>
-                <p class="subtitle">Ivy OS arrives at the exact moment when Higher Education needs to modernise operations — and AI finally makes it possible.</p>
+                <p class="subtitle">Ivy OS arrives at the exact moment when Higher Education needs to modernise operations - and AI finally makes it possible.</p>
                 
                 <div class="card card-glow card-rail" style="margin-top: 1.5rem;">
                     <h3 class="primary" style="margin-bottom: 0.75rem; font-size: 1rem;">Sector Pressure Is Reaching Breaking Point</h3>
                     <ul style="margin: 0; font-size: 0.9rem; line-height: 1.6;">
                         <li>OfS and compliance expectations are rising: universities must now evidence recruitment ROI, retention, and progression through verifiable data</li>
-                        <li><strong>Franchise and partner colleges above ~300 students will soon be required to apply for OfS registration themselves</strong> — adding new regulatory and reporting burdens to smaller institutions without dedicated data infrastructure</li>
+                        <li><strong>Franchise and partner colleges above ~300 students will soon be required to apply for OfS registration themselves</strong> - adding new regulatory and reporting burdens to smaller institutions without dedicated data infrastructure</li>
                         <li>Budgets are tightening: recruitment and admissions teams must deliver more with less while juggling fragmented systems</li>
                         <li>Leadership urgency: Vice-Chancellors, Marketing, and Registry teams need real-time visibility and audit-ready data</li>
                     </ul>
-                    <p style="margin: 1rem 0 0 0; font-weight: 600; color: #0A1F1A; font-style: italic;">In short: operational compliance and performance accountability are converging — creating a perfect storm Ivy OS is built to solve.</p>
+                    <p style="margin: 1rem 0 0 0; font-weight: 600; color: #0A1F1A; font-style: italic;">In short: operational compliance and performance accountability are converging - creating a perfect storm Ivy OS is built to solve.</p>
                 </div>
 
                 <div class="two-column" style="margin-top: 1.5rem; gap: 1.5rem;">
@@ -2451,7 +2518,7 @@
                             <tbody>
                                 <tr>
                                     <td>Sales CRMs</td>
-                                    <td>Wrong data model — would need full rebuild</td>
+                                    <td>Wrong data model - would need full rebuild</td>
                                 </tr>
                                 <tr>
                                     <td>Legacy SIS</td>
@@ -2475,13 +2542,13 @@
                         </ul>
                         <ul class="timing-list">
                             <li><strong style="color: #0A1F1A;">Market gap:</strong> no credible AI-native HE operating system exists yet</li>
-                            <li><strong style="color: #0A1F1A;">Window:</strong> measured in quarters, not years — before incumbents adapt</li>
+                            <li><strong style="color: #0A1F1A;">Window:</strong> measured in quarters, not years - before incumbents adapt</li>
                         </ul>
                     </div>
                 </div>
 
                 <div class="highlight-box" style="margin-top: 1.5rem; border-left: 4px solid #0A1F1A;">
-                    <h3>Regulatory pressure, technical readiness, and incumbent inertia have aligned.<br/><strong>Ivy OS is positioned to define the category of AI-native Higher Education operations software — and the window is open now.</strong></h3>
+                    <h3>Regulatory pressure, technical readiness, and incumbent inertia have aligned.<br/><strong>Ivy OS is positioned to define the category of AI-native Higher Education operations software - and the window is open now.</strong></h3>
                     <div style="margin-top: 1rem; padding: 0.5rem 1rem; background: rgba(10, 31, 26, 0.08); border-radius: 6px; border-left: 3px solid var(--brand-forest);">
                         <p style="margin: 0; font-size: 0.9rem; color: var(--brand-forest); font-weight: 600;">Framework-ready product: cuts typical HE procurement from 9 months → 6 weeks</p>
                     </div>
@@ -2588,12 +2655,12 @@
                                 <div class="donut-tooltip" role="status"><span class="dot"></span><span class="text"></span></div>
                             </div>
                             <ul class="donut-legend">
-                                <li data-seg="founder"><span class="swatch c1"></span>Founder Salary <span class="pct">24%</span></li>
-                                <li data-seg="principal"><span class="swatch c2"></span>Principal Engineer + QA <span class="pct">31%</span></li>
-                                <li data-seg="gtm"><span class="swatch c3"></span>GTM & RevOps <span class="pct">16%</span></li>
-                                <li data-seg="infra"><span class="swatch c4"></span>Infra & AI Compute <span class="pct">11%</span></li>
-                                <li data-seg="legal"><span class="swatch c5"></span>Legal & Procurement <span class="pct">9%</span></li>
-                                <li data-seg="contingency"><span class="swatch c6"></span>Contingency / R&D <span class="pct">9%</span></li>
+                                <li data-seg="founder"><span class="legend-key">1</span><span class="swatch c1"></span>Founder Salary <span class="pct">24%</span></li>
+                                <li data-seg="principal"><span class="legend-key">2</span><span class="swatch c2"></span>Principal Engineer + QA <span class="pct">31%</span></li>
+                                <li data-seg="gtm"><span class="legend-key">3</span><span class="swatch c3"></span>GTM & RevOps <span class="pct">16%</span></li>
+                                <li data-seg="infra"><span class="legend-key">4</span><span class="swatch c4"></span>Infra & AI Compute <span class="pct">11%</span></li>
+                                <li data-seg="legal"><span class="legend-key">5</span><span class="swatch c5"></span>Legal & Procurement <span class="pct">9%</span></li>
+                                <li data-seg="contingency"><span class="legend-key">6</span><span class="swatch c6"></span>Contingency / R&D <span class="pct">9%</span></li>
                             </ul>
                         </div>
                     </div>
@@ -2643,13 +2710,13 @@
                             <li><strong>Technical Risk →</strong> Mitigated by fractional principal engineer, modern stack</li>
                             <li><strong>Market Risk →</strong> Mitigated by warm pipeline, pilot structure for rapid feedback</li>
                             <li><strong>Execution Risk →</strong> Mitigated by 5 years domain experience, 24-month runway</li>
-                            <li><strong>Capital Efficiency:</strong> £450k → £400k ARR ≈ <strong>£1,100 cost per £1 ARR</strong> — top‑quartile B2B SaaS efficiency</li>
+                            <li><strong>Capital Efficiency:</strong> £450k → £400k ARR ≈ <strong>£1,100 cost per £1 ARR</strong> - top‑quartile B2B SaaS efficiency</li>
                         </ul>
                     </div>
                 </div>
 
                 <div class="highlight-box" style="margin-top: 1.5rem; border-left: 4px solid #0A1F1A;">
-                    <h3>This raise funds a disciplined 24-month execution plan to turn a working AI-native platform into a <strong>category leader with 10 institutional customers</strong> and clear path to £1M ARR — while building a technical and data moat before incumbents can react.</h3>
+                    <h3>This raise funds a disciplined 24-month execution plan to turn a working AI-native platform into a <strong>category leader with 10 institutional customers</strong> and clear path to £1M ARR - while building a technical and data moat before incumbents can react.</h3>
                 </div>
             </div>
             <div class="slide-number">12</div>
@@ -2665,7 +2732,7 @@
                     <div class="profile">
                         <div class="avatar" aria-hidden="true">LB</div>
                         <div class="meta">
-                            <h3 style="margin-bottom: 0.25rem; font-size: 1.1rem;">Laurance Bridge — Founder & CEO</h3>
+                    <h3 style="margin-bottom: 0.25rem; font-size: 1.1rem;">Laurance Bridge - Founder & CEO</h3>
                             <div class="chips" style="margin: 0 0 0.75rem 0; display:flex; gap:0.4rem; flex-wrap:wrap;">
                                 <span class="chip">HE Ops</span>
                                 <span class="chip">Data Systems</span>
@@ -2680,17 +2747,17 @@
                     <div style="font-size: 0.9rem; line-height: 1.6;">
                         <p style="margin: 0 0 0.6rem 0; font-weight: 700; color: #0A1F1A; letter-spacing:-0.005em;">Track record</p>
                         <ul class="check-list" style="margin: 0;">
-                            <li>Live 90‑day forecasts with <strong>±3–5% accuracy</strong> across six cycles</li>
+                            <li>5yrs HE RevOps + admissions ops</li>
+                            <li>Rebuilt data stack: Supabase/Postgres + XGBoost/LightGBM</li>
                             <li>Scaled intake <strong>52 → 750+</strong>; ARR ~<strong>£11M</strong></li>
-                            <li>Built Supabase/Postgres warehouse + XGBoost/LightGBM models</li>
-                            <li>Offer→enrol conversion <strong>41% → 48%</strong>; reporting time −30%</li>
+                            <li>Live forecasts <strong>±3–5%</strong> across six cycles; offer→enrol <strong>41% → 48%</strong></li>
                         </ul>
                     </div>
                 </div>
 
                 <div class="card card-glow card-rail" style="margin-top: 1.5rem;">
                     <h3 class="primary" style="margin-bottom: 0.75rem; font-size: 1rem;">Why It Matters</h3>
-                    <p style="margin: 0; font-size: 0.95rem; line-height: 1.6;">Most EdTech founders either understand education or can build software — <strong>few have rebuilt an institution's RevOps stack end to end while running admissions at scale.</strong> Laurance has done exactly that, translating five years of live operational problem-solving into a scalable, AI-native platform.</p>
+                    <p style="margin: 0; font-size: 0.95rem; line-height: 1.6;">Most EdTech founders either understand education or can build software - <strong>few have rebuilt an institution's RevOps stack end to end while running admissions at scale.</strong> Laurance has done exactly that, translating five years of live operational problem-solving into a scalable, AI-native platform.</p>
                 </div>
 
                 <div class="two-column" style="margin-top: 1.5rem; gap: 1.5rem;">
@@ -2702,19 +2769,19 @@
                                     <td><span class="role-ic" aria-hidden="true">
                                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 8l-4 4 4 4"/><path d="M16 8l4 4-4 4"/></svg>
                                     </span>Principal Engineer</td>
-                                    <td>AI infrastructure, architecture, code review — ensures scalability, performance, security</td>
+                                    <td>AI infrastructure, architecture, code review - ensures scalability, performance, security</td>
                                 </tr>
                                 <tr>
                                     <td><span class="role-ic" aria-hidden="true">
                                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V6l-8-4-8 4v6c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
                                     </span>QA / Security</td>
-                                    <td>Continuous testing and penetration audits — de‑risks enterprise adoption</td>
+                                    <td>Continuous testing and penetration audits - de‑risks enterprise adoption</td>
                                 </tr>
                                 <tr>
                                     <td><span class="role-ic" aria-hidden="true">
                                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 7-7"/><path d="M14 4h7v7"/></svg>
                                     </span>RevOps / GTM</td>
-                                    <td>Pilot delivery, onboarding, reporting — converts early partners into case studies</td>
+                                    <td>Pilot delivery, onboarding, reporting - converts early partners into case studies</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -2741,7 +2808,7 @@
                 </div>
 
                 <div class="highlight-box" style="margin-top: 1.5rem; border-left: 4px solid #0A1F1A;">
-                    <h3>A founder-operator with rare crossover between Higher Education, data systems, and AI — supported by senior fractional specialists to keep burn low and velocity high.</h3>
+                    <h3>A founder-operator with rare crossover between Higher Education, data systems, and AI - supported by senior fractional specialists to keep burn low and velocity high.</h3>
                 </div>
             </div>
             <div class="slide-number">13</div>
@@ -2778,7 +2845,7 @@
                             <div class="step-num">3</div>
                             <div class="step-body">
                                 <p class="step-title">Full Operational OS (Year 3 → 5)</p>
-                                <p class="step-desc">Add timetabling, compliance, alumni layers — become default infrastructure for intelligent universities</p>
+                                <p class="step-desc">Add timetabling, compliance, alumni layers - become default infrastructure for intelligent universities</p>
                             </div>
                         </div>
                     </div>
@@ -2790,29 +2857,35 @@
                         <p class="lead">Within five years, every UK university will operate on AI‑native systems. Manual spreadsheets and disconnected CRMs will feel as outdated as paper timetables.</p>
                         <p class="label">First‑mover advantage is decisive:</p>
                         <ul class="bullet-list">
-                            <li>Data network effects — more institutions = smarter models</li>
+                            <li>Data network effects - more institutions = smarter models</li>
                             <li>Integration depth (UCAS, OfS, EventMAP) competitors can't replicate quickly</li>
                         </ul>
+                        <p class="footnote" style="margin-top: 0.5rem; font-size: 0.75rem; color: hsl(220,15%,30%);">SAM method: 400 UK HE orgs × £35k replacement ASP ≈ £14M UK; UK+EU near‑term ≈ £150M.</p>
                     </div>
-                    <div class="card card-success card-glow card-rail">
-                        <h3 style="margin-bottom: 1rem; font-size: 1rem;">The Investment</h3>
-                        <div class="investment-banner">
-                            <div class="investment-figure">£450,000</div>
-                            <div class="safe-terms">£5M cap • 20% discount SAFE</div>
-                        </div>
-                        <div class="investment-list">
-                            <p class="label">Funds a disciplined 24‑month plan:</p>
-                            <ul class="target-list">
-                                <li>10 institutions live in production</li>
-                                <li>£300–400k ARR with path to £1M</li>
-                                <li>Proven category leadership in AI‑native HE ops</li>
-                            </ul>
-                        </div>
+                    <!-- Right column: Next Horizons (expansion hint) -->
+                    <div class="card card-glow card-rail" style="padding: 0.9rem;">
+                        <h3 class="success" style="margin-bottom: 0.5rem; font-size: 1rem;">Next Horizons</h3>
+                        <ul class="bullet-list" style="margin: 0;">
+                            <li>FE & Apprenticeships (ESFA/ILR) - regulated, admissions‑like lifecycles</li>
+                            <li>Professional Certification & Awarding Bodies - candidates, compliance, CPD tracking</li>
+                            <li>Corporate L&D & Workforce Academies - internal programs, ROI reporting (HRIS/LMS)</li>
+                            <li>International Agency Recruitment - multi‑country pipelines, partner CRM/invoicing, compliance</li>
+                        </ul>
+                        <p class="footnote" style="margin-top: 0.5rem; font-size: 0.75rem; color: hsl(220,15%,30%);">Sequence after 10+ HE customers; co‑design packs with domain experts.</p>
                     </div>
                 </div>
 
+                <!-- Full-width Deal Terms strip (no white container) -->
+                <div class="deal-strip" role="region" aria-label="Deal Terms">
+                    <div class="ds-title">Deal Terms</div>
+                    <div class="ds-figure">£450,000</div>
+                    <div class="ds-terms">£5M cap • 20% SAFE • 24 months runway</div>
+                </div>
+
+                
+
                 <div class="highlight-box" style="margin-top: 1.5rem; border-left: 4px solid #0A1F1A;">
-                    <h3>Ivy OS isn't another SaaS product — it's the <strong>infrastructure layer that lets Higher Education finally run on intelligence, not intuition.</strong><br/>The window is open. Let's build the system universities have been waiting for.</h3>
+                    <h3>Ivy OS isn't another SaaS product - it's the <strong>infrastructure layer that lets Higher Education finally run on intelligence, not intuition.</strong><br/>The window is open. Let's build the system universities have been waiting for.</h3>
                 </div>
             </div>
             <div class="slide-number">14</div>
@@ -2827,7 +2900,7 @@
                     <div class="card card-glow compact card-rail" style="padding: 1rem;">
                         <h3 class="success" style="margin-bottom: 0.5rem;">Large and Inevitable Market</h3>
                         <ul class="bullet-list">
-                            <li>£150M near-term SAM hidden in existing HE budgets — no new spend required</li>
+                            <li>£150M near-term SAM hidden in existing HE budgets - no new spend required</li>
                             <li>400 UK institutions already pay £30–50k for fragmented CRM + SIS stacks</li>
                             <li>Replacement market with zero budget friction → fast adoption</li>
                             <li>Global TAM ≈ $10B education CRM + SIS market by 2030</li>
@@ -2838,7 +2911,7 @@
                         <h3 class="success" style="margin-bottom: 0.5rem;">Proven Product & Demand</h3>
                         <ul class="bullet-list">
                             <li>5 years of production proof at WaterBear (±5% forecast accuracy, 60% time saved)</li>
-                            <li>Working AI-native CRM + SIS stack live today — not concept</li>
+                            <li>Working AI-native CRM + SIS stack live today - not concept</li>
                             <li>Early interest from Falmouth University, BIMM Group, and WaterBear College</li>
                             <li>Warm pipeline validates pain and budget fit</li>
                         </ul>
@@ -2848,7 +2921,7 @@
                         <h3 class="success" style="margin-bottom: 0.5rem;">Defensible Moat</h3>
                         <ul class="bullet-list">
                             <li>18-month technical lead ahead of any AI HE entrant</li>
-                            <li>Compounding data moat — more institutions → smarter models → better forecasts</li>
+                            <li>Compounding data moat - more institutions → smarter models → better forecasts</li>
                             <li>Deep integrations (UCAS, OfS, EventMAP) create high switching costs</li>
                             <li>Incumbents can't pivot (legacy architecture + wrong incentives)</li>
                         </ul>
@@ -2859,62 +2932,58 @@
                         <p class="lead" style="margin: 0;">Head of Student Recruitment at WaterBear; rebuilt the admissions data stack while scaling from 52 → 750+ students. Combines rare domain expertise + technical execution; already solved the problem Ivy OS commercialises. Backed by fractional principal engineer, QA/security, and RevOps.</p>
                     </div>
 
-                    <div class="card card-glow compact card-rail" style="padding: 1rem;">
-                        <h3 class="success" style="margin-bottom: 0.75rem;">Capital‑Efficient Return Profile</h3>
-                        <table class="mini-table">
-                            <thead>
-                                <tr>
-                                    <th>Milestone</th>
-                                    <th>Customers</th>
-                                    <th>ARR</th>
-                                    <th>Timeline</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td>Initial traction</td>
-                                    <td>3 pilots</td>
-                                    <td>£75k</td>
-                                    <td>Month 12</td>
-                                </tr>
-                                <tr>
-                                    <td>Product‑market fit</td>
-                                    <td>10 customers</td>
-                                    <td>£350k</td>
-                                    <td>Month 18</td>
-                                </tr>
-                                <tr>
-                                    <td>Scale momentum</td>
-                                    <td>25 customers</td>
-                                    <td>£1M</td>
-                                    <td>Month 30</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                        <ul class="bullet-list" style="font-size: var(--fs-xs);">
-                            <li>£450k → £400k ARR ≈ < £1,200 per £1 ARR (top‑quartile efficiency)</li>
-                            <li>90%+ gross margins and 10:1 LTV:CAC ratio at scale</li>
-                            <li>Path to profitability by ~20 customers</li>
-                        </ul>
-                    </div>
+                    
                 </div>
 
-                <div class="card card-accent card-glow card-rail" style="margin-top: 1.5rem; padding: 1rem;">
-                    <h3 style="margin-bottom: 0.75rem; font-size: 1rem; text-align: center;">The Investment</h3>
-                    <div class="investment-banner" style="margin-bottom: 0.8rem;">
-                        <div class="investment-figure">£450,000</div>
-                        <div class="safe-terms">£5M cap • 20% discount SAFE</div>
-                    </div>
-                    <div style="text-align: center; font-size: 0.9rem; line-height: 1.6;">
-                        <p style="margin: 0 0 0.4rem 0;">
-                            <strong>Runway:</strong> 24 months
-                        </p>
-                        <p style="margin: 0; color: hsl(220, 15%, 15%); font-size: 0.85rem;">Use: Full-time founder focus • Fractional engineering & QA • GTM execution • Compute & compliance</p>
+                <!-- Full-width Capital‑Efficient Return Profile (moved here by request) -->
+                <div class="card card-glow card-rail" style="padding: 1rem; margin-top: 1rem;">
+                    <h3 class="success" style="margin-bottom: 0.75rem;">Capital‑Efficient Return Profile</h3>
+                    <table class="mini-table">
+                        <thead>
+                            <tr>
+                                <th>Milestone</th>
+                                <th>Customers</th>
+                                <th>ARR</th>
+                                <th>Timeline</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Initial traction</td>
+                                <td>3 pilots</td>
+                                <td>£75k</td>
+                                <td>Month 12</td>
+                            </tr>
+                            <tr>
+                                <td>Product‑market fit</td>
+                                <td>10 customers</td>
+                                <td>£350k</td>
+                                <td>Month 18</td>
+                            </tr>
+                            <tr>
+                                <td>Scale momentum</td>
+                                <td>25 customers</td>
+                                <td>£1M</td>
+                                <td>Month 30</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <ul class="bullet-list" style="font-size: var(--fs-xs);">
+                        <li>£450k → £400k ARR ≈ < £1,200 per £1 ARR (top‑quartile efficiency)</li>
+                        <li>90%+ gross margins and 10:1 LTV:CAC ratio at scale</li>
+                        <li>Path to profitability by ~20 customers</li>
+                    </ul>
+                </div>
+
+                <div class="card card-accent card-glow card-rail" style="margin-top: 1.5rem; padding: 0; background: transparent;">
+                    <div class="investment-panel">
+                        <div class="inv-title">Deal Recap</div>
+                        <div class="inv-row">Raising £450k • £5M cap • 20% SAFE • 24 months runway</div>
                     </div>
                 </div>
 
                 <div class="highlight-box" style="margin-top: 1.5rem; border-left: 4px solid #0A1F1A;">
-                    <h3>Ivy OS isn't a bet on AI in education — it's the platform that makes AI operational in Higher Education.<br/><strong>The window is open now — the first to build wins.</strong></h3>
+                    <h3>Ivy OS isn't a bet on AI in education - it's the platform that makes AI operational in Higher Education.<br/><strong>The window is open now - the first to build wins.</strong></h3>
                 </div>
             </div>
             <div class="slide-number">15</div>

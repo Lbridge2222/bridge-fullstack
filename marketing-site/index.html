@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IvyOS - The Higher Education OS</title>
+    <meta name="description" content="Built from first-hand experience in Higher Education, IvyOS combines AI and machine learning to give institutions a single view of the student journey - from enquiry to alumni.">
+    <meta name="keywords" content="higher education, student management, AI, machine learning, admissions, CRM">
+    <meta property="og:title" content="IvyOS - The Higher Education OS">
+    <meta property="og:description" content="Built from first-hand experience in Higher Education, IvyOS combines AI and machine learning to give institutions a single view of the student journey.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://ivyos.com">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="IvyOS - The Higher Education OS">
+    <meta name="twitter:description" content="Built from first-hand experience in Higher Education, IvyOS combines AI and machine learning to give institutions a single view of the student journey.">
+    
+    <link rel="icon" type="image/svg+xml" href="/vite.svg">
+    
+    <style>
+        :root {
+            --brand-forest: #0A1F1A;
+            --brand-ivy: #156B4A;
+            --brand-red: #E11D1D;
+            --text: #111111;
+            --muted: hsl(220,15%,18%);
+            --muted-2: hsl(220,15%,14%);
+            --bg: #FFFFFF;
+            --bg-soft: hsl(210,25%,99%);
+            --card: rgba(255,255,255,0.82);
+            --border: hsl(215,25%,88%);
+            --radius: 12px;
+            --shadow-sm: 0 1px 2px rgba(0,0,0,.06);
+            --shadow-md: 0 4px 12px rgba(0,0,0,.08);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+            line-height: 1.6;
+            color: var(--text);
+            background: var(--bg);
+        }
+
+        .min-h-screen {
+            min-height: 100vh;
+        }
+
+        .bg-surface-primary {
+            background: var(--bg);
+        }
+
+        .text-text-primary {
+            color: var(--text);
+        }
+
+        .bg-background {
+            background: var(--bg);
+        }
+
+        .backdrop-blur-xl {
+            backdrop-filter: blur(24px);
+        }
+
+        .border-b {
+            border-bottom: 1px solid var(--border);
+        }
+
+        .border-border {
+            border-color: var(--border);
+        }
+
+        .overflow-hidden {
+            overflow: hidden;
+        }
+
+        .pointer-events-none {
+            pointer-events: none;
+        }
+
+        .absolute {
+            position: absolute;
+        }
+
+        .relative {
+            position: relative;
+        }
+
+        .mx-auto {
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .max-w-7xl {
+            max-width: 80rem;
+        }
+
+        .px-6 {
+            padding-left: 1.5rem;
+            padding-right: 1.5rem;
+        }
+
+        .py-4 {
+            padding-top: 1rem;
+            padding-bottom: 1rem;
+        }
+
+        .py-20 {
+            padding-top: 5rem;
+            padding-bottom: 5rem;
+        }
+
+        .py-8 {
+            padding-top: 2rem;
+            padding-bottom: 2rem;
+        }
+
+        .flex {
+            display: flex;
+        }
+
+        .items-center {
+            align-items: center;
+        }
+
+        .justify-between {
+            justify-content: space-between;
+        }
+
+        .gap-3 {
+            gap: 0.75rem;
+        }
+
+        .gap-2 {
+            gap: 0.5rem;
+        }
+
+        .w-9 {
+            width: 2.25rem;
+        }
+
+        .h-9 {
+            height: 2.25rem;
+        }
+
+        .rounded-lg {
+            border-radius: 0.5rem;
+        }
+
+        .bg-forest-green {
+            background-color: var(--brand-ivy);
+        }
+
+        .text-white {
+            color: white;
+        }
+
+        .font-semibold {
+            font-weight: 600;
+        }
+
+        .tracking-tight {
+            letter-spacing: -0.025em;
+        }
+
+        .inline-flex {
+            display: inline-flex;
+        }
+
+        .items-center {
+            align-items: center;
+        }
+
+        .rounded-full {
+            border-radius: 9999px;
+        }
+
+        .px-3 {
+            padding-left: 0.75rem;
+            padding-right: 0.75rem;
+        }
+
+        .py-1 {
+            padding-top: 0.25rem;
+            padding-bottom: 0.25rem;
+        }
+
+        .text-xs {
+            font-size: 0.75rem;
+        }
+
+        .font-medium {
+            font-weight: 500;
+        }
+
+        .forest-bg {
+            background-color: var(--brand-ivy);
+        }
+
+        .text-text-secondary {
+            color: var(--muted);
+        }
+
+        .border {
+            border: 1px solid var(--border);
+        }
+
+        .mt-3 {
+            margin-top: 0.75rem;
+        }
+
+        .mt-4 {
+            margin-top: 1rem;
+        }
+
+        .mt-8 {
+            margin-top: 2rem;
+        }
+
+        .text-5xl {
+            font-size: 3rem;
+        }
+
+        .text-4xl {
+            font-size: 2.25rem;
+        }
+
+        .text-lg {
+            font-size: 1.125rem;
+        }
+
+        .text-sm {
+            font-size: 0.875rem;
+        }
+
+        .font-900 {
+            font-weight: 900;
+        }
+
+        .font-700 {
+            font-weight: 700;
+        }
+
+        .leading-tight {
+            line-height: 1.25;
+        }
+
+        .tracking-[-0.02em] {
+            letter-spacing: -0.02em;
+        }
+
+        .text-foreground {
+            color: var(--text);
+        }
+
+        .text-forest-green {
+            color: var(--brand-ivy);
+        }
+
+        .whitespace-nowrap {
+            white-space: nowrap;
+        }
+
+        .inline-block {
+            display: inline-block;
+        }
+
+        .align-bottom {
+            vertical-align: bottom;
+        }
+
+        .max-w-3xl {
+            max-width: 48rem;
+        }
+
+        .max-w-2xl {
+            max-width: 42rem;
+        }
+
+        .flex-wrap {
+            flex-wrap: wrap;
+        }
+
+        .border-t {
+            border-top: 1px solid var(--border);
+        }
+
+        .flex-col {
+            flex-direction: column;
+        }
+
+        .md\\:flex-row {
+            flex-direction: row;
+        }
+
+        .md\\:text-7xl {
+            font-size: 4.5rem;
+        }
+
+        .md\\:text-5xl {
+            font-size: 3rem;
+        }
+
+        .lg\\:py-28 {
+            padding-top: 7rem;
+            padding-bottom: 7rem;
+        }
+
+        .hover\\:text-text-primary:hover {
+            color: var(--text);
+        }
+
+        .button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: all 0.2s;
+            text-decoration: none;
+            border: none;
+            cursor: pointer;
+            padding: 0.5rem 1rem;
+        }
+
+        .button-forestAccent {
+            background-color: var(--brand-ivy);
+            color: white;
+        }
+
+        .button-forestAccent:hover {
+            background-color: #0f5a3a;
+        }
+
+        .button-forest {
+            background-color: transparent;
+            color: var(--brand-ivy);
+            border: 1px solid var(--brand-ivy);
+        }
+
+        .button-forest:hover {
+            background-color: var(--brand-ivy);
+            color: white;
+        }
+
+        .ml-1 {
+            margin-left: 0.25rem;
+        }
+
+        .ml-2 {
+            margin-left: 0.5rem;
+        }
+
+        .absolute {
+            position: absolute;
+        }
+
+        .left-0 {
+            left: 0;
+        }
+
+        .-bottom-1 {
+            bottom: -0.25rem;
+        }
+
+        .h-\\[2px\\] {
+            height: 2px;
+        }
+
+        .w-full {
+            width: 100%;
+        }
+
+        .bg-gradient-to-r {
+            background-image: linear-gradient(to right, var(--brand-ivy), var(--brand-red));
+        }
+
+        .rounded-full {
+            border-radius: 9999px;
+        }
+
+        .glow-white {
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+        }
+
+        .glow-green {
+            background: radial-gradient(circle, rgba(21,107,74,0.1) 0%, transparent 70%);
+        }
+
+        .-top-20 {
+            top: -5rem;
+        }
+
+        .-right-24 {
+            right: -6rem;
+        }
+
+        .h-40 {
+            height: 10rem;
+        }
+
+        .w-40 {
+            width: 10rem;
+        }
+
+        .blur-2xl {
+            filter: blur(40px);
+        }
+
+        .-bottom-24 {
+            bottom: -6rem;
+        }
+
+        .-left-20 {
+            left: -5rem;
+        }
+
+        .h-56 {
+            height: 14rem;
+        }
+
+        .w-56 {
+            width: 14rem;
+        }
+
+        @media (min-width: 768px) {
+            .md\\:text-7xl {
+                font-size: 4.5rem;
+            }
+            .md\\:text-5xl {
+                font-size: 3rem;
+            }
+            .md\\:flex-row {
+                flex-direction: row;
+            }
+        }
+
+        @media (min-width: 1024px) {
+            .lg\\:py-28 {
+                padding-top: 7rem;
+                padding-bottom: 7rem;
+            }
+        }
+
+        /* Navigation styles */
+        .nav-link {
+            color: var(--text);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        .nav-link:hover {
+            color: var(--brand-ivy);
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .text-5xl {
+                font-size: 2.5rem;
+            }
+            .text-4xl {
+                font-size: 2rem;
+            }
+            .whitespace-nowrap {
+                white-space: normal;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="min-h-screen bg-surface-primary text-text-primary">
+        <!-- Header -->
+        <header class="relative bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60 border-b border-border/60 overflow-hidden">
+            <div aria-hidden="true" class="pointer-events-none absolute -top-20 -right-24 h-40 w-40 rounded-full blur-2xl glow-white"></div>
+            <div aria-hidden="true" class="pointer-events-none absolute -bottom-24 -left-20 h-56 w-56 rounded-full blur-2xl glow-green"></div>
+            <div class="mx-auto max-w-7xl px-6 py-4 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-lg bg-forest-green flex items-center justify-center">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
+                            <path d="M6 12v5c3 3 9 3 12 0v-5"/>
+                        </svg>
+                    </div>
+                    <div class="font-semibold tracking-tight">IvyOS</div>
+                </div>
+                <nav class="flex items-center gap-6">
+                    <a href="#about" class="nav-link">About</a>
+                    <a href="#features" class="nav-link">Features</a>
+                    <a href="pitch-deck.html" class="nav-link">Pitch Deck</a>
+                    <a href="mailto:hello@ivy.so" class="nav-link">Contact</a>
+                </nav>
+            </div>
+        </header>
+
+        <!-- Hero Section -->
+        <section>
+            <div class="mx-auto max-w-7xl px-6 py-20 lg:py-28">
+                <div class="max-w-3xl">
+                    <div class="inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-medium forest-bg text-white border border-border">
+                        Coming soon
+                    </div>
+                    <div class="mt-3 text-5xl md:text-7xl font-900 tracking-[-0.02em] text-foreground">
+                        IvyOS
+                    </div>
+                    <h1 class="mt-4 text-4xl md:text-5xl font-700 leading-tight tracking-[-0.02em] text-forest-green whitespace-nowrap">
+                        <span class="relative inline-block align-bottom">
+                            <span>The Higher Education</span>
+                            <span class="absolute left-0 -bottom-1 h-[2px] w-full bg-gradient-to-r from-forest-green to-accent rounded-full"></span>
+                        </span>
+                        <span class="ml-2">OS</span>
+                    </h1>
+                    <p class="mt-4 text-lg text-text-secondary max-w-2xl">
+                        Built from first-hand experience in Higher Education, IvyOS combines AI and machine learning to give institutions a single view of the student journey - from enquiry to alumni. It replaces fragmented systems with one intelligent platform designed for outcomes, not admin.
+                    </p>
+                    <p class="mt-3 text-text-secondary">Minimal, decisive, and built for outcomes.</p>
+                    <p class="mt-3 text-sm text-text-secondary">MVP Preview: Applications Board · Conversations · Forecasting</p>
+                    <div class="mt-8 flex flex-wrap gap-3">
+                        <a href="mailto:hello@ivy.so" class="button button-forestAccent">
+                            Join waitlist
+                            <svg class="ml-1" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M5 12h14"/>
+                                <path d="M12 5l7 7-7 7"/>
+                            </svg>
+                        </a>
+                        <a href="pitch-deck.html" class="button button-forest">View Pitch Deck</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Features Section -->
+        <section id="features" class="py-20 bg-bg-soft">
+            <div class="mx-auto max-w-7xl px-6">
+                <div class="text-center mb-16">
+                    <h2 class="text-3xl font-700 text-foreground mb-4">Built for Higher Education</h2>
+                    <p class="text-lg text-text-secondary max-w-2xl mx-auto">
+                        Three core modules that transform how institutions manage the student journey
+                    </p>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div class="bg-card p-8 rounded-lg border border-border">
+                        <div class="w-12 h-12 bg-forest-green rounded-lg flex items-center justify-center mb-4">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+                                <circle cx="9" cy="7" r="4"/>
+                                <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
+                                <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                            </svg>
+                        </div>
+                        <h3 class="text-xl font-600 mb-2">Applications Board</h3>
+                        <p class="text-text-secondary">Visual pipeline management with AI-powered insights and automated workflows for admissions teams.</p>
+                    </div>
+                    <div class="bg-card p-8 rounded-lg border border-border">
+                        <div class="w-12 h-12 bg-forest-green rounded-lg flex items-center justify-center mb-4">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                            </svg>
+                        </div>
+                        <h3 class="text-xl font-600 mb-2">Conversations</h3>
+                        <p class="text-text-secondary">Unified communication hub with AI-powered conversation intelligence and automated follow-ups.</p>
+                    </div>
+                    <div class="bg-card p-8 rounded-lg border border-border">
+                        <div class="w-12 h-12 bg-forest-green rounded-lg flex items-center justify-center mb-4">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M3 3v18h18"/>
+                                <path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3"/>
+                            </svg>
+                        </div>
+                        <h3 class="text-xl font-600 mb-2">Forecasting</h3>
+                        <p class="text-text-secondary">Predictive analytics and ML models to forecast enrollment, identify at-risk students, and optimize outcomes.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- About Section -->
+        <section id="about" class="py-20">
+            <div class="mx-auto max-w-7xl px-6">
+                <div class="max-w-3xl">
+                    <h2 class="text-3xl font-700 text-foreground mb-6">Why IvyOS?</h2>
+                    <p class="text-lg text-text-secondary mb-6">
+                        Higher education institutions are drowning in fragmented systems. CRMs that don't understand admissions. 
+                        Student information systems that can't predict outcomes. Communication tools that create silos instead of connections.
+                    </p>
+                    <p class="text-lg text-text-secondary mb-6">
+                        IvyOS changes that. Built by people who've lived the pain points, it's the first platform designed 
+                        specifically for higher education outcomes - not just data management.
+                    </p>
+                    <div class="bg-card p-6 rounded-lg border border-border">
+                        <p class="text-text-secondary italic">
+                            "We're not building another CRM. We're building the operating system that higher education has been waiting for."
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer id="contact" class="border-t border-border">
+            <div class="mx-auto max-w-7xl px-6 py-8 text-sm text-text-secondary flex flex-col md:flex-row items-center justify-between gap-3">
+                <div>© 2025 IvyOS — Higher Education OS</div>
+                <div>
+                    <a href="mailto:hello@ivy.so" class="hover:text-text-primary">hello@ivy.so</a>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        // Simple smooth scrolling for navigation links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+    </script>
+</body>
+</html>
