@@ -335,7 +335,7 @@
 
   /* Set as base font */
   body {
-    font-family: 'Satoshi', sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
     background-color: hsl(var(--background));
     color: hsl(var(--foreground));
     overflow-x: hidden; /* prevent accidental horizontal scroll from 100vw gaps */
@@ -534,58 +534,4 @@ html, body, #root {
 }
 
 /* ===== FONT FACES ===== */
-@font-face {
-  font-family: 'Satoshi';
-  src: url('/src/assets/Fonts/satoshi/Satoshi-Variable.woff2') format('woff2');
-  font-weight: 100 900;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Satoshi';
-  src: url('/src/assets/Fonts/satoshi/Satoshi-VariableItalic.woff2') format('woff2');
-  font-weight: 100 900;
-  font-style: italic;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Satoshi';
-  src: url('/src/assets/Fonts/satoshi/Satoshi-Light.woff2') format('woff2');
-  font-weight: 300;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Satoshi';
-  src: url('/src/assets/Fonts/satoshi/Satoshi-Regular.woff2') format('woff2');
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Satoshi';
-  src: url('/src/assets/Fonts/satoshi/Satoshi-Medium.woff2') format('woff2');
-  font-weight: 500;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Satoshi';
-  src: url('/src/assets/Fonts/satoshi/Satoshi-Bold.woff2') format('woff2');
-  font-weight: 700;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Satoshi';
-  src: url('/src/assets/Fonts/satoshi/Satoshi-Black.woff2') format('woff2');
-  font-weight: 900;
-  font-style: normal;
-  font-display: swap;
-}
+/* Using system fonts for better compatibility and performance */
