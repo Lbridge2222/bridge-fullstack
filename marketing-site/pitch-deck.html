@@ -820,7 +820,7 @@
             /* Make tables more mobile-friendly */
             .card table { font-size: 0.85rem; }
             .card table th, .card table td { padding: 0.5rem 0.25rem; }
-        }
+            
             p, li { font-size: 1rem; }
             
             .features-grid,
@@ -836,9 +836,16 @@
             .slide {
                 padding: 2rem;
             }
-
-            @keyframes slideGlow { animation: none; }
-            .slide-container { scroll-snap-type: none; }
+        }
+        
+        @media (prefers-reduced-motion: reduce) {
+            * {
+                animation: none !important;
+                transition: none !important;
+            }
+            .slide-container { 
+                scroll-snap-type: none;
+            }
         }
 
         .card.compact { padding: 0.9rem; }
