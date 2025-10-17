@@ -44,13 +44,13 @@ export default function IvyHome() {
             <p className="mt-3 text-text-secondary">Minimal, decisive, and built for outcomes.</p>
             <p className="mt-3 text-sm text-text-secondary">MVP Preview: Applications Board · Conversations · Forecasting</p>
             <div className="mt-8 flex flex-wrap gap-3">
-              <a href="mailto:laurence@ivy-os.io">
+              <a href="mailto:laurance@ivy-os.io">
                 <Button variant="forestAccent">
                   Join waitlist
                   <ArrowRight className="ml-1" />
                 </Button>
               </a>
-              <a href="mailto:laurence@ivy-os.io">
+              <a href="mailto:laurance@ivy-os.io">
                 <Button variant="forest">Contact</Button>
               </a>
             </div>
@@ -63,7 +63,7 @@ export default function IvyHome() {
         <div className="mx-auto max-w-7xl px-6 py-8 text-sm text-text-secondary flex flex-col md:flex-row items-center justify-between gap-3">
           <div>© {new Date().getFullYear()} IvyOS — Higher Education OS</div>
           <div>
-            <a href="mailto:laurence@ivy-os.io" className="hover:text-text-primary">laurence@ivy-os.io</a>
+            <a href="mailto:laurance@ivy-os.io" className="hover:text-text-primary">laurance@ivy-os.io</a>
           </div>
         </div>
       </footer>
