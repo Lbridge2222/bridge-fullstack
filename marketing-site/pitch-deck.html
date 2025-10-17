@@ -998,102 +998,92 @@
         /* Fix mobile landscape viewport issues */
         @media (max-width: 896px) and (orientation: landscape) {
             html, body {
-                width: 100vw;
-                height: 100vh;
-                margin: 0;
-                padding: 0;
-                overflow-x: hidden;
+                width: 100vw !important;
+                height: 100vh !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                overflow-x: hidden !important;
             }
             
             .slide-container {
-                width: 100vw;
-                min-width: 100vw;
+                width: 100vw !important;
+                min-width: 100vw !important;
             }
             
             .slide {
-                width: 100vw;
-                min-width: 100vw;
-                padding: 0.75rem;
-                min-height: 100vh;
-                display: flex;
-                align-items: center;
+                width: 100vw !important;
+                min-width: 100vw !important;
+                padding: 0.5rem !important;
+                min-height: 100vh !important;
+                display: flex !important;
+                align-items: center !important;
             }
             
-            /* Override slide-content constraints for mobile landscape */
+            /* Override ALL slide-content constraints for mobile landscape */
             .slide-content {
                 width: 100% !important;
                 max-width: none !important;
                 margin: 0 !important;
-                padding: 0 0.75rem !important;
+                padding: 0 0.5rem !important;
+                display: flex !important;
+                flex-direction: column !important;
+                justify-content: center !important;
+                align-items: center !important;
+                text-align: center !important;
+            }
+            
+            /* Override the specific inline styles on the first slide */
+            .slide--center .slide-content[style*="padding: 4rem 2rem"] {
+                padding: 0.5rem !important;
+            }
+            
+            .slide--center .slide-content[style*="min-height: 100vh"] {
+                min-height: auto !important;
             }
             
             /* Fix text spacing and prevent overlap */
             .slide h1 {
-                font-size: clamp(1.5rem, 4vw, 2rem) !important;
-                margin-bottom: 0.5rem !important;
+                font-size: clamp(1.2rem, 3.5vw, 1.8rem) !important;
+                margin-bottom: 0.4rem !important;
+                line-height: 1.2 !important;
             }
             
             .slide h2 {
-                font-size: clamp(1.25rem, 3.5vw, 1.5rem) !important;
-                margin-bottom: 0.75rem !important;
+                font-size: clamp(1rem, 3vw, 1.4rem) !important;
+                margin-bottom: 0.6rem !important;
+                line-height: 1.3 !important;
             }
             
             .slide .subtitle {
-                font-size: clamp(0.85rem, 2.5vw, 1rem) !important;
-                margin-bottom: 1rem !important;
-                line-height: 1.4 !important;
+                font-size: clamp(0.75rem, 2.2vw, 0.9rem) !important;
+                margin-bottom: 0.8rem !important;
+                line-height: 1.3 !important;
+            }
+            
+            /* Fix the logo size */
+            .slide .logo {
+                font-size: clamp(1.5rem, 4vw, 2.2rem) !important;
+                margin-bottom: 0.5rem !important;
             }
             
             /* Fix funding box spacing */
             .slide .card {
-                width: 100%;
-                max-width: none;
-                margin-top: 0.75rem !important;
-                padding: 0.75rem !important;
+                width: 100% !important;
+                max-width: none !important;
+                margin-top: 0.6rem !important;
+                padding: 0.6rem !important;
             }
             
             /* Specific fixes for funding information box */
             .slide .card p {
-                margin: 0.25rem 0 !important;
-                font-size: clamp(0.8rem, 2vw, 0.9rem) !important;
-                line-height: 1.3 !important;
-            }
-            
-            /* Ensure funding box doesn't overlap with text above */
-            .slide .card:has(p) {
-                clear: both;
-                margin-top: 1rem !important;
+                margin: 0.2rem 0 !important;
+                font-size: clamp(0.7rem, 1.8vw, 0.8rem) !important;
+                line-height: 1.2 !important;
             }
             
             /* Ensure proper spacing between elements */
             .slide > * + * {
-                margin-top: 0.5rem !important;
-            }
-            
-            /* Fix specific slide layout issues */
-            .slide--center {
-                justify-content: center !important;
-                text-align: center !important;
-            }
-            
-            .slide--center .slide-content {
-                display: flex !important;
-                flex-direction: column !important;
-                align-items: center !important;
-                gap: 0.5rem !important;
-            }
-            
-            /* Prevent text from bunching up */
-            .slide--center h1 + h2 {
-                margin-top: 0.5rem !important;
-            }
-            
-            .slide--center h2 + .subtitle {
-                margin-top: 0.75rem !important;
-            }
-            
-            .slide--center .subtitle + .card {
-                margin-top: 1rem !important;
+                margin-top: 0.3rem !important;
             }
             
             /* Hide mobile prompt in landscape */
