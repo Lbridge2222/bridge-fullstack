@@ -808,6 +808,19 @@
             h1 { font-size: 2.25rem; }
             h2 { font-size: 1.875rem; }
             h3 { font-size: 1.25rem; }
+            
+            /* Better mobile spacing */
+            .slide { padding: 1.5rem; }
+            .card { padding: 1rem; margin-bottom: 1rem; }
+            
+            /* Improve text readability */
+            .slide-content p { font-size: 0.95rem; line-height: 1.6; }
+            .slide-content li { font-size: 0.9rem; line-height: 1.5; }
+            
+            /* Make tables more mobile-friendly */
+            .card table { font-size: 0.85rem; }
+            .card table th, .card table td { padding: 0.5rem 0.25rem; }
+        }
             p, li { font-size: 1rem; }
             
             .features-grid,
@@ -931,6 +944,55 @@
         /* Smooth badge and button styling */
         .slide-content > div[style*="top: 2rem"] {
             box-shadow: 0 4px 12px rgba(10, 31, 26, 0.15);
+        }
+
+        /* Mobile orientation prompt */
+        .mobile-prompt {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(135deg, #156B4A, #0A1F1A);
+            color: white;
+            padding: 12px 16px;
+            text-align: center;
+            font-size: 14px;
+            font-weight: 500;
+            z-index: 1000;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+        
+        .mobile-prompt .icon {
+            display: inline-block;
+            margin-right: 8px;
+            font-size: 16px;
+        }
+        
+        .mobile-prompt .close {
+            position: absolute;
+            right: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: white;
+            font-size: 18px;
+            cursor: pointer;
+            opacity: 0.8;
+        }
+        
+        .mobile-prompt .close:hover {
+            opacity: 1;
+        }
+        
+        @media (max-width: 768px) and (orientation: portrait) {
+            .mobile-prompt {
+                display: block;
+            }
+            body {
+                padding-top: 50px;
+            }
         }
 
         /* Reduced motion preference */
@@ -1460,8 +1522,14 @@
         .badge,
         .small-text { font-size: var(--fs-sm2) !important; }
     </style>
-</head>
-<body>
+  </head>
+  <body>
+    <!-- Mobile orientation prompt -->
+    <div class="mobile-prompt" id="mobilePrompt">
+      <span class="icon">📱</span>
+      For the best experience, please rotate your device to landscape mode
+      <button class="close" onclick="document.getElementById('mobilePrompt').style.display='none'">×</button>
+    </div>
     <div class="nav-dots" id="navDots"></div>
     
     <div class="slide-container" id="slideContainer">
