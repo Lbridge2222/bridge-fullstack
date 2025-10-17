@@ -698,48 +698,98 @@
 
         /* Print styles for PDF export */
         @media print {
+            * {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+            
             body {
-                background: #FFFFFF;
-                -webkit-print-color-adjust: exact;
-                print-color-adjust: exact;
+                background: #FFFFFF !important;
+                margin: 0 !important;
+                padding: 0 !important;
             }
 
             .slide-container {
                 overflow: visible !important;
                 height: auto !important;
                 scroll-snap-type: none !important;
-            }
-
-            .slide {
-                min-height: 100vh;
-                height: 100vh;
-                page-break-after: always;
-                page-break-inside: avoid;
-                break-after: page;
-                break-inside: avoid;
-                scroll-snap-align: none;
-                display: flex !important;
-                padding: 3rem !important;
-            }
-
-            .slide:last-child {
-                page-break-after: auto;
+                position: static !important;
             }
             
+            .slide {
+                page-break-after: always !important;
+                page-break-inside: avoid !important;
+                height: 100vh !important;
+                min-height: 100vh !important;
+                max-height: 100vh !important;
+                display: flex !important;
+                flex-direction: column !important;
+                justify-content: center !important;
+                align-items: center !important;
+                padding: 2rem !important;
+                margin: 0 !important;
+                background: white !important;
+                position: relative !important;
+            }
+            
+            .slide:last-child {
+                page-break-after: avoid !important;
+            }
+            
+            .slide-content {
+                max-width: 100% !important;
+                width: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+            
+            /* Hide interactive elements */
             .nav-dots,
-            .slide-number {
+            .mobile-prompt,
+            .carousel-btn,
+            .progress-bar,
+            #printButton {
                 display: none !important;
             }
-
-            /* Ensure all content is visible */
-            * {
-                overflow: visible !important;
+            
+            /* Ensure text is visible */
+            h1, h2, h3, h4, h5, h6, p, li, span, div {
+                color: #000000 !important;
+                text-shadow: none !important;
             }
-            .orb { display: none !important; }
-
-            .card, .feature-card, .highlight-box, .visual-diagram, table {
-                break-inside: avoid;
-                page-break-inside: avoid;
+            
+            /* Fix any transparent or light text */
+            .subtitle,
+            .muted,
+            [style*="color: hsl(220, 15%"] {
+                color: #333333 !important;
+            }
+            
+            /* Ensure cards are visible */
+            .card {
+                background: white !important;
+                border: 1px solid #cccccc !important;
+                box-shadow: none !important;
+            }
+            
+            /* Fix tables */
+            table {
+                border-collapse: collapse !important;
+                width: 100% !important;
+            }
+            
+            table th,
+            table td {
+                border: 1px solid #cccccc !important;
+                padding: 0.5rem !important;
+                background: white !important;
+            }
+            
+            /* Hide decorative elements */
+            .orb,
+            .slide::before,
+            .slide::after {
+                display: none !important;
             }
         }
 
@@ -1587,6 +1637,26 @@
       <button class="close" onclick="document.getElementById('mobilePrompt').style.display='none'">×</button>
     </div>
     <div class="nav-dots" id="navDots"></div>
+    
+    <!-- Print Button -->
+    <button id="printButton" onclick="window.print()" style="
+        position: fixed;
+        top: 2rem;
+        right: 2rem;
+        background: var(--brand-forest);
+        color: white;
+        border: none;
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        cursor: pointer;
+        z-index: 1000;
+        box-shadow: 0 4px 12px rgba(10, 31, 26, 0.15);
+        transition: all 0.2s ease;
+    " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 16px rgba(10, 31, 26, 0.2)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(10, 31, 26, 0.15)'">
+        📄 Download PDF
+    </button>
     
     <div class="slide-container" id="slideContainer">
         <!-- Slide 1: Title / Hook -->
