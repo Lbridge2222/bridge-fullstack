@@ -730,6 +730,13 @@
                 margin: 0 !important;
                 background: white !important;
                 position: relative !important;
+                break-after: page !important;
+            }
+            
+            /* Ensure first slide (title page) is included */
+            .slide:first-child {
+                page-break-before: auto !important;
+                display: flex !important;
             }
             
             .slide:last-child {
@@ -752,7 +759,7 @@
                 display: none !important;
             }
             
-            /* Ensure text is visible */
+            /* Ensure text is visible but preserve button text colors */
             h1, h2, h3, h4, h5, h6, p, li, span, div {
                 color: #000000 !important;
                 text-shadow: none !important;
@@ -763,6 +770,29 @@
             .muted,
             [style*="color: hsl(220, 15%"] {
                 color: #333333 !important;
+            }
+            
+            /* Preserve white text in buttons and cards */
+            div[style*="background: var(--brand-forest)"] p,
+            div[style*="background: var(--brand-forest)"] span,
+            .card[style*="background"] p,
+            .card[style*="background"] span,
+            button p,
+            button span {
+                color: #FFFFFF !important;
+            }
+            
+            /* Ensure green buttons maintain white text */
+            div[style*="background: var(--brand-forest)"],
+            div[style*="background: #0A1F1A"] {
+                background: #0A1F1A !important;
+            }
+            
+            div[style*="background: var(--brand-forest)"] p,
+            div[style*="background: var(--brand-forest)"] span,
+            div[style*="background: #0A1F1A"] p,
+            div[style*="background: #0A1F1A"] span {
+                color: #FFFFFF !important;
             }
             
             /* Ensure cards are visible */
@@ -790,6 +820,36 @@
             .slide::before,
             .slide::after {
                 display: none !important;
+            }
+            
+            /* Ensure title page content is visible */
+            .slide--center {
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+            }
+            
+            .slide--center .slide-content {
+                display: flex !important;
+                flex-direction: column !important;
+                align-items: center !important;
+                text-align: center !important;
+            }
+            
+            /* Make sure logo and title are visible */
+            .logo {
+                color: #0A1F1A !important;
+                font-weight: 700 !important;
+            }
+            
+            /* Ensure funding box is visible with proper contrast */
+            div[style*="background: var(--brand-forest)"] {
+                background: #0A1F1A !important;
+                color: #FFFFFF !important;
+            }
+            
+            div[style*="background: var(--brand-forest)"] p {
+                color: #FFFFFF !important;
             }
         }
 
