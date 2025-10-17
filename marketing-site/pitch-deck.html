@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Ivy OS - Pre-Seed Investor Deck</title>
     <style>
         :root{
@@ -992,6 +992,47 @@
             }
             body {
                 padding-top: 50px;
+            }
+        }
+        
+        /* Fix mobile landscape viewport issues */
+        @media (max-width: 896px) and (orientation: landscape) {
+            html, body {
+                width: 100vw;
+                height: 100vh;
+                margin: 0;
+                padding: 0;
+                overflow-x: hidden;
+            }
+            
+            .slide-container {
+                width: 100vw;
+                min-width: 100vw;
+            }
+            
+            .slide {
+                width: 100vw;
+                min-width: 100vw;
+                padding: 1rem;
+            }
+            
+            /* Override slide-content constraints for mobile landscape */
+            .slide-content {
+                width: 100% !important;
+                max-width: none !important;
+                margin: 0 !important;
+                padding: 0 1rem !important;
+            }
+            
+            /* Ensure content uses full width */
+            .card {
+                width: 100%;
+                max-width: none;
+            }
+            
+            /* Hide mobile prompt in landscape */
+            .mobile-prompt {
+                display: none !important;
             }
         }
 
