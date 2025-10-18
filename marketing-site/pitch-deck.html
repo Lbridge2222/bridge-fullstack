@@ -1742,37 +1742,25 @@
     </div>
     <div class="nav-dots" id="navDots"></div>
     
-    <!-- Download Buttons -->
-    <div style="position: fixed; top: 2rem; right: 2rem; display: flex; gap: 0.5rem; z-index: 1000;">
-        <button id="printButton" onclick="window.print()" style="
-            background: var(--brand-forest);
-            color: white;
-            border: none;
-            padding: 0.75rem 1.5rem;
-            border-radius: 8px;
-            font-size: 0.9rem;
-            font-weight: 600;
-            cursor: pointer;
-            box-shadow: 0 4px 12px rgba(10, 31, 26, 0.15);
-            transition: all 0.2s ease;
-        " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 16px rgba(10, 31, 26, 0.2)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(10, 31, 26, 0.15)'">
-            📄 Print PDF
-        </button>
-        <button id="downloadHtml" onclick="downloadAsHtml()" style="
-            background: #0A1F1A;
-            color: white;
-            border: none;
-            padding: 0.75rem 1.5rem;
-            border-radius: 8px;
-            font-size: 0.9rem;
-            font-weight: 600;
-            cursor: pointer;
-            box-shadow: 0 4px 12px rgba(10, 31, 26, 0.15);
-            transition: all 0.2s ease;
-        " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 16px rgba(10, 31, 26, 0.2)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(10, 31, 26, 0.15)'">
-            💾 Download HTML
-        </button>
-    </div>
+    <!-- Download Button -->
+    <button id="downloadHtml" onclick="downloadAsHtml()" style="
+        position: fixed;
+        top: 2rem;
+        right: 2rem;
+        background: var(--brand-forest);
+        color: white;
+        border: none;
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        cursor: pointer;
+        z-index: 1000;
+        box-shadow: 0 4px 12px rgba(10, 31, 26, 0.15);
+        transition: all 0.2s ease;
+    " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 16px rgba(10, 31, 26, 0.2)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(10, 31, 26, 0.15)'">
+        💾 Download Pitch Deck
+    </button>
     
     <div class="slide-container" id="slideContainer">
         <!-- Slide 1: Title / Hook -->
