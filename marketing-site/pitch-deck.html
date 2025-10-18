@@ -741,11 +741,12 @@
                 opacity: 1 !important;
             }
             
-            /* Force all slides to be visible in print */
+            /* Force all slides to be visible in print - override any hiding */
             .slide {
                 visibility: visible !important;
                 opacity: 1 !important;
                 display: flex !important;
+                position: relative !important;
             }
             
             .slide:last-child {
@@ -784,8 +785,14 @@
             /* CRITICAL: Override all text color rules for green background elements */
             div[style*="background: var(--brand-forest)"] *,
             div[style*="background: #0A1F1A"] *,
-            div[style*="background: linear-gradient(135deg, var(--brand-forest)"] * {
+            div[style*="background: linear-gradient(135deg, var(--brand-forest)"] *,
+            div[style*="background: var(--brand-forest)"] p,
+            div[style*="background: var(--brand-forest)"] span,
+            div[style*="background: #0A1F1A"] p,
+            div[style*="background: #0A1F1A"] span {
                 color: #FFFFFF !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
             }
             
             /* Ensure green buttons maintain white text with highest specificity */
@@ -876,6 +883,17 @@
             /* Ensure funding box text is white in print */
             .slide--center div[style*="background: var(--brand-forest)"] * {
                 color: #FFFFFF !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+            
+            /* Specific targeting for funding box text */
+            div[style*="background: var(--brand-forest)"] p[style*="color: white"],
+            div[style*="background: var(--brand-forest)"] p[style*="color: rgba(255, 255, 255"],
+            div[style*="background: var(--brand-forest)"] p[style*="color: #FFFFFF"] {
+                color: #FFFFFF !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
             }
         }
 
