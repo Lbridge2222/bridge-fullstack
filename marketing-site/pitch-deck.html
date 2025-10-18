@@ -733,9 +733,18 @@
                 break-after: page !important;
             }
             
-            /* Ensure first slide (title page) is included */
+            /* Ensure first slide (title page) is included and visible */
             .slide:first-child {
                 page-break-before: auto !important;
+                display: flex !important;
+                visibility: visible !important;
+                opacity: 1 !important;
+            }
+            
+            /* Force all slides to be visible in print */
+            .slide {
+                visibility: visible !important;
+                opacity: 1 !important;
                 display: flex !important;
             }
             
@@ -772,27 +781,30 @@
                 color: #333333 !important;
             }
             
-            /* Preserve white text in buttons and cards */
-            div[style*="background: var(--brand-forest)"] p,
-            div[style*="background: var(--brand-forest)"] span,
-            .card[style*="background"] p,
-            .card[style*="background"] span,
-            button p,
-            button span {
+            /* CRITICAL: Override all text color rules for green background elements */
+            div[style*="background: var(--brand-forest)"] *,
+            div[style*="background: #0A1F1A"] *,
+            div[style*="background: linear-gradient(135deg, var(--brand-forest)"] * {
                 color: #FFFFFF !important;
             }
             
-            /* Ensure green buttons maintain white text */
+            /* Ensure green buttons maintain white text with highest specificity */
             div[style*="background: var(--brand-forest)"],
-            div[style*="background: #0A1F1A"] {
+            div[style*="background: #0A1F1A"],
+            div[style*="background: linear-gradient(135deg, var(--brand-forest)"] {
                 background: #0A1F1A !important;
+                color: #FFFFFF !important;
             }
             
+            /* Force white text in funding box */
             div[style*="background: var(--brand-forest)"] p,
             div[style*="background: var(--brand-forest)"] span,
             div[style*="background: #0A1F1A"] p,
-            div[style*="background: #0A1F1A"] span {
+            div[style*="background: #0A1F1A"] span,
+            div[style*="background: linear-gradient(135deg, var(--brand-forest)"] p,
+            div[style*="background: linear-gradient(135deg, var(--brand-forest)"] span {
                 color: #FFFFFF !important;
+                text-shadow: none !important;
             }
             
             /* Ensure cards are visible */
@@ -849,6 +861,20 @@
             }
             
             div[style*="background: var(--brand-forest)"] p {
+                color: #FFFFFF !important;
+            }
+            
+            /* Force title page elements to be visible */
+            .slide--center h1,
+            .slide--center .subtitle,
+            .slide--center .logo {
+                color: #000000 !important;
+                visibility: visible !important;
+                opacity: 1 !important;
+            }
+            
+            /* Ensure funding box text is white in print */
+            .slide--center div[style*="background: var(--brand-forest)"] * {
                 color: #FFFFFF !important;
             }
         }
