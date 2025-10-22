@@ -1042,8 +1042,10 @@
             }
             
             /* Make sure table elements render correctly */
-            table thead, table tbody {
+            table thead {
                 display: table-header-group;
+            }
+            table tbody {
                 display: table-row-group;
             }
             table tr {
@@ -3488,127 +3490,158 @@
 
     <script>
         // Navigation dots
-        const slideContainer = document.getElementById('slideContainer');
-        // Only select actual slides that have slide numbers (15 slides total)
-        // Use more specific selector: direct children of slide-container that have slide-number
-        const slides = Array.from(document.querySelectorAll('#slideContainer > .slide')).filter(slide => 
-            slide.querySelector('.slide-number')
-        );
-        console.log('Total slides with numbers:', slides.length); // Debug log
-        const navDots = document.getElementById('navDots');
-        
-        // Progress bar
-        const progressBar = document.createElement('div');
-        progressBar.className = 'progress-bar';
-        document.body.appendChild(progressBar);
+        function initNavigation() {
+            const slideContainer = document.getElementById('slideContainer');
+            if (!slideContainer) {
+                return;
+            }
 
-        // Create navigation dots
-        slides.forEach((slide, index) => {
-            const dot = document.createElement('div');
-            dot.className = 'nav-dot';
-            dot.addEventListener('click', () => {
-                slides[index].scrollIntoView({ behavior: 'smooth' });
+            const navDots = document.getElementById('navDots');
+            if (!navDots) {
+                return;
+            }
+
+            const slideNodes = Array.prototype.slice.call(slideContainer.children);
+            const slides = slideNodes.filter(function (slide) {
+                return slide.classList && slide.classList.contains('slide') && slide.querySelector('.slide-number');
             });
-            navDots.appendChild(dot);
-        });
 
-        // Update active dot on scroll
-        const updateActiveDot = () => {
-            const scrollTop = slideContainer.scrollTop;
-            const containerMid = scrollTop + slideContainer.clientHeight / 2;
-            let activeIndex = 0;
-            let minDelta = Infinity;
+            // Clear existing dots (if re-initialised)
+            navDots.innerHTML = '';
 
-            slides.forEach((slide, index) => {
-                const top = slide.offsetTop;
-                const bottom = top + slide.offsetHeight;
-                const slideMid = top + (bottom - top) / 2;
-                const delta = Math.abs(slideMid - containerMid);
-                if (delta < minDelta) {
-                    minDelta = delta;
-                    activeIndex = index;
-                }
+            // Create navigation dots
+            slides.forEach(function (slide, index) {
+                var dot = document.createElement('div');
+                dot.className = 'nav-dot';
+                dot.addEventListener('click', function () {
+                    slide.scrollIntoView({ behavior: 'smooth' });
+                });
+                navDots.appendChild(dot);
             });
-            
-            document.querySelectorAll('.nav-dot').forEach((dot, index) => {
-                const isActive = index === activeIndex;
-                dot.classList.toggle('active', isActive);
-                if (isActive) {
-                    dot.setAttribute('aria-current', 'step');
-                } else {
-                    dot.removeAttribute('aria-current');
-                }
+
+            var progressBar = document.querySelector('.progress-bar');
+            if (!progressBar) {
+                progressBar = document.createElement('div');
+                progressBar.className = 'progress-bar';
+                document.body.appendChild(progressBar);
+            }
+
+            function updateActiveDot() {
+                var scrollTop = slideContainer.scrollTop;
+                var containerMid = scrollTop + slideContainer.clientHeight / 2;
+                var activeIndex = 0;
+                var minDelta = Infinity;
+
+                slides.forEach(function (slide, index) {
+                    var top = slide.offsetTop;
+                    var bottom = top + slide.offsetHeight;
+                    var slideMid = top + (bottom - top) / 2;
+                    var delta = Math.abs(slideMid - containerMid);
+                    if (delta < minDelta) {
+                        minDelta = delta;
+                        activeIndex = index;
+                    }
+                });
+
+                var dots = navDots.querySelectorAll('.nav-dot');
+                dots.forEach(function (dot, index) {
+                    var isActive = index === activeIndex;
+                    dot.classList.toggle('active', isActive);
+                    if (isActive) {
+                        dot.setAttribute('aria-current', 'step');
+                    } else {
+                        dot.removeAttribute('aria-current');
+                    }
+                });
+            }
+
+            function updateProgress() {
+                var max = slideContainer.scrollHeight - slideContainer.clientHeight;
+                var pct = Math.max(0, Math.min(1, slideContainer.scrollTop / Math.max(1, max)));
+                progressBar.style.width = (pct * 100).toFixed(2) + '%';
+            }
+
+            slideContainer.addEventListener('scroll', function () {
+                updateActiveDot();
+                updateProgress();
             });
-        };
-
-        const updateProgress = () => {
-            const max = slideContainer.scrollHeight - slideContainer.clientHeight;
-            const pct = Math.max(0, Math.min(1, slideContainer.scrollTop / Math.max(1, max)));
-            progressBar.style.width = (pct * 100).toFixed(2) + '%';
-        };
-
-        slideContainer.addEventListener('scroll', () => {
             updateActiveDot();
             updateProgress();
-        });
-        updateActiveDot(); // Initial call
-        updateProgress();
 
-        // Keyboard navigation
-        document.addEventListener('keydown', (e) => {
-            const scrollPosition = slideContainer.scrollTop;
-            const slideHeight = slides[0].offsetHeight;
-            const currentSlide = Math.round(scrollPosition / slideHeight);
-
-            if (e.key === 'ArrowDown' || e.key === 'ArrowRight' || e.key === ' ') {
-                e.preventDefault();
-                if (currentSlide < slides.length - 1) {
-                    slides[currentSlide + 1].scrollIntoView({ behavior: 'smooth' });
+            document.addEventListener('keydown', function (e) {
+                var scrollPosition = slideContainer.scrollTop;
+                var slideHeight = slides[0] ? slides[0].offsetHeight : 0;
+                if (!slideHeight) {
+                    return;
                 }
-            } else if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') {
-                e.preventDefault();
-                if (currentSlide > 0) {
-                    slides[currentSlide - 1].scrollIntoView({ behavior: 'smooth' });
-                }
-            } else if (e.key === 'Home') {
-                e.preventDefault();
-                slides[0].scrollIntoView({ behavior: 'smooth' });
-            } else if (e.key === 'End') {
-                e.preventDefault();
-                slides[slides.length - 1].scrollIntoView({ behavior: 'smooth' });
-            }
-        });
+                var currentSlide = Math.round(scrollPosition / slideHeight);
 
-        // Reveal-on-scroll: apply to key content blocks (include new arch + metric cards)
-        const revealTargets = document.querySelectorAll('.feature-card, .card, .highlight-box, .stat, .tech-item, .arch-card, .metric-item, .kpi, .two-column > .card, .visual-diagram, .market-bar, table');
-        const io = new IntersectionObserver((entries) => {
-            entries.forEach((entry) => {
-                if (entry.isIntersecting) {
-                    entry.target.classList.add('is-visible');
-                    io.unobserve(entry.target);
+                if (e.key === 'ArrowDown' || e.key === 'ArrowRight' || e.key === ' ') {
+                    e.preventDefault();
+                    if (currentSlide < slides.length - 1) {
+                        slides[currentSlide + 1].scrollIntoView({ behavior: 'smooth' });
+                    }
+                } else if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') {
+                    e.preventDefault();
+                    if (currentSlide > 0) {
+                        slides[currentSlide - 1].scrollIntoView({ behavior: 'smooth' });
+                    }
+                } else if (e.key === 'Home') {
+                    e.preventDefault();
+                    slides[0].scrollIntoView({ behavior: 'smooth' });
+                } else if (e.key === 'End') {
+                    e.preventDefault();
+                    slides[slides.length - 1].scrollIntoView({ behavior: 'smooth' });
                 }
             });
-        }, { root: slideContainer, threshold: 0.15, rootMargin: '0px 0px -10% 0px' });
+        }
 
-        let stagger = 0;
-        revealTargets.forEach((el) => {
-            el.classList.add('reveal-up');
-            el.style.setProperty('--d', `${stagger}ms`);
-            stagger = (stagger + 30) % 240; // soft stagger within a slide
-            io.observe(el);
-        });
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initNavigation);
+        } else {
+            initNavigation();
+        }
+        
+        // Reveal-on-scroll: apply to key content blocks (include new arch + metric cards)
+        var revealTargets = document.querySelectorAll('.feature-card, .card, .highlight-box, .stat, .tech-item, .arch-card, .metric-item, .kpi, .two-column > .card, .visual-diagram, .market-bar, table');
+        if ('IntersectionObserver' in window) {
+            var observer = new IntersectionObserver(function (entries) {
+                entries.forEach(function (entry) {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('is-visible');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, { root: document.getElementById('slideContainer'), threshold: 0.15, rootMargin: '0px 0px -10% 0px' });
+
+            var stagger = 0;
+            revealTargets.forEach(function (el) {
+                el.classList.add('reveal-up');
+                el.style.setProperty('--d', stagger + 'ms');
+                stagger = (stagger + 30) % 240;
+                observer.observe(el);
+            });
+        } else {
+            revealTargets.forEach(function (el) {
+                el.classList.add('reveal-up', 'is-visible');
+            });
+        }
 
         // Simple carousel controls for Slide 5
-        document.querySelectorAll('.screenshot-carousel').forEach((carousel) => {
-            const track = carousel.querySelector('[data-carousel-track]');
-            const prev = carousel.querySelector('[data-carousel-prev]');
-            const next = carousel.querySelector('[data-carousel-next]');
-            prev?.addEventListener('click', () => {
-                track.scrollBy({ left: -track.clientWidth, behavior: 'smooth' });
-            });
-            next?.addEventListener('click', () => {
-                track.scrollBy({ left: track.clientWidth, behavior: 'smooth' });
-            });
+        Array.prototype.slice.call(document.querySelectorAll('.screenshot-carousel')).forEach(function (carousel) {
+            var track = carousel.querySelector('[data-carousel-track]');
+            var prev = carousel.querySelector('[data-carousel-prev]');
+            var next = carousel.querySelector('[data-carousel-next]');
+            if (prev && track) {
+                prev.addEventListener('click', function () {
+                    track.scrollBy({ left: -track.clientWidth, behavior: 'smooth' });
+                });
+            }
+            if (next && track) {
+                next.addEventListener('click', function () {
+                    track.scrollBy({ left: track.clientWidth, behavior: 'smooth' });
+                });
+            }
         });
 
         // Print instructions
@@ -3626,50 +3659,61 @@
                 const legendItems = allocVisual.querySelectorAll('.donut-legend li');
                 const tooltip = allocVisual.querySelector('.donut-tooltip');
 
-                const clearActive = () => {
-                    arcs.forEach(a => a.classList.remove('active'));
-                    legendItems.forEach(li => li.classList.remove('active'));
-                    if (tooltip) tooltip.classList.remove('is-visible');
-                };
+                function clearActive() {
+                    arcs.forEach(function (a) { a.classList.remove('active'); });
+                    legendItems.forEach(function (li) { li.classList.remove('active'); });
+                    if (tooltip) {
+                        tooltip.classList.remove('is-visible');
+                    }
+                }
 
-                const setActive = (seg, pos) => {
+                function setActive(seg, pos) {
                     clearActive();
-                    const arc = allocVisual.querySelector(`.donut-svg .arc[data-seg="${seg}"]`);
-                    const li = allocVisual.querySelector(`.donut-legend li[data-seg="${seg}"]`);
-                    if (arc) arc.classList.add('active');
-                    if (li) li.classList.add('active');
+                    var arc = allocVisual.querySelector('.donut-svg .arc[data-seg="' + seg + '"]');
+                    var li = allocVisual.querySelector('.donut-legend li[data-seg="' + seg + '"]');
+                    if (arc) {
+                        arc.classList.add('active');
+                    }
+                    if (li) {
+                        li.classList.add('active');
+                    }
                     if (tooltip && arc) {
-                        const color = getComputedStyle(arc).stroke;
-                        const label = arc.getAttribute('data-label') || '';
-                        const pct = arc.getAttribute('data-pct') || '';
-                        const dot = tooltip.querySelector('.dot');
-                        const text = tooltip.querySelector('.text');
-                        if (dot) dot.style.background = color;
-                        if (text) text.textContent = `${label} • ${pct}`;
+                        var color = getComputedStyle(arc).stroke;
+                        var label = arc.getAttribute('data-label') || '';
+                        var pct = arc.getAttribute('data-pct') || '';
+                        var dot = tooltip.querySelector('.dot');
+                        var text = tooltip.querySelector('.text');
+                        if (dot) {
+                            dot.style.background = color;
+                        }
+                        if (text) {
+                            text.textContent = label + ' • ' + pct;
+                        }
                         tooltip.classList.add('is-visible');
                         if (pos) {
-                            const rect = donut.getBoundingClientRect();
-                            // Position tooltip near cursor within donut bounds
-                            tooltip.style.left = `${pos.clientX - rect.left}px`;
-                            tooltip.style.top = `${pos.clientY - rect.top}px`;
+                            var rect = donut.getBoundingClientRect();
+                            tooltip.style.left = (pos.clientX - rect.left) + 'px';
+                            tooltip.style.top = (pos.clientY - rect.top) + 'px';
                         }
                     }
-                };
+                }
 
-                arcs.forEach(arc => {
-                    arc.addEventListener('mouseenter', e => {
-                        const seg = arc.getAttribute('data-seg');
+                arcs.forEach(function (arc) {
+                    arc.addEventListener('mouseenter', function (e) {
+                        var seg = arc.getAttribute('data-seg');
                         setActive(seg, e);
                     });
-                    arc.addEventListener('mousemove', e => {
-                        const seg = arc.getAttribute('data-seg');
+                    arc.addEventListener('mousemove', function (e) {
+                        var seg = arc.getAttribute('data-seg');
                         setActive(seg, e);
                     });
                     arc.addEventListener('mouseleave', clearActive);
                 });
 
-                legendItems.forEach(li => {
-                    li.addEventListener('mouseenter', () => setActive(li.getAttribute('data-seg')));
+                legendItems.forEach(function (li) {
+                    li.addEventListener('mouseenter', function () {
+                        setActive(li.getAttribute('data-seg'));
+                    });
                     li.addEventListener('mouseleave', clearActive);
                 });
             }
@@ -3679,50 +3723,72 @@
         
         // Ensure all tables are mobile-friendly
         (function ensureMobileTables() {
-            // Wrap any unwrapped tables in scrollable containers
-            const allTables = document.querySelectorAll('table');
-            allTables.forEach(table => {
-                const parent = table.parentElement;
-                // Only wrap if not already in a scrollable container
-                if (parent && !parent.style.overflowX && parent.tagName !== 'DIV') {
-                    const wrapper = document.createElement('div');
+            try {
+                var tables = document.querySelectorAll('table');
+                Array.prototype.slice.call(tables).forEach(function (table) {
+                    var parent = table.parentElement;
+                    if (parent && parent.classList && parent.classList.contains('table-container')) {
+                        return;
+                    }
+                    if (parent && parent.classList && parent.classList.contains('table-wrapper')) {
+                        return;
+                    }
+                    if (parent && parent.getAttribute && parent.getAttribute('data-mobile-table-wrapper')) {
+                        return;
+                    }
+
+                    var wrapper = document.createElement('div');
+                    wrapper.className = 'table-wrapper';
+                    wrapper.setAttribute('data-mobile-table-wrapper', 'true');
                     wrapper.style.overflowX = 'auto';
                     wrapper.style.WebkitOverflowScrolling = 'touch';
                     wrapper.style.margin = '0 -1rem';
                     wrapper.style.padding = '0 1rem';
-                    table.parentNode.insertBefore(wrapper, table);
+                    parent.insertBefore(wrapper, table);
                     wrapper.appendChild(table);
-                }
-            });
+                });
+            } catch (tableError) {
+                console.warn('Table wrapper initialisation failed:', tableError);
+            }
         })();
         
         // Smart button functionality - detects if running from file or web
         (function initSmartButton() {
-            const smartButton = document.getElementById('smartButton');
-            const webVersionNote = document.getElementById('webVersionNote');
-            const webVersionLink = document.getElementById('webVersionLink');
-            const isLocalFile = window.location.protocol === 'file:';
-            
-            // Actual web URL for Ivy OS pitch deck
-            const WEB_VERSION_URL = 'https://www.ivy-os.io/pitch-deck.html';
-            
-            if (isLocalFile) {
-                // Downloaded version - show "View Web Version" button and note
-                smartButton.innerHTML = '🌐 View Web Version';
-                smartButton.onclick = function() {
-                    window.open(WEB_VERSION_URL, '_blank');
-                };
-                webVersionNote.style.display = 'block';
-                webVersionLink.href = WEB_VERSION_URL;
-                webVersionLink.onclick = function(e) {
-                    e.preventDefault();
-                    window.open(WEB_VERSION_URL, '_blank');
-                };
-            } else {
-                // Web version - show "Download" button
-                smartButton.innerHTML = '💾 Download Pitch Deck';
-                smartButton.onclick = downloadAsHtml;
-                webVersionNote.style.display = 'none';
+            try {
+                var smartButton = document.getElementById('smartButton');
+                var webVersionNote = document.getElementById('webVersionNote');
+                var webVersionLink = document.getElementById('webVersionLink');
+                if (!smartButton || !webVersionNote || !webVersionLink) {
+                    return;
+                }
+
+                var protocol = window.location.protocol;
+                var href = window.location.href;
+                var isLocal = protocol === 'file:' ||
+                    href.indexOf('127.0.0.1') !== -1 ||
+                    href.indexOf('localhost') !== -1 ||
+                    (!href.match(/^https?:\/\//i) && !href.match(/^data:/i));
+
+                var WEB_VERSION_URL = 'https://www.ivy-os.io/pitch-deck.html';
+
+                if (isLocal) {
+                    smartButton.innerHTML = '🌐 View Web Version';
+                    smartButton.onclick = function () {
+                        window.open(WEB_VERSION_URL, '_blank');
+                    };
+                    webVersionNote.style.display = 'block';
+                    webVersionLink.href = WEB_VERSION_URL;
+                    webVersionLink.onclick = function (e) {
+                        e.preventDefault();
+                        window.open(WEB_VERSION_URL, '_blank');
+                    };
+                } else {
+                    smartButton.innerHTML = '💾 Download Pitch Deck';
+                    smartButton.onclick = downloadAsHtml;
+                    webVersionNote.style.display = 'none';
+                }
+            } catch (buttonError) {
+                console.warn('Smart button initialisation failed:', buttonError);
             }
         })();
         
