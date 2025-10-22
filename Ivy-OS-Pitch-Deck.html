@@ -1037,6 +1037,35 @@
                 display: table !important;
                 visibility: visible !important;
                 opacity: 1 !important;
+                background: white !important;
+                border: 1px solid #ccc !important;
+            }
+            
+            /* Force all table elements to be visible */
+            table, table *, table th, table td, table tr, table thead, table tbody {
+                display: table !important;
+                visibility: visible !important;
+                opacity: 1 !important;
+            }
+            
+            table th, table td {
+                display: table-cell !important;
+                padding: 0.5rem !important;
+                border: 1px solid #ddd !important;
+                background: white !important;
+                color: #000 !important;
+            }
+            
+            table thead {
+                display: table-header-group !important;
+            }
+            
+            table tbody {
+                display: table-row-group !important;
+            }
+            
+            table tr {
+                display: table-row !important;
             }
             
             /* Ensure all tables can scroll */
@@ -1925,7 +1954,7 @@
     <div class="nav-dots" id="navDots"></div>
     
     <!-- Smart Download/Web Link Button -->
-    <button id="smartButton" style="
+    <button id="smartButton" onclick="window.open('https://www.ivy-os.io/pitch-deck.html', '_blank')" style="
         position: fixed;
         top: 2rem;
         right: 2rem;
@@ -1941,12 +1970,12 @@
         box-shadow: 0 4px 12px rgba(10, 31, 26, 0.15);
         transition: all 0.2s ease;
     " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 16px rgba(10, 31, 26, 0.2)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(10, 31, 26, 0.15)'">
-        💾 Download Pitch Deck
+        🌐 View Web Version
     </button>
     
-    <!-- Note for downloaded version (only shows on file:// protocol) -->
+    <!-- Note for downloaded version -->
     <div id="webVersionNote" style="
-        display: none;
+        display: block;
         position: fixed;
         bottom: 2rem;
         left: 50%;
@@ -1963,7 +1992,7 @@
         font-size: 0.85rem;
         color: #0A1F1A;
     ">
-        💡 <strong>Tip:</strong> For optimal viewing, please view the <a href="#" id="webVersionLink" style="color: #156B4A; font-weight: 600; text-decoration: underline;">live web version</a>
+        💡 <strong>Tip:</strong> For optimal viewing, please view the <a href="https://www.ivy-os.io/pitch-deck.html" style="color: #156B4A; font-weight: 600; text-decoration: underline;">live web version</a>
     </div>
     
     <div class="slide-container" id="slideContainer">
