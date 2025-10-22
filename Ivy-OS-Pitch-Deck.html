@@ -3490,9 +3490,11 @@
         // Navigation dots
         const slideContainer = document.getElementById('slideContainer');
         // Only select actual slides that have slide numbers (15 slides total)
-        const slides = Array.from(document.querySelectorAll('.slide')).filter(slide => 
+        // Use more specific selector: direct children of slide-container that have slide-number
+        const slides = Array.from(document.querySelectorAll('#slideContainer > .slide')).filter(slide => 
             slide.querySelector('.slide-number')
         );
+        console.log('Total slides with numbers:', slides.length); // Debug log
         const navDots = document.getElementById('navDots');
         
         // Progress bar
@@ -3701,8 +3703,8 @@
             const webVersionLink = document.getElementById('webVersionLink');
             const isLocalFile = window.location.protocol === 'file:';
             
-            // Replace this with your actual web URL
-            const WEB_VERSION_URL = 'https://your-domain.com/pitch-deck.html'; // TODO: Update with actual URL
+            // Actual web URL for Ivy OS pitch deck
+            const WEB_VERSION_URL = 'https://www.ivy-os.io/pitch-deck.html';
             
             if (isLocalFile) {
                 // Downloaded version - show "View Web Version" button and note
