@@ -3,7 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Ivy OS - Pre-Seed Investor Deck</title>
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Ivy OS - Pre-Seed Investor Deck v2.1</title>
     <style>
         :root{
             --brand-forest:#0A1F1A;
@@ -3775,6 +3778,24 @@
             }
         })();
         
+        // Cache buster for iOS
+        (function cacheBuster() {
+            try {
+                var timestamp = new Date().getTime();
+                var version = 'v2.1-' + timestamp;
+                console.log('Cache buster version:', version);
+                
+                // Force reload if this is an old cached version
+                if (document.title.indexOf('v2.1') === -1) {
+                    console.log('Old version detected, forcing reload');
+                    window.location.reload(true);
+                    return;
+                }
+            } catch (e) {
+                console.warn('Cache buster failed:', e);
+            }
+        })();
+
         // Smart button functionality - detects if running from file or web
         (function initSmartButton() {
             try {
@@ -3797,7 +3818,8 @@
                     host: host,
                     href: href,
                     isIvyHost: isIvyHost,
-                    isMobile: isMobile
+                    isMobile: isMobile,
+                    title: document.title
                 });
 
                 var isLocal = protocol === 'file:' ||
