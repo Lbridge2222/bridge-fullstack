@@ -3727,10 +3727,25 @@
         (function ensureMobileTables() {
             try {
                 var tables = document.querySelectorAll('table');
-                Array.prototype.slice.call(tables).forEach(function (table) {
-                    // Force visible
+                console.log('Found tables:', tables.length);
+                
+                Array.prototype.slice.call(tables).forEach(function (table, index) {
+                    console.log('Processing table', index, ':', table);
+                    
+                    // Force visible with multiple approaches
                     table.style.visibility = 'visible';
                     table.style.opacity = '1';
+                    table.style.display = 'table';
+                    table.style.width = '100%';
+                    table.style.minWidth = '100%';
+                    
+                    // Force table elements to be visible
+                    var cells = table.querySelectorAll('td, th');
+                    cells.forEach(function(cell) {
+                        cell.style.visibility = 'visible';
+                        cell.style.opacity = '1';
+                        cell.style.display = 'table-cell';
+                    });
 
                     var parent = table.parentElement;
                     if (parent && parent.classList && parent.classList.contains('table-container')) {
@@ -3752,6 +3767,8 @@
                     wrapper.style.padding = '0 1rem';
                     parent.insertBefore(wrapper, table);
                     wrapper.appendChild(table);
+                    
+                    console.log('Wrapped table', index);
                 });
             } catch (tableError) {
                 console.warn('Table wrapper initialisation failed:', tableError);
@@ -3772,9 +3789,21 @@
                 var href = window.location.href;
                 var host = (window.location && window.location.host) ? window.location.host : '';
                 var isIvyHost = /(^|\.)ivy-os\.io$/i.test(host);
+                var isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+                
+                // Debug info
+                console.log('Smart Button Debug:', {
+                    protocol: protocol,
+                    host: host,
+                    href: href,
+                    isIvyHost: isIvyHost,
+                    isMobile: isMobile
+                });
+
                 var isLocal = protocol === 'file:' ||
                     href.indexOf('127.0.0.1') !== -1 ||
                     href.indexOf('localhost') !== -1 ||
+                    isMobile ||
                     (!isIvyHost);
 
                 var WEB_VERSION_URL = 'https://www.ivy-os.io/pitch-deck.html';
@@ -3790,10 +3819,12 @@
                         e.preventDefault();
                         window.open(WEB_VERSION_URL, '_blank');
                     };
+                    console.log('Smart button set to: View Web Version');
                 } else {
                     smartButton.innerHTML = '💾 Download Pitch Deck';
                     smartButton.onclick = downloadAsHtml;
                     webVersionNote.style.display = 'none';
+                    console.log('Smart button set to: Download Pitch Deck');
                 }
             } catch (buttonError) {
                 console.warn('Smart button initialisation failed:', buttonError);
