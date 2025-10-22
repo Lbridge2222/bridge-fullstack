@@ -1032,13 +1032,15 @@
                 width: max-content;
                 min-width: 100%;
                 display: table !important;
+                visibility: visible !important;
+                opacity: 1 !important;
             }
             
             /* Ensure all tables can scroll */
             .card table, 
             table {
-                overflow-x: auto;
-                -webkit-overflow-scrolling: touch;
+                overflow-x: auto !important;
+                -webkit-overflow-scrolling: touch !important;
             }
             
             /* Make sure table elements render correctly */
@@ -3603,7 +3605,7 @@
         }
         
         // Reveal-on-scroll: apply to key content blocks (include new arch + metric cards)
-        var revealTargets = document.querySelectorAll('.feature-card, .card, .highlight-box, .stat, .tech-item, .arch-card, .metric-item, .kpi, .two-column > .card, .visual-diagram, .market-bar, table');
+        var revealTargets = document.querySelectorAll('.feature-card, .card, .highlight-box, .stat, .tech-item, .arch-card, .metric-item, .kpi, .two-column > .card, .visual-diagram, .market-bar');
         if ('IntersectionObserver' in window) {
             var observer = new IntersectionObserver(function (entries) {
                 entries.forEach(function (entry) {
@@ -3726,6 +3728,10 @@
             try {
                 var tables = document.querySelectorAll('table');
                 Array.prototype.slice.call(tables).forEach(function (table) {
+                    // Force visible
+                    table.style.visibility = 'visible';
+                    table.style.opacity = '1';
+
                     var parent = table.parentElement;
                     if (parent && parent.classList && parent.classList.contains('table-container')) {
                         return;
@@ -3764,10 +3770,12 @@
 
                 var protocol = window.location.protocol;
                 var href = window.location.href;
+                var host = (window.location && window.location.host) ? window.location.host : '';
+                var isIvyHost = /(^|\.)ivy-os\.io$/i.test(host);
                 var isLocal = protocol === 'file:' ||
                     href.indexOf('127.0.0.1') !== -1 ||
                     href.indexOf('localhost') !== -1 ||
-                    (!href.match(/^https?:\/\//i) && !href.match(/^data:/i));
+                    (!isIvyHost);
 
                 var WEB_VERSION_URL = 'https://www.ivy-os.io/pitch-deck.html';
 
