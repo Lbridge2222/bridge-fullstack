@@ -508,6 +508,29 @@
             border-collapse: collapse;
             margin-top: 2rem;
         }
+        
+        /* Table container for mobile scrolling */
+        .table-container {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(10,31,26,0.3) transparent;
+            margin: 0 -1rem;
+            padding: 0 1rem;
+        }
+        
+        .table-container::-webkit-scrollbar {
+            height: 6px;
+        }
+        
+        .table-container::-webkit-scrollbar-thumb {
+            background: rgba(10,31,26,0.3);
+            border-radius: 3px;
+        }
+        
+        .table-container::-webkit-scrollbar-track {
+            background: transparent;
+        }
 
         th {
             background: linear-gradient(135deg, hsl(210, 25%, 98%) 0%, hsl(210, 25%, 96%) 100%);
@@ -971,9 +994,107 @@
             .slide-content p { font-size: 0.95rem; line-height: 1.6; }
             .slide-content li { font-size: 0.9rem; line-height: 1.5; }
             
-            /* Make tables more mobile-friendly */
-            .card table { font-size: 0.85rem; }
-            .card table th, .card table td { padding: 0.5rem 0.25rem; }
+            /* Enhanced mobile table handling */
+            .card table { 
+                font-size: 0.8rem; 
+                min-width: 100%;
+                table-layout: auto;
+            }
+            .card table th, .card table td { 
+                padding: 0.4rem 0.3rem; 
+                white-space: nowrap;
+                min-width: 80px;
+            }
+            
+            /* Table wrapper for horizontal scroll */
+            .card > div[style*="overflow-x: auto"] {
+                overflow-x: auto !important;
+                -webkit-overflow-scrolling: touch;
+                scrollbar-width: thin;
+                scrollbar-color: rgba(10,31,26,0.3) transparent;
+            }
+            
+            .card > div[style*="overflow-x: auto"]::-webkit-scrollbar {
+                height: 6px;
+            }
+            
+            .card > div[style*="overflow-x: auto"]::-webkit-scrollbar-thumb {
+                background: rgba(10,31,26,0.3);
+                border-radius: 3px;
+            }
+            
+            .card > div[style*="overflow-x: auto"]::-webkit-scrollbar-track {
+                background: transparent;
+            }
+            
+            /* Ensure tables don't break layout */
+            table {
+                width: max-content;
+                min-width: 100%;
+            }
+            
+            /* Fix grid layouts for mobile */
+            .arch-grid { 
+                grid-template-columns: 1fr !important; 
+                gap: 1rem !important; 
+            }
+            .metric-grid { 
+                grid-template-columns: repeat(2, 1fr) !important; 
+                gap: 0.75rem !important; 
+            }
+            .kpi-grid { 
+                grid-template-columns: repeat(2, 1fr) !important; 
+                gap: 0.75rem !important; 
+            }
+            .price-grid { 
+                grid-template-columns: 1fr !important; 
+                gap: 1rem !important; 
+            }
+            
+            /* Fix card layouts */
+            .arch-card { 
+                padding: 0.75rem !important; 
+                margin-bottom: 0.5rem !important; 
+            }
+            .metric-item { 
+                padding: 0.75rem !important; 
+                flex-direction: column !important;
+                text-align: center !important;
+            }
+            .kpi { 
+                padding: 0.75rem !important; 
+            }
+            
+            /* Fix pill layouts */
+            .pill-row { 
+                flex-direction: column !important; 
+                gap: 0.5rem !important; 
+            }
+            .interest-pills { 
+                flex-direction: column !important; 
+                gap: 0.5rem !important; 
+            }
+            
+            /* Fix specific slide layouts */
+            .slide--comp .card table { 
+                font-size: 0.75rem !important;
+            }
+            .slide--comp .card table th, 
+            .slide--comp .card table td { 
+                padding: 0.3rem 0.2rem !important;
+                white-space: nowrap;
+            }
+            
+            .slide--pricing .price-grid { 
+                grid-template-columns: 1fr !important; 
+            }
+            .slide--pricing .card table { 
+                font-size: 0.75rem !important;
+            }
+            .slide--pricing .card table th, 
+            .slide--pricing .card table td { 
+                padding: 0.3rem 0.2rem !important;
+            }
             
             p, li { font-size: 1rem; }
             
@@ -1203,6 +1324,35 @@
             .mobile-prompt {
                 display: none !important;
             }
+            
+            /* Enhanced table handling for landscape */
+            .card table { 
+                font-size: 0.75rem !important;
+            }
+            .card table th, .card table td { 
+                padding: 0.3rem 0.2rem !important;
+            }
+        }
+        
+        /* ===== SMALL MOBILE DEVICES ===== */
+        @media (max-width: 480px) {
+            .slide { padding: 1rem; }
+            .card { padding: 0.75rem; }
+            
+            /* Ultra-compact tables for small screens */
+            .card table { 
+                font-size: 0.7rem !important;
+            }
+            .card table th, .card table td { 
+                padding: 0.25rem 0.15rem !important;
+                min-width: 60px !important;
+            }
+            
+            /* Ensure table wrapper has proper touch scrolling */
+            .card > div[style*="overflow-x: auto"] {
+                margin: 0 -1rem;
+                padding: 0 1rem;
+            }
         }
 
         /* Reduced motion preference */
@@ -1370,7 +1520,12 @@
         .metric-item svg{ flex:0 0 24px; }
         .metric-item .label{ font-size:0.8rem; color:var(--muted-2); margin:0; }
         .metric-item .value{ font-size:1rem; font-weight:700; color:#111111; line-height:1; }
-        @media (max-width: 900px){ .arch-grid{ grid-template-columns:1fr; } .metric-grid{ grid-template-columns:repeat(2,1fr);} }
+        @media (max-width: 900px){ 
+            .arch-grid{ grid-template-columns:1fr; } 
+            .metric-grid{ grid-template-columns:repeat(2,1fr);} 
+            .kpi-grid{ grid-template-columns:repeat(2,1fr); } 
+            .price-grid{ grid-template-columns:1fr; }
+        }
 
         /* Screenshot carousel (Slide 5) */
         .screenshot-carousel { position: relative; margin-top: 1rem; }
