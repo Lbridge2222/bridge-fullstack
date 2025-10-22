@@ -1031,6 +1031,26 @@
             table {
                 width: max-content;
                 min-width: 100%;
+                display: table !important;
+            }
+            
+            /* Ensure all tables can scroll */
+            .card table, 
+            table {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+            
+            /* Make sure table elements render correctly */
+            table thead, table tbody {
+                display: table-header-group;
+                display: table-row-group;
+            }
+            table tr {
+                display: table-row !important;
+            }
+            table th, table td {
+                display: table-cell !important;
             }
             
             /* Fix grid layouts for mobile */
@@ -1897,8 +1917,8 @@
     </div>
     <div class="nav-dots" id="navDots"></div>
     
-    <!-- Download Button -->
-    <button id="downloadHtml" onclick="downloadAsHtml()" style="
+    <!-- Smart Download/Web Link Button -->
+    <button id="smartButton" style="
         position: fixed;
         top: 2rem;
         right: 2rem;
@@ -1916,6 +1936,28 @@
     " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 16px rgba(10, 31, 26, 0.2)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(10, 31, 26, 0.15)'">
         💾 Download Pitch Deck
     </button>
+    
+    <!-- Note for downloaded version (only shows on file:// protocol) -->
+    <div id="webVersionNote" style="
+        display: none;
+        position: fixed;
+        bottom: 2rem;
+        left: 50%;
+        transform: translateX(-50%);
+        background: linear-gradient(135deg, rgba(255,255,255,0.98), rgba(249,250,251,0.95));
+        border: 1px solid rgba(21,107,74,0.3);
+        border-left: 4px solid #156B4A;
+        border-radius: 8px;
+        padding: 0.75rem 1.25rem;
+        box-shadow: 0 4px 12px rgba(10, 31, 26, 0.15);
+        z-index: 999;
+        max-width: 90%;
+        text-align: center;
+        font-size: 0.85rem;
+        color: #0A1F1A;
+    ">
+        💡 <strong>Tip:</strong> For optimal viewing, please view the <a href="#" id="webVersionLink" style="color: #156B4A; font-weight: 600; text-decoration: underline;">live web version</a>
+    </div>
     
     <div class="slide-container" id="slideContainer">
         <!-- Slide 1: Title / Hook -->
@@ -3447,7 +3489,10 @@
     <script>
         // Navigation dots
         const slideContainer = document.getElementById('slideContainer');
-        const slides = document.querySelectorAll('.slide');
+        // Only select actual slides that have slide numbers (15 slides total)
+        const slides = Array.from(document.querySelectorAll('.slide')).filter(slide => 
+            slide.querySelector('.slide-number')
+        );
         const navDots = document.getElementById('navDots');
         
         // Progress bar
@@ -3629,6 +3674,55 @@
         } catch (e) {
             console.warn('Donut interactivity not initialised:', e);
         }
+        
+        // Ensure all tables are mobile-friendly
+        (function ensureMobileTables() {
+            // Wrap any unwrapped tables in scrollable containers
+            const allTables = document.querySelectorAll('table');
+            allTables.forEach(table => {
+                const parent = table.parentElement;
+                // Only wrap if not already in a scrollable container
+                if (parent && !parent.style.overflowX && parent.tagName !== 'DIV') {
+                    const wrapper = document.createElement('div');
+                    wrapper.style.overflowX = 'auto';
+                    wrapper.style.WebkitOverflowScrolling = 'touch';
+                    wrapper.style.margin = '0 -1rem';
+                    wrapper.style.padding = '0 1rem';
+                    table.parentNode.insertBefore(wrapper, table);
+                    wrapper.appendChild(table);
+                }
+            });
+        })();
+        
+        // Smart button functionality - detects if running from file or web
+        (function initSmartButton() {
+            const smartButton = document.getElementById('smartButton');
+            const webVersionNote = document.getElementById('webVersionNote');
+            const webVersionLink = document.getElementById('webVersionLink');
+            const isLocalFile = window.location.protocol === 'file:';
+            
+            // Replace this with your actual web URL
+            const WEB_VERSION_URL = 'https://your-domain.com/pitch-deck.html'; // TODO: Update with actual URL
+            
+            if (isLocalFile) {
+                // Downloaded version - show "View Web Version" button and note
+                smartButton.innerHTML = '🌐 View Web Version';
+                smartButton.onclick = function() {
+                    window.open(WEB_VERSION_URL, '_blank');
+                };
+                webVersionNote.style.display = 'block';
+                webVersionLink.href = WEB_VERSION_URL;
+                webVersionLink.onclick = function(e) {
+                    e.preventDefault();
+                    window.open(WEB_VERSION_URL, '_blank');
+                };
+            } else {
+                // Web version - show "Download" button
+                smartButton.innerHTML = '💾 Download Pitch Deck';
+                smartButton.onclick = downloadAsHtml;
+                webVersionNote.style.display = 'none';
+            }
+        })();
         
         // Function to download HTML file
         function downloadAsHtml() {
