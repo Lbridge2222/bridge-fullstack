@@ -1954,7 +1954,7 @@
     <div class="nav-dots" id="navDots"></div>
     
     <!-- Smart Download/Web Link Button -->
-    <button id="smartButton" onclick="window.open('https://www.ivy-os.io/pitch-deck.html', '_blank')" style="
+    <button id="smartButton" style="
         position: fixed;
         top: 2rem;
         right: 2rem;
@@ -1970,12 +1970,12 @@
         box-shadow: 0 4px 12px rgba(10, 31, 26, 0.15);
         transition: all 0.2s ease;
     " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 16px rgba(10, 31, 26, 0.2)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(10, 31, 26, 0.15)'">
-        🌐 View Web Version
+        💾 Download Pitch Deck
     </button>
     
-    <!-- Note for downloaded version -->
+    <!-- Note for downloaded version (hidden by default, shown by JS if needed) -->
     <div id="webVersionNote" style="
-        display: block;
+        display: none;
         position: fixed;
         bottom: 2rem;
         left: 50%;
@@ -3830,52 +3830,35 @@
             try {
                 var smartButton = document.getElementById('smartButton');
                 var webVersionNote = document.getElementById('webVersionNote');
-                var webVersionLink = document.getElementById('webVersionLink');
-                if (!smartButton || !webVersionNote || !webVersionLink) {
+                if (!smartButton || !webVersionNote) {
                     return;
                 }
 
-                var protocol = window.location.protocol;
-                var href = window.location.href;
-                var host = (window.location && window.location.host) ? window.location.host : '';
-                var isIvyHost = /(^|\.)ivy-os\.io$/i.test(host);
-                var isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+                var host = window.location.hostname;
+                var isIvyHost = host === 'www.ivy-os.io' || host === 'ivy-os.io';
                 
-                // Debug info
                 console.log('Smart Button Debug:', {
-                    protocol: protocol,
-                    host: host,
-                    href: href,
+                    hostname: host,
                     isIvyHost: isIvyHost,
-                    isMobile: isMobile,
-                    title: document.title
+                    href: window.location.href
                 });
-
-                var isLocal = protocol === 'file:' ||
-                    href.indexOf('127.0.0.1') !== -1 ||
-                    href.indexOf('localhost') !== -1 ||
-                    isMobile ||
-                    (!isIvyHost);
 
                 var WEB_VERSION_URL = 'https://www.ivy-os.io/pitch-deck.html';
 
-                if (isLocal) {
+                if (isIvyHost) {
+                    // On Ivy OS website - show download button
+                    smartButton.innerHTML = '💾 Download Pitch Deck';
+                    smartButton.onclick = downloadAsHtml;
+                    webVersionNote.style.display = 'none';
+                    console.log('Smart button set to: Download Pitch Deck');
+                } else {
+                    // Downloaded file or other domain - show web version button
                     smartButton.innerHTML = '🌐 View Web Version';
                     smartButton.onclick = function () {
                         window.open(WEB_VERSION_URL, '_blank');
                     };
                     webVersionNote.style.display = 'block';
-                    webVersionLink.href = WEB_VERSION_URL;
-                    webVersionLink.onclick = function (e) {
-                        e.preventDefault();
-                        window.open(WEB_VERSION_URL, '_blank');
-                    };
                     console.log('Smart button set to: View Web Version');
-                } else {
-                    smartButton.innerHTML = '💾 Download Pitch Deck';
-                    smartButton.onclick = downloadAsHtml;
-                    webVersionNote.style.display = 'none';
-                    console.log('Smart button set to: Download Pitch Deck');
                 }
             } catch (buttonError) {
                 console.warn('Smart button initialisation failed:', buttonError);
