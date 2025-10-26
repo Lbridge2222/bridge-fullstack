@@ -20,6 +20,8 @@ import math
 import json
 
 from app.db.db import fetch, fetchrow, execute
+from app.ai.ucas_cycle import UcasCycleCalendar, UcasPeriod
+from app.ai.ucas_benchmarks import UcasSectorBenchmarks
 
 router = APIRouter(prefix="/ai/application-intelligence", tags=["Application Intelligence"])
 
@@ -38,6 +40,53 @@ def interval_to_days(value: Any) -> float:
         return float(value)
     except (TypeError, ValueError):
         return 0.0
+
+
+def _generate_score_explanation(
+    base_prob: float,
+    final_prob: float,
+    adjustment_factors: List[Dict[str, Any]],
+    current_stage: str
+) -> str:
+    """
+    Generate human-readable explanation of why the progression probability is what it is.
+
+    Example output:
+    "Progression probability is 65% (base 60% for conditional offer stage).
+
+    **Positive Indicators:**
+    • Very fast responses (avg 3.2h) - highly engaged (+20%)
+    • Looking for accommodation - serious intent to enrol (+18%)
+    • Sorting student finance - committed to enrolling (+15%)
+
+    **Risk Factors:**
+    • Offer aging without response (over 14 days) (-20%)
+    • Low engagement with communications (-10%)"
+    """
+    if not adjustment_factors:
+        return f"Progression probability is {final_prob:.0%} (base probability for {current_stage.replace('_', ' ')} stage)."
+
+    # Sort adjustments by absolute weight (most impactful first)
+    sorted_factors = sorted(adjustment_factors, key=lambda x: abs(x['weight']), reverse=True)
+
+    # Split into positive and negative
+    positive = [f for f in sorted_factors if f['weight'] > 0]
+    negative = [f for f in sorted_factors if f['weight'] < 0]
+
+    # Build explanation
+    lines = [f"Progression probability is {final_prob:.0%} (base {base_prob:.0%} for {current_stage.replace('_', ' ')} stage)."]
+
+    if positive:
+        lines.append("\n**Positive Indicators:**")
+        for factor in positive[:5]:  # Top 5 positive factors
+            lines.append(f"• {factor['reason']} (+{factor['weight']*100:.0f}%)")
+
+    if negative:
+        lines.append("\n**Risk Factors:**")
+        for factor in negative[:5]:  # Top 5 negative factors
+            lines.append(f"• {factor['reason']} ({factor['weight']*100:.0f}%)")
+
+    return "\n".join(lines)
 
 
 # ============================================================================
@@ -74,6 +123,8 @@ class ProgressionPrediction(BaseModel):
     progression_probability: float
     eta_days: Optional[int] = None
     confidence: float
+    explanation: Optional[str] = None  # Human-readable explanation of why the score is what it is
+    adjustment_factors: List[Dict[str, Any]] = Field(default_factory=list)  # Breakdown of adjustments applied
 
 
 class EnrollmentPrediction(BaseModel):
@@ -175,7 +226,7 @@ async def extract_application_features(application_id: str) -> Dict[str, Any]:
     
     # Get application data with all related information
     query = """
-        SELECT 
+        SELECT
             a.id as application_id,
             a.stage,
             a.status,
@@ -183,6 +234,7 @@ async def extract_application_features(application_id: str) -> Dict[str, Any]:
             a.sub_source,
             a.priority,
             a.urgency,
+            a.fee_status,
             a.created_at,
             a.updated_at,
             
@@ -315,6 +367,291 @@ async def extract_application_features(application_id: str) -> Dict[str, Any]:
         features['days_to_deadline'] = None
         features['deadline_pressure'] = 'none'
     
+    # --- Keyword signals from communications (activities) ---
+    # Extended for UK HE commitment signals (Phase 2A)
+    try:
+        # Calculate 90 days ago
+        ninety_days_ago = datetime.now() - timedelta(days=90)
+
+        kw_row = await fetchrow(
+            """
+            SELECT
+              -- Existing keywords
+              COUNT(*) FILTER (WHERE activity_title ILIKE %s OR activity_description ILIKE %s) as k_deposit,
+              COUNT(*) FILTER (WHERE activity_title ILIKE %s OR activity_description ILIKE %s) as k_deadline,
+              COUNT(*) FILTER (WHERE activity_title ILIKE %s OR activity_description ILIKE %s) as k_visa,
+              COUNT(*) FILTER (WHERE activity_title ILIKE %s OR activity_description ILIKE %s) as k_cas,
+              COUNT(*) FILTER (WHERE activity_title ILIKE %s OR activity_description ILIKE %s) as k_defer,
+              COUNT(*) FILTER (WHERE activity_title ILIKE %s OR activity_description ILIKE %s) as k_scholar,
+              COUNT(*) FILTER (WHERE activity_title ILIKE %s OR activity_description ILIKE %s OR activity_title ILIKE %s OR activity_description ILIKE %s) as k_apel_rpl,
+              COUNT(*) FILTER (WHERE activity_title ILIKE %s OR activity_description ILIKE %s) as k_ucas,
+
+              -- NEW: UK HE commitment signals (Phase 2A)
+              COUNT(*) FILTER (WHERE activity_title ILIKE %s OR activity_description ILIKE %s
+                                  OR activity_title ILIKE %s OR activity_description ILIKE %s) as k_accommodation,
+              COUNT(*) FILTER (WHERE activity_title ILIKE %s OR activity_description ILIKE %s
+                                  OR activity_title ILIKE %s OR activity_description ILIKE %s) as k_finance,
+              COUNT(*) FILTER (WHERE activity_title ILIKE %s OR activity_description ILIKE %s
+                                  OR activity_title ILIKE %s OR activity_description ILIKE %s
+                                  OR activity_title ILIKE %s OR activity_description ILIKE %s) as k_term_planning,
+              COUNT(*) FILTER (WHERE activity_title ILIKE %s OR activity_description ILIKE %s
+                                  OR activity_title ILIKE %s OR activity_description ILIKE %s
+                                  OR activity_title ILIKE %s OR activity_description ILIKE %s) as k_academic_prep,
+              COUNT(*) FILTER (WHERE activity_title ILIKE %s OR activity_description ILIKE %s
+                                  OR activity_title ILIKE %s OR activity_description ILIKE %s) as k_enrolment_prep,
+
+              -- NEW: Hesitation signals
+              COUNT(*) FILTER (WHERE activity_title ILIKE %s OR activity_description ILIKE %s
+                                  OR activity_title ILIKE %s OR activity_description ILIKE %s) as k_hesitation
+            FROM lead_activities
+            WHERE lead_id = %s
+              AND created_at > %s
+            """,
+            # Existing keywords (2 params each)
+            '%deposit%', '%deposit%',
+            '%deadline%', '%deadline%',
+            '%visa%', '%visa%',
+            '%cas%', '%cas%',
+            '%deferr%', '%deferr%',
+            '%scholar%', '%scholar%',
+            '%apel%', '%apel%', '%rpl%', '%rpl%',
+            '%ucas%', '%ucas%',
+            # UK HE commitment signals
+            '%accommodation%', '%accommodation%', '%halls%', '%halls%',
+            '%student finance%', '%student finance%', '%tuition fee%', '%tuition fee%',
+            '%term start%', '%term start%', '%induction%', '%induction%', '%fresher%', '%fresher%',
+            '%reading list%', '%reading list%', '%course material%', '%course material%', '%timetable%', '%timetable%',
+            '%enrolment day%', '%enrolment day%', '%registration%', '%registration%',
+            # Hesitation signals
+            '%other offer%', '%other offer%', '%reconsider%', '%reconsider%',
+            # WHERE clause params
+            str(row['person_id']),
+            ninety_days_ago
+        )
+        # Existing keywords
+        features['kw_deposit_count'] = int(kw_row['k_deposit'] or 0)
+        features['kw_deadline_count'] = int(kw_row['k_deadline'] or 0)
+        features['kw_visa_count'] = int(kw_row['k_visa'] or 0)
+        features['kw_cas_count'] = int(kw_row['k_cas'] or 0)
+        features['kw_defer_count'] = int(kw_row['k_defer'] or 0)
+        features['kw_scholar_count'] = int(kw_row['k_scholar'] or 0)
+        features['kw_apel_rpl_count'] = int(kw_row['k_apel_rpl'] or 0)
+        features['kw_ucas_count'] = int(kw_row['k_ucas'] or 0)
+
+        # NEW: UK HE commitment signals
+        features['kw_accommodation_count'] = int(kw_row['k_accommodation'] or 0)
+        features['kw_finance_count'] = int(kw_row['k_finance'] or 0)
+        features['kw_term_planning_count'] = int(kw_row['k_term_planning'] or 0)
+        features['kw_academic_prep_count'] = int(kw_row['k_academic_prep'] or 0)
+        features['kw_enrolment_prep_count'] = int(kw_row['k_enrolment_prep'] or 0)
+        features['kw_hesitation_count'] = int(kw_row['k_hesitation'] or 0)
+
+    except Exception:
+        # Existing keywords
+        features['kw_deposit_count'] = 0
+        features['kw_deadline_count'] = 0
+        features['kw_visa_count'] = 0
+        features['kw_cas_count'] = 0
+        features['kw_defer_count'] = 0
+        features['kw_scholar_count'] = 0
+        features['kw_apel_rpl_count'] = 0
+        features['kw_ucas_count'] = 0
+
+        # NEW: UK HE commitment signals
+        features['kw_accommodation_count'] = 0
+        features['kw_finance_count'] = 0
+        features['kw_term_planning_count'] = 0
+        features['kw_academic_prep_count'] = 0
+        features['kw_enrolment_prep_count'] = 0
+        features['kw_hesitation_count'] = 0
+
+    # --- NEW: Communication velocity tracking (Phase 2A) ---
+    try:
+        velocity_row = await fetchrow(
+            """
+            WITH email_pairs AS (
+                SELECT
+                    created_at,
+                    LAG(created_at) OVER (ORDER BY created_at) as prev_time,
+                    activity_type
+                FROM lead_activities
+                WHERE lead_id = %s
+                  AND activity_type IN ('email_received', 'sms_received', 'note')
+                  AND created_at > %s
+                ORDER BY created_at
+            )
+            SELECT
+                COUNT(*) as response_count,
+                AVG(EXTRACT(EPOCH FROM (created_at - prev_time)) / 3600.0) as avg_response_hours,
+                MIN(EXTRACT(EPOCH FROM (created_at - prev_time)) / 3600.0) as fastest_response_hours,
+                MAX(EXTRACT(EPOCH FROM (created_at - prev_time)) / 3600.0) as slowest_response_hours
+            FROM email_pairs
+            WHERE prev_time IS NOT NULL
+              AND EXTRACT(EPOCH FROM (created_at - prev_time)) / 3600.0 < 168  -- Within 1 week
+            """,
+            str(row['person_id']),
+            ninety_days_ago
+        )
+
+        features['response_count'] = int(velocity_row['response_count'] or 0)
+        features['avg_response_hours'] = float(velocity_row['avg_response_hours'] or 0)
+        features['fastest_response_hours'] = float(velocity_row['fastest_response_hours'] or 999)
+        features['slowest_response_hours'] = float(velocity_row['slowest_response_hours'] or 0)
+
+        # Categorise response velocity
+        if features['avg_response_hours'] < 4:
+            features['response_velocity'] = 'very_fast'
+        elif features['avg_response_hours'] < 24:
+            features['response_velocity'] = 'fast'
+        elif features['avg_response_hours'] < 72:
+            features['response_velocity'] = 'moderate'
+        else:
+            features['response_velocity'] = 'slow'
+
+    except Exception:
+        features['response_count'] = 0
+        features['avg_response_hours'] = 0
+        features['fastest_response_hours'] = 999
+        features['slowest_response_hours'] = 0
+        features['response_velocity'] = 'unknown'
+
+    # --- Interview Ratings (Phase 2C) ---
+    # Panel ratings are CRITICAL for UK HE - often the strongest predictor
+    try:
+        ratings_row = await fetchrow(
+            """
+            SELECT
+                COUNT(*) as interview_count,
+                COUNT(*) FILTER (WHERE overall_rating IS NOT NULL) as rated_interview_count,
+                AVG(overall_rating) as avg_overall_rating,
+                MAX(overall_rating) as max_overall_rating,
+                MIN(overall_rating) as min_overall_rating,
+                AVG(technical_rating) as avg_technical_rating,
+                AVG(portfolio_rating) as avg_portfolio_rating,
+                AVG(communication_rating) as avg_communication_rating,
+                AVG(motivation_rating) as avg_motivation_rating,
+                AVG(fit_rating) as avg_fit_rating,
+                -- Get latest interview ratings
+                (SELECT overall_rating FROM interviews WHERE application_id = %s AND overall_rating IS NOT NULL ORDER BY scheduled_start DESC LIMIT 1) as latest_overall_rating,
+                (SELECT portfolio_rating FROM interviews WHERE application_id = %s AND portfolio_rating IS NOT NULL ORDER BY scheduled_start DESC LIMIT 1) as latest_portfolio_rating,
+                -- Fallback: sentiment analysis from notes (legacy)
+                string_agg(coalesce(notes,''), ' ') as all_notes
+            FROM interviews
+            WHERE application_id = %s
+            """,
+            application_id, application_id, application_id
+        )
+
+        # Primary: Use actual panel ratings if available
+        features['interview_count'] = int(ratings_row['interview_count'] or 0)
+        features['rated_interview_count'] = int(ratings_row['rated_interview_count'] or 0)
+        features['avg_overall_rating'] = float(ratings_row['avg_overall_rating'] or 0)
+        features['max_overall_rating'] = float(ratings_row['max_overall_rating'] or 0)
+        features['min_overall_rating'] = float(ratings_row['min_overall_rating'] or 0)
+        features['avg_technical_rating'] = float(ratings_row['avg_technical_rating'] or 0)
+        features['avg_portfolio_rating'] = float(ratings_row['avg_portfolio_rating'] or 0)
+        features['avg_communication_rating'] = float(ratings_row['avg_communication_rating'] or 0)
+        features['avg_motivation_rating'] = float(ratings_row['avg_motivation_rating'] or 0)
+        features['avg_fit_rating'] = float(ratings_row['avg_fit_rating'] or 0)
+        features['latest_overall_rating'] = float(ratings_row['latest_overall_rating'] or 0) if ratings_row['latest_overall_rating'] else 0
+        features['latest_portfolio_rating'] = float(ratings_row['latest_portfolio_rating'] or 0) if ratings_row['latest_portfolio_rating'] else 0
+
+        # Fallback: sentiment analysis if no ratings (legacy support)
+        if features['rated_interview_count'] == 0:
+            notes = (ratings_row and (ratings_row.get('all_notes') or '')) or ''
+            text = (notes or '').lower()
+            pos_terms = ['strong','excellent','motivated','engaging','good fit','outstanding','solid','impressive','clear','prepared','portfolio strong']
+            neg_terms = ['weak','poor','concern','incomplete','missing','unprepared','late','bad fit','unclear','failed']
+            features['interview_pos_count'] = sum(1 for t in pos_terms if t in text)
+            features['interview_neg_count'] = sum(1 for t in neg_terms if t in text)
+        else:
+            # If we have ratings, set sentiment counts to 0 (not used)
+            features['interview_pos_count'] = 0
+            features['interview_neg_count'] = 0
+
+    except Exception as e:
+        # Fallback values
+        features['interview_count'] = 0
+        features['rated_interview_count'] = 0
+        features['avg_overall_rating'] = 0
+        features['max_overall_rating'] = 0
+        features['min_overall_rating'] = 0
+        features['avg_technical_rating'] = 0
+        features['avg_portfolio_rating'] = 0
+        features['avg_communication_rating'] = 0
+        features['avg_motivation_rating'] = 0
+        features['avg_fit_rating'] = 0
+        features['latest_overall_rating'] = 0
+        features['latest_portfolio_rating'] = 0
+        features['interview_pos_count'] = 0
+        features['interview_neg_count'] = 0
+
+    # --- UCAS Cycle Temporal Awareness (Phase 2B) ---
+    try:
+        # Get current UCAS period and context
+        ucas_period, ucas_context = UcasCycleCalendar.get_current_period()
+        features['ucas_period'] = ucas_period.value
+        features['ucas_cycle_year'] = ucas_context['cycle_year']
+        features['days_to_equal_consideration'] = ucas_context['days_to_equal_consideration']
+        features['days_to_results'] = ucas_context['days_to_results']
+        features['days_to_decline_by_default'] = ucas_context['days_to_decline_by_default']
+
+        # Calculate temporal adjustment based on application timing
+        temporal_adj, temporal_reason = UcasCycleCalendar.get_temporal_adjustment(
+            application_stage=row['stage'],
+            application_created_date=row['created_at'],
+            current_date=datetime.now()
+        )
+        features['ucas_temporal_adjustment'] = temporal_adj
+        features['ucas_temporal_reason'] = temporal_reason
+
+        # Get LLM-friendly context
+        features['ucas_context_description'] = UcasCycleCalendar.get_ucas_context_for_llm()
+
+    except Exception as e:
+        # Fallback if UCAS cycle calculation fails
+        features['ucas_period'] = 'unknown'
+        features['ucas_cycle_year'] = datetime.now().year
+        features['days_to_equal_consideration'] = None
+        features['days_to_results'] = None
+        features['days_to_decline_by_default'] = None
+        features['ucas_temporal_adjustment'] = 0.0
+        features['ucas_temporal_reason'] = 'UCAS cycle data unavailable'
+        features['ucas_context_description'] = ''
+
+    # --- UCAS Sector Benchmarks (Phase 2D) ---
+    # Compare application trajectory to historical sector performance
+    try:
+        fee_status = str(row.get('fee_status') or 'home').lower()
+
+        # Get sector benchmark for current stage
+        stage_benchmark = UcasSectorBenchmarks.get_stage_benchmark(
+            row['stage'],
+            fee_status
+        )
+        features['sector_benchmark_rate'] = stage_benchmark
+
+        # Get expected timeline benchmarks
+        timeline_benchmarks = UcasSectorBenchmarks.get_expected_timeline(
+            row['stage'],
+            fee_status,
+            datetime.now()
+        )
+        features['sector_expected_timeline'] = timeline_benchmarks
+
+        # Get LLM-friendly benchmark context (will be updated with actual probability after scoring)
+        features['benchmark_context'] = UcasSectorBenchmarks.get_benchmark_context_for_llm(
+            row['stage'],
+            fee_status,
+            current_probability=None  # Will be set after scoring
+        )
+
+    except Exception as e:
+        # Fallback if benchmark calculation fails
+        features['sector_benchmark_rate'] = 0.0
+        features['sector_expected_timeline'] = {}
+        features['benchmark_context'] = ''
+
     return features
 
 
@@ -441,115 +778,303 @@ def predict_stage_progression(features: Dict[str, Any]) -> ProgressionPrediction
     
     base_prob = base_probabilities.get(current_stage, 0.5)
     
-    # Adjustment factors
+    # Adjustment factors - now tracked for explanation generation
     adjustments = 0.0
-    
+    adjustment_factors = []  # Track all adjustments for explanation
+
+    def add_adjustment(weight: float, reason: str, category: str = "general"):
+        """Helper to track adjustments"""
+        nonlocal adjustments
+        adjustments += weight
+        if weight != 0:
+            adjustment_factors.append({
+                "weight": weight,
+                "reason": reason,
+                "category": category
+            })
+
     # 1. Lead quality adjustment
     if features['lead_quality'] == 'excellent':
-        adjustments += 0.15
+        add_adjustment(0.15, "Excellent lead quality", "lead_quality")
     elif features['lead_quality'] == 'good':
-        adjustments += 0.10
+        add_adjustment(0.10, "Good lead quality", "lead_quality")
     elif features['lead_quality'] == 'poor':
-        adjustments -= 0.15
+        add_adjustment(-0.15, "Poor lead quality", "lead_quality")
     
     # 2. Engagement level adjustment
     if features['engagement_level'] == 'high':
-        adjustments += 0.15
+        add_adjustment(0.15, "High engagement with communications", "engagement")
     elif features['engagement_level'] == 'medium':
-        adjustments += 0.05
+        add_adjustment(0.05, "Moderate engagement", "engagement")
     elif features['engagement_level'] == 'low':
-        adjustments -= 0.10
+        add_adjustment(-0.10, "Low engagement with communications", "engagement")
     elif features['engagement_level'] == 'very_low':
-        adjustments -= 0.20
-    
+        add_adjustment(-0.20, "Very low engagement", "engagement")
+
     # 3. Source quality adjustment
     if features['source_quality'] == 'high':
-        adjustments += 0.10
+        add_adjustment(0.10, "High-quality lead source", "source")
     elif features['source_quality'] == 'low':
-        adjustments -= 0.10
-    
+        add_adjustment(-0.10, "Low-quality lead source", "source")
+
     # 4. Responsiveness adjustment
     if features['is_responsive']:
-        adjustments += 0.10
+        add_adjustment(0.10, "Responsive to outreach", "responsiveness")
     else:
-        adjustments -= 0.15
-    
+        add_adjustment(-0.15, "Unresponsive to outreach", "responsiveness")
+
     # 5. Contact info adjustment
     if not features['has_contact_info']:
-        adjustments -= 0.20
+        add_adjustment(-0.20, "Missing contact information", "data_quality")
     
     # 6. Stage-specific adjustments
     if current_stage in ['application_submitted', 'fee_status_query']:
         if not features['has_interview']:
-            adjustments -= 0.25  # No interview scheduled
+            add_adjustment(-0.25, "No interview scheduled yet", "interview")
         elif features['has_completed_interview']:
-            adjustments += 0.20  # Interview completed
-    
+            add_adjustment(0.20, "Interview completed successfully", "interview")
+
     elif current_stage == 'interview_portfolio':
         if features['latest_interview_outcome'] == 'completed':
-            adjustments += 0.25
+            add_adjustment(0.25, "Interview successfully completed", "interview")
         elif features['latest_interview_outcome'] == 'cancelled':
-            adjustments -= 0.30
-    
+            add_adjustment(-0.30, "Interview cancelled", "interview")
+
     elif current_stage in ['conditional_offer_no_response', 'unconditional_offer_no_response', 'conditional_offer_accepted', 'unconditional_offer_accepted']:
         if features['has_offer']:
             offer_age_days = (datetime.now() - features['latest_offer_date']).days if features['latest_offer_date'] else 999
             if offer_age_days < 3:
-                adjustments += 0.15  # Fresh offer
+                add_adjustment(0.15, "Fresh offer (less than 3 days old)", "offer")
             elif offer_age_days > 14:
-                adjustments -= 0.20  # Stale offer
-    
+                add_adjustment(-0.20, "Offer aging without response (over 14 days)", "offer")
+
     # 7. Time pressure adjustment
     if features['urgency_score'] > 0.7:
-        adjustments -= 0.15  # High urgency often means problems
+        add_adjustment(-0.15, "High urgency signals potential issues", "urgency")
     
-    # 8. Email engagement adjustment (NEW - no DB changes needed)
+    # 8. Email engagement adjustment
     email_engagement_rate = features.get('email_engagement_rate', 0)
     if email_engagement_rate > 0.5:
-        adjustments += 0.08  # Good email engagement
+        add_adjustment(0.08, f"Good email engagement ({int(email_engagement_rate * 100)}% open rate)", "engagement")
     elif email_engagement_rate == 0 and features.get('email_activity_count', 0) > 3:
-        adjustments -= 0.12  # Sent emails but no opens = disengaged
-    
+        add_adjustment(-0.12, "Not opening emails despite multiple sends", "engagement")
+
     if features.get('has_recent_email_engagement'):
-        adjustments += 0.05  # Recent email activity is positive
-    
-    # 9. Portal engagement adjustment (NEW - calculated from activities)
+        add_adjustment(0.05, "Recent email activity", "engagement")
+
+    # 9. Portal engagement adjustment
     portal_level = features.get('portal_engagement_level', 'none')
     if portal_level == 'very_high':
-        adjustments += 0.12
+        add_adjustment(0.12, "Very high portal engagement", "portal")
     elif portal_level == 'high':
-        adjustments += 0.08
+        add_adjustment(0.08, "High portal engagement", "portal")
     elif portal_level == 'medium':
-        adjustments += 0.04
-    
+        add_adjustment(0.04, "Moderate portal engagement", "portal")
+
     if features.get('has_recent_portal_login'):
-        adjustments += 0.06  # Recent portal activity shows active interest
-    
-    # 10. Document activity adjustment (NEW - proxy for completion)
+        add_adjustment(0.06, "Recent portal login activity", "portal")
+
+    # 10. Document activity adjustment
     doc_level = features.get('document_activity_level', 'none')
     if doc_level == 'high':
-        adjustments += 0.10  # Lots of document activity = committed
+        add_adjustment(0.10, "High document activity (committed)", "documents")
     elif doc_level == 'medium':
-        adjustments += 0.05
+        add_adjustment(0.05, "Moderate document activity", "documents")
     elif doc_level == 'none' and current_stage in ['application_submitted', 'fee_status_query', 'interview_portfolio']:
-        adjustments -= 0.12  # No document activity is a blocker
-    
+        add_adjustment(-0.12, "No document activity at critical stage", "documents")
+
+    # 11. Interview Ratings (Phase 2C - UK HE CRITICAL)
+    # Panel ratings are often the STRONGEST predictor of enrollment
+    if current_stage in ['interview_portfolio', 'review_in_progress', 'review_complete']:
+        # PRIMARY: Use actual panel ratings if available
+        rated_count = int(features.get('rated_interview_count') or 0)
+        if rated_count > 0:
+            avg_rating = float(features.get('avg_overall_rating') or 0)
+            latest_rating = float(features.get('latest_overall_rating') or 0)
+
+            # Rating scale: 1=Poor, 2=Concerns, 3=Satisfactory, 4=Good, 5=Excellent
+            if latest_rating >= 5:
+                add_adjustment(0.35, f"Excellent interview rating (5/5) - very strong", "interview_rating")
+            elif latest_rating >= 4.5:
+                add_adjustment(0.28, f"Outstanding interview rating ({latest_rating:.1f}/5)", "interview_rating")
+            elif latest_rating >= 4:
+                add_adjustment(0.20, f"Good interview rating ({latest_rating:.1f}/5)", "interview_rating")
+            elif latest_rating >= 3.5:
+                add_adjustment(0.10, f"Above average interview rating ({latest_rating:.1f}/5)", "interview_rating")
+            elif latest_rating >= 3:
+                add_adjustment(0.03, f"Satisfactory interview rating ({latest_rating:.1f}/5)", "interview_rating")
+            elif latest_rating >= 2:
+                add_adjustment(-0.15, f"Below average interview rating ({latest_rating:.1f}/5) - concerns", "interview_rating")
+            else:
+                add_adjustment(-0.30, f"Poor interview rating ({latest_rating:.1f}/5) - serious concerns", "interview_rating")
+
+            # Portfolio rating bonus for creative/technical programmes
+            portfolio_rating = float(features.get('latest_portfolio_rating') or 0)
+            if portfolio_rating >= 4.5:
+                add_adjustment(0.15, f"Exceptional portfolio ({portfolio_rating:.1f}/5)", "interview_rating")
+            elif portfolio_rating >= 4:
+                add_adjustment(0.10, f"Strong portfolio ({portfolio_rating:.1f}/5)", "interview_rating")
+
+        else:
+            # FALLBACK: Use sentiment analysis from notes (legacy)
+            pos = int(features.get('interview_pos_count') or 0)
+            neg = int(features.get('interview_neg_count') or 0)
+            if pos > neg and pos > 0:
+                add_adjustment(0.08, f"Positive interview feedback ({pos} positive notes)", "interview")
+            if neg > 0:
+                add_adjustment(-0.12, f"Negative interview feedback ({neg} concerns noted)", "interview")
+
+    # 12. Communications keyword signals (HE specific)
+    if int(features.get('kw_ucas_count') or 0) > 0:
+        add_adjustment(0.03, "Mentioned UCAS in communications", "keywords")
+    if int(features.get('kw_apel_rpl_count') or 0) > 0:
+        add_adjustment(0.03, "Discussed APEL/RPL credit", "keywords")
+    if int(features.get('kw_visa_count') or 0) > 0 or int(features.get('kw_cas_count') or 0) > 0:
+        add_adjustment(0.03, "Discussed visa/CAS requirements", "keywords")
+    if int(features.get('kw_deposit_count') or 0) > 0 and current_stage in ['conditional_offer_no_response', 'unconditional_offer_no_response', 'conditional_offer_accepted', 'unconditional_offer_accepted']:
+        add_adjustment(0.05, "Deposit discussed at offer stage", "keywords")
+
+    # 13. Communication velocity (Phase 2A - UK HE specific)
+    velocity = features.get('response_velocity', 'unknown')
+    avg_hours = features.get('avg_response_hours', 0)
+    if velocity == 'very_fast':
+        add_adjustment(0.20, f"Very fast responses (avg {avg_hours:.1f}h) - highly engaged", "velocity")
+    elif velocity == 'fast':
+        add_adjustment(0.10, f"Fast responses (avg {avg_hours:.1f}h)", "velocity")
+    elif velocity == 'moderate':
+        add_adjustment(0.02, f"Moderate response time (avg {avg_hours:.1f}h)", "velocity")
+    elif velocity == 'slow':
+        add_adjustment(-0.15, f"Slow responses (avg {avg_hours:.1f}h) - potential disengagement", "velocity")
+
+    # 14. UK HE commitment keyword signals (Phase 2A)
+    # Strong commitment signals - these are HUGE predictors
+    if int(features.get('kw_accommodation_count') or 0) > 0:
+        add_adjustment(0.18, "Looking for accommodation - serious intent to enrol", "commitment")
+    if int(features.get('kw_finance_count') or 0) > 0:
+        add_adjustment(0.15, "Sorting student finance - committed to enrolling", "commitment")
+    if int(features.get('kw_term_planning_count') or 0) > 0:
+        add_adjustment(0.12, "Planning term start/induction - serious commitment", "commitment")
+    if int(features.get('kw_academic_prep_count') or 0) > 0:
+        add_adjustment(0.10, "Getting course materials - preparing to enrol", "commitment")
+    if int(features.get('kw_enrolment_prep_count') or 0) > 0:
+        add_adjustment(0.14, "Asking about enrolment day - very strong signal", "commitment")
+
+    # Negative signal - hesitation
+    if int(features.get('kw_hesitation_count') or 0) > 0:
+        add_adjustment(-0.20, "Mentioned other offers/reconsidering - flight risk", "commitment")
+
+    # 15. UCAS Cycle Temporal Adjustments (Phase 2B - UK HE CRITICAL)
+    # Timing in the UCAS cycle is HUGELY impactful on conversion
+    ucas_temporal_adj = features.get('ucas_temporal_adjustment', 0.0)
+    ucas_temporal_reason = features.get('ucas_temporal_reason', '')
+    if ucas_temporal_adj != 0.0 and ucas_temporal_reason:
+        add_adjustment(ucas_temporal_adj, ucas_temporal_reason, "ucas_timing")
+
+    # 16. Fee Status Differentiation (Phase 2E - UK HE CRITICAL)
+    # International vs Home students have VASTLY different conversion patterns
+    fee_status = str(features.get('fee_status') or 'unknown').lower()
+
+    if fee_status == 'international':
+        # International students: higher conversion once engaged, different timeline
+        # More influenced by deposit, visa, less by UCAS timing
+
+        # Deposit discussed = huge signal for international
+        if int(features.get('kw_deposit_count') or 0) > 0:
+            add_adjustment(0.25, "International student + deposit discussed - very strong commitment", "fee_status")
+
+        # Visa/CAS discussed = strong signal
+        if int(features.get('kw_visa_count') or 0) > 0 or int(features.get('kw_cas_count') or 0) > 0:
+            add_adjustment(0.20, "International student + visa/CAS discussed - serious intent", "fee_status")
+
+        # Late application less penalized for international (different cycle)
+        if ucas_temporal_adj < -0.10:
+            add_adjustment(0.08, "International student - late application less critical", "fee_status")
+
+        # Generally higher base conversion once past interview
+        if current_stage in ['review_in_progress', 'review_complete', 'conditional_offer_accepted', 'unconditional_offer_accepted']:
+            add_adjustment(0.08, "International student in offer stage - higher conversion baseline", "fee_status")
+
+    elif fee_status == 'home':
+        # Home students: UCAS cycle driven, student finance critical
+
+        # Student finance mentioned = strong for home students
+        if int(features.get('kw_finance_count') or 0) > 0:
+            add_adjustment(0.10, "Home student + student finance discussed - committed", "fee_status")
+
+        # Accommodation for home students = strong (means they're planning to relocate)
+        if int(features.get('kw_accommodation_count') or 0) > 0:
+            add_adjustment(0.15, "Home student + accommodation discussed - committed to relocating", "fee_status")
+
+        # UCAS timing MORE critical for home students
+        if features.get('ucas_period') == 'clearing':
+            add_adjustment(0.05, "Home student in clearing - urgency benefit", "fee_status")
+
+    elif fee_status == 'eu':
+        # EU students: mixed characteristics (post-Brexit complexity)
+        # Often need visa but familiar with UK system
+
+        if int(features.get('kw_visa_count') or 0) > 0:
+            add_adjustment(0.12, "EU student + visa discussed (post-Brexit) - serious", "fee_status")
+
+    # Unknown fee status = slight penalty (incomplete data)
+    elif fee_status == 'unknown' and current_stage not in ['enquiry', 'pre_application']:
+        add_adjustment(-0.05, "Fee status unknown at advanced stage - data gap", "fee_status")
+
+    # 17. Historical Benchmark Variance (Phase 2D - UCAS Sector Comparison)
+    # Compare current trajectory to UCAS sector norms for context and variance detection
+    sector_benchmark = features.get('sector_benchmark_rate', 0.0)
+    if sector_benchmark > 0:
+        # Calculate where we stand BEFORE final probability calculation
+        # This gives us a comparison point for variance-based adjustments
+        current_trajectory = base_prob + adjustments
+        variance = current_trajectory - sector_benchmark
+
+        # Significant variance indicates outlier performance (positive or negative)
+        if variance < -0.20:  # Significantly below sector (>20pp below)
+            add_adjustment(-0.10, f"Significantly below sector benchmark ({sector_benchmark:.0%}) - needs urgent attention", "benchmark")
+        elif variance < -0.10:  # Below sector (10-20pp below)
+            add_adjustment(-0.05, f"Below sector benchmark ({sector_benchmark:.0%}) - monitor closely", "benchmark")
+        elif variance > 0.20:  # Significantly above sector (>20pp above)
+            add_adjustment(0.08, f"Significantly above sector benchmark ({sector_benchmark:.0%}) - exceptional performance", "benchmark")
+        elif variance > 0.10:  # Above sector (10-20pp above)
+            add_adjustment(0.04, f"Above sector benchmark ({sector_benchmark:.0%}) - strong performance", "benchmark")
+        # If within ±10pp of sector benchmark, no adjustment (performing as expected)
+
     # Calculate final probability
     probability = base_prob + adjustments
     probability = max(0.05, min(0.95, probability))  # Clamp between 5% and 95%
-    
+
     # Estimate ETA
     probability_float = float(probability)
     eta_days = estimate_eta_to_next_stage(features, probability_float)
-    
+
     # Calculate confidence based on data completeness
     confidence = calculate_prediction_confidence(features)
-    
+
+    # Update benchmark context with actual final probability
+    if features.get('sector_benchmark_rate', 0) > 0:
+        fee_status = str(features.get('fee_status') or 'home').lower()
+        features['benchmark_context'] = UcasSectorBenchmarks.get_benchmark_context_for_llm(
+            current_stage,
+            fee_status,
+            probability_float
+        )
+
+    # Generate human-readable explanation
+    explanation = _generate_score_explanation(
+        base_prob=base_prob,
+        final_prob=probability_float,
+        adjustment_factors=adjustment_factors,
+        current_stage=current_stage
+    )
+
     return ProgressionPrediction(
         next_stage=next_stage,
         progression_probability=round(probability_float, 3),
         eta_days=eta_days,
-        confidence=round(confidence, 3)
+        confidence=round(confidence, 3),
+        explanation=explanation,
+        adjustment_factors=adjustment_factors
     )
 
 
@@ -626,6 +1151,27 @@ def predict_enrollment(features: Dict[str, Any], progression_prob: float) -> Enr
         adjustments += 0.08
         key_factors.append("Responsive applicant")
     
+    # Interview signal
+    pos = int(features.get('interview_pos_count') or 0)
+    neg = int(features.get('interview_neg_count') or 0)
+    if pos > neg and pos > 0:
+        adjustments += 0.08
+        key_factors.append('Positive interview indicators')
+    if neg > 0:
+        adjustments -= 0.12
+        key_factors.append('Interview concerns')
+
+    # Comms keyword signals
+    if int(features.get('kw_deposit_count') or 0) > 0:
+        adjustments += 0.10
+        key_factors.append('Deposit discussed')
+    if int(features.get('kw_scholar_count') or 0) > 0:
+        adjustments += 0.05
+        key_factors.append('Scholarship mentioned')
+    if int(features.get('kw_ucas_count') or 0) > 0:
+        adjustments += 0.03
+        key_factors.append('UCAS points/track referenced')
+
     # Apply adjustments
     enrollment_prob = enrollment_prob + adjustments
     enrollment_prob = max(0.05, min(0.95, enrollment_prob))
@@ -1136,4 +1682,3 @@ async def predict_batch_applications(application_ids: List[str]):
         'failed': sum(1 for r in results if not r['success']),
         'results': results
     }
-

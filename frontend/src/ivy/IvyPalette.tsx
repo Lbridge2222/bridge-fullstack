@@ -17,6 +17,15 @@ interface IvyPaletteProps {
   onOpenChange: (open: boolean) => void;
   context: IvyContext;
   commands: IvyCommand[];
+  // Optional RAG props for application-specific queries
+  queryRag?: (query: string) => Promise<void>;
+  isQuerying?: boolean;
+  ragResponse?: {
+    answer: string;
+    sources: Array<{title: string; url?: string; snippet: string}>;
+    query_type: string;
+    confidence: number;
+  } | null;
 }
 
 // Fuzzy search scoring function
@@ -155,12 +164,19 @@ export function IvyPalette({
   open, 
   onOpenChange, 
   context, 
-  commands 
+  commands,
+  queryRag: externalQueryRag,
+  isQuerying: externalIsQuerying,
+  ragResponse: externalRagResponse
 }: IvyPaletteProps) {
   const [query, setQuery] = React.useState('');
   const [activeIndex, setActiveIndex] = React.useState(0);
   const [ragResponse, setRagResponse] = React.useState<IvyResponse | null>(null);
   const [isQuerying, setIsQuerying] = React.useState(false);
+  
+  // Use external RAG state if provided, otherwise use internal state
+  const currentRagResponse = externalRagResponse || ragResponse;
+  const currentIsQuerying = externalIsQuerying || isQuerying;
   
   const inputRef = React.useRef<HTMLInputElement>(null);
   
@@ -195,49 +211,55 @@ export function IvyPalette({
     setActiveIndex(0);
   }, [filteredCommands]);
   
-  // RAG query function
+  // RAG query function - use external if provided, otherwise use internal
   const queryRAG = React.useCallback(async (queryText: string) => {
-    if (!context.personData) return;
-    
-    setIsQuerying(true);
-    try {
-      const ragContext: RagContext = {
-        lead: {
-          id: context.personData.id || 0,
-          uid: context.personId || '',
-          name: context.personName || '',
-          email: context.personData.email || '',
-          phone: context.personData.phone || '',
-          courseInterest: context.personData.latest_programme_name,
-          statusType: context.personData.lifecycle_state,
-          nextAction: context.personData.next_best_action,
-          followUpDate: context.personData.last_activity_at,
-          aiInsights: {
-            conversionProbability: context.personData.conversion_probability || 0,
-            callStrategy: context.personData.next_best_action || 'Follow up',
-            recommendedAction: context.personData.next_best_action || 'Follow up'
-          }
-        },
-        transcriptWindow: [],
-        consentGranted: true
-      };
+    if (externalQueryRag) {
+      // Use external RAG function (for application-specific queries)
+      await externalQueryRag(queryText);
+    } else {
+      // Use internal RAG function (for contact-specific queries)
+      if (!context.personData) return;
+      
+      setIsQuerying(true);
+      try {
+        const ragContext: RagContext = {
+          lead: {
+            id: context.personData.id || 0,
+            uid: context.personId || '',
+            name: context.personName || '',
+            email: context.personData.email || '',
+            phone: context.personData.phone || '',
+            courseInterest: context.personData.latest_programme_name,
+            statusType: context.personData.lifecycle_state,
+            nextAction: context.personData.next_best_action,
+            followUpDate: context.personData.last_activity_at,
+            aiInsights: {
+              conversionProbability: context.personData.conversion_probability || 0,
+              callStrategy: context.personData.next_best_action || 'Follow up',
+              recommendedAction: context.personData.next_best_action || 'Follow up'
+            }
+          },
+          transcriptWindow: [],
+          consentGranted: true
+        };
 
-      const response = await ragApi.queryRag(queryText, ragContext);
-      setRagResponse({
-        answer: response.answer,
-        sources: response.sources,
-        actions: []
-      });
-    } catch (error) {
-      console.error('RAG query failed:', error);
-      setRagResponse({
-        answer: "I'm sorry, I couldn't process that query right now. Please try again.",
-        sources: []
-      });
-    } finally {
-      setIsQuerying(false);
+        const response = await ragApi.queryRag(queryText, ragContext);
+        setRagResponse({
+          answer: response.answer,
+          sources: response.sources,
+          actions: []
+        });
+      } catch (error) {
+        console.error('RAG query failed:', error);
+        setRagResponse({
+          answer: "I'm sorry, I couldn't process that query right now. Please try again.",
+          sources: []
+        });
+      } finally {
+        setIsQuerying(false);
+      }
     }
-  }, [context]);
+  }, [context, externalQueryRag]);
   
   // Execute command
   const executeCommand = React.useCallback((cmd: IvyCommand) => {
@@ -275,13 +297,13 @@ export function IvyPalette({
   
   // Handle copy and add to notes
   const handleCopy = React.useCallback(() => {
-    if (ragResponse) {
-      navigator.clipboard.writeText(ragResponse.answer);
+    if (currentRagResponse) {
+      navigator.clipboard.writeText(currentRagResponse.answer);
     }
-  }, [ragResponse]);
+  }, [currentRagResponse]);
   
   const handleAddToNotes = React.useCallback(() => {
-    if (ragResponse && context.appendActivity) {
+    if (currentRagResponse && context.appendActivity) {
       context.appendActivity({
         id: crypto.randomUUID(),
         type: 'workflow',
@@ -293,7 +315,7 @@ export function IvyPalette({
       });
     }
     onOpenChange(false);
-  }, [ragResponse, context, query, onOpenChange]);
+  }, [currentRagResponse, context, query, onOpenChange]);
   
   if (!open) return null;
   
@@ -323,9 +345,9 @@ export function IvyPalette({
                 placeholder={`Ask Ivy${context.personName ? ` about ${context.personName}` : ''}...`}
                 className="border-none shadow-none focus-visible:ring-0 text-sm"
                 style={{ color: '#111827' }}
-                disabled={isQuerying}
+                disabled={currentIsQuerying}
               />
-              {isQuerying && <Loader2 className="h-4 w-4 animate-spin" style={{ color: '#6b7280' }} />}
+              {currentIsQuerying && <Loader2 className="h-4 w-4 animate-spin" style={{ color: '#6b7280' }} />}
               <Badge variant="outline" className="text-[10px] px-1.5 shrink-0">
                 <Brain className="h-2.5 w-2.5 mr-1" />
                 Ask Ivy
@@ -333,10 +355,10 @@ export function IvyPalette({
             </div>
             
             {/* RAG Response */}
-            {ragResponse && (
+            {currentRagResponse && (
               <div className="p-4 border-b border-muted">
                 <RagResponseCard
-                  response={ragResponse}
+                  response={currentRagResponse}
                   query={query}
                   onCopy={handleCopy}
                   onAddToNotes={handleAddToNotes}

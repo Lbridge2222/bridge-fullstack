@@ -5,8 +5,10 @@ import {
   Search, Grid, List, Plus, Mail, Calendar as CalIcon,
   Phone, Eye, Edit, Filter, TrendingUp, MoreHorizontal,
   Clock, AlertTriangle, CheckCircle, XCircle, Star,
-  Users, Target, BarChart3, Zap,
-  RefreshCw, BookmarkPlus, Sparkles, ChevronRight, X, ChevronLeft
+  Users, Target, Zap, ArrowUpDown, ArrowUp, ArrowDown,
+  RefreshCw, BookmarkPlus, Sparkles, ChevronRight, X, ChevronLeft,
+  ArrowUpRight,
+  ChevronUp, ChevronDown
 } from "lucide-react";
 
 // shadcn/ui
@@ -19,6 +21,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -36,7 +39,8 @@ import { BulkActionsModal } from "./BulkActionsModal";
 import MeetingBooker, { type Lead as MeetingBookerLead } from "@/components/MeetingBooker";
 import EmailComposer, { type Lead as EmailComposerLead } from "@/components/EmailComposer";
 import CallConsole, { type Lead as CallConsoleLead } from "@/components/CallConsole";
-import { useIvy } from "@/ivy/useIvy";
+import { useApplicationIvy } from "@/ivy/useApplicationIvy";
+import { ApplicationIvyButton } from "@/ivy/ApplicationIvyButton";
 // Drag and drop
 import {
   DragDropContext,
@@ -70,6 +74,7 @@ type StageId =
 type StageTone = "neutral" | "success" | "danger";
 
 type StageToneStyle = {
+  cardBg: string;
   iconWrapper: string;
   badge: string;
   chevron: string;
@@ -85,25 +90,138 @@ type StageToneStyle = {
   collapsedLabel: string;
 };
 
+type TableColumnKey =
+  | "applicant"
+  | "program"
+  | "stage"
+  | "priority"
+  | "conversion"
+  | "leadScore"
+  | "delivery"
+  | "nextAction"
+  | "source"
+  | "campus"
+  | "cycle"
+  | "lastActivity";
+
+const BASE_COLUMN_VISIBILITY: Record<TableColumnKey, boolean> = {
+  applicant: true,
+  program: true,
+  stage: true,
+  priority: true,
+  conversion: true,
+  leadScore: false,
+  delivery: false,
+  nextAction: true,
+  source: false,
+  campus: false,
+  cycle: false,
+  lastActivity: false,
+};
+
+const DEFAULT_COLUMN_ORDER: TableColumnKey[] = [
+  "applicant",
+  "program",
+  "stage",
+  "priority",
+  "conversion",
+  "leadScore",
+  "delivery",
+  "nextAction",
+  "source",
+  "campus",
+  "cycle",
+  "lastActivity",
+];
+
+const DEFAULT_COLUMN_WIDTHS: Record<TableColumnKey, number> = {
+  applicant: 260,
+  program: 200,
+  stage: 180,
+  priority: 140,
+  conversion: 150,
+  leadScore: 140,
+  delivery: 200,
+  nextAction: 220,
+  source: 160,
+  campus: 180,
+  cycle: 160,
+  lastActivity: 180,
+};
+
+const COLUMN_ORDER_STORAGE_KEY = "appsTableOrder";
+const COLUMN_WIDTHS_STORAGE_KEY = "appsTableWidths";
+const COLUMN_LAYOUT_DEFAULT_STORAGE_KEY = "appsTableLayoutDefault";
+
+interface TableColumnDefinition {
+  id: TableColumnKey;
+  label: string;
+  minWidth?: number;
+  align?: "left" | "right" | "center";
+  defaultVisible?: boolean;
+  lockVisibility?: boolean;
+  sortable?: boolean;
+  renderCell: (app: ApplicationCard) => React.ReactNode;
+  getFilterValue?: (app: ApplicationCard) => string;
+  filter?: {
+    type: "text" | "select";
+    placeholder?: string;
+    options?: { label: string; value: string }[];
+  };
+  sortAccessor?: (app: ApplicationCard) => string | number | null | undefined;
+}
+
+type ColumnLayoutPreset = {
+  order: TableColumnKey[];
+  visibility: Partial<Record<TableColumnKey, boolean>>;
+  widths: Partial<Record<TableColumnKey, number>>;
+};
+
+const normalizeColumnOrder = (order?: TableColumnKey[]): TableColumnKey[] => {
+  const baseline = DEFAULT_COLUMN_ORDER;
+  const seen = new Set<TableColumnKey>();
+  const normalized: TableColumnKey[] = [];
+  if (Array.isArray(order)) {
+    order.forEach((id) => {
+      if (baseline.includes(id) && !seen.has(id)) {
+        normalized.push(id);
+        seen.add(id);
+      }
+    });
+  }
+  baseline.forEach((id) => {
+    if (!seen.has(id)) {
+      normalized.push(id);
+      seen.add(id);
+    }
+  });
+  return normalized;
+};
+
+const arraysEqual = <T,>(a: T[], b: T[]): boolean =>
+  a.length === b.length && a.every((value, index) => value === b[index]);
+
 const stageToneStyles: Record<StageTone, StageToneStyle> = {
   neutral: {
-    iconWrapper: "border-slate-200 bg-white text-slate-500",
-    badge: "border-slate-200 bg-white text-slate-600",
-    chevron: "border-slate-200 text-slate-500 hover:bg-slate-100 hover:border-slate-300",
+    cardBg: "bg-white/80",
+    iconWrapper: "border-border/50 bg-white/80 text-slate-500",
+    badge: "border-border/50 bg-white text-slate-600",
+    chevron: "border-border/40 text-slate-500 hover:bg-white hover:border-border/60",
     dropRing: "ring-slate-200/80 bg-slate-100/70",
     dropBorder: "border-slate-300/70",
     dropBg: "bg-slate-100/80",
     dropText: "text-slate-600",
     emptyBorder: "border-slate-200/70",
     emptyText: "text-slate-500",
-    collapsedShell: "border border-dashed border-slate-300 bg-slate-50",
-    collapsedChevron: "border-slate-200 text-slate-500",
-    collapsedCount: "border-slate-200 bg-white text-slate-600",
+    collapsedShell: "border border-dashed border-slate-200 bg-slate-50",
+    collapsedChevron: "border-border/40 text-slate-500",
+    collapsedCount: "border-border/40 bg-white text-slate-600",
     collapsedLabel: "text-slate-600",
   },
   success: {
-    iconWrapper: "border-success/40 bg-success/10 text-success",
-    badge: "border-success/40 bg-success/10 text-success",
+    cardBg: "bg-success/5",
+    iconWrapper: "border-success/40 bg-white/80 text-success",
+    badge: "border-success/40 bg-white text-success",
     chevron: "border-success/40 text-success hover:bg-success/10 hover:border-success/50",
     dropRing: "ring-success/40 bg-success/10",
     dropBorder: "border-success/40",
@@ -117,8 +235,9 @@ const stageToneStyles: Record<StageTone, StageToneStyle> = {
     collapsedLabel: "text-success/90",
   },
   danger: {
-    iconWrapper: "border-destructive/40 bg-destructive/10 text-destructive",
-    badge: "border-destructive/40 bg-destructive/10 text-destructive",
+    cardBg: "bg-destructive/5",
+    iconWrapper: "border-destructive/40 bg-white/80 text-destructive",
+    badge: "border-destructive/40 bg-white text-destructive",
     chevron: "border-destructive/40 text-destructive hover:bg-destructive/10 hover:border-destructive/50",
     dropRing: "ring-destructive/40 bg-destructive/10",
     dropBorder: "border-destructive/40",
@@ -405,10 +524,14 @@ export default function ApplicationsBoardPage() {
   const [showFilters, setShowFilters] = React.useState<boolean>(() => {
     try { return localStorage.getItem('appsShowFilters') === '1'; } catch { return false; }
   });
+  const [showInsights, setShowInsights] = React.useState<boolean>(() => {
+    try { return localStorage.getItem('appsShowInsights') === '1'; } catch { return false; }
+  });
   const [selectedApplicationId, setSelectedApplicationId] = React.useState<string | null>(null);
   const [showDetailsDrawer, setShowDetailsDrawer] = React.useState(false);
   const [showBulkActions, setShowBulkActions] = React.useState(false);
   const boardScrollRef = React.useRef<HTMLDivElement | null>(null);
+  const tableRef = React.useRef<HTMLTableElement | null>(null);
   const columnRefs = React.useRef<Map<string, HTMLDivElement>>(new Map());
   const lastDragOverRef = React.useRef<string | null>(null);
   const autoExpandedStageRef = React.useRef<string | null>(null);
@@ -421,13 +544,106 @@ export default function ApplicationsBoardPage() {
   
   const [showMeetingBooker, setShowMeetingBooker] = React.useState(false);
   const [selectedLeadForMeeting, setSelectedLeadForMeeting] = React.useState<MeetingBookerLead | null>(null);
-  const { IvyOverlay, openIvy } = useIvy();
+  const { IvyOverlay, openIvy, setIvyContext } = useApplicationIvy();
   
   const [draggedApplicationId, setDraggedApplicationId] = React.useState<string | null>(null);
+  const [riskOnly, setRiskOnly] = React.useState<boolean>(false);
+
+  const [columnVisibility, setColumnVisibility] = React.useState<Record<TableColumnKey, boolean>>(() => {
+    try {
+      const stored = localStorage.getItem("appsTableColumns");
+      if (!stored) return BASE_COLUMN_VISIBILITY;
+      const parsed = JSON.parse(stored) as Record<TableColumnKey, boolean>;
+      return { ...BASE_COLUMN_VISIBILITY, ...parsed };
+    } catch {
+      return BASE_COLUMN_VISIBILITY;
+    }
+  });
+  const [columnOrder, setColumnOrder] = React.useState<TableColumnKey[]>(() => {
+    try {
+      const stored = localStorage.getItem(COLUMN_ORDER_STORAGE_KEY);
+      if (!stored) return [...DEFAULT_COLUMN_ORDER];
+      const parsed = JSON.parse(stored) as TableColumnKey[];
+      return normalizeColumnOrder(parsed);
+    } catch {
+      return [...DEFAULT_COLUMN_ORDER];
+    }
+  });
+  const [columnWidths, setColumnWidths] = React.useState<Record<TableColumnKey, number>>(() => {
+    try {
+      const stored = localStorage.getItem(COLUMN_WIDTHS_STORAGE_KEY);
+      if (!stored) return { ...DEFAULT_COLUMN_WIDTHS };
+      const parsed = JSON.parse(stored) as Partial<Record<TableColumnKey, number>>;
+      return { ...DEFAULT_COLUMN_WIDTHS, ...(parsed || {}) };
+    } catch {
+      return { ...DEFAULT_COLUMN_WIDTHS };
+    }
+  });
+
+  const [columnFilters, setColumnFilters] = React.useState<Partial<Record<TableColumnKey, string>>>(() => {
+    try {
+      const stored = localStorage.getItem("appsTableFilters");
+      if (!stored) return {};
+      const parsed = JSON.parse(stored) as Partial<Record<TableColumnKey, string>>;
+      const sanitized: Partial<Record<TableColumnKey, string>> = {};
+      Object.entries(parsed || {}).forEach(([key, value]) => {
+        if (typeof value === "string" && value.trim().length > 0 && value !== "all") {
+          sanitized[key as TableColumnKey] = value;
+        }
+      });
+      return sanitized;
+    } catch {
+      return {};
+    }
+  });
+
+  const [sortState, setSortState] = React.useState<{ column: TableColumnKey | null; direction: "asc" | "desc" }>({
+    column: "applicant",
+    direction: "asc",
+  });
+  const updateColumnFilter = React.useCallback((columnId: TableColumnKey, value: string) => {
+    setColumnFilters(prev => {
+      const next = { ...prev };
+      const normalized = (value ?? "").trim();
+      if (!normalized || normalized === "all") {
+        delete next[columnId];
+      } else {
+        next[columnId] = normalized;
+      }
+      return next;
+    });
+  }, []);
+  const clearColumnFilters = React.useCallback(() => setColumnFilters({}), []);
+  const [resizingColumnId, setResizingColumnId] = React.useState<TableColumnKey | null>(null);
 
   React.useEffect(() => { localStorage.setItem('appsCompact', compactCards ? '1' : '0'); }, [compactCards]);
   React.useEffect(() => { localStorage.setItem('appsAiFocus', aiFocus ? '1' : '0'); }, [aiFocus]);
   React.useEffect(() => { try { localStorage.setItem('appsShowFilters', showFilters ? '1' : '0'); } catch {} }, [showFilters]);
+  React.useEffect(() => {
+    try { localStorage.setItem('appsShowInsights', showInsights ? '1' : '0'); } catch {}
+  }, [showInsights]);
+  React.useEffect(() => {
+    try { localStorage.setItem("appsTableColumns", JSON.stringify(columnVisibility)); } catch {}
+  }, [columnVisibility]);
+  React.useEffect(() => {
+    try { localStorage.setItem(COLUMN_ORDER_STORAGE_KEY, JSON.stringify(columnOrder)); } catch {}
+  }, [columnOrder]);
+  React.useEffect(() => {
+    if (typeof window === "undefined") return;
+    const timeout = window.setTimeout(() => {
+      try { localStorage.setItem(COLUMN_WIDTHS_STORAGE_KEY, JSON.stringify(columnWidths)); } catch {}
+    }, 160);
+    return () => window.clearTimeout(timeout);
+  }, [columnWidths]);
+  React.useEffect(() => {
+    try { localStorage.setItem("appsTableFilters", JSON.stringify(columnFilters)); } catch {}
+  }, [columnFilters]);
+  React.useEffect(() => {
+    return () => {
+      try { document.body.style.cursor = ""; } catch {}
+      tableRef.current?.classList.remove("is-resizing");
+    };
+  }, []);
 
 
   const activeFilterCount = React.useMemo(() => {
@@ -599,13 +815,15 @@ export default function ApplicationsBoardPage() {
       const pattern = deriveStudyPattern(app);
       const matchesDelivery = deliveryMode === 'all' || mode === deliveryMode;
       const matchesPattern = studyPattern === 'all' || pattern === studyPattern;
+      const prob = (app.conversion_probability ?? app.progression_probability ?? 0);
+      const matchesRisk = !riskOnly || prob < 0.35;
       
       // Multi-application filter: keep only applicants that appear more than once
       // We'll compute counts below and apply after this filter
       
-      return matchesSearch && matchesProgram && matchesDelivery && matchesPattern;
+      return matchesSearch && matchesProgram && matchesDelivery && matchesPattern && matchesRisk;
     });
-  }, [applications, search, program, deliveryMode, studyPattern, deriveDeliveryMode, deriveStudyPattern]);
+  }, [applications, search, program, deliveryMode, studyPattern, deriveDeliveryMode, deriveStudyPattern, riskOnly]);
 
   // Build person->application count and optionally filter to only multi-application applicants
   const personAppCounts = React.useMemo(() => {
@@ -661,6 +879,8 @@ export default function ApplicationsBoardPage() {
     
     return g;
   }, [filteredWithMulti, stages]);
+
+  
 
   // Aggregation: single card per applicant (choose primary stage)
   const stageOrder: StageId[] = [
@@ -770,8 +990,695 @@ export default function ApplicationsBoardPage() {
   // Get unique programmes for filter dropdown
   const uniqueProgrammes = React.useMemo(() => {
     if (!applications || !Array.isArray(applications)) return [];
-    return [...new Set(applications.map((app: ApplicationCard) => app.programme_name))];
+    return [...new Set(applications.map((app: ApplicationCard) => app.programme_name).filter(Boolean))] as string[];
   }, [applications]);
+
+  const uniqueSources = React.useMemo(() => {
+    if (!applications || !Array.isArray(applications)) return [];
+    return [...new Set(applications.map((app: ApplicationCard) => app.source).filter(Boolean))] as string[];
+  }, [applications]);
+
+  const uniqueCampuses = React.useMemo(() => {
+    if (!applications || !Array.isArray(applications)) return [];
+    return [...new Set(applications.map((app: ApplicationCard) => app.campus_name).filter(Boolean))] as string[];
+  }, [applications]);
+
+  const uniqueCycles = React.useMemo(() => {
+    if (!applications || !Array.isArray(applications)) return [];
+    return [...new Set(applications.map((app: ApplicationCard) => app.cycle_label).filter(Boolean))] as string[];
+  }, [applications]);
+
+  // Ask Ivy debug: expose visible apps (with names) for quick troubleshooting
+  React.useEffect(() => {
+    try {
+      const rows = (filteredWithMulti || []).map((a: ApplicationCard) => ({
+        application_id: a.application_id,
+        person_id: a.person_id,
+        name: `${a.first_name || ''} ${a.last_name || ''}`.trim(),
+        first_name: a.first_name,
+        last_name: a.last_name,
+        email: a.email,
+        stage: a.stage,
+        programme_name: a.programme_name,
+      }));
+      (window as any).__ivyAppsVisible = rows;
+      // Log a small sample for convenience
+      if (rows.length > 0) {
+        console.log('[AskIvy Debug] Visible apps (id → name):',
+          rows.slice(0, 10).map(r => ({ id: r.application_id, name: r.name, stage: r.stage, program: r.programme_name }))
+        );
+      } else {
+        console.log('[AskIvy Debug] No visible apps for AskIvy matching. Check filters or data.');
+      }
+    } catch {}
+  }, [filteredWithMulti]);
+
+  // Keep Ask Ivy context in sync (after progressionStats is available)
+  const ivySyncKeyRef = React.useRef<string>("");
+  React.useEffect(() => {
+    try {
+      const keyObj = {
+        ids: (filteredWithMulti || []).map(a => a.application_id),
+        selId: selectedApplicationId || null,
+        sel: selectedApps,
+        view,
+        f: { program, urgency, priority, deliveryMode, studyPattern, multiOnly },
+        stats: progressionStats,
+      };
+      const key = JSON.stringify(keyObj);
+      if (ivySyncKeyRef.current === key) return;
+      ivySyncKeyRef.current = key;
+
+      setIvyContext?.({
+        applications: filteredWithMulti as any,
+        selectedApplicationId: selectedApplicationId || undefined,
+        selectedApplications: selectedApps,
+        currentView: view,
+        filters: { program, urgency, priority, deliveryMode, studyPattern, multiOnly },
+        progressionStats,
+      });
+    } catch {}
+  }, [
+    filteredWithMulti,
+    progressionStats,
+    selectedApplicationId,
+    selectedApps,
+    view,
+    program,
+    urgency,
+    priority,
+    deliveryMode,
+    studyPattern,
+    multiOnly,
+    setIvyContext,
+  ]);
+
+  const stageFilterOptions = React.useMemo(() => {
+    return stages.map(stage => {
+      const config = getStageConfig(stage.id);
+      return { value: stage.id, label: config.name || stage.id };
+    });
+  }, [stages]);
+
+  const priorityFilterOptions = React.useMemo(() => ([
+    { value: "critical", label: "Critical" },
+    { value: "high", label: "High" },
+    { value: "medium", label: "Medium" },
+    { value: "low", label: "Low" },
+  ]), []);
+
+  const isColumnVisible = React.useCallback(
+    (columnId: TableColumnKey) =>
+      Object.prototype.hasOwnProperty.call(columnVisibility, columnId)
+        ? columnVisibility[columnId]
+        : BASE_COLUMN_VISIBILITY[columnId],
+    [columnVisibility]
+  );
+
+  const columnDefinitions = React.useMemo<TableColumnDefinition[]>(() => {
+    const priorityRank: Record<string, number> = { critical: 4, high: 3, medium: 2, low: 1 };
+    return [
+      {
+        id: "applicant",
+        label: "Applicant",
+        minWidth: 240,
+        lockVisibility: true,
+        sortable: true,
+        filter: { type: "text", placeholder: "Search name or email" },
+        getFilterValue: (app) => `${app.first_name || ""} ${app.last_name || ""} ${app.email || ""}`.toLowerCase(),
+        sortAccessor: (app) => {
+          const display = getApplicationCardDisplay(app);
+          return (display.studentName || "").toLowerCase();
+        },
+        renderCell: (app) => {
+          const display = getApplicationCardDisplay(app);
+          const initials = (display.studentName || "")
+            .split(" ")
+            .map(part => part?.[0] || "")
+            .join("")
+            .slice(0, 2)
+            .toUpperCase() || "??";
+          const multiCount = personAppCounts.get(String(app.person_id)) || 0;
+          return (
+            <div className="flex items-center gap-3">
+              <div className="flex h-9 w-9 items-center justify-center rounded border border-border bg-muted text-xs font-semibold text-muted-foreground">
+                {initials}
+              </div>
+              <div className="min-w-0">
+                <button
+                  type="button"
+                  className="group/name inline-flex w-full items-center gap-1 truncate text-left text-sm font-semibold text-foreground transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 cursor-pointer"
+                  title={`Open application for ${display.studentName}`}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    navigate(`/admissions/applications/${app.application_id}`);
+                  }}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                      event.preventDefault();
+                      event.stopPropagation();
+                      navigate(`/admissions/applications/${app.application_id}`);
+                    }
+                  }}
+                >
+                  <span className="truncate">{display.studentName}</span>
+                  <ArrowUpRight className="h-3.5 w-3.5 shrink-0 opacity-0 transition-opacity group-hover/name:opacity-100" />
+                </button>
+                <div className="text-xs text-muted-foreground truncate">{app.email || "—"}</div>
+                {multiCount > 1 && (
+                  <div className="mt-0.5 text-[10px] uppercase tracking-wide text-muted-foreground">
+                    {multiCount} applications
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        },
+      },
+      {
+        id: "program",
+        label: "Program",
+        minWidth: 200,
+        sortable: true,
+        filter: {
+          type: "select",
+          placeholder: "All programs",
+          options: uniqueProgrammes.map(name => ({ value: name, label: name })),
+        },
+        getFilterValue: (app) => app.programme_name || "",
+        sortAccessor: (app) => (app.programme_name || "").toLowerCase(),
+        renderCell: (app) => {
+          const display = getApplicationCardDisplay(app);
+          return (
+            <div className="min-w-0">
+              <div className="truncate text-sm text-foreground">{display.program}</div>
+              <div className="truncate text-xs text-muted-foreground">{app.programme_name || "—"}</div>
+            </div>
+          );
+        },
+      },
+      {
+        id: "stage",
+        label: "Stage",
+        minWidth: 160,
+        sortable: true,
+        lockVisibility: true,
+        filter: {
+          type: "select",
+          placeholder: "All stages",
+          options: stageFilterOptions,
+        },
+        getFilterValue: (app) => mapStageToFrontendStage(app.stage),
+        sortAccessor: (app) => mapStageToFrontendStage(app.stage) || "",
+        renderCell: (app) => (
+          <div className="text-sm text-foreground">{mapStageToDisplay(app.stage)}</div>
+        ),
+      },
+      {
+        id: "priority",
+        label: "Priority",
+        minWidth: 140,
+        sortable: true,
+        filter: {
+          type: "select",
+          placeholder: "All priorities",
+          options: priorityFilterOptions,
+        },
+        getFilterValue: (app) => (app.priority || "medium").toLowerCase(),
+        sortAccessor: (app) => priorityRank[(app.priority || "medium").toLowerCase()] || 0,
+        renderCell: (app) => (
+          <PriorityBadge priority={(app.priority || "medium").toLowerCase()} />
+        ),
+      },
+      {
+        id: "conversion",
+        label: "Conversion",
+        minWidth: 150,
+        align: "right",
+        sortable: true,
+        sortAccessor: (app) => {
+          const probability = app.progression_probability ?? app.conversion_probability ?? 0;
+          return probability;
+        },
+        renderCell: (app) => {
+          const probability = app.progression_probability ?? app.conversion_probability;
+          if (probability === undefined || probability === null) {
+            return <span className="text-xs text-muted-foreground">—</span>;
+          }
+          const percentage = Math.round(probability * 100);
+          return (
+            <div className="flex items-center justify-end gap-2">
+              <span className="text-sm font-medium tabular-nums text-foreground">{percentage}%</span>
+              <div className="h-1.5 w-16 rounded bg-muted">
+                <div
+                  className="h-full rounded bg-foreground/70"
+                  style={{ width: `${Math.min(100, Math.max(0, percentage))}%` }}
+                />
+              </div>
+            </div>
+          );
+        },
+      },
+      {
+        id: "leadScore",
+        label: "Lead Score",
+        minWidth: 140,
+        align: "right",
+        sortable: true,
+        renderCell: (app) => {
+          const display = getApplicationCardDisplay(app);
+          const score = Number(display.leadScore) || 0;
+          return (
+            <div className="text-sm font-medium tabular-nums text-foreground">{score}</div>
+          );
+        },
+        sortAccessor: (app) => {
+          const display = getApplicationCardDisplay(app);
+          return Number(display.leadScore) || 0;
+        },
+      },
+      {
+        id: "delivery",
+        label: "Delivery",
+        minWidth: 200,
+        filter: { type: "text", placeholder: "Filter delivery" },
+        getFilterValue: (app) => {
+          const mode = deriveDeliveryMode(app);
+          const pattern = deriveStudyPattern(app);
+          return `${mode} ${pattern}`.toLowerCase();
+        },
+        renderCell: (app) => {
+          const mode = deriveDeliveryMode(app);
+          const pattern = deriveStudyPattern(app);
+          const parts = [
+            mode && mode !== "unknown" ? mode.replace("_", " ") : null,
+            pattern && pattern !== "unknown" ? pattern.replace("_", " ") : null,
+          ].filter(Boolean);
+          return <div className="text-sm text-foreground capitalize">{parts.join(" · ") || "—"}</div>;
+        },
+      },
+      {
+        id: "nextAction",
+        label: "Next Action",
+        minWidth: 220,
+        sortable: true,
+        filter: { type: "text", placeholder: "Filter action" },
+        getFilterValue: (app) => {
+          const display = getApplicationCardDisplay(app);
+          return `${display.nextAction || ""} ${display.nextFollowUp || ""}`.toLowerCase();
+        },
+        sortAccessor: (app) => {
+          const display = getApplicationCardDisplay(app);
+          return (display.nextFollowUp || "").toLowerCase();
+        },
+        renderCell: (app) => {
+          const display = getApplicationCardDisplay(app);
+          return (
+            <div className="min-w-0">
+              <div className="truncate text-sm text-foreground">{display.nextAction || "—"}</div>
+              <div className="truncate text-xs text-muted-foreground">{display.nextFollowUp || ""}</div>
+            </div>
+          );
+        },
+      },
+      {
+        id: "source",
+        label: "Source",
+        minWidth: 160,
+        filter: {
+          type: "select",
+          placeholder: "All sources",
+          options: uniqueSources.map(src => ({ value: src, label: src })),
+        },
+        getFilterValue: (app) => app.source || "",
+        renderCell: (app) => <span className="text-sm text-foreground capitalize">{app.source || "—"}</span>,
+        sortable: true,
+        sortAccessor: (app) => (app.source || "").toLowerCase(),
+      },
+      {
+        id: "campus",
+        label: "Campus",
+        minWidth: 180,
+        filter: {
+          type: "select",
+          placeholder: "All campuses",
+          options: uniqueCampuses.map(campus => ({ value: campus, label: campus })),
+        },
+        getFilterValue: (app) => app.campus_name || "",
+        sortable: true,
+        sortAccessor: (app) => (app.campus_name || "").toLowerCase(),
+        renderCell: (app) => <span className="text-sm text-foreground">{app.campus_name || "—"}</span>,
+      },
+      {
+        id: "cycle",
+        label: "Cycle",
+        minWidth: 160,
+        filter: {
+          type: "select",
+          placeholder: "All cycles",
+          options: uniqueCycles.map(cycle => ({ value: cycle, label: cycle })),
+        },
+        getFilterValue: (app) => app.cycle_label || "",
+        sortable: true,
+        sortAccessor: (app) => (app.cycle_label || "").toLowerCase(),
+        renderCell: (app) => <span className="text-sm text-foreground">{app.cycle_label || "—"}</span>,
+      },
+      {
+        id: "lastActivity",
+        label: "Last Activity",
+        minWidth: 180,
+        sortable: true,
+        filter: { type: "text", placeholder: "Filter activity" },
+        getFilterValue: (app) => {
+          const display = getApplicationCardDisplay(app);
+          return (display.lastActivity || "").toLowerCase();
+        },
+        sortAccessor: (app) => {
+          const display = getApplicationCardDisplay(app);
+          return (display.lastActivity || "").toLowerCase();
+        },
+        renderCell: (app) => {
+          const display = getApplicationCardDisplay(app);
+          return <span className="text-sm text-foreground">{display.lastActivity || "—"}</span>;
+        },
+      },
+    ];
+  }, [
+    navigate,
+    personAppCounts,
+    uniqueProgrammes,
+    stageFilterOptions,
+    priorityFilterOptions,
+    deriveDeliveryMode,
+    deriveStudyPattern,
+    uniqueSources,
+    uniqueCampuses,
+    uniqueCycles,
+  ]);
+
+  const orderedColumnDefinitions = React.useMemo(() => {
+    const map = new Map<TableColumnKey, TableColumnDefinition>();
+    columnDefinitions.forEach((column) => map.set(column.id, column));
+    const ordered: TableColumnDefinition[] = [];
+    columnOrder.forEach((id) => {
+      const column = map.get(id);
+      if (column) ordered.push(column);
+    });
+    columnDefinitions.forEach((column) => {
+      if (!ordered.some((entry) => entry.id === column.id)) {
+        ordered.push(column);
+      }
+    });
+    return ordered;
+  }, [columnDefinitions, columnOrder]);
+
+  const visibleColumns = React.useMemo(
+    () => orderedColumnDefinitions.filter((column) => isColumnVisible(column.id)),
+    [orderedColumnDefinitions, isColumnVisible]
+  );
+
+  React.useEffect(() => {
+    setColumnOrder((prev) => {
+      const normalized = normalizeColumnOrder(prev);
+      const definitionIds = columnDefinitions.map((column) => column.id);
+      let changed = !arraysEqual(prev, normalized);
+      const updated = [...normalized];
+      definitionIds.forEach((id) => {
+        if (!updated.includes(id)) {
+          updated.push(id);
+          changed = true;
+        }
+      });
+      return changed ? updated : prev;
+    });
+  }, [columnDefinitions]);
+
+  const lockedColumnIds = React.useMemo(() => {
+    const next = new Set<TableColumnKey>();
+    columnDefinitions.forEach((column) => {
+      if (column.lockVisibility) next.add(column.id);
+    });
+    return next;
+  }, [columnDefinitions]);
+
+  const handleToggleColumnVisibility = React.useCallback(
+    (columnId: TableColumnKey) => {
+      if (lockedColumnIds.has(columnId)) return;
+      setColumnVisibility((prev) => {
+        const current = Object.prototype.hasOwnProperty.call(prev, columnId)
+          ? prev[columnId]
+          : BASE_COLUMN_VISIBILITY[columnId];
+        return { ...prev, [columnId]: !current };
+      });
+    },
+    [lockedColumnIds]
+  );
+
+  const moveColumn = React.useCallback((columnId: TableColumnKey, direction: "up" | "down") => {
+    setColumnOrder((prev) => {
+      const order = normalizeColumnOrder(prev);
+      const index = order.indexOf(columnId);
+      if (index === -1) return order;
+      const targetIndex = direction === "up" ? index - 1 : index + 1;
+      if (targetIndex < 0 || targetIndex >= order.length) return order;
+      const next = [...order];
+      const [removed] = next.splice(index, 1);
+      next.splice(targetIndex, 0, removed);
+      return next;
+    });
+  }, []);
+
+  const handleSort = React.useCallback(
+    (columnId: TableColumnKey) => {
+      const sortableColumn = columnDefinitions.find(
+        (column) => column.id === columnId && column.sortable
+      );
+      if (!sortableColumn) return;
+
+      setSortState((prev) => {
+        if (prev.column === columnId) {
+          return {
+            column: columnId,
+            direction: prev.direction === "asc" ? "desc" : "asc",
+          };
+        }
+        return { column: columnId, direction: "asc" };
+      });
+    },
+    [columnDefinitions]
+  );
+
+  const handleColumnResizeStart = React.useCallback(
+    (event: React.PointerEvent<HTMLDivElement>, columnId: TableColumnKey) => {
+      event.preventDefault();
+      event.stopPropagation();
+
+      const columnIndex = visibleColumns.findIndex((column) => column.id === columnId);
+      if (columnIndex === -1) return;
+
+      const tableElement = tableRef.current;
+      const colElement = tableElement?.querySelectorAll<HTMLTableColElement>("colgroup col")[columnIndex + 1];
+      const headerCell = event.currentTarget.closest("th") as HTMLTableCellElement | null;
+      if (!colElement || !headerCell) return;
+
+      const startX = event.clientX;
+      const initialWidth = headerCell.getBoundingClientRect().width;
+      const column = visibleColumns[columnIndex];
+      if (!column) return;
+      
+      const minWidth =
+        column.minWidth ??
+        DEFAULT_COLUMN_WIDTHS[column.id] ??
+        120;
+
+      const updateWidth = (width: number) => {
+        const px = `${width}px`;
+        colElement.style.width = px;
+        colElement.style.minWidth = px;
+        colElement.style.maxWidth = px;
+      };
+
+      const commitWidthToState = (width: number) => {
+        setColumnWidths((prev) => {
+          if (prev[columnId] === width) return prev;
+          return { ...prev, [columnId]: width };
+        });
+      };
+
+      let latestWidth = initialWidth;
+
+      const handlePointerMove = (moveEvent: PointerEvent) => {
+        const delta = moveEvent.clientX - startX;
+        latestWidth = Math.max(minWidth, Math.round(initialWidth + delta));
+        updateWidth(latestWidth);
+      };
+
+      const handlePointerEnd = () => {
+        commitWidthToState(latestWidth);
+        setResizingColumnId(null);
+        tableElement?.classList.remove("is-resizing");
+        document.body.style.cursor = "";
+        window.removeEventListener("pointermove", handlePointerMove);
+        window.removeEventListener("pointerup", handlePointerEnd);
+        window.removeEventListener("pointercancel", handlePointerEnd);
+      };
+
+      tableElement?.classList.add("is-resizing");
+      setResizingColumnId(columnId);
+      document.body.style.cursor = "col-resize";
+      window.addEventListener("pointermove", handlePointerMove);
+      window.addEventListener("pointerup", handlePointerEnd);
+      window.addEventListener("pointercancel", handlePointerEnd);
+    },
+    [visibleColumns, setColumnWidths, tableRef]
+  );
+
+  const applyLayoutPreset = React.useCallback((preset: ColumnLayoutPreset | null) => {
+    if (preset?.order?.length) {
+      setColumnOrder(normalizeColumnOrder(preset.order));
+    } else {
+      setColumnOrder([...DEFAULT_COLUMN_ORDER]);
+    }
+
+    if (preset?.visibility) {
+      setColumnVisibility({ ...BASE_COLUMN_VISIBILITY, ...preset.visibility });
+    } else {
+      setColumnVisibility({ ...BASE_COLUMN_VISIBILITY });
+    }
+
+    if (preset?.widths) {
+      setColumnWidths({ ...DEFAULT_COLUMN_WIDTHS, ...preset.widths });
+    } else {
+      setColumnWidths({ ...DEFAULT_COLUMN_WIDTHS });
+    }
+  }, []);
+
+  const handleResetLayout = React.useCallback(() => {
+    try {
+      const stored = localStorage.getItem(COLUMN_LAYOUT_DEFAULT_STORAGE_KEY);
+      if (stored) {
+        const parsed = JSON.parse(stored) as ColumnLayoutPreset;
+        applyLayoutPreset(parsed);
+        toast({ title: "Layout reset", description: "Default column layout applied.", variant: "success" });
+        return;
+      }
+    } catch (error) {
+      console.warn("Failed to load saved layout preset", error);
+    }
+    applyLayoutPreset(null);
+    toast({ title: "Layout reset", description: "Baseline column layout applied.", variant: "default" });
+  }, [applyLayoutPreset, toast]);
+
+  const handleSaveDefaultLayout = React.useCallback(() => {
+    const layoutPreset: ColumnLayoutPreset = {
+      order: [...columnOrder],
+      visibility: { ...columnVisibility },
+      widths: { ...columnWidths },
+    };
+    try {
+      localStorage.setItem(COLUMN_LAYOUT_DEFAULT_STORAGE_KEY, JSON.stringify(layoutPreset));
+      toast({ title: "Layout saved", description: "Current column layout stored as default.", variant: "success" });
+    } catch (error) {
+      console.warn("Failed to save layout preset", error);
+      toast({ title: "Unable to save layout", description: "Check storage permissions and try again.", variant: "destructive" });
+    }
+  }, [columnOrder, columnVisibility, columnWidths, toast]);
+
+  const columnLabelMap = React.useMemo(() => {
+    const map = new Map<TableColumnKey, string>();
+    orderedColumnDefinitions.forEach((column) => map.set(column.id, column.label));
+    return map;
+  }, [orderedColumnDefinitions]);
+
+  const activeColumnFilterEntries = React.useMemo(
+    () =>
+      Object.entries(columnFilters).filter(
+        ([, value]) =>
+          typeof value === "string" && value.trim().length > 0 && value !== "all"
+      ),
+    [columnFilters]
+  );
+
+  const getFilterDisplayValue = React.useCallback(
+    (columnId: TableColumnKey, value: string) => {
+      const column = orderedColumnDefinitions.find((col) => col.id === columnId);
+      if (!column) return value;
+      if (column.filter?.type === "select") {
+        const match = column.filter.options?.find((option) => option.value === value);
+        return match?.label ?? value;
+      }
+      return value;
+    },
+    [orderedColumnDefinitions]
+  );
+
+  const handleClearColumnFilter = React.useCallback(
+    (columnId: TableColumnKey) => updateColumnFilter(columnId, ""),
+    [updateColumnFilter]
+  );
+
+  const collator = React.useMemo(
+    () => new Intl.Collator(undefined, { sensitivity: "base", numeric: false }),
+    []
+  );
+
+  const tableFilteredRows = React.useMemo(() => {
+    const dataset = Array.isArray(filteredWithMulti) ? filteredWithMulti : [];
+    if (!dataset.length) return [];
+
+    return dataset.filter((app) =>
+      columnDefinitions.every((column) => {
+        if (!column.filter) return true;
+        const filterValue = columnFilters[column.id];
+        if (!filterValue) return true;
+
+        const value = column.getFilterValue ? column.getFilterValue(app) : "";
+        if (column.filter.type === "select") {
+          return (value || "") === filterValue;
+        }
+        return (value || "").toLowerCase().includes(filterValue.toLowerCase());
+      })
+    );
+  }, [filteredWithMulti, columnDefinitions, columnFilters]);
+
+  const sortedTableRows = React.useMemo(() => {
+    const dataset = [...tableFilteredRows];
+    if (!dataset.length) return dataset;
+
+    const sortColumn = columnDefinitions.find(
+      (column) => column.id === sortState.column && column.sortable
+    );
+
+    if (!sortColumn) return dataset;
+
+    const getSortableValue = (app: ApplicationCard) => {
+      if (sortColumn.sortAccessor) return sortColumn.sortAccessor(app);
+      if (sortColumn.getFilterValue) return sortColumn.getFilterValue(app);
+      return "";
+    };
+
+    dataset.sort((a, b) => {
+      const aValue = getSortableValue(a);
+      const bValue = getSortableValue(b);
+
+      if (typeof aValue === "number" && typeof bValue === "number") {
+        return aValue - bValue;
+      }
+
+      const left = aValue == null ? "" : String(aValue);
+      const right = bValue == null ? "" : String(bValue);
+      return collator.compare(left, right);
+    });
+
+    if (sortState.direction === "desc") dataset.reverse();
+    return dataset;
+  }, [tableFilteredRows, sortState, columnDefinitions, collator]);
+
+  const tableRows = sortedTableRows;
+  const activeColumnFilterCount = React.useMemo(
+    () => Object.keys(columnFilters).length,
+    [columnFilters]
+  );
 
   // Build app lookup for drag overlay rendering
   const appById = React.useMemo(() => {
@@ -923,6 +1830,8 @@ export default function ApplicationsBoardPage() {
 
   const AppCardView = ({ app, agg, compact }: { app: ApplicationCard; agg?: { count: number; modes: string[]; patterns: string[]; apps: ApplicationCard[] }, compact?: boolean }) => {
     const displayData = getApplicationCardDisplay(app);
+    const [isExpanded, setIsExpanded] = React.useState(false);
+
     const priorityToColor = (p?: string) => {
       const t = (p || '').toLowerCase();
       if (t === 'critical') return 'hsl(var(--destructive))';
@@ -933,9 +1842,10 @@ export default function ApplicationsBoardPage() {
     const Rail = ({ color, w = 6 }: { color: string; w?: number }) => (
       <div aria-hidden className="opacity-90 group-hover:opacity-100 transition-opacity" style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: w, borderTopLeftRadius: w, borderBottomLeftRadius: w, background: color, boxShadow: '0 0 0 1px rgba(0,0,0,0.03)' }} />
     );
-    
+
     const isAiHigh = ((app as any).progression_probability ?? (app as any).conversion_probability ?? 0) >= 0.7;
-    const isCompact = !!compact;
+    const probability = app.progression_probability ?? app.conversion_probability ?? 0;
+    const progressionPercentage = Math.round(probability * 100);
     return (
       <Card 
         className={`relative flex flex-col select-none border transition-transform duration-150 ease-out group ${
@@ -945,148 +1855,92 @@ export default function ApplicationsBoardPage() {
          } ${aiFocus ? (isAiHigh ? 'border-accent/40 shadow-md' : 'border-slate-200 opacity-60') : 'border-slate-200 hover:shadow-md hover:border-slate-300'}`}
       >
         <Rail color={priorityToColor(app.priority)} />
-        <CardHeader className="relative pb-2 pr-10">
-          <div className="flex items-start gap-3">
-            <div className="flex min-w-0 flex-1 flex-col gap-2">
-              <div className="grid grid-cols-[auto_1fr] gap-2">
-                <Checkbox 
+
+        <CardHeader className="relative pb-3 pt-4">
+          <div className="flex items-start gap-2">
+            <Checkbox
+              data-no-drag
+              onPointerDown={(e) => e.stopPropagation()}
+              checked={selectedApps.includes(app.application_id)}
+              onCheckedChange={() => toggleSelection(app.application_id)}
+              onClick={(e) => e.stopPropagation()}
+            />
+            <div className="flex-1 min-w-0">
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0 flex-1">
+                  <CardTitle className="text-sm font-semibold text-slate-900 leading-tight mb-1">
+                    {displayData.studentName}
+                  </CardTitle>
+                  <p className="text-xs text-slate-500 truncate">{app.email || 'No email'}</p>
+                  <p className="text-xs text-slate-600 truncate mt-0.5 font-medium">{displayData.program}</p>
+                  {agg && agg.count > 1 && (
+                    <Badge variant="secondary" className="mt-1.5 w-fit text-[10px]">{agg.count} applications</Badge>
+                  )}
+
+                  {/* Progression bar below applicant info */}
+                  <div className="space-y-1 mt-2">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="font-medium text-slate-600">Next Stage</span>
+                      <span className="text-xs font-bold tabular-nums text-slate-800">{progressionPercentage}%</span>
+                    </div>
+                    <div className="h-2 w-full rounded-full bg-slate-100 overflow-hidden">
+                      <div
+                        className={`h-full rounded-full transition-all duration-300 ${
+                          progressionPercentage >= 70 ? 'bg-success' :
+                          progressionPercentage >= 40 ? 'bg-warning' :
+                          'bg-destructive'
+                        }`}
+                        style={{ width: `${progressionPercentage}%` }}
+                      />
+                    </div>
+                  </div>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
                   data-no-drag
                   onPointerDown={(e) => e.stopPropagation()}
-                  checked={selectedApps.includes(app.application_id)}
-                  onCheckedChange={() => toggleSelection(app.application_id)}
-                  onClick={(e) => e.stopPropagation()}
-                />
-                <div className="min-w-0 flex flex-col">
-                  <CardTitle className="text-sm font-semibold text-slate-900 leading-tight">
-                  {displayData.studentName}
-                </CardTitle>
-                  {agg && agg.count > 1 && (
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Badge variant="secondary" className="mt-1 w-fit text-[10px] cursor-help">{agg.count} applications</Badge>
-                        </TooltipTrigger>
-                        <TooltipContent className="max-w-sm">
-                          <div className="text-xs font-medium mb-1">Applications</div>
-                          <div className="text-xs space-y-1">
-                            {(agg.apps as any[]).slice(0,6).map((a) => (
-                              <div key={a.application_id} className="flex items-center gap-2">
-                                <span className="truncate">{a.programme_name}</span>
-                                <span className="text-muted-foreground">• {mapStageToDisplay(a.stage)}</span>
-              </div>
-                            ))}
-                            {agg.apps.length > 6 && (
-                              <div className="text-muted-foreground">+{agg.apps.length - 6} more…</div>
-                            )}
-              </div>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  )}
-            </div>
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsExpanded(!isExpanded);
+                  }}
+                  className="h-6 w-6 p-0 shrink-0 rounded-full border border-slate-200 hover:border-slate-300 hover:bg-slate-50"
+                  title={isExpanded ? 'Collapse details' : 'Expand details'}
+                >
+                  {isExpanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+                </Button>
               </div>
             </div>
           </div>
         </CardHeader>
-        
-        <CardContent className={`${isCompact ? 'hidden group-hover:block' : 'block'} space-y-4 pt-2`}>
-          <p className="text-xs text-slate-500 truncate">{app.email || 'No email'}</p>
-          {agg && (agg.modes.length > 0 || agg.patterns.length > 0) && (
-            <div className="flex flex-wrap gap-1">
-              {agg.modes.slice(0,2).map(m => (
-                <Badge key={m} variant="secondary" className="h-5 capitalize">{m}</Badge>
-              ))}
-              {agg.patterns.slice(0,2).map(s => (
-                <Badge key={s} variant="secondary" className="h-5 capitalize">{s.replace('_',' ')}
-                </Badge>
-              ))}
-            </div>
-          )}
-          <div className="space-y-3">
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-slate-500">Program</span>
-              <span className="font-medium text-slate-700 text-right leading-tight max-w-[65%] truncate">{displayData.program}</span>
-            </div>
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-slate-500">Lead Score</span>
-              <span className="font-medium text-slate-700">{displayData.leadScore}</span>
-            </div>
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-slate-500">Progression</span>
-              <ProgressionIndicator probability={app.progression_probability || app.conversion_probability} />
-            </div>
-            {app.enrollment_probability && (
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-slate-500">Enrollment</span>
-                <ProgressionIndicator probability={app.enrollment_probability} />
-              </div>
-            )}
-          </div>
-          
-          {/* Blockers display */}
-          {app.progression_blockers && app.progression_blockers.length > 0 && (
-          <div className="pt-2 border-t border-slate-100">
-              <div className="flex items-center gap-1 mb-1">
-                <BlockerBadge 
-                  count={app.progression_blockers.length} 
-                  severity={app.progression_blockers[0]?.severity} 
-                />
-            </div>
-              {app.progression_blockers.slice(0, 2).map((blocker, idx) => (
-                <div key={idx} className="text-xs text-slate-600 mb-1">
-                  <span className="font-medium">{blocker.item}</span>
-                </div>
-              ))}
-            </div>
-          )}
-          
-          <div className="pt-3 border-t border-slate-100 space-y-3">
-            <div className="space-y-2">
-              <div className="text-xs text-slate-500">
-                <span className="font-medium">Recommended:</span>
-              </div>
-              {Array.isArray(app.recommended_actions) && app.recommended_actions.length > 0 ? (
-                <ul className="space-y-1 text-xs text-slate-600">
-                  {app.recommended_actions.slice(0, 3).map((action, idx) => (
-                    <li key={idx} className="flex items-start gap-2">
-                      <span className="text-slate-400">{idx + 1}.</span>
-                      <div className="flex-1">
-                        <span className="font-medium text-slate-700">{action.action}</span>
-                        {action.deadline && (
-                          <span className="ml-2 text-[11px] text-slate-400">Due {action.deadline}</span>
-                        )}
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <div className="text-xs text-slate-400">No actions queued</div>
-              )}
-            </div>
-            <div className="text-xs text-slate-400">
-              {displayData.nextFollowUp} • {displayData.lastActivity}
-            </div>
-            
-            <div className="flex flex-wrap gap-2">
+
+        <CardContent className="pt-0 pb-3 space-y-3">
+          {/* Always visible - Primary action */}
+          <Button
+            variant="outline"
+            size="sm"
+            data-no-drag
+            onPointerDown={(event) => event.stopPropagation()}
+            className="w-full h-8 text-xs justify-center font-medium"
+            onClick={(event) => {
+              event.stopPropagation();
+              navigate(`/admissions/applications/${app.application_id}`);
+            }}
+          >
+            <Eye className="mr-1.5 h-3 w-3" /> View Details
+          </Button>
+
+          {/* Expanded section - Toggle with chevron */}
+          {isExpanded && (
+            <div className="space-y-3 pt-2 border-t border-slate-100">
+            {/* Action buttons - First thing in expanded section */}
+            <div className="grid grid-cols-2 gap-2">
               <Button
                 variant="outline"
                 size="sm"
                 data-no-drag
                 onPointerDown={(event) => event.stopPropagation()}
-                className="flex-1 min-w-[96px] h-8 text-xs justify-center"
-                onClick={(event) => {
-                  event.stopPropagation();
-                  navigate(`/admissions/applications/${app.application_id}`);
-                }}
-              >
-                <Eye className="mr-1.5 h-3 w-3" /> View
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                data-no-drag
-                onPointerDown={(event) => event.stopPropagation()}
-                className="flex-1 min-w-[96px] h-8 text-xs justify-center"
+                className="h-8 text-xs justify-center"
                 onClick={(event) => {
                   event.stopPropagation();
                   handleEmailClick(app);
@@ -1099,29 +1953,121 @@ export default function ApplicationsBoardPage() {
                 size="sm"
                 data-no-drag
                 onPointerDown={(event) => event.stopPropagation()}
-                className="flex-1 min-w-[96px] h-8 text-xs justify-center"
-                onClick={(event) => {
-                  event.stopPropagation();
-                  handleMeetingClick(app);
-                }}
-              >
-                <CalIcon className="mr-1.5 h-3 w-3" /> Schedule
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                data-no-drag
-                onPointerDown={(event) => event.stopPropagation()}
-                className="flex-1 min-w-[96px] h-8 text-xs justify-center"
+                className="h-8 text-xs justify-center"
                 onClick={(event) => {
                   event.stopPropagation();
                   handlePhoneClick(app);
                 }}
               >
                 <Phone className="mr-1.5 h-3 w-3" /> Call
-                </Button>
-          </div>
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                data-no-drag
+                onPointerDown={(event) => event.stopPropagation()}
+                className="h-8 text-xs justify-center col-span-2"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  handleMeetingClick(app);
+                }}
+              >
+                <CalIcon className="mr-1.5 h-3 w-3" /> Schedule Meeting
+              </Button>
             </div>
+
+            {/* Blockers - in expanded view */}
+            {app.progression_blockers && app.progression_blockers.length > 0 && (() => {
+              const hasCritical = app.progression_blockers.some(b => b.severity === 'critical');
+              const hasHigh = app.progression_blockers.some(b => b.severity === 'high');
+
+              // Critical = red, High = amber, Otherwise = blue info
+              const style = hasCritical
+                ? { border: 'border-destructive/30', bg: 'bg-destructive/10', icon: 'text-destructive', text: 'text-destructive' }
+                : hasHigh
+                ? { border: 'border-warning/30', bg: 'bg-warning/10', icon: 'text-warning', text: 'text-warning' }
+                : { border: 'border-blue-200/60', bg: 'bg-blue-50/50', icon: 'text-blue-600', text: 'text-blue-700' };
+
+              return (
+                <div className={`rounded-lg border ${style.border} ${style.bg} p-2.5`}>
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <AlertTriangle className={`h-3.5 w-3.5 ${style.icon}`} />
+                    <span className={`text-xs font-semibold ${style.text}`}>
+                      {app.progression_blockers.length} Blocker{app.progression_blockers.length !== 1 ? 's' : ''}
+                    </span>
+                  </div>
+                  <div className="text-xs text-slate-700 space-y-0.5">
+                    {app.progression_blockers.slice(0, 2).map((blocker, idx) => (
+                      <div key={idx}>• {blocker.item}</div>
+                    ))}
+                    {app.progression_blockers.length > 2 && (
+                      <div className="text-slate-500 mt-1">+{app.progression_blockers.length - 2} more</div>
+                    )}
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* Delivery modes & patterns */}
+            {agg && (agg.modes.length > 0 || agg.patterns.length > 0) && (
+              <div className="flex flex-wrap gap-1">
+                {agg.modes.slice(0,2).map(m => (
+                  <Badge key={m} variant="secondary" className="h-5 text-[10px] capitalize">{m}</Badge>
+                ))}
+                {agg.patterns.slice(0,2).map(s => (
+                  <Badge key={s} variant="secondary" className="h-5 text-[10px] capitalize">{s.replace('_',' ')}</Badge>
+                ))}
+              </div>
+            )}
+
+            {/* Secondary metrics */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-slate-500">Program</span>
+                <span className="font-medium text-slate-700 text-right leading-tight max-w-[65%] truncate">{displayData.program}</span>
+              </div>
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-slate-500">Lead Score</span>
+                <span className="font-medium text-slate-700">{displayData.leadScore}</span>
+              </div>
+              {app.enrollment_probability && (
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-slate-500">Enrollment</span>
+                  <ProgressionIndicator probability={app.enrollment_probability} />
+                </div>
+              )}
+            </div>
+
+            {/* Recommended actions & activity */}
+            <div className="pt-3 border-t border-slate-100 space-y-3">
+              <div className="space-y-2">
+                <div className="text-xs text-slate-500">
+                  <span className="font-medium">Recommended:</span>
+                </div>
+                {Array.isArray(app.recommended_actions) && app.recommended_actions.length > 0 ? (
+                  <ul className="space-y-1 text-xs text-slate-600">
+                    {app.recommended_actions.slice(0, 2).map((action, idx) => (
+                      <li key={idx} className="flex items-start gap-2">
+                        <span className="text-slate-400">{idx + 1}.</span>
+                        <div className="flex-1">
+                          <span className="font-medium text-slate-700">{action.action}</span>
+                          {action.deadline && (
+                            <span className="ml-2 text-[11px] text-slate-400">Due {action.deadline}</span>
+                          )}
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <div className="text-xs text-slate-400">No actions queued</div>
+                )}
+              </div>
+              <div className="text-xs text-slate-400">
+                {displayData.nextFollowUp} • {displayData.lastActivity}
+              </div>
+            </div>
+            </div>
+          )}
         </CardContent>
       </Card>
     );
@@ -1132,7 +2078,7 @@ export default function ApplicationsBoardPage() {
 
   if (loading || stagesLoading) {
     return (
-      <div className="px-6 py-6 bg-slate-50/50 min-h-screen flex items-center justify-center">
+      <div className="px-4 sm:px-6 py-6 bg-slate-50/50 min-h-screen flex items-center justify-center">
         <div className="text-center">
           <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-4 text-slate-400" />
           <p className="text-slate-500">Loading applications...</p>
@@ -1143,7 +2089,7 @@ export default function ApplicationsBoardPage() {
 
   if (error || stagesError) {
     return (
-      <div className="px-6 py-6 bg-slate-50/50 min-h-screen flex items-center justify-center">
+      <div className="px-4 sm:px-6 py-6 bg-slate-50/50 min-h-screen flex items-center justify-center">
         <div className="text-center">
           <AlertTriangle className="h-8 w-8 mx-auto mb-4 text-destructive" />
           <p className="text-destructive mb-2">Error loading data</p>
@@ -1155,16 +2101,15 @@ export default function ApplicationsBoardPage() {
   }
 
   return (
-    <div className="px-6 py-6 bg-gradient-to-br from-background via-background to-muted/30 min-h-screen">
+    <div className="px-4 sm:px-5 lg:px-6 py-4 bg-gradient-to-br from-background via-background to-muted/30 min-h-screen">
       {/* Sticky Glass Header */}
-      <div className="relative bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60 border-b border-border/30 sticky top-0 z-40 shadow-sm overflow-hidden mb-6">
-        <div aria-hidden className="pointer-events-none absolute -top-24 -right-20 h-56 w-56 rounded-full blur-2xl glow-white" />
-        <div aria-hidden className="pointer-events-none absolute -bottom-24 -left-16 h-64 w-64 rounded-full blur-2xl glow-green" />
+      <div className="relative bg-background/85 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60 border border-border/40 sticky top-3 z-40 shadow-lg overflow-hidden rounded-3xl mb-4 mx-auto max-w-[min(1720px,calc(100%-16px))]">
+        <div aria-hidden className="pointer-events-none absolute -top-32 -right-20 h-64 w-64 rounded-full blur-3xl glow-white" />
+        <div aria-hidden className="pointer-events-none absolute -bottom-32 -left-24 h-72 w-72 rounded-full blur-3xl glow-green" />
         <div className="px-4 lg:px-6 py-4">
           <div className="flex items-center justify-between gap-4">
             <div>
               <h1 className="text-xl lg:text-2xl font-bold text-foreground truncate">Admissions Pipeline</h1>
-              <p className="text-xs text-muted-foreground">CRM → Admissions → Applications</p>
             </div>
             <div className="flex items-center gap-2">
               <Tabs value={view} onValueChange={(v) => setView(v as any)}>
@@ -1188,112 +2133,6 @@ export default function ApplicationsBoardPage() {
               />
             </div>
               {/* Filters Sheet */}
-              <Sheet open={showFilters} onOpenChange={setShowFilters}>
-                <Button
-                  variant="outline"
-                  size="default"
-                  className="gap-2 h-9 px-3 text-sm bg-background/60 backdrop-blur-sm border-border/50 hover:bg-background/80 transition-all"
-                  onClick={() => setShowFilters(true)}
-                  title="Open filters"
-                >
-                  <Filter className="h-4 w-4" />
-                  <span className="hidden sm:inline">Filters</span>
-                  {activeFilterCount > 0 && (
-                    <span className="ml-2 inline-flex items-center justify-center rounded-full bg-slate-900 text-white text-[10px] h-5 min-w-[20px] px-1">
-                      {activeFilterCount}
-                    </span>
-                  )}
-                </Button>
-                <SheetContent side="right" className="sm:max-w-sm">
-                  <SheetHdr>
-                    <SheetTtl>Filters</SheetTtl>
-                    <SheetDesc>Refine the applications shown on the board.</SheetDesc>
-                  </SheetHdr>
-                  <div className="mt-4 space-y-4">
-                    <div className="grid gap-2">
-                      <label className="text-xs text-muted-foreground">Program</label>
-            <Select value={program} onValueChange={setProgram}>
-                        <SelectTrigger className="w-full border-slate-200">
-                <SelectValue placeholder="Program" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Programs</SelectItem>
-                {uniqueProgrammes.map(prog => (
-                  <SelectItem key={prog} value={prog}>{prog}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-                    </div>
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="grid gap-2">
-                        <label className="text-xs text-muted-foreground">Urgency</label>
-            <Select value={urgency} onValueChange={setUrgency}>
-                          <SelectTrigger className="w-full border-slate-200">
-                <SelectValue placeholder="Urgency" />
-              </SelectTrigger>
-              <SelectContent>
-                            <SelectItem value="all">All</SelectItem>
-                <SelectItem value="high">High</SelectItem>
-                <SelectItem value="medium">Medium</SelectItem>
-                <SelectItem value="low">Low</SelectItem>
-              </SelectContent>
-            </Select>
-                      </div>
-                      <div className="grid gap-2">
-                        <label className="text-xs text-muted-foreground">Priority</label>
-            <Select value={priority} onValueChange={setPriority}>
-                          <SelectTrigger className="w-full border-slate-200">
-                <SelectValue placeholder="Priority" />
-              </SelectTrigger>
-              <SelectContent>
-                            <SelectItem value="all">All</SelectItem>
-                <SelectItem value="critical">Critical</SelectItem>
-                <SelectItem value="high">High</SelectItem>
-                <SelectItem value="medium">Medium</SelectItem>
-                <SelectItem value="low">Low</SelectItem>
-              </SelectContent>
-            </Select>
-                      </div>
-                    </div>
-                    <div className="grid gap-2">
-                      <label className="text-xs text-muted-foreground">Delivery Mode</label>
-            <Select value={deliveryMode} onValueChange={(v) => setDeliveryMode(v as any)}>
-                        <SelectTrigger className="w-full border-slate-200">
-                <SelectValue placeholder="Delivery Mode" />
-              </SelectTrigger>
-              <SelectContent>
-                          <SelectItem value="all">All</SelectItem>
-                <SelectItem value="onsite">Onsite</SelectItem>
-                <SelectItem value="online">Online</SelectItem>
-                <SelectItem value="hybrid">Hybrid</SelectItem>
-              </SelectContent>
-            </Select>
-                    </div>
-                    <div className="grid gap-2">
-                      <label className="text-xs text-muted-foreground">Study Pattern</label>
-            <Select value={studyPattern} onValueChange={(v) => setStudyPattern(v as any)}>
-                        <SelectTrigger className="w-full border-slate-200">
-                <SelectValue placeholder="Study Pattern" />
-              </SelectTrigger>
-              <SelectContent>
-                          <SelectItem value="all">All</SelectItem>
-                <SelectItem value="full_time">Full-time</SelectItem>
-                <SelectItem value="part_time">Part-time</SelectItem>
-                <SelectItem value="accelerated">Accelerated</SelectItem>
-              </SelectContent>
-            </Select>
-            </div>
-            <div className="flex items-center gap-2 text-sm px-2 py-1 rounded-md border border-slate-200 bg-white">
-                      <Checkbox checked={multiOnly} onCheckedChange={(v) => setMultiOnly(v === true)} id="multiOnlySheet" />
-                      <label htmlFor="multiOnlySheet" className="text-slate-600">Multi-application only</label>
-            </div>
-          </div>
-                  <SheetFooter className="mt-6">
-                    <Button variant="outline" onClick={clearAllFilters}>Clear all</Button>
-                    <Button onClick={() => setShowFilters(false)}>Apply</Button>
-                  </SheetFooter>
-                </SheetContent>
-              </Sheet>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" size="default" className="gap-2 h-9 px-3 text-sm bg-background/60 backdrop-blur-sm border-border/50 hover:bg-background/80 transition-all">
@@ -1348,6 +2187,17 @@ export default function ApplicationsBoardPage() {
                   
                   {/* Actions */}
                   <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">Actions</div>
+                  <DropdownMenuItem
+                    onClick={() => setShowFilters(true)}
+                  >
+                    <Filter className="h-4 w-4 mr-2" />
+                    Open filters…
+                    {activeFilterCount > 0 && (
+                      <span className="ml-auto inline-flex h-5 min-w-[20px] items-center justify-center rounded-full bg-slate-900 px-1 text-[10px] text-white">
+                        {activeFilterCount}
+                      </span>
+                    )}
+                  </DropdownMenuItem>
                   <DropdownMenuItem 
                     onClick={handleRefreshInsights}
                     disabled={isRefreshingInsights || isRefreshing}
@@ -1357,20 +2207,101 @@ export default function ApplicationsBoardPage() {
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-              <Button
-                variant="outline"
-                size="default"
-                className="gap-2 h-9 px-3 text-sm bg-background/60 backdrop-blur-sm border-border/50 hover:bg-background/80 transition-all"
-                onClick={() => openIvy({})}
-                title="Ask Ivy"
-              >
-                <Sparkles className="h-4 w-4 text-accent" />
-                <span className="hidden sm:inline">Ask Ivy</span>
-              </Button>
-              <Button onClick={refreshBoard} variant="outline" className="gap-2 h-9 px-3 text-sm bg-background/60 backdrop-blur-sm border-border/50 hover:bg-background/80 transition-all" disabled={isRefreshing}>
-                <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-                <span className="hidden sm:inline">{isRefreshing ? 'Refreshing…' : 'Refresh'}</span>
-              </Button>
+              <ApplicationIvyButton
+                onOpenIvy={() => openIvy({
+                  applications: filteredWithMulti,
+                  selectedApplicationId: selectedApplicationId || undefined,
+                  selectedApplications: selectedApps,
+                  currentView: view,
+                  filters: {
+                    program,
+                    urgency,
+                    priority,
+                    deliveryMode,
+                    studyPattern,
+                    multiOnly
+                  },
+                  progressionStats,
+                  hasPhoneNumber: selectedApps.length === 1 && selectedApps[0] ? 
+                    (filteredWithMulti.find(app => app.application_id === selectedApps[0])?.phone ? true : false) : 
+                    false,
+                  // Application-specific actions
+                  navigate,
+                  setView: setView,
+                  toggleFilters: () => setShowFilters(!showFilters),
+                  toggleAiFocus: () => setAiFocus(!aiFocus),
+                  openFilterModal: () => {
+                    setShowFilters(true);
+                    // Could focus on specific filter type
+                  },
+                  setFilter: (key: string, value: any) => {
+                    switch(key) {
+                      case 'program': setProgram(value); break;
+                      case 'urgency': setUrgency(value); break;
+                      case 'priority': setPriority(value); break;
+                      case 'deliveryMode': setDeliveryMode(value); break;
+                      case 'studyPattern': setStudyPattern(value); break;
+                      case 'multiOnly': setMultiOnly(value); break;
+                      case 'risk': setRiskOnly(value === 'high' || value === true); break;
+                    }
+                  },
+                  showAnalytics: () => {
+                    // Could open analytics panel or modal
+                    console.log('Show analytics');
+                  },
+                  refreshInsights: handleRefreshInsights,
+                  createApplication: () => {
+                    // Navigate to create application page
+                    navigate('/admissions/applications/new');
+                  },
+                  exportApplications: (ids: string[]) => {
+                    // Export selected applications
+                    console.log('Export applications:', ids);
+                  },
+                  openBulkActions: openBulkActions,
+                  explainScore: (id: string) => {
+                    // Show AI score explanation
+                    console.log('Explain score for:', id);
+                  },
+                  getRecommendations: (id: string) => {
+                    // Get AI recommendations
+                    console.log('Get recommendations for:', id);
+                  },
+                  identifyBlockers: (id: string) => {
+                    // Identify blockers
+                    console.log('Identify blockers for:', id);
+                  },
+                  selectAll: () => {
+                    setSelectedApps(tableRows.map(app => app.application_id));
+                  },
+                  clearSelection: () => setSelectedApps([]),
+                  refreshData: refreshBoard,
+                  // Modal openers
+                  openEmailComposer: () => {
+                    if (selectedApps.length === 1) {
+                      const app = filteredWithMulti.find(app => app.application_id === selectedApps[0]);
+                      if (app) handleEmailClick(app);
+                    }
+                  },
+                  openCallConsole: () => {
+                    if (selectedApps.length === 1) {
+                      const app = filteredWithMulti.find(app => app.application_id === selectedApps[0]);
+                      if (app) handlePhoneClick(app);
+                    }
+                  },
+                  openMeetingBooker: () => {
+                    if (selectedApps.length === 1) {
+                      const app = filteredWithMulti.find(app => app.application_id === selectedApps[0]);
+                      if (app) handleMeetingClick(app);
+                    }
+                  }
+                })}
+                context={{
+                  applications: filteredWithMulti,
+                  selectedApplications: selectedApps,
+                  progressionStats
+                }}
+              />
               <Button className="gap-2 h-9 px-4 text-sm font-medium text-white shadow-sm transition-all bg-[hsl(var(--brand-accent))] hover:bg-[hsl(var(--brand-accent))]/90">
                 <Plus className="h-4 w-4" />
                 <span className="hidden sm:inline">New Application</span>
@@ -1380,9 +2311,101 @@ export default function ApplicationsBoardPage() {
         </div>
       </div>
 
+      <Sheet open={showFilters} onOpenChange={setShowFilters}>
+        <SheetContent side="right" className="sm:max-w-sm">
+          <SheetHdr>
+            <SheetTtl>Filters</SheetTtl>
+            <SheetDesc>Refine the applications shown on the board.</SheetDesc>
+          </SheetHdr>
+          <div className="mt-4 space-y-4">
+            <div className="grid gap-2">
+              <label className="text-xs text-muted-foreground">Program</label>
+              <Select value={program} onValueChange={setProgram}>
+                <SelectTrigger className="w-full border-slate-200">
+                  <SelectValue placeholder="Program" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Programs</SelectItem>
+                  {uniqueProgrammes.map(prog => (
+                    <SelectItem key={prog} value={prog}>{prog}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="grid gap-2">
+                <label className="text-xs text-muted-foreground">Urgency</label>
+                <Select value={urgency} onValueChange={setUrgency}>
+                  <SelectTrigger className="w-full border-slate-200">
+                    <SelectValue placeholder="Urgency" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All</SelectItem>
+                    <SelectItem value="high">High</SelectItem>
+                    <SelectItem value="medium">Medium</SelectItem>
+                    <SelectItem value="low">Low</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid gap-2">
+                <label className="text-xs text-muted-foreground">Priority</label>
+                <Select value={priority} onValueChange={setPriority}>
+                  <SelectTrigger className="w-full border-slate-200">
+                    <SelectValue placeholder="Priority" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All</SelectItem>
+                    <SelectItem value="critical">Critical</SelectItem>
+                    <SelectItem value="high">High</SelectItem>
+                    <SelectItem value="medium">Medium</SelectItem>
+                    <SelectItem value="low">Low</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="grid gap-2">
+              <label className="text-xs text-muted-foreground">Delivery Mode</label>
+              <Select value={deliveryMode} onValueChange={(v) => setDeliveryMode(v as any)}>
+                <SelectTrigger className="w-full border-slate-200">
+                  <SelectValue placeholder="Delivery Mode" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All</SelectItem>
+                  <SelectItem value="onsite">Onsite</SelectItem>
+                  <SelectItem value="online">Online</SelectItem>
+                  <SelectItem value="hybrid">Hybrid</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid gap-2">
+              <label className="text-xs text-muted-foreground">Study Pattern</label>
+              <Select value={studyPattern} onValueChange={(v) => setStudyPattern(v as any)}>
+                <SelectTrigger className="w-full border-slate-200">
+                  <SelectValue placeholder="Study Pattern" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All</SelectItem>
+                  <SelectItem value="full_time">Full-time</SelectItem>
+                  <SelectItem value="part_time">Part-time</SelectItem>
+                  <SelectItem value="accelerated">Accelerated</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex items-center gap-2 text-sm px-2 py-1 rounded-md border border-slate-200 bg-white">
+              <Checkbox checked={multiOnly} onCheckedChange={(v) => setMultiOnly(v === true)} id="multiOnlySheet" />
+              <label htmlFor="multiOnlySheet" className="text-slate-600">Multi-application only</label>
+            </div>
+          </div>
+          <SheetFooter className="mt-6">
+            <Button variant="outline" onClick={clearAllFilters}>Clear all</Button>
+            <Button onClick={() => setShowFilters(false)}>Apply</Button>
+          </SheetFooter>
+        </SheetContent>
+      </Sheet>
+
         {/* Applied Filter Chips */}
         {activeFilterCount > 0 && (
-          <div className="mb-4">
+          <div className="px-4 sm:px-5 lg:px-6 mb-4">
             <div className="flex flex-wrap gap-2">
               {(search || '').trim().length > 0 && (
                 <Badge variant="secondary" className="bg-white border-slate-200 text-slate-700">
@@ -1446,84 +2469,116 @@ export default function ApplicationsBoardPage() {
         )}
 
         {/* Pipeline Progression Insights */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
-          <div className="bg-card border border-border rounded-lg p-3 shadow-sm hover:shadow-md transition-all duration-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-xs text-muted-foreground uppercase tracking-wide">Active Applications</div>
-                <div className="text-2xl font-bold text-foreground tabular-nums">{progressionStats.total}</div>
-                <div className="text-[11px] text-muted-foreground mt-1">
-                  {progressionStats.highConfidence} high-confidence (≥70%)
-                </div>
-              </div>
-              <div className="p-2 rounded-md bg-muted/60">
-                <Users className="h-4 w-4 text-muted-foreground" />
-              </div>
-            </div>
+        <div className="px-4 sm:px-5 lg:px-6">
+          <div className="mb-2 flex justify-end">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 gap-1 rounded-full border border-white/50 bg-white/40 px-3 text-xs text-slate-600 backdrop-blur-md transition hover:border-white/70 hover:bg-white/60 hover:text-slate-700"
+              onClick={() => setShowInsights((prev) => !prev)}
+              aria-pressed={showInsights}
+              aria-label={showInsights ? "Hide pipeline insights" : "Show pipeline insights"}
+            >
+              {showInsights ? (
+                <>
+                  Hide
+                  <ChevronDown className="h-3.5 w-3.5" />
+                </>
+              ) : (
+                <>
+                  Show
+                  <ChevronUp className="h-3.5 w-3.5" />
+                </>
+              )}
+            </Button>
           </div>
-
-          <div className="bg-card border border-border rounded-lg p-3 shadow-sm hover:shadow-md transition-all duration-200">
-            <div className="flex items-center justify-between">
-              <div className="w-full">
-                <div className="flex items-center justify-between">
-                  <div className="text-xs text-muted-foreground uppercase tracking-wide">Avg Progression Likelihood</div>
-                  <div className="text-sm font-semibold text-success tabular-nums">{progressionStats.avgProgression}%</div>
+          <div className="relative mb-6 overflow-hidden rounded-2xl border border-border/20 bg-card/40 backdrop-blur">
+            {showInsights ? (
+              <div className="grid grid-cols-1 gap-3 px-4 pb-4 pt-2 sm:grid-cols-2 xl:grid-cols-4">
+                <div className="flex items-center gap-3 rounded-xl border border-border/30 bg-white/85 px-4 py-3 shadow-[0_12px_40px_-26px_rgba(15,23,42,0.35)]">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full border border-border/40 text-muted-foreground">
+                    <Users className="h-4 w-4" />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Active Applications</div>
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-xl font-semibold tabular-nums text-foreground">{progressionStats.total}</span>
+                      <span className="text-xs text-muted-foreground">
+                        {progressionStats.highConfidence} ≥70%
+                      </span>
+                    </div>
+                  </div>
                 </div>
-                <div className="mt-3 h-2 w-full bg-muted rounded-full overflow-hidden">
-                  <div
-                    className="h-2 bg-success rounded-full transition-all"
-                    style={{ width: `${Math.max(0, Math.min(100, progressionStats.avgProgression))}%` }}
-                  />
+                <div className="flex items-center gap-3 rounded-xl border border-success/10 bg-white/85 px-4 py-3 shadow-[0_12px_40px_-26px_rgba(34,197,94,0.35)]">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full border border-success/40 text-success">
+                    <Sparkles className="h-4 w-4" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Avg Progression</div>
+                    <div className="flex items-center gap-3">
+                      <span className="text-xl font-semibold tabular-nums text-success">{progressionStats.avgProgression}%</span>
+                      <div className="h-2 flex-1 rounded-full bg-muted">
+                        <div
+                          className="h-full rounded-full bg-success transition-all"
+                          style={{ width: `${Math.max(0, Math.min(100, progressionStats.avgProgression))}%` }}
+                        />
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <div className="text-[11px] text-muted-foreground mt-2">
-                  Target ≥ 65% • lift driven by ML progression scores
+                <div className="flex items-center gap-3 rounded-xl border border-destructive/10 bg-white/85 px-4 py-3 shadow-[0_12px_40px_-26px_rgba(239,68,68,0.35)]">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full border border-destructive/40 text-destructive">
+                    <AlertTriangle className="h-4 w-4" />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">At-Risk Applicants</div>
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-xl font-semibold tabular-nums text-destructive">{progressionStats.highRisk}</span>
+                      <span className="text-xs text-muted-foreground">
+                        {progressionStats.total > 0
+                          ? `${Math.round((progressionStats.highRisk / progressionStats.total) * 100)}% of pipeline`
+                          : '—'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 rounded-xl border border-border/30 bg-white/85 px-4 py-3 shadow-[0_12px_40px_-26px_rgba(15,23,42,0.28)]">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full border border-border/40 text-muted-foreground">
+                    <Target className="h-4 w-4" />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Blockers Spotlight</div>
+                    <div className="text-sm font-semibold text-foreground truncate">
+                      {progressionStats.topBlocker ? progressionStats.topBlocker.item : 'No blockers flagged'}
+                    </div>
+                    <div className="text-[11px] text-muted-foreground">
+                      {progressionStats.blockersApps > 0
+                        ? `${progressionStats.blockersApps} apps • ${progressionStats.topBlocker?.count ?? 0} mentions`
+                        : 'Pipeline clear'}
+                    </div>
+                  </div>
                 </div>
               </div>
-              <div className="p-2 rounded-md bg-success/10 border border-success/20 ml-3">
-                <Sparkles className="h-4 w-4 text-success" />
+            ) : (
+              <div className="flex flex-wrap items-center gap-2 px-4 sm:px-5 py-2.5">
+                <Badge variant="secondary" className="bg-white/70 border-border/40 text-slate-700">
+                  <Users className="mr-1.5 h-3.5 w-3.5 text-muted-foreground" />
+                  {progressionStats.total} active
+                </Badge>
+                <Badge variant="secondary" className="bg-white/70 border-border/40 text-success">
+                  <Sparkles className="mr-1.5 h-3.5 w-3.5" />
+                  {progressionStats.avgProgression}% avg
+                </Badge>
+                <Badge variant="secondary" className="bg-white/70 border-border/40 text-destructive">
+                  <AlertTriangle className="mr-1.5 h-3.5 w-3.5" />
+                  {progressionStats.highRisk} at-risk
+                </Badge>
+                <Badge variant="secondary" className="bg-white/70 border-border/40 text-muted-foreground">
+                  <Target className="mr-1.5 h-3.5 w-3.5" />
+                  {progressionStats.blockersApps} blockers
+                </Badge>
               </div>
-            </div>
-          </div>
-
-          <div className="bg-card border border-border rounded-lg p-3 shadow-sm hover:shadow-md transition-all duration-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-xs text-muted-foreground uppercase tracking-wide">At-Risk Applicants</div>
-                <div className="text-2xl font-bold text-destructive tabular-nums">{progressionStats.highRisk}</div>
-                <div className="text-[11px] text-muted-foreground mt-1">
-                  {progressionStats.total > 0
-                    ? `${Math.round((progressionStats.highRisk / progressionStats.total) * 100)}% of active pipeline`
-                    : '—'}
-                </div>
-              </div>
-              <div className="p-2 rounded-md bg-destructive/10 border border-destructive/20">
-                <AlertTriangle className="h-4 w-4 text-destructive" />
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-card border border-border rounded-lg p-3 shadow-sm hover:shadow-md transition-all duration-200">
-            <div className="flex items-center justify-between">
-              <div className="flex-1 min-w-0">
-                <div className="text-xs text-muted-foreground uppercase tracking-wide">Blockers Spotlight</div>
-                <div className="mt-1 text-sm font-semibold text-foreground leading-snug truncate">
-                  {progressionStats.topBlocker ? progressionStats.topBlocker.item : 'No blockers flagged'}
-                </div>
-                <div className="text-[11px] text-muted-foreground mt-1">
-                  {progressionStats.blockersApps > 0
-                    ? `${progressionStats.blockersApps} apps with blockers • ${progressionStats.topBlocker?.count ?? 0} mentions`
-                    : 'All clear across the pipeline'}
-                </div>
-                <div className="text-[11px] text-muted-foreground mt-1">
-                  {progressionStats.totalRecommendedActions > 0
-                    ? `${progressionStats.totalRecommendedActions} recommended actions ready`
-                    : 'No actions queued'}
-                </div>
-              </div>
-              <div className="p-2 rounded-md bg-muted/60 ml-3">
-                <Target className="h-4 w-4 text-muted-foreground" />
-              </div>
-            </div>
+            )}
           </div>
         </div>
 
@@ -1546,7 +2601,8 @@ export default function ApplicationsBoardPage() {
 
         {/* Bulk Actions */}
         {selectedApps.length > 0 && (
-          <div className="bg-accent/5 border border-accent/20 rounded-lg p-3 mb-4">
+        <div className="px-4 sm:px-5 lg:px-6">
+          <div className="bg-accent/3 border border-accent/10 rounded-lg p-3 mb-4">
             <div className="flex items-center justify-between">
               <span className="text-sm text-accent font-medium">
                 {selectedApps.length} application{selectedApps.length !== 1 ? 's' : ''} selected
@@ -1570,6 +2626,7 @@ export default function ApplicationsBoardPage() {
                 </Button>
               </div>
             </div>
+          </div>
           </div>
         )}
 
@@ -1646,7 +2703,7 @@ export default function ApplicationsBoardPage() {
               collapseAutoExpandedStage();
             }}
           >
-            <div className="flex gap-4 px-3">
+            <div className="flex gap-6 px-4 sm:px-5">
           {stages.map((stage) => {
             const config = getStageConfig(stage.id);
                  const columnItems = grouped[stage.id] || [];
@@ -1657,7 +2714,7 @@ export default function ApplicationsBoardPage() {
                        const toneVariant = stageToneStyles[config.tone];
                        const columnBase = isCollapsed
                          ? 'w-12 px-0 pb-0 rounded-2xl h-96'
-                         : `w-[21rem] px-4 pb-6 rounded-[26px] bg-white/75 backdrop-blur-lg border border-slate-200/40 shadow-[0_18px_45px_-28px_rgba(15,23,42,0.75)] min-h-screen`;
+                         : `w-[21rem] px-5 pb-6 rounded-2xl bg-white/80 backdrop-blur-lg border border-border/40 shadow-[0_18px_45px_-28px_rgba(15,23,42,0.75)] min-h-screen`;
                        const columnHover = snapshot.isDraggingOver
                          ? `ring-1 ${toneVariant.dropRing} shadow-[0_24px_48px_-32px_rgba(15,23,42,0.55)]`
                          : 'hover:border-slate-200/70 hover:shadow-[0_22px_42px_-34px_rgba(15,23,42,0.45)]';
@@ -1673,7 +2730,7 @@ export default function ApplicationsBoardPage() {
                                <button
                                  type="button"
                                  onClick={() => toggleStageCollapse(stage.id)}
-                                 className={`group/collapse relative flex w-full items-stretch justify-center rounded-xl transition-colors ${toneVariant.collapsedShell} hover:brightness-[0.97]`}
+                                 className={`group/collapse relative flex w-full items-stretch justify-center rounded-2xl transition-colors ${toneVariant.collapsedShell} hover:brightness-[0.97]`}
                                  style={{ minHeight: 'calc(24rem - 8px)' }}
                                  title={`Expand ${config.name}`}
                                >
@@ -1698,7 +2755,7 @@ export default function ApplicationsBoardPage() {
                       </div>
                            ) : (
                              <>
-                               <Card className={`mb-6 mt-3 border ${config.color} relative min-h-[96px] rounded-2xl shadow-sm hover:shadow-md transition-shadow`} >
+                               <Card className={`mb-6 mt-3 border border-border/40 ${toneVariant.cardBg} relative min-h-[96px] rounded-2xl shadow-sm hover:shadow-lg transition-shadow`} >
                                  {/* Drop indicator */}
                                  {snapshot.isDraggingOver && (
                                    <div className={`pointer-events-none absolute inset-1 border border-dashed rounded-lg flex items-center justify-center z-20 transition-all duration-200 ease-out shadow ${toneVariant.dropBorder} ${toneVariant.dropBg}`}>
@@ -1707,20 +2764,22 @@ export default function ApplicationsBoardPage() {
                                      </div>
                                    </div>
                                  )}
-                                 <CardHeader className="py-3 h-full pr-12">
+                                 <CardHeader className="px-5 pt-4 pb-2 pr-11">
                                    <TooltipProvider delayDuration={150}>
                                      <Tooltip>
                                        <TooltipTrigger asChild>
-                                         <div className="flex items-start gap-3 cursor-help">
-                                           <div className={`p-2 rounded-xl border shadow-sm flex items-center justify-center ${toneVariant.iconWrapper}`}>
-                                             {config.icon}
+                                         <div className="flex items-center justify-between gap-3 cursor-help">
+                                           <div className="flex items-center gap-2">
+                                             <span className={`flex h-7 w-7 items-center justify-center rounded-full border ${toneVariant.iconWrapper}`}>
+                                               {config.icon}
+                                             </span>
+                                             <CardTitle className="text-sm font-semibold text-foreground leading-snug" title={config.name}>
+                                               {config.name}
+                                             </CardTitle>
                                            </div>
-                                           <div className="min-w-0 flex flex-col gap-1">
-                                             <CardTitle className="text-sm font-semibold text-foreground leading-snug whitespace-normal break-words" title={config.name}>{config.name}</CardTitle>
-                                             <Badge variant="outline" className={`w-fit text-[10px] font-semibold ${toneVariant.badge}`}>
-                                               {columnItems.length}
-                      </Badge>
-                    </div>
+                                           <span className={`rounded-full border px-2.5 py-0.5 text-[11px] font-medium tabular-nums ${toneVariant.badge}`}>
+                                             {columnItems.length}
+                                           </span>
                                          </div>
                                        </TooltipTrigger>
                                        <TooltipContent align="start" sideOffset={10} className="max-w-xs text-xs leading-relaxed text-slate-600">
@@ -1728,12 +2787,12 @@ export default function ApplicationsBoardPage() {
                                        </TooltipContent>
                                      </Tooltip>
                                    </TooltipProvider>
-                  </CardHeader>
+                                 </CardHeader>
                                  {/* Chevron positioned relative to Card, not CardHeader */}
                                  <Button
                                    variant="ghost"
                                    size="icon"
-                                   className={`absolute right-3 top-1/2 -translate-y-1/2 h-7 w-7 rounded-full bg-white z-10 ${toneVariant.chevron}`}
+                                   className={`absolute right-4 top-4 h-7 w-7 rounded-full bg-white z-10 ${toneVariant.chevron}`}
                                    onClick={() => toggleStageCollapse(stage.id)}
                                    title={collapsedStages[stage.id] ? 'Expand cards' : 'Collapse cards'}
                                  >
@@ -1744,7 +2803,7 @@ export default function ApplicationsBoardPage() {
                                <div
                                  className="transition-all duration-200 ease-out overflow-visible opacity-100 flex-1 min-h-0"
                                >
-                                 <div className="space-y-3" ref={(el) => { if (el) columnRefs.current.set(stage.id, el); }}>
+                                 <div className="space-y-4" ref={(el) => { if (el) columnRefs.current.set(stage.id, el); }}>
                                    {columnItems.map((app, index) => (
                                      <Draggable key={app.application_id} draggableId={app.application_id} index={index}>
                                        {(dragProvided, dragSnapshot) => {
@@ -1808,210 +2867,419 @@ export default function ApplicationsBoardPage() {
         </div>
         )
       ) : (
-        // Enhanced Table View
-        <Card className="overflow-hidden border-slate-200">
+        <Card className="overflow-hidden border border-slate-200 shadow-sm">
+          <div className="flex items-center justify-between border-b border-border/60 bg-muted/5 px-4 py-2">
+            <div className="text-xs text-muted-foreground">
+              {tableRows.length} of {filteredWithMulti.length} applications visible
+              {activeColumnFilterCount > 0 && (
+                <span className="ml-1">• {activeColumnFilterCount} column filter{activeColumnFilterCount > 1 ? "s" : ""}</span>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              {activeColumnFilterCount > 0 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 text-xs"
+                  onClick={clearColumnFilters}
+                >
+                  Clear column filters
+                </Button>
+              )}
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 text-xs"
+                onClick={handleSaveDefaultLayout}
+              >
+                Save as default layout
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 text-xs"
+                onClick={handleResetLayout}
+              >
+                Reset layout
+              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="h-8 gap-2 text-xs">
+                    <List className="h-3.5 w-3.5" />
+                    Columns
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-64">
+                  <div className="px-2 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                    Manage columns
+                  </div>
+                  <DropdownMenuSeparator />
+                  <div className="max-h-72 overflow-y-auto">
+                    {orderedColumnDefinitions.map((column, index) => {
+                      const isVisible = isColumnVisible(column.id);
+                      const isLocked = lockedColumnIds.has(column.id);
+                      return (
+                        <DropdownMenuItem
+                          key={column.id}
+                          onSelect={(event) => event.preventDefault()}
+                          className="focus:bg-muted/60 p-0"
+                        >
+                          <div className="flex w-full items-center justify-between gap-3 px-2 py-1.5">
+                            <label className="flex items-center gap-2 text-sm font-medium text-foreground/90">
+                              <Checkbox
+                                checked={isVisible}
+                                onCheckedChange={() => column.id && handleToggleColumnVisibility(column.id)}
+                                disabled={isLocked}
+                              />
+                              <span>{column.label}</span>
+                            </label>
+                            <div className="flex items-center gap-1">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6"
+                                onClick={(event) => {
+                                  event.preventDefault();
+                                  event.stopPropagation();
+                                  moveColumn(column.id, "up");
+                                }}
+                                disabled={index === 0}
+                              >
+                                <ChevronUp className="h-3 w-3" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6"
+                                onClick={(event) => {
+                                  event.preventDefault();
+                                  event.stopPropagation();
+                                  moveColumn(column.id, "down");
+                                }}
+                                disabled={index === orderedColumnDefinitions.length - 1}
+                              >
+                                <ChevronDown className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          </div>
+                        </DropdownMenuItem>
+                      );
+                    })}
+                  </div>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </div>
+          {activeColumnFilterEntries.length > 0 && (
+            <div className="flex flex-wrap items-center gap-2 border-b border-border/60 bg-muted/20 px-4 py-2">
+              {activeColumnFilterEntries.map(([columnId, value]) => {
+                const key = columnId as TableColumnKey;
+                const displayLabel = columnLabelMap.get(key) ?? key;
+                const displayValue = getFilterDisplayValue(key, value as string);
+                return (
+                  <Badge
+                    key={`${key}-${displayValue}`}
+                    variant="secondary"
+                    className="flex items-center gap-1 bg-white text-xs text-slate-700"
+                  >
+                    <span className="font-medium text-foreground">{displayLabel}:</span>
+                    <span className="text-foreground/80">{displayValue}</span>
+                    <button
+                      type="button"
+                      className="ml-1 inline-flex h-4 w-4 items-center justify-center rounded-full hover:bg-muted"
+                      onClick={() => handleClearColumnFilter(key)}
+                      aria-label={`Clear ${displayLabel} filter`}
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </Badge>
+                );
+              })}
+            </div>
+          )}
           <CardContent className="p-0">
             <div className="w-full overflow-x-auto">
-              {loading ? (
-                <div className="p-4 space-y-2">
-                  {Array.from({ length: 8 }).map((_, i) => (
-                    <div key={i} className="grid grid-cols-[40px_1.4fr_1fr_1fr_1fr_0.8fr_1fr_0.8fr_1.4fr_1fr] items-center gap-2 px-4 py-3 border-b">
-                      <Skeleton className="h-5 w-5 rounded-sm" />
-                      <Skeleton className="h-4 w-56" />
-                      <Skeleton className="h-4 w-32" />
-                      <Skeleton className="h-4 w-24" />
-                      <Skeleton className="h-5 w-20" />
-                      <Skeleton className="h-4 w-16" />
-                      <Skeleton className="h-4 w-24" />
-                      <Skeleton className="h-4 w-10" />
-                      <Skeleton className="h-4 w-40" />
-                      <div className="flex gap-2 justify-self-start">
-                        <Skeleton className="h-7 w-7 rounded" />
-                        <Skeleton className="h-7 w-7 rounded" />
-                        <Skeleton className="h-7 w-7 rounded" />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-              <table className="w-full text-sm">
+              <table
+                ref={tableRef}
+                className={`relative min-w-full text-sm ${resizingColumnId ? "cursor-col-resize select-none" : ""}`}
+              >
                 <colgroup>
-                  <col style={{ width: '40px' }} />
-                  <col style={{ width: '22%' }} />
-                  <col style={{ width: '14%' }} />
-                  <col style={{ width: '10%' }} />
-                  <col style={{ width: '10%' }} />
-                  <col style={{ width: '8%' }} />
-                  <col style={{ width: '12%' }} />
-                  <col style={{ width: '6%' }} />
-                  <col style={{ width: '12%' }} />
-                  <col style={{ width: '6%' }} />
+                  <col style={{ width: 48 }} />
+                  {visibleColumns.map((column) => {
+                    const widthValue =
+                      columnWidths[column.id] ??
+                      column.minWidth ??
+                      DEFAULT_COLUMN_WIDTHS[column.id] ??
+                      160;
+                    const minWidth =
+                      column.minWidth ?? DEFAULT_COLUMN_WIDTHS[column.id] ?? 160;
+                    return (
+                      <col
+                        key={`col-${column.id}`}
+                        style={{ width: widthValue, minWidth }}
+                      />
+                    );
+                  })}
+                  <col style={{ width: 152, minWidth: 128 }} />
                 </colgroup>
-                <thead className="sticky top-0 z-10 bg-gradient-to-r from-slate-50 to-slate-100 border-b border-slate-200">
-                  <tr className="text-slate-600">
-                    <th className="px-6 py-3 text-left font-medium">
-                      <Checkbox 
-                        checked={selectedApps.length === filtered.length && filtered.length > 0}
+                <thead className="bg-muted/40 border-b border-border/60 text-muted-foreground">
+                  <tr>
+                    <th className="sticky top-0 z-10 px-4 py-3 text-left align-middle">
+                      <Checkbox
                         onCheckedChange={(checked) => {
-                          if (checked) {
-                            setSelectedApps(filtered.map(a => a.application_id));
+                          if (checked === true) {
+                            setSelectedApps((prev) => {
+                              const next = new Set(prev);
+                              tableRows.forEach((app) => next.add(app.application_id));
+                              return Array.from(next);
+                            });
                           } else {
-                            setSelectedApps([]);
+                            setSelectedApps((prev) =>
+                              prev.filter((id) => !tableRows.some((app) => app.application_id === id))
+                            );
                           }
                         }}
+                        checked={
+                          tableRows.length > 0 &&
+                          tableRows.every((app) => selectedApps.includes(app.application_id))
+                        }
+                        aria-label="Select all visible applications"
                       />
                     </th>
-                    <th className="px-6 py-3 text-left font-medium">Student</th>
-                    <th className="px-6 py-3 text-left font-medium">Program</th>
-                    <th className="px-6 py-3 text-left font-medium">Stage</th>
-                    <th className="px-6 py-3 text-left font-medium">Priority</th>
-                    <th className="px-6 py-3 text-left font-medium">Lead Score</th>
-                    <th className="px-6 py-3 text-left font-medium">Conversion</th>
-                    <th className="px-6 py-3 text-left font-medium">Days</th>
-                    <th className="px-6 py-3 text-left font-medium">Next Action</th>
-                    <th className="px-6 py-3 text-left font-medium">Actions</th>
+                    {visibleColumns.map((column) => {
+                      const alignClass =
+                        column.align === "right"
+                          ? "text-right"
+                          : column.align === "center"
+                            ? "text-center"
+                            : "text-left";
+                      const justifyClass =
+                        column.align === "right"
+                          ? "justify-end"
+                          : column.align === "center"
+                            ? "justify-center"
+                            : "justify-start";
+                      return (
+                        <th
+                          key={column.id}
+                          className={`sticky top-0 z-10 px-4 py-3 text-xs font-semibold uppercase tracking-wide ${alignClass} relative`}
+                        >
+                          <button
+                            type="button"
+                            className={`relative inline-flex w-full items-center gap-2 ${justifyClass} pr-4 ${column.sortable ? "hover:text-foreground transition-colors" : ""}`}
+                            onClick={() => column.sortable && handleSort(column.id)}
+                          >
+                            <span>{column.label}</span>
+                            {column.sortable && (
+                              sortState.column === column.id ? (
+                                sortState.direction === "asc" ? (
+                                  <ArrowUp className="h-3 w-3" />
+                                ) : (
+                                  <ArrowDown className="h-3 w-3" />
+                                )
+                              ) : (
+                                <ArrowUpDown className="h-3 w-3 opacity-50" />
+                              )
+                            )}
+                          </button>
+                          <div
+                            className="absolute right-0 top-0 h-full w-2 cursor-col-resize select-none"
+                            onPointerDown={(event) => handleColumnResizeStart(event, column.id)}
+                            aria-hidden="true"
+                          >
+                            <span
+                              className={`absolute right-0 top-0 h-full w-[3px] rounded-full transition-colors ${resizingColumnId === column.id ? "bg-border/80" : "bg-transparent hover:bg-border/80"}`}
+                            />
+                          </div>
+                        </th>
+                      );
+                    })}
+                    <th className="sticky top-0 z-10 px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide">
+                      Actions
+                    </th>
+                  </tr>
+                  <tr className="bg-background/90 border-b border-border/50 text-xs text-muted-foreground">
+                    <th className="px-4 py-2"></th>
+                    {visibleColumns.map((column) => {
+                      const alignClass =
+                        column.align === "right"
+                          ? "text-right"
+                          : column.align === "center"
+                            ? "text-center"
+                            : "text-left";
+
+                      if (!column.filter) {
+                        return (
+                          <th
+                            key={`${column.id}-filter`}
+                            className={`px-4 py-2 ${alignClass}`}
+                          />
+                        );
+                      }
+
+                      if (column.filter.type === "select") {
+                        return (
+                          <th
+                            key={`${column.id}-filter`}
+                            className={`px-4 py-2 ${alignClass}`}
+                          >
+                            <Select
+                              value={columnFilters[column.id] ?? "all"}
+                              onValueChange={(value) => updateColumnFilter(column.id, value)}
+                            >
+                              <SelectTrigger className="h-8 w-full text-xs">
+                                <SelectValue placeholder={column.filter.placeholder || "All"} />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="all">All</SelectItem>
+                                {(column.filter.options || []).map((option) => (
+                                  <SelectItem key={option.value} value={option.value}>
+                                    {option.label}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </th>
+                        );
+                      }
+
+                      return (
+                        <th
+                          key={`${column.id}-filter`}
+                          className={`px-4 py-2 ${alignClass}`}
+                        >
+                          <Input
+                            value={columnFilters[column.id] ?? ""}
+                            onChange={(event) => updateColumnFilter(column.id, event.target.value)}
+                            placeholder={column.filter.placeholder}
+                            className="h-8 text-xs"
+                          />
+                        </th>
+                      );
+                    })}
+                    <th className="px-4 py-2"></th>
                   </tr>
                 </thead>
                 <tbody>
-          {filteredWithMulti.map((app) => {
-            const displayData = getApplicationCardDisplay(app);
-            return (
-              <tr key={app.application_id} className="group border-b border-slate-100 hover:bg-slate-50/50">
-                <td className="px-6 py-4">
-                  <Checkbox 
-                    checked={selectedApps.includes(app.application_id)}
-                    onCheckedChange={() => toggleSelection(app.application_id)}
-                  />
-                </td>
-                <td className="px-6 py-4">
-                  <div className="flex items-center gap-3">
-                    <div className="mr-1 flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-muted to-muted/80 text-muted-foreground text-xs font-bold border border-border">
-                      {(displayData.studentName || '??').split(' ').map(s => s[0]).join('').slice(0,2).toUpperCase()}
-                    </div>
-                    <div>
-                      <div className="font-medium text-foreground">{displayData.studentName}</div>
-                      <div className="text-muted-foreground text-xs">{app.email || 'No email'}</div>
-                      {(personAppCounts.get(String(app.person_id)) || 0) > 1 && (
-                        <div className="text-[10px] text-accent">{personAppCounts.get(String(app.person_id))} applications</div>
-                      )}
-                    </div>
-                  </div>
-                </td>
-                <td className="px-6 py-4 text-slate-700">{displayData.program}</td>
-                <td className="px-6 py-4">
-                  <Badge variant="outline" className="text-xs">
-                    {displayData.stage}
-                  </Badge>
-                </td>
-                <td className="px-6 py-4">
-                  <PriorityBadge priority={app.priority || 'medium'} />
-                </td>
-                <td className="px-6 py-4">
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium text-slate-700">{displayData.leadScore}</span>
-                  </div>
-                </td>
-                <td className="px-6 py-4">
-                   <ProgressionIndicator probability={app.progression_probability || app.conversion_probability} />
-                </td>
-                {/* New: Delivery + Study columns combined for compactness */}
-                <td className="px-6 py-4 text-slate-700">
-                  <div className="flex items-center gap-2 text-xs">
-                    <Badge variant="secondary" className="capitalize">
-                      {(() => { const m = deriveDeliveryMode(app); return m === 'unknown' ? '—' : m; })()}
-                    </Badge>
-                    <Badge variant="secondary" className="capitalize">
-                      {(() => { const s = deriveStudyPattern(app); return s === 'unknown' ? '—' : s.replace('_',' '); })()}
-                    </Badge>
-                  </div>
-                </td>
-                <td className="px-6 py-4 text-slate-700">{displayData.nextFollowUp}</td>
-                <td className="px-6 py-4 text-slate-700">{displayData.nextAction}</td>
-                        <td className="px-6 py-4">
-                          <div className="flex items-center gap-1">
-                            <TooltipProvider>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
+                  {tableRows.length === 0 ? (
+                    <tr>
+                      <td
+                        colSpan={visibleColumns.length + 2}
+                        className="px-4 py-6 text-center text-sm text-muted-foreground"
+                      >
+                        {activeColumnFilterCount > 0
+                          ? "No applications match the current column filters."
+                          : "No applications to display."}
+                      </td>
+                    </tr>
+                  ) : (
+                    tableRows.map((app) => {
+                      const displayData = getApplicationCardDisplay(app);
+                      const rowSelected = selectedApps.includes(app.application_id);
+                      return (
+                        <tr
+                          key={app.application_id}
+                          className="border-b border-border/60 bg-background hover:bg-muted/40 transition-colors"
+                        >
+                          <td className="px-4 py-3 align-middle">
+                            <Checkbox
+                              checked={rowSelected}
+                              onCheckedChange={() => toggleSelection(app.application_id)}
+                              aria-label={`Select ${displayData.studentName}`}
+                            />
+                          </td>
+                          {visibleColumns.map((column) => {
+                            const alignClass =
+                              column.align === "right"
+                                ? "text-right"
+                                : column.align === "center"
+                                  ? "text-center"
+                                  : "text-left";
+                            return (
+                              <td
+                                key={`${app.application_id}-${column.id}`}
+                                className={`px-4 py-3 align-middle ${alignClass}`}
+                              >
+                                {column.renderCell(app)}
+                              </td>
+                            );
+                          })}
+                          <td className="px-4 py-3 align-middle text-right">
+                            <div className="flex items-center justify-end gap-1">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-8 px-2 text-xs"
+                                onClick={(event) => {
+                                  event.stopPropagation();
+                                  handlePhoneClick(app);
+                                }}
+                              >
+                                <Phone className="mr-1 h-3.5 w-3.5" />
+                                Call
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-8 px-2 text-xs"
+                                onClick={(event) => {
+                                  event.stopPropagation();
+                                  handleEmailClick(app);
+                                }}
+                              >
+                                <Mail className="mr-1 h-3.5 w-3.5" />
+                                Email
+                              </Button>
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
                                   <Button
                                     variant="ghost"
-                                    size="icon"
-                                    data-no-drag
-                                    onPointerDown={(event) => event.stopPropagation()}
-                                    className="h-7 w-7"
+                                    size="sm"
+                                    className="h-8 px-2 text-xs"
+                                    onClick={(event) => event.stopPropagation()}
+                                  >
+                                    <MoreHorizontal className="mr-1 h-3.5 w-3.5" />
+                                    More
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuItem
                                     onClick={(event) => {
                                       event.stopPropagation();
-                                      handleEmailClick(app);
+                                      navigate(`/admissions/applications/${app.application_id}`);
                                     }}
                                   >
-                                    <Mail className="h-3.5 w-3.5" />
-                                  </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>Send Email</TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
-                            
-                            <TooltipProvider>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    data-no-drag
-                                    onPointerDown={(event) => event.stopPropagation()}
-                                    className="h-7 w-7"
+                                    <Eye className="mr-2 h-4 w-4" />
+                                    View details
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
                                     onClick={(event) => {
                                       event.stopPropagation();
                                       handleMeetingClick(app);
                                     }}
                                   >
-                                    <CalIcon className="h-3.5 w-3.5" />
-                                  </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>Schedule Meeting</TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
-                            
-                            <TooltipProvider>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    data-no-drag
-                                    onPointerDown={(event) => event.stopPropagation()}
-                                    className="h-7 w-7"
+                                    <CalIcon className="mr-2 h-4 w-4" />
+                                    Schedule meeting
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
                                     onClick={(event) => {
                                       event.stopPropagation();
-                                      handlePhoneClick(app);
+                                      // Placeholder for edit action
                                     }}
                                   >
-                                    <Phone className="h-3.5 w-3.5" />
-                                  </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>Call Student</TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
-                            
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-7 w-7">
-                                  <MoreHorizontal className="h-3.5 w-3.5" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuItem className="gap-2"><Eye className="h-3.5 w-3.5" /> View Details</DropdownMenuItem>
-                                <DropdownMenuItem className="gap-2"><Edit className="h-3.5 w-3.5" /> Edit</DropdownMenuItem>
-                                <DropdownMenuItem className="gap-2"><BarChart3 className="h-3.5 w-3.5" /> Analytics</DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
+                                    <Edit className="mr-2 h-4 w-4" />
+                                    Edit application
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
                 </tbody>
               </table>
-              )}
             </div>
           </CardContent>
         </Card>

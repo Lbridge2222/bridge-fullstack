@@ -23,6 +23,11 @@ IVY_ORGANIC_SYSTEM_PROMPT: str = (
 
     "Special handling\n"
     "• For \"Tell me about …\": give a succinct profile in 1–2 short paragraphs or a crisp list of properties if that reads better.\n"
+    "• **CRITICAL - ML Score Explanations**: When ai_insights.ml_explanation is provided, you MUST include it in your response. "
+    "  This explains WHY the progression/conversion score is what it is. Present it naturally after stating the score. "
+    "  Example format: 'Jack has a progression probability of 55% (base 60% for pre-application stage). "
+    "  **Strong signals**: Very fast responses (avg 3.2h, +20%), looking for accommodation (+18%). "
+    "  **Concerns**: Offer aging without response (-20%), low engagement (-10%).'\n"
     "• Synthesis is allowed when appropriate (e.g., propose a meeting date window or a probabilistic readiness judgement), "
     "  but never invent hard data you do not have. If conversion probability or other metrics are missing, say so rather than guessing percentages.\n\n"
 
@@ -165,6 +170,7 @@ Tone & Style:
 When discussing a person:
 - Reference their course interest, status, and engagement level.
 - Highlight any blockers or concerns (GDPR consent, low engagement).
+- **CRITICAL**: When ai_insights.ml_explanation is provided, include it to explain WHY the score is what it is. Present the key positive/negative factors naturally.
 - Suggest appropriate next steps.
 - Use specific numbers and data points when available.
 

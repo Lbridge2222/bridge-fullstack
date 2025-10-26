@@ -3,6 +3,7 @@ from typing import List, Optional, Dict, Any
 from uuid import UUID
 from app.db.db import fetch, execute, fetchrow
 from app.schemas.applications import ApplicationCard, StageMoveIn, StageMoveOut
+from datetime import datetime
 
 router = APIRouter()
 
@@ -581,3 +582,125 @@ async def get_application_audit_trail(
         raise HTTPException(status_code=500, detail=f"Failed to fetch audit trail: {str(e)}")
 
 
+# ============================================================================
+# Ask Ivy Action Logging (Outcome Loop foundation)
+# ============================================================================
+
+@router.post("/{application_id}/ai/action")
+async def log_ivy_action(
+    application_id: UUID = Path(...),
+    payload: Dict[str, Any] = Body(...)
+):
+    """
+    Log a one-click Ask Ivy action into the existing application_audit_log.
+
+    Does not change any application data; provides a lightweight trail so we can
+    correlate actions with subsequent outcomes (stages, replies) later.
+    """
+    try:
+        # Minimal payload normalization
+        now = datetime.utcnow().isoformat() + "Z"
+        record = {
+            "action_id": payload.get("action_id"),
+            "action_label": payload.get("action_label"),
+            "group": payload.get("group"),
+            "source": payload.get("source") or "ask_ivy",
+            "query_context": payload.get("query_context") or {},
+            "metadata": payload.get("metadata") or {},
+            "session_id": payload.get("session_id"),
+            "ts": payload.get("timestamp") or now,
+        }
+
+        # Insert into audit log as an UPDATE with synthetic field 'ivy_action'
+        audit_row = await fetchrow(
+            """
+            INSERT INTO application_audit_log (
+                application_id,
+                table_name,
+                operation,
+                field_name,
+                old_value,
+                new_value,
+                change_source,
+                session_id,
+                changed_at
+            ) VALUES (
+                %s,
+                'applications',
+                'UPDATE',
+                'ivy_action',
+                NULL,
+                %s::jsonb,
+                'ask_ivy',
+                %s,
+                NOW()
+            )
+            RETURNING id
+            """,
+            application_id,
+            json.dumps(record),
+            record.get("session_id")
+        )
+
+        return {"ok": True, "audit_id": str(audit_row["id"]) if audit_row else None}
+    except Exception as e:
+        print(f"Error logging Ivy action: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to log Ivy action: {str(e)}")
+
+
+@router.post("/{application_id}/ai/action-outcome")
+async def log_ivy_action_outcome(
+    application_id: UUID = Path(...),
+    payload: Dict[str, Any] = Body(...)
+):
+    """
+    Optional endpoint to log the observed outcome that follows an Ivy action.
+
+    Example payload:
+      { "related_audit_id": "...", "outcome": "stage_changed",
+        "details": {"from": "review_in_progress", "to": "review_complete"} }
+    """
+    try:
+        now = datetime.utcnow().isoformat() + "Z"
+        outcome = {
+            "related_audit_id": payload.get("related_audit_id"),
+            "outcome": payload.get("outcome"),
+            "details": payload.get("details") or {},
+            "session_id": payload.get("session_id"),
+            "ts": payload.get("timestamp") or now,
+        }
+
+        audit_row = await fetchrow(
+            """
+            INSERT INTO application_audit_log (
+                application_id,
+                table_name,
+                operation,
+                field_name,
+                old_value,
+                new_value,
+                change_source,
+                session_id,
+                changed_at
+            ) VALUES (
+                %s,
+                'applications',
+                'UPDATE',
+                'ivy_action_outcome',
+                NULL,
+                %s::jsonb,
+                'ask_ivy',
+                %s,
+                NOW()
+            )
+            RETURNING id
+            """,
+            application_id,
+            json.dumps(outcome),
+            outcome.get("session_id")
+        )
+
+        return {"ok": True, "audit_id": str(audit_row["id"]) if audit_row else None}
+    except Exception as e:
+        print(f"Error logging Ivy action outcome: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to log Ivy action outcome: {str(e)}")

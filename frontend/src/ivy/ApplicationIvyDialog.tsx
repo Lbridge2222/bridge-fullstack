@@ -1,0 +1,948 @@
+// src/ivy/ApplicationIvyDialog.tsx
+// Floating Ask Ivy sidekick for Applications Board with natural language priority
+
+import * as React from "react";
+import { X, Brain, Sparkles, Loader2, GripVertical, Minimize2, Maximize2, User, Copy, Check, RotateCcw, Trash2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
+import type { ApplicationIvyContext } from "./useApplicationIvy";
+import { applicationsApi } from "@/services/api";
+import { applicationRegistry } from "./applicationRegistry";
+import ReactMarkdown from 'react-markdown';
+
+interface ApplicationIvyDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  context: ApplicationIvyContext;
+  queryRag: (query: string) => Promise<void>;
+  isQuerying: boolean;
+  ragResponse: {
+    answer: string;
+    sources: Array<{title: string; url?: string; snippet: string}>;
+    query_type: string;
+    confidence: number;
+    candidates?: Array<{ application_id: string; name: string; stage?: string; programme_name?: string }>;
+    originalQuery?: string;
+  } | null;
+  clearRagResponse: () => void;
+  analyzeByApplicationId: (applicationId: string, originalQuery?: string) => Promise<void>;
+}
+
+// Chat message interface
+interface ChatMessage {
+  id: string;
+  type: 'user' | 'ai';
+  content: string;
+  timestamp: Date;
+  metadata?: {
+    confidence?: number;
+    sources?: Array<{title: string; url?: string; snippet: string}>;
+    query_type?: string;
+  };
+}
+
+// Suggested follow-up prompts based on query type
+const SUGGESTED_PROMPTS: Record<string, string[]> = {
+  applicant_analysis: [
+    "What are their next steps?",
+    "Show me similar applications",
+    "What's the risk assessment?"
+  ],
+  risk_assessment: [
+    "Which applications need attention?",
+    "Show me conversion rates",
+    "What are common blockers?"
+  ],
+  general: [
+    "Show me high-priority applications",
+    "What are the conversion trends?",
+    "Which applications are at risk?"
+  ]
+};
+
+// Local storage keys
+const CONVERSATION_STORAGE_KEY = 'ask-ivy-conversation-history';
+const SIZE_STORAGE_KEY = 'ask-ivy-window-size';
+
+// Size presets - responsive to viewport
+const getSizePresets = () => {
+  const vw = Math.max(window.innerWidth || 0, document.documentElement.clientWidth || 0);
+  const vh = Math.max(window.innerHeight || 0, document.documentElement.clientHeight || 0);
+
+  return {
+    compact: {
+      width: Math.min(384, vw * 0.9),
+      height: Math.min(500, vh * 0.9)
+    },
+    normal: {
+      width: Math.min(480, vw * 0.9),
+      height: Math.min(650, vh * 0.9)
+    },
+    expanded: {
+      width: Math.min(700, vw * 0.9),
+      height: Math.min(800, vh * 0.9)
+    }
+  };
+};
+
+const SIZE_PRESETS = getSizePresets();
+
+export function ApplicationIvyDialog({
+  open,
+  onOpenChange,
+  context,
+  queryRag,
+  isQuerying,
+  ragResponse,
+  clearRagResponse,
+  analyzeByApplicationId
+}: ApplicationIvyDialogProps) {
+  const [query, setQuery] = React.useState('');
+  const [isMinimized, setIsMinimized] = React.useState(false);
+  const [position, setPosition] = React.useState({ x: 20, y: 100 });
+  const [size, setSize] = React.useState(SIZE_PRESETS.normal);
+  const [isDragging, setIsDragging] = React.useState(false);
+  const [isResizing, setIsResizing] = React.useState(false);
+  const [resizeDirection, setResizeDirection] = React.useState<string>('');
+  const [dragStart, setDragStart] = React.useState({ x: 0, y: 0 });
+  const [resizeStart, setResizeStart] = React.useState({ x: 0, y: 0, width: 0, height: 0 });
+  const [messages, setMessages] = React.useState<ChatMessage[]>([]);
+  const [copiedMessageId, setCopiedMessageId] = React.useState<string | null>(null);
+  const [isTyping, setIsTyping] = React.useState(false);
+  const inputRef = React.useRef<HTMLTextAreaElement>(null);
+  const dialogRef = React.useRef<HTMLDivElement>(null);
+  const messagesEndRef = React.useRef<HTMLDivElement>(null);
+  const lastResponseKeysRef = React.useRef<Set<string>>(new Set());
+  const lastUserQueryRef = React.useRef<string>('');
+
+  // Live refs for smooth 60fps dragging/resizing without re-renders
+  const positionRef = React.useRef(position);
+  const sizeRef = React.useRef(size);
+  const rafIdRef = React.useRef<number | null>(null);
+  const dragLatestRef = React.useRef<{ x: number; y: number } | null>(null);
+  const resizeLatestRef = React.useRef<{ width: number; height: number } | null>(null);
+
+  // Keep position and size refs in sync with state
+  React.useEffect(() => {
+    positionRef.current = position;
+  }, [position]);
+
+  React.useEffect(() => {
+    sizeRef.current = size;
+  }, [size]);
+
+  // Load window size from localStorage on mount
+  React.useEffect(() => {
+    try {
+      const stored = localStorage.getItem(SIZE_STORAGE_KEY);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        setSize(parsed);
+      }
+    } catch (error) {
+      console.warn('Failed to load window size:', error);
+    }
+  }, []);
+
+  // Save window size to localStorage when it changes
+  React.useEffect(() => {
+    try {
+      localStorage.setItem(SIZE_STORAGE_KEY, JSON.stringify(size));
+    } catch (error) {
+      console.warn('Failed to save window size:', error);
+    }
+  }, [size]);
+
+  // DISABLED: Conversation history persistence was causing duplicate messages
+  // Messages now only persist during the session (while page is open)
+  // React.useEffect(() => {
+  //   try {
+  //     const stored = localStorage.getItem(CONVERSATION_STORAGE_KEY);
+  //     if (stored) {
+  //       const parsed = JSON.parse(stored);
+  //       const restored = parsed.map((msg: any) => ({
+  //         ...msg,
+  //         timestamp: new Date(msg.timestamp)
+  //       }));
+  //       setMessages(restored);
+  //     }
+  //   } catch (error) {
+  //     console.warn('Failed to load conversation history:', error);
+  //   }
+  // }, []);
+
+  // React.useEffect(() => {
+  //   if (messages.length > 0) {
+  //     try {
+  //       localStorage.setItem(CONVERSATION_STORAGE_KEY, JSON.stringify(messages));
+  //     } catch (error) {
+  //       console.warn('Failed to save conversation history:', error);
+  //     }
+  //   }
+  // }, [messages]);
+
+  // Auto-scroll to bottom when new messages arrive
+  React.useEffect(() => {
+    console.log('Messages updated:', messages);
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
+  // Handle RAG responses and add to conversation with typing animation
+  React.useEffect(() => {
+    if (ragResponse) {
+      // De-dup guard: keep a small window of recent hashes
+      const key = JSON.stringify({ a: ragResponse.answer, t: ragResponse.query_type, c: ragResponse.confidence });
+      const set = lastResponseKeysRef.current;
+      if (set.has(key)) return;
+      set.add(key);
+      // Trim set to last 5
+      if (set.size > 5) {
+        const first = set.values().next().value;
+        if (first !== undefined) {
+          set.delete(first);
+        }
+      }
+
+      console.log('Adding RAG response to chat:', ragResponse);
+
+      // Show typing indicator briefly for natural feel
+      setIsTyping(true);
+      setTimeout(() => {
+        setIsTyping(false);
+        const aiMessage: ChatMessage = {
+          id: crypto.randomUUID(),
+          type: 'ai',
+          content: ragResponse.answer,
+          timestamp: new Date(),
+          metadata: {
+            confidence: ragResponse.confidence,
+            sources: ragResponse.sources,
+            query_type: ragResponse.query_type
+          }
+        };
+        setMessages(prev => [...prev, aiMessage]);
+      }, 300); // Brief delay for natural typing feel
+    }
+  }, [ragResponse]);
+
+  // Focus input when dialog opens
+  React.useEffect(() => {
+    if (open) {
+      setQuery('');
+      // Don't clear RAG response when opening - keep conversation history
+      setTimeout(() => inputRef.current?.focus(), 100);
+    } else {
+      // Clear conversation when dialog is closed
+      // This prevents stale messages from accumulating
+      setMessages([]);
+      clearRagResponse();
+    }
+  }, [open, clearRagResponse]);
+
+  // Smooth dragging with RAF
+  const handleMouseDown = React.useCallback((e: React.MouseEvent) => {
+    if (e.target === e.currentTarget || (e.target as HTMLElement).closest('[data-drag-handle]')) {
+      if (!dialogRef.current) return;
+      
+      // Disable transitions during drag for snappy feel
+      dialogRef.current.style.transition = 'none';
+      document.body.style.userSelect = 'none';
+      
+      setIsDragging(true);
+      setDragStart({
+        x: e.clientX - positionRef.current.x,
+        y: e.clientY - positionRef.current.y
+      });
+    }
+  }, []);
+
+  // RAF-based smooth updates
+  const applyFrame = React.useCallback(() => {
+    if (!dialogRef.current) return;
+    
+    if (dragLatestRef.current) {
+      const { x, y } = dragLatestRef.current;
+      dialogRef.current.style.transform = `translate3d(${x}px, ${y}px, 0)`;
+      rafIdRef.current = requestAnimationFrame(applyFrame);
+    } else {
+      rafIdRef.current = null;
+    }
+  }, []);
+
+  React.useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (isDragging && dialogRef.current) {
+        const newX = e.clientX - dragStart.x;
+        const newY = e.clientY - dragStart.y;
+        
+        // Keep within viewport bounds
+        const maxX = window.innerWidth - 384; // dialog width
+        const maxY = window.innerHeight - 200; // minimum visible height
+        const boundedX = Math.max(0, Math.min(newX, maxX));
+        const boundedY = Math.max(0, Math.min(newY, maxY));
+        
+        dragLatestRef.current = { x: boundedX, y: boundedY };
+        positionRef.current = { x: boundedX, y: boundedY };
+        
+        if (rafIdRef.current == null) {
+          rafIdRef.current = requestAnimationFrame(applyFrame);
+        }
+      }
+    };
+
+    const handleMouseUp = () => {
+      setIsDragging(false);
+      
+      // Re-enable transitions after interaction
+      if (dialogRef.current) {
+        dialogRef.current.style.transition = '';
+      }
+      document.body.style.userSelect = '';
+      
+      // Final position update
+      if (dragLatestRef.current) {
+        setPosition(dragLatestRef.current);
+        dragLatestRef.current = null;
+      }
+      
+      if (rafIdRef.current) {
+        cancelAnimationFrame(rafIdRef.current);
+        rafIdRef.current = null;
+      }
+    };
+
+    if (isDragging) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+    }
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isDragging, dragStart, applyFrame]);
+
+  // Handle resize mouse down
+  const handleResizeMouseDown = React.useCallback((e: React.MouseEvent, direction: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (!dialogRef.current) return;
+
+    dialogRef.current.style.transition = 'none';
+    document.body.style.userSelect = 'none';
+
+    setIsResizing(true);
+    setResizeDirection(direction);
+    setResizeStart({
+      x: e.clientX,
+      y: e.clientY,
+      width: sizeRef.current.width,
+      height: sizeRef.current.height
+    });
+  }, []);
+
+  // Resize effect
+  React.useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (isResizing && dialogRef.current) {
+        const deltaX = e.clientX - resizeStart.x;
+        const deltaY = e.clientY - resizeStart.y;
+
+        let newWidth = resizeStart.width;
+        let newHeight = resizeStart.height;
+
+        // Calculate new dimensions based on resize direction
+        if (resizeDirection.includes('e')) {
+          newWidth = resizeStart.width + deltaX;
+        }
+        if (resizeDirection.includes('w')) {
+          newWidth = resizeStart.width - deltaX;
+        }
+        if (resizeDirection.includes('s')) {
+          newHeight = resizeStart.height + deltaY;
+        }
+        if (resizeDirection.includes('n')) {
+          newHeight = resizeStart.height - deltaY;
+        }
+
+        // Apply constraints
+        newWidth = Math.max(350, Math.min(newWidth, window.innerWidth - position.x - 20));
+        newHeight = Math.max(400, Math.min(newHeight, window.innerHeight - position.y - 20));
+
+        resizeLatestRef.current = { width: newWidth, height: newHeight };
+        sizeRef.current = { width: newWidth, height: newHeight };
+
+        // Apply directly to DOM for smooth performance
+        dialogRef.current.style.width = `${newWidth}px`;
+        dialogRef.current.style.height = `${newHeight}px`;
+      }
+    };
+
+    const handleMouseUp = () => {
+      setIsResizing(false);
+      setResizeDirection('');
+
+      if (dialogRef.current) {
+        dialogRef.current.style.transition = '';
+      }
+      document.body.style.userSelect = '';
+
+      // Final size update
+      if (resizeLatestRef.current) {
+        setSize(resizeLatestRef.current);
+        resizeLatestRef.current = null;
+      }
+    };
+
+    if (isResizing) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+    }
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isResizing, resizeStart, resizeDirection, position]);
+
+  // Handle size preset changes
+  const handleSetSizePreset = React.useCallback((preset: 'compact' | 'normal' | 'expanded') => {
+    // Recalculate presets based on current viewport
+    const presets = getSizePresets();
+    setSize(presets[preset]);
+  }, []);
+
+  // Handle query submission
+  const handleQuery = React.useCallback(async () => {
+    if (!query.trim() || isQuerying) return;
+
+    const currentQuery = query.trim();
+    lastUserQueryRef.current = currentQuery;
+
+    // Add user message to conversation
+    const userMessage: ChatMessage = {
+      id: crypto.randomUUID(),
+      type: 'user',
+      content: currentQuery,
+      timestamp: new Date()
+    };
+    setMessages(prev => [...prev, userMessage]);
+
+    // Clear input
+    setQuery('');
+
+    // Make the RAG query
+    await queryRag(currentQuery);
+  }, [query, queryRag, isQuerying]);
+
+  // Copy message to clipboard
+  const handleCopyMessage = React.useCallback((messageId: string, content: string) => {
+    navigator.clipboard.writeText(content).then(() => {
+      setCopiedMessageId(messageId);
+      setTimeout(() => setCopiedMessageId(null), 2000);
+    }).catch(err => {
+      console.error('Failed to copy:', err);
+    });
+  }, []);
+
+  // Clear conversation history
+  const handleClearConversation = React.useCallback(() => {
+    setMessages([]);
+    localStorage.removeItem(CONVERSATION_STORAGE_KEY);
+    setQuery('');
+  }, []);
+
+  // Regenerate last response
+  const handleRegenerateResponse = React.useCallback(async () => {
+    if (!lastUserQueryRef.current || isQuerying) return;
+
+    // Remove last AI response if it exists
+    setMessages(prev => {
+      const lastAiIndex = prev.map((m, i) => m.type === 'ai' ? i : -1)
+        .filter(i => i !== -1)
+        .pop();
+      if (lastAiIndex !== undefined) {
+        return prev.filter((_, i) => i !== lastAiIndex);
+      }
+      return prev;
+    });
+
+    // Re-run the query
+    await queryRag(lastUserQueryRef.current);
+  }, [queryRag, isQuerying]);
+
+  // Handle suggested prompt click
+  const handleSuggestedPrompt = React.useCallback((prompt: string) => {
+    setQuery(prompt);
+    setTimeout(() => inputRef.current?.focus(), 0);
+  }, []);
+
+  // Handle keyboard shortcuts
+  const handleKeyDown = React.useCallback((e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleQuery();
+    } else if (e.key === 'Escape') {
+      onOpenChange(false);
+    }
+  }, [handleQuery, onOpenChange]);
+
+  // Handle command execution
+  const executeCommand = React.useCallback(async (command: any) => {
+    // Best-effort logging of Ivy action for outcome loop
+    try {
+      // Determine the target application id
+      const appId =
+        context.selectedApplicationId ||
+        (context.selectedApplications && context.selectedApplications[0]) ||
+        (Array.isArray(context.applications) && context.applications[0] &&
+          ((context.applications[0] as any).application_id || (context.applications[0] as any).id));
+
+      if (appId) {
+        const lastUser = [...messages].reverse().find(m => m.type === 'user');
+        const lastAI = [...messages].reverse().find(m => m.type === 'ai');
+        const payload = {
+          action_id: command.id,
+          action_label: command.label,
+          group: command.group,
+          source: 'ask_ivy',
+          query_context: {
+            last_user_message: lastUser?.content,
+            last_ai_summary: lastAI?.metadata?.query_type,
+          },
+          timestamp: new Date().toISOString(),
+        };
+        // Fire-and-forget
+        applicationsApi.logIvyAction(String(appId), payload).catch(() => {});
+      }
+    } catch {
+      // non-blocking
+    }
+
+    // Run the actual command
+    command.run(context);
+    onOpenChange(false);
+  }, [context, onOpenChange, messages]);
+
+  // Copy response to clipboard
+
+  if (!open) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 pointer-events-none">
+      <div
+        ref={dialogRef}
+        className="fixed z-50 pointer-events-auto"
+        style={{
+          left: '0',
+          top: '0',
+          width: `${size.width}px`,
+          height: isMinimized ? 'auto' : `${size.height}px`,
+          maxWidth: '90vw',
+          maxHeight: '90vh',
+          transform: `translate3d(${position.x}px, ${position.y}px, 0)`,
+          transition: (isDragging || isResizing) ? 'none' : 'all 0.2s ease-out'
+        }}
+      >
+        <Card className="shadow-2xl border-border/50 bg-background/95 backdrop-blur-xl h-full flex flex-col relative overflow-hidden">
+          <CardContent className="p-0 flex flex-col h-full overflow-hidden">
+            {/* Header with drag handle */}
+            <div
+              className="flex-shrink-0 flex items-center justify-between p-3 border-b border-border/50 cursor-move select-none bg-background"
+              onMouseDown={handleMouseDown}
+              data-drag-handle
+            >
+              <div className="flex items-center gap-2">
+                <GripVertical className="h-4 w-4 text-muted-foreground" />
+                <div className="flex items-center gap-2">
+                  <div className="p-1.5 rounded-md bg-primary/10">
+                    <Brain className="h-4 w-4 text-primary" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-semibold text-foreground">Ask Ivy</h3>
+                    <p className="text-xs text-muted-foreground">AI Assistant</p>
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-center gap-1">
+                {/* Size preset buttons */}
+                <div className="flex items-center gap-0.5 mr-1 border-r border-border/50 pr-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleSetSizePreset('compact')}
+                    className="h-6 w-6 p-0"
+                    title="Compact size"
+                  >
+                    <div className="w-2 h-2 border border-current rounded-sm" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleSetSizePreset('normal')}
+                    className="h-6 w-6 p-0"
+                    title="Normal size"
+                  >
+                    <div className="w-2.5 h-2.5 border border-current rounded-sm" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleSetSizePreset('expanded')}
+                    className="h-6 w-6 p-0"
+                    title="Expanded size"
+                  >
+                    <div className="w-3 h-3 border border-current rounded-sm" />
+                  </Button>
+                </div>
+
+                {messages.length > 0 && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleClearConversation}
+                    className="h-7 w-7 p-0"
+                    title="Clear conversation"
+                  >
+                    <Trash2 className="h-3 w-3" />
+                  </Button>
+                )}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setIsMinimized(!isMinimized)}
+                  className="h-7 w-7 p-0"
+                >
+                  {isMinimized ? <Maximize2 className="h-3 w-3" /> : <Minimize2 className="h-3 w-3" />}
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => onOpenChange(false)}
+                  className="h-7 w-7 p-0"
+                >
+                  <X className="h-3 w-3" />
+                </Button>
+              </div>
+            </div>
+
+            {!isMinimized && (
+              <>
+                {/* Chat Messages */}
+                <div className="flex-1 min-h-0 overflow-hidden">
+                  <ScrollArea className="h-full">
+                    <div className="p-3 space-y-3">
+                      {messages.length === 0 ? (
+                        <div className="text-center py-8 text-muted-foreground">
+                          <Brain className="h-8 w-8 mx-auto mb-2 text-muted-foreground/50" />
+                          <p className="text-sm">Ask me anything about your applications</p>
+                          <p className="text-xs mt-1">e.g., "Which applications are at risk?"</p>
+                        </div>
+                      ) : (
+                        messages.map((message, index) => (
+                          <div key={message.id} className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'} group`}>
+                            <div className={`max-w-[85%] ${message.type === 'user' ? 'order-2' : 'order-1'}`}>
+                              <div className={`flex items-start gap-2 ${message.type === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
+                                <div className={`p-1.5 rounded-full flex-shrink-0 ${
+                                  message.type === 'user'
+                                    ? 'bg-primary text-primary-foreground'
+                                    : 'bg-muted text-foreground'
+                                }`}>
+                                  {message.type === 'user' ? (
+                                    <User className="h-3 w-3" />
+                                  ) : (
+                                    <Brain className="h-3 w-3" />
+                                  )}
+                                </div>
+
+                                <div className="flex-1 min-w-0">
+                                  <div className={`rounded-lg p-3 text-sm ${
+                                    message.type === 'user'
+                                      ? 'bg-primary text-primary-foreground'
+                                      : 'bg-muted text-foreground'
+                                  }`}>
+                                    {message.type === 'ai' ? (
+                                      <div className="prose prose-sm dark:prose-invert max-w-none">
+                                        <ReactMarkdown>{message.content}</ReactMarkdown>
+                                      </div>
+                                    ) : (
+                                      <p className="leading-relaxed whitespace-pre-wrap">{message.content}</p>
+                                    )}
+
+                                    {/* AI Message Metadata */}
+                                    {message.type === 'ai' && message.metadata && (
+                                      <div className="mt-2 pt-2 border-t border-border/30 space-y-1">
+                                        {/* Confidence Score */}
+                                        {message.metadata.confidence && (
+                                          <div className="flex items-center gap-1 text-xs opacity-75">
+                                            <div className="w-1 h-1 rounded-full bg-current" />
+                                            <span>Confidence: {Math.round(message.metadata.confidence * 100)}%</span>
+                                          </div>
+                                        )}
+
+                                        {/* Sources */}
+                                        {message.metadata.sources && message.metadata.sources.length > 0 && (
+                                          <div className="text-xs opacity-75">
+                                            <div className="font-medium mb-1">Sources:</div>
+                                            <div className="space-y-0.5">
+                                              {message.metadata.sources.slice(0, 2).map((source, idx) => (
+                                                <div key={idx} className="flex items-center gap-1">
+                                                  <div className="w-0.5 h-0.5 rounded-full bg-current" />
+                                                  {source.title}
+                                                </div>
+                                              ))}
+                                            </div>
+                                          </div>
+                                        )}
+                                      </div>
+                                    )}
+                                  </div>
+
+                                  {/* Action buttons for AI messages */}
+                                  {message.type === 'ai' && (
+                                    <div className="flex items-center gap-1 mt-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => handleCopyMessage(message.id, message.content)}
+                                        className="h-6 px-2 text-xs"
+                                      >
+                                        {copiedMessageId === message.id ? (
+                                          <>
+                                            <Check className="h-3 w-3 mr-1" />
+                                            Copied
+                                          </>
+                                        ) : (
+                                          <>
+                                            <Copy className="h-3 w-3 mr-1" />
+                                            Copy
+                                          </>
+                                        )}
+                                      </Button>
+                                      {index === messages.length - 1 && (
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          onClick={handleRegenerateResponse}
+                                          disabled={isQuerying}
+                                          className="h-6 px-2 text-xs"
+                                        >
+                                          <RotateCcw className="h-3 w-3 mr-1" />
+                                          Regenerate
+                                        </Button>
+                                      )}
+                                    </div>
+                                  )}
+
+                                  <div className={`text-[10px] text-muted-foreground mt-1 ${
+                                    message.type === 'user' ? 'text-right' : 'text-left'
+                                  }`}>
+                                    {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                      
+                      {/* Typing indicator */}
+                      {(isQuerying || isTyping) && (
+                        <div className="flex justify-start">
+                          <div className="flex items-start gap-2">
+                            <div className="p-1.5 rounded-full bg-muted text-foreground">
+                              <Brain className="h-3 w-3" />
+                            </div>
+                            <div className="bg-muted rounded-lg p-3">
+                              <div className="flex items-center gap-2">
+                                <div className="flex gap-1">
+                                  <div className="w-2 h-2 bg-foreground/40 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                                  <div className="w-2 h-2 bg-foreground/40 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                                  <div className="w-2 h-2 bg-foreground/40 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                                </div>
+                                <span className="text-sm text-muted-foreground">Thinking...</span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                      
+                      <div ref={messagesEndRef} />
+                    </div>
+                  </ScrollArea>
+                </div>
+
+                {/* Input Area - Fixed at bottom */}
+                <div className="flex-shrink-0 p-3 border-t border-border/50 bg-background">
+                  {/* Disambiguation picker */}
+                  {ragResponse?.query_type === 'applicant_disambiguation' && Array.isArray(ragResponse.candidates) && ragResponse.candidates.length > 0 && (
+                    <div className="mb-2 p-2 rounded-md bg-muted/60">
+                      <div className="text-xs font-medium text-muted-foreground mb-1">Select an applicant:</div>
+                      <div className="flex flex-col gap-1">
+                        {ragResponse.candidates.slice(0, 5).map((c) => (
+                          <Button
+                            key={c.application_id}
+                            variant="secondary"
+                            size="sm"
+                            className="justify-start h-7 text-xs"
+                            onClick={async () => {
+                              clearRagResponse();
+                              await analyzeByApplicationId(c.application_id, ragResponse?.originalQuery || query);
+                            }}
+                          >
+                            <div className="truncate">
+                              {c.name} {c.programme_name ? `· ${c.programme_name}` : ''} {c.stage ? `· ${c.stage}` : ''}
+                            </div>
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Suggested prompts */}
+                  {messages.length > 0 && messages[messages.length - 1]?.type === 'ai' && !isQuerying && (() => {
+                    const lastMessage = messages[messages.length - 1];
+                    if (!lastMessage) return null;
+                    const queryType = lastMessage.metadata?.query_type || 'general';
+                    const prompts = (SUGGESTED_PROMPTS[queryType] || SUGGESTED_PROMPTS.general) ?? [];
+                    if (prompts.length === 0) return null;
+                    return (
+                      <div className="mb-2">
+                        <div className="text-[10px] font-medium text-muted-foreground mb-1">Suggested:</div>
+                        <div className="flex flex-wrap gap-1">
+                          {prompts.slice(0, 3).map((prompt, idx) => (
+                            <Button
+                              key={idx}
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleSuggestedPrompt(prompt)}
+                              className="h-6 px-2 text-xs"
+                            >
+                              {prompt}
+                            </Button>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })()}
+
+                  <div className="flex gap-2 items-end">
+                    <div className="flex-1 relative">
+                      <Textarea
+                        ref={inputRef}
+                        value={query}
+                        onChange={(e) => setQuery(e.target.value)}
+                        onKeyDown={handleKeyDown}
+                        placeholder="Ask about applications..."
+                        className="min-h-[2.5rem] max-h-32 text-sm resize-none"
+                        rows={1}
+                        disabled={isQuerying}
+                      />
+                      {isQuerying && (
+                        <div className="absolute right-2 top-3">
+                          <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
+                        </div>
+                      )}
+                    </div>
+                    <Button
+                      onClick={handleQuery}
+                      disabled={!query.trim() || isQuerying}
+                      size="sm"
+                      className="h-10 px-3"
+                    >
+                      <Sparkles className="h-3 w-3" />
+                    </Button>
+                  </div>
+                  <div className="text-[10px] text-muted-foreground mt-1">
+                    Press Enter to send, Shift+Enter for new line
+                  </div>
+                  
+                  {/* Quick Actions */}
+                  <div className="mt-2">
+                    <div className="flex items-center justify-between mb-1">
+                      <h4 className="text-[10px] font-medium text-muted-foreground">Quick Actions</h4>
+                      <Badge variant="outline" className="text-[9px] px-1 py-0.5">
+                        {applicationRegistry.filter(cmd => cmd.when ? cmd.when(context) : true).length}
+                      </Badge>
+                    </div>
+                    
+                    <ScrollArea className="max-h-20">
+                      <div className="space-y-0.5">
+                        {applicationRegistry
+                          .filter(cmd => cmd.when ? cmd.when(context) : true)
+                          .slice(0, 3)
+                          .map((command) => (
+                            <Button
+                              key={command.id}
+                              variant="ghost"
+                              size="sm"
+                              className="w-full justify-start h-auto p-1 text-left text-xs"
+                              onClick={() => executeCommand(command)}
+                            >
+                              <div className="flex-1 min-w-0">
+                                <div className="font-medium truncate">
+                                  {command.label}
+                                </div>
+                              </div>
+                            </Button>
+                          ))}
+                      </div>
+                    </ScrollArea>
+                  </div>
+                </div>
+              </>
+            )}
+          </CardContent>
+
+          {/* Resize handles */}
+          {!isMinimized && (
+            <>
+              {/* Corner handles */}
+              <div
+                className="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize group"
+                onMouseDown={(e) => handleResizeMouseDown(e, 'se')}
+                title="Resize"
+              >
+                <div className="absolute bottom-0.5 right-0.5 w-3 h-3 border-r-2 border-b-2 border-border group-hover:border-primary transition-colors" />
+              </div>
+              <div
+                className="absolute bottom-0 left-0 w-4 h-4 cursor-sw-resize"
+                onMouseDown={(e) => handleResizeMouseDown(e, 'sw')}
+              />
+              <div
+                className="absolute top-0 right-0 w-4 h-4 cursor-ne-resize"
+                onMouseDown={(e) => handleResizeMouseDown(e, 'ne')}
+              />
+              <div
+                className="absolute top-0 left-0 w-4 h-4 cursor-nw-resize"
+                onMouseDown={(e) => handleResizeMouseDown(e, 'nw')}
+              />
+
+              {/* Edge handles */}
+              <div
+                className="absolute right-0 top-0 bottom-0 w-1 cursor-e-resize hover:bg-primary/20 transition-colors"
+                onMouseDown={(e) => handleResizeMouseDown(e, 'e')}
+              />
+              <div
+                className="absolute left-0 top-0 bottom-0 w-1 cursor-w-resize hover:bg-primary/20 transition-colors"
+                onMouseDown={(e) => handleResizeMouseDown(e, 'w')}
+              />
+              <div
+                className="absolute top-0 left-0 right-0 h-1 cursor-n-resize hover:bg-primary/20 transition-colors"
+                onMouseDown={(e) => handleResizeMouseDown(e, 'n')}
+              />
+              <div
+                className="absolute bottom-0 left-0 right-0 h-1 cursor-s-resize hover:bg-primary/20 transition-colors"
+                onMouseDown={(e) => handleResizeMouseDown(e, 's')}
+              />
+            </>
+          )}
+        </Card>
+      </div>
+    </div>
+  );
+}

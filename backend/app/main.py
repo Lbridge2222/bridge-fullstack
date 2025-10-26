@@ -348,6 +348,24 @@ except Exception as e:
     print(f"❌ Failed to load RAG router: {e}")
     pass
 
+# Applications AI router (Phase 6.2 - Application-specific AI Analysis)
+try:
+    from app.routers.applications_ai import router as applications_ai_router
+    app.include_router(applications_ai_router)
+    print("✅ Applications AI router loaded successfully")
+except Exception as e:
+    print(f"❌ Failed to load Applications AI router: {e}")
+    pass
+
+# Applications Insights router (DB-grounded pipeline summaries)
+try:
+    from app.routers.applications_insights import router as applications_insights_router
+    app.include_router(applications_insights_router)
+    print("✅ Applications Insights router loaded successfully")
+except Exception as e:
+    print(f"❌ Failed to load Applications Insights router: {e}")
+    pass
+
 # AI Router (Multi-step orchestration for Ask Ivy)
 try:
     from app.routers.ai_router import router as ai_router_router

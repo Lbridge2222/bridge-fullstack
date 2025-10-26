@@ -18,14 +18,15 @@ try:
 except Exception:
     # sane fallbacks so we never crash here
     ACTIVE_MODEL, GEMINI_API_KEY, OPENAI_API_KEY = "gemini", None, None
-    GEMINI_MODEL, OPENAI_MODEL = "gemini-1.5-flash", "gpt-4o-mini"
+    GEMINI_MODEL, OPENAI_MODEL = "gemini-2.0-flash-001", "gpt-4o-mini"
     AI_TIMEOUT_MAIN_MS = 7000
     AI_TIMEOUT_HELPER_MS = 3000
     AI_TIMEOUT_MS = AI_TIMEOUT_MAIN_MS
 
 # Centralized model management - env-driven with fallbacks
+# CRITICAL: Always use exact version suffixes (-001) to prevent remapping to Pro/Experimental
 GEMINI_MODEL_ENV = os.getenv("GEMINI_MODEL", "gemini-2.0-flash-001")
-GEMINI_CANDIDATES_ENV = os.getenv("GEMINI_CANDIDATES", "gemini-2.0-flash,gemini-1.5-flash-001,gemini-1.5-flash").split(",")
+GEMINI_CANDIDATES_ENV = os.getenv("GEMINI_CANDIDATES", "gemini-2.0-flash-001,gemini-1.5-flash-001").split(",")
 
 # Use only valid, stable Gemini model IDs to avoid 404s
 VALID_GEMINI = [GEMINI_MODEL_ENV] + [c.strip() for c in GEMINI_CANDIDATES_ENV if c.strip()]
@@ -33,16 +34,26 @@ VALID_GEMINI = [GEMINI_MODEL_ENV] + [c.strip() for c in GEMINI_CANDIDATES_ENV if
 def _normalize_gemini_model(name: str | None) -> str:
     """Normalize Gemini model names to API-key surface stable forms.
     - Strip any leading "models/" prefix
-    - Pin aliases to -001 to avoid upstream remap to -002
+    - ALWAYS pin to exact version (-001) to prevent Google from remapping to Pro/Experimental
     - Coerce -002 back to -001 for API-key compatibility
     """
     n = (name or "gemini-2.0-flash").strip()
     if n.startswith("models/"):
         n = n[7:]
-    if n in ("gemini-2.0-flash", "gemini-1.5-flash", "gemini-1.5-pro"):
-        n = n + "-001"
+    
+    # CRITICAL: Always pin to exact version (-001) to prevent remapping to Pro/Experimental
+    # Google remaps versionless aliases (gemini-2.0-flash) to latest Pro versions
+    if n == "gemini-2.0-flash":
+        n = "gemini-2.0-flash-001"
+    elif n == "gemini-1.5-flash":
+        n = "gemini-1.5-flash-001"
+    elif n == "gemini-1.5-pro":
+        n = "gemini-1.5-pro-001"
+    
+    # Coerce -002 back to -001 for API-key compatibility
     if n.endswith("-002") and (n.startswith("gemini-1.5-flash") or n.startswith("gemini-1.5-pro")):
         n = n[:-4] + "-001"
+    
     return n
 
 class LLMCtx:

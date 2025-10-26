@@ -298,6 +298,25 @@ export const applicationsApi = {
     });
   },
 
+  // NEW: Log an Ask Ivy action for outcome loop tracking
+  logIvyAction: (applicationId: string, data: any): Promise<{ ok: boolean; audit_id?: string }> => {
+    return apiFetch(`/applications/${applicationId}/ai/action`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
+
+  // NEW: Log a follow-up outcome related to a prior Ivy action
+  logIvyActionOutcome: (
+    applicationId: string,
+    data: { related_audit_id?: string; outcome: string; details?: any; session_id?: string; timestamp?: string }
+  ): Promise<{ ok: boolean; audit_id?: string }> => {
+    return apiFetch(`/applications/${applicationId}/ai/action-outcome`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
+
   // Bulk stage update
   bulkMoveStage: (payload: {
     application_ids: string[];
