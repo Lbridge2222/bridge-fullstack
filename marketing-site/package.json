@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build && cp pitch-deck.html dist/ && cp -r Screenshots dist/",
+    "build": "vite build && node -e \"const fs=require('fs'); fs.copyFileSync('pitch-deck.html', 'dist/pitch-deck.html'); fs.cpSync('Screenshots', 'dist/Screenshots', {recursive: true});\"",
     "preview": "vite preview"
   },
   "dependencies": {

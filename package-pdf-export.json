@@ -1,0 +1,18 @@
+{
+  "name": "pitch-deck-pdf-export",
+  "version": "1.0.0",
+  "description": "Export HTML pitch deck to high-quality PDF",
+  "type": "module",
+  "scripts": {
+    "export-pdf": "node export-pitch-deck-perfect-final.mjs",
+    "export-pdf-compressed": "node export-pitch-deck-compressed.mjs",
+    "install-playwright": "npx playwright install chromium"
+  },
+  "dependencies": {
+    "playwright": "^1.40.0"
+  },
+  "devDependencies": {},
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
