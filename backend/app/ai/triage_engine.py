@@ -9,7 +9,12 @@ from decimal import Decimal
 import logging
 
 from app.db.db import fetch, fetchrow, execute
-from app.ai.application_ml import extract_application_features, predict_stage_progression
+from app.ai.application_ml import (
+    extract_application_features,
+    predict_stage_progression,
+    detect_blockers,
+    generate_next_best_actions
+)
 from app.ai.ucas_cycle import UcasCycleCalendar
 
 logger = logging.getLogger(__name__)
@@ -273,6 +278,62 @@ def generate_action_reason(
     return f"{name} - {stage.replace('_', ' ')} stage requires action"
 
 
+def generate_ml_enhanced_reason(
+    action_type: str,
+    features: Dict[str, Any],
+    stage: str,
+    urgency_context: str,
+    prediction: Any,
+    blockers: List[Any],
+    ml_actions: List[Any]
+) -> str:
+    """
+    Generate intelligent action reason using ML insights.
+
+    Combines:
+    - Top blocker (if any) - most critical issue
+    - Top positive ML factor - what's working
+    - Top negative ML factor - what's at risk
+    """
+    name = features.get('first_name', 'Applicant')
+
+    # Priority 1: Use top blocker if critical
+    if blockers and blockers[0].severity in ['critical', 'high']:
+        blocker = blockers[0]
+        return f"{name}: {blocker.item} - {blocker.impact}"
+
+    # Priority 2: Use ML adjustment factors for nuanced reason
+    if hasattr(prediction, 'adjustment_factors') and prediction.adjustment_factors:
+        factors = prediction.adjustment_factors
+
+        # Get top positive and negative factors
+        positive_factors = [f for f in factors if f.get('weight', 0) > 0]
+        negative_factors = [f for f in factors if f.get('weight', 0) < 0]
+
+        parts = [name]
+
+        # Add top positive insight
+        if positive_factors:
+            top_positive = positive_factors[0]
+            parts.append(f"{top_positive['reason']} (+{int(top_positive['weight']*100)}%)")
+
+        # Add top negative/risk
+        if negative_factors:
+            top_negative = negative_factors[0]
+            parts.append(f"but {top_negative['reason'].lower()} ({int(top_negative['weight']*100)}%)")
+
+        # Add recommended action
+        if blockers:
+            parts.append(f"- {blockers[0].resolution_action}")
+        elif ml_actions:
+            parts.append(f"- {ml_actions[0].action}")
+
+        return " ".join(parts)
+
+    # Priority 3: Fall back to standard reason
+    return generate_action_reason(action_type, features, stage, urgency_context)
+
+
 # ============================================================================
 # Artifact Generation (Message Drafts)
 # ============================================================================
@@ -332,6 +393,85 @@ def generate_artifacts(
         artifacts["message"] = f"Review required: {reason}"
     elif action_type == "unblock":
         artifacts["message"] = f"Remove blocker: {reason}"
+
+    return artifacts
+
+
+def generate_artifacts_with_ml(
+    action_type: str,
+    features: Dict[str, Any],
+    reason: str,
+    prediction: Any,
+    blockers: List[Any],
+    ml_actions: List[Any]
+) -> Dict[str, Any]:
+    """
+    Generate artifacts enhanced with ML intelligence.
+
+    Adds:
+    - ML explanation from prediction
+    - Top blockers with severity
+    - Adjustment factors (positive/negative)
+    - ML-recommended actions
+    """
+    # Start with standard artifacts
+    artifacts = generate_artifacts(action_type, features, reason, prediction)
+
+    # Add ML intelligence
+    ml_intelligence = {}
+
+    # Add ML explanation if available
+    if hasattr(prediction, 'explanation') and prediction.explanation:
+        ml_intelligence['explanation'] = prediction.explanation
+
+    # Add adjustment factors for UI display
+    if hasattr(prediction, 'adjustment_factors') and prediction.adjustment_factors:
+        # Get top 5 factors
+        factors = prediction.adjustment_factors[:5]
+        ml_intelligence['factors'] = [
+            {
+                'reason': f['reason'],
+                'weight': f['weight'],
+                'type': 'positive' if f['weight'] > 0 else 'negative'
+            }
+            for f in factors
+        ]
+
+    # Add blockers
+    if blockers:
+        ml_intelligence['blockers'] = [
+            {
+                'item': b.item,
+                'severity': b.severity,
+                'impact': b.impact,
+                'resolution': b.resolution_action
+            }
+            for b in blockers[:3]  # Top 3 blockers
+        ]
+
+    # Add ML recommended actions
+    if ml_actions:
+        ml_intelligence['recommended_actions'] = [
+            {
+                'action': a.action,
+                'priority': a.priority,
+                'impact': a.impact,
+                'effort': a.effort
+            }
+            for a in ml_actions[:3]  # Top 3 actions
+        ]
+
+    # Add ML intelligence to artifacts
+    artifacts['ml_intelligence'] = ml_intelligence
+
+    # Enhance context with ML insights
+    if blockers:
+        artifacts['context'].insert(0, f"🚨 {blockers[0].item} (blocker)")
+
+    if hasattr(prediction, 'adjustment_factors') and prediction.adjustment_factors:
+        top_positive = next((f for f in prediction.adjustment_factors if f.get('weight', 0) > 0), None)
+        if top_positive:
+            artifacts['context'].insert(0, f"✅ {top_positive['reason']}")
 
     return artifacts
 
@@ -516,7 +656,16 @@ async def generate_triage_queue(
         LIMIT 50  -- Consider top 50, then prioritize
     """
 
+    logger.info(f"Executing query: {query}")
+    logger.info(f"With params: {params}")
+    
     rows = await fetch(query, *params) if params else await fetch(query)
+    logger.info(f"Found {len(rows)} applications for triage")
+    
+    if filters and 'application_ids' in filters and filters['application_ids']:
+        logger.info(f"Expected to find applications with IDs: {filters['application_ids']}")
+        if len(rows) == 0:
+            logger.warning("⚠️ No applications found matching the suggested IDs!")
 
     if not rows:
         logger.info("No applications found for triage")
@@ -530,9 +679,13 @@ async def generate_triage_queue(
             app_id = str(row['application_id'])
             features = await extract_application_features(app_id)
 
-            # Get prediction
+            # Get ML prediction and intelligence
             prediction = predict_stage_progression(features)
             current_prob = prediction.progression_probability
+
+            # Get ML-detected blockers and recommended actions
+            blockers = detect_blockers(features, prediction)
+            ml_actions = generate_next_best_actions(features, prediction, blockers)
 
             # Determine action type
             action_type = recommend_action_type(features, row['stage'])
@@ -549,9 +702,24 @@ async def generate_triage_queue(
                 impact_estimate
             )
 
-            # Generate reason and artifacts
-            reason = generate_action_reason(action_type, features, row['stage'], urgency_context)
-            artifacts = generate_artifacts(action_type, features, reason, prediction)
+            # Generate ML-enhanced reason and artifacts
+            reason = generate_ml_enhanced_reason(
+                action_type,
+                features,
+                row['stage'],
+                urgency_context,
+                prediction,
+                blockers,
+                ml_actions
+            )
+            artifacts = generate_artifacts_with_ml(
+                action_type,
+                features,
+                reason,
+                prediction,
+                blockers,
+                ml_actions
+            )
 
             # Build triage item
             triage_item = {
@@ -565,6 +733,7 @@ async def generate_triage_queue(
                 "expected_gain": float(impact_estimate),
                 "artifacts": artifacts,
                 "expires_at": (datetime.now() + timedelta(hours=24)).isoformat(),
+                "conversion_probability": float(current_prob),
                 "_debug": {
                     "urgency_context": urgency_context,
                     "engagement_decay": engagement_decay,
