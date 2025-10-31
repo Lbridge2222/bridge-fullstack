@@ -27,8 +27,9 @@ OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-3.5-turbo")
 
 # Gemini Configuration
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-# Pin to concrete version to avoid alias remapping upstream
-GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.0-flash")
+# CRITICAL: Pin to -001 version to prevent Google remapping to Gemini 2.5 Pro (paid)
+# Versionless aliases are remapped to expensive Pro models by Google's API
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.0-flash-001")
 
 # Fallback Logic
 def get_available_models() -> list[str]:

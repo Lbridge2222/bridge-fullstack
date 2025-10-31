@@ -3,7 +3,7 @@ from pydantic import BaseModel
 from typing import List, Dict, Any, Optional
 import os
 import google.generativeai as genai
-from app.ai import GEMINI_API_KEY, ACTIVE_MODEL
+from app.ai import GEMINI_API_KEY, ACTIVE_MODEL, GEMINI_MODEL
 
 router = APIRouter(prefix="/api/ai", tags=["ai-chat"])
 
@@ -92,10 +92,12 @@ async def chat_with_gemini(request: ChatRequest):
         
         Be professional, specific, and data-driven. Reference actual lead names, scores, and metrics.
         """
-        
-        # Call Gemini
-        model = genai.GenerativeModel('gemini-2.0-flash')
-        response = model.generate_content(prompt)
+
+        # Call Gemini - use LLMCtx for proper model normalization and failover
+        from app.ai.safe_llm import LLMCtx
+        llm = LLMCtx(temperature=0.7)
+        response_text = await llm.ainvoke(prompt)
+        response = type('obj', (object,), {'text': response_text})()
         
         # Parse Gemini response (assuming it returns JSON)
         try:
@@ -188,10 +190,12 @@ async def generate_call_script(request: ScriptRequest):
         Create a natural, engaging script that doesn't sound robotic. Make it feel like a real conversation starter.
         Return ONLY the script text, no additional formatting or explanations.
         """
-        
-        # Call Gemini
-        model = genai.GenerativeModel('gemini-2.0-flash')
-        response = model.generate_content(prompt)
+
+        # Call Gemini - use LLMCtx for proper model normalization and failover
+        from app.ai.safe_llm import LLMCtx
+        llm = LLMCtx(temperature=0.7)
+        response_text = await llm.ainvoke(prompt)
+        response = type('obj', (object,), {'text': response_text})()
         
         # Clean up the response
         script = response.text.strip()
@@ -215,7 +219,7 @@ async def generate_call_script(request: ScriptRequest):
             script=script,
             confidence=confidence,
             metadata={
-                "model_used": "gemini-2.0-flash",
+                "model_used": GEMINI_MODEL,
                 "data_completeness": data_completeness,
                 "script_length": len(script.split()),
                 "guardrails_applied": list(guardrails.keys()) if guardrails else []

@@ -6,9 +6,10 @@ import {
   Phone, Eye, Edit, Filter, TrendingUp, MoreHorizontal,
   Clock, AlertTriangle, CheckCircle, XCircle, Star,
   Users, Target, Zap, ArrowUpDown, ArrowUp, ArrowDown,
-  RefreshCw, BookmarkPlus, Sparkles, ChevronRight, X, ChevronLeft,
+  RefreshCw, BookmarkPlus, ChevronRight, X, ChevronLeft,
   ArrowUpRight,
-  ChevronUp, ChevronDown
+  ChevronUp, ChevronDown, Flag, BarChart3, Focus,
+  Workflow, Flame, Sparkles
 } from "lucide-react";
 
 // shadcn/ui
@@ -23,6 +24,8 @@ import {
   DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
+import { TriageModal } from "@/components/Actions/TriageModal";
+import { useSessionStore } from "@/stores/sessionStore";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -75,6 +78,8 @@ type StageTone = "neutral" | "success" | "danger";
 
 type StageToneStyle = {
   cardBg: string;
+  cardBorder?: string;
+  cardGlow?: string;
   iconWrapper: string;
   badge: string;
   chevron: string;
@@ -204,6 +209,8 @@ const arraysEqual = <T,>(a: T[], b: T[]): boolean =>
 const stageToneStyles: Record<StageTone, StageToneStyle> = {
   neutral: {
     cardBg: "bg-white/80",
+    cardBorder: "",
+    cardGlow: "",
     iconWrapper: "border-border/50 bg-white/80 text-slate-500",
     badge: "border-border/50 bg-white text-slate-600",
     chevron: "border-border/40 text-slate-500 hover:bg-white hover:border-border/60",
@@ -219,33 +226,37 @@ const stageToneStyles: Record<StageTone, StageToneStyle> = {
     collapsedLabel: "text-slate-600",
   },
   success: {
-    cardBg: "bg-success/5",
-    iconWrapper: "border-success/40 bg-white/80 text-success",
-    badge: "border-success/40 bg-white text-success",
-    chevron: "border-success/40 text-success hover:bg-success/10 hover:border-success/50",
-    dropRing: "ring-success/40 bg-success/10",
-    dropBorder: "border-success/40",
-    dropBg: "bg-success/10",
-    dropText: "text-success",
-    emptyBorder: "border-success/40",
-    emptyText: "text-success",
-    collapsedShell: "border border-dashed border-success/40 bg-success/10",
-    collapsedChevron: "border-success/40 text-success",
-    collapsedCount: "border-success/40 bg-white text-success",
-    collapsedLabel: "text-success/90",
+    cardBg: "bg-white",
+    cardBorder: "border-green-300",
+    cardGlow: "shadow-[0_0_0_2px_hsl(var(--semantic-success)/0.15),0_18px_45px_-28px_hsl(var(--semantic-success)/0.35)]",
+    iconWrapper: "border-green-300 bg-white/80 text-[hsl(var(--semantic-success))]",
+    badge: "border-green-300 bg-white text-[hsl(var(--semantic-success))]",
+    chevron: "border-green-300 text-[hsl(var(--semantic-success))] hover:bg-white hover:border-green-400",
+    dropRing: "ring-[hsl(var(--semantic-success))]/30 bg-white",
+    dropBorder: "border-green-300",
+    dropBg: "bg-white",
+    dropText: "text-[hsl(var(--semantic-success))]",
+    emptyBorder: "border-green-300",
+    emptyText: "text-[hsl(var(--semantic-success))]",
+    collapsedShell: "border border-dashed border-green-300 bg-white",
+    collapsedChevron: "border-green-300 text-[hsl(var(--semantic-success))]",
+    collapsedCount: "border-green-300 bg-white text-[hsl(var(--semantic-success))]",
+    collapsedLabel: "text-[hsl(var(--semantic-success))]/90",
   },
   danger: {
-    cardBg: "bg-destructive/5",
+    cardBg: "bg-white",
+    cardBorder: "border-destructive/40",
+    cardGlow: "shadow-[0_0_0_2px_hsl(var(--destructive)/0.12),0_18px_45px_-28px_hsl(var(--destructive)/0.28)]",
     iconWrapper: "border-destructive/40 bg-white/80 text-destructive",
     badge: "border-destructive/40 bg-white text-destructive",
-    chevron: "border-destructive/40 text-destructive hover:bg-destructive/10 hover:border-destructive/50",
-    dropRing: "ring-destructive/40 bg-destructive/10",
+    chevron: "border-destructive/40 text-destructive hover:bg-white hover:border-destructive/50",
+    dropRing: "ring-destructive/30 bg-white",
     dropBorder: "border-destructive/40",
-    dropBg: "bg-destructive/10",
+    dropBg: "bg-white",
     dropText: "text-destructive",
     emptyBorder: "border-destructive/40",
     emptyText: "text-destructive",
-    collapsedShell: "border border-dashed border-destructive/40 bg-destructive/10",
+    collapsedShell: "border border-dashed border-destructive/40 bg-white",
     collapsedChevron: "border-destructive/40 text-destructive",
     collapsedCount: "border-destructive/40 bg-white text-destructive",
     collapsedLabel: "text-destructive",
@@ -518,6 +529,11 @@ export default function ApplicationsBoardPage() {
   const [deliveryMode, setDeliveryMode] = React.useState<'all' | 'online' | 'onsite' | 'hybrid'>('all');
   const [studyPattern, setStudyPattern] = React.useState<'all' | 'full_time' | 'part_time' | 'accelerated'>('all');
   const [multiOnly, setMultiOnly] = React.useState<boolean>(false);
+  const [riskOnly, setRiskOnly] = React.useState<boolean>(false);
+  const [blockersOnly, setBlockersOnly] = React.useState<boolean>(false);
+  const [sourceFilter, setSourceFilter] = React.useState<string>('all');
+  const [campusFilter, setCampusFilter] = React.useState<string>('all');
+  const [cycleFilter, setCycleFilter] = React.useState<string>('all');
   const [compactCards, setCompactCards] = React.useState<boolean>(() => localStorage.getItem('appsCompact') === '1');
   const [aiFocus, setAiFocus] = React.useState<boolean>(() => localStorage.getItem('appsAiFocus') === '1');
   const [selectedApps, setSelectedApps] = React.useState<string[]>([]);
@@ -545,9 +561,39 @@ export default function ApplicationsBoardPage() {
   const [showMeetingBooker, setShowMeetingBooker] = React.useState(false);
   const [selectedLeadForMeeting, setSelectedLeadForMeeting] = React.useState<MeetingBookerLead | null>(null);
   const { IvyOverlay, openIvy, setIvyContext } = useApplicationIvy();
+  const { ivySuggestions, setIvySuggestions, consumeSuggestion } = useSessionStore();
+
+  // Debug: Log ivySuggestions whenever it changes
+  React.useEffect(() => {
+    console.log('[ApplicationsBoard] ivySuggestions state changed:', ivySuggestions);
+  }, [ivySuggestions]);
   
   const [draggedApplicationId, setDraggedApplicationId] = React.useState<string | null>(null);
-  const [riskOnly, setRiskOnly] = React.useState<boolean>(false);
+  const [triageModalOpen, setTriageModalOpen] = React.useState(false);
+
+  // Listen for Ivy suggestions and update store
+  React.useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail as { application_ids?: string[] } | undefined;
+      const ids = Array.isArray(detail?.application_ids) ? detail!.application_ids : [];
+      console.log('[ApplicationsBoard] Received ivy:suggestAction event with IDs:', ids);
+      setIvySuggestions(ids);
+      console.log('[ApplicationsBoard] Store updated, ivySuggestions should now be:', { applicationIds: ids });
+    };
+    window.addEventListener('ivy:suggestAction', handler as EventListener);
+    return () => window.removeEventListener('ivy:suggestAction', handler as EventListener);
+  }, [setIvySuggestions]);
+
+  // When an action completes, consume suggestion for that application
+  React.useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail as { application_id?: string } | undefined;
+      const id = detail?.application_id;
+      if (id) consumeSuggestion(id);
+    };
+    window.addEventListener('action:completed', handler as EventListener);
+    return () => window.removeEventListener('action:completed', handler as EventListener);
+  }, [consumeSuggestion]);
 
   const [columnVisibility, setColumnVisibility] = React.useState<Record<TableColumnKey, boolean>>(() => {
     try {
@@ -655,8 +701,11 @@ export default function ApplicationsBoardPage() {
     if (deliveryMode !== 'all') c++;
     if (studyPattern !== 'all') c++;
     if (multiOnly) c++;
+    if (sourceFilter !== 'all') c++;
+    if (campusFilter !== 'all') c++;
+    if (cycleFilter !== 'all') c++;
     return c;
-  }, [search, program, urgency, priority, deliveryMode, studyPattern, multiOnly]);
+  }, [search, program, urgency, priority, deliveryMode, studyPattern, multiOnly, sourceFilter, campusFilter, cycleFilter]);
 
   // Persist collapsed stages
   const [collapsedStages, setCollapsedStages] = React.useState<Record<string, boolean>>(() => {
@@ -688,6 +737,11 @@ export default function ApplicationsBoardPage() {
     setDeliveryMode('all');
     setStudyPattern('all');
     setMultiOnly(false);
+    setRiskOnly(false);
+    setBlockersOnly(false);
+    setSourceFilter('all');
+    setCampusFilter('all');
+    setCycleFilter('all');
   }, []);
 
   // Saved Views (local)
@@ -815,15 +869,20 @@ export default function ApplicationsBoardPage() {
       const pattern = deriveStudyPattern(app);
       const matchesDelivery = deliveryMode === 'all' || mode === deliveryMode;
       const matchesPattern = studyPattern === 'all' || pattern === studyPattern;
+      const matchesSource = sourceFilter === 'all' || (app.source || '') === sourceFilter;
+      const matchesCampus = campusFilter === 'all' || (app.campus_name || '') === campusFilter;
+      const matchesCycle = cycleFilter === 'all' || (app.cycle_label || '') === cycleFilter;
       const prob = (app.conversion_probability ?? app.progression_probability ?? 0);
       const matchesRisk = !riskOnly || prob < 0.35;
+      const hasBlockers = Array.isArray(app.progression_blockers) && app.progression_blockers.length > 0;
+      const matchesBlockers = !blockersOnly || hasBlockers;
       
       // Multi-application filter: keep only applicants that appear more than once
       // We'll compute counts below and apply after this filter
       
-      return matchesSearch && matchesProgram && matchesDelivery && matchesPattern && matchesRisk;
+      return matchesSearch && matchesProgram && matchesDelivery && matchesPattern && matchesSource && matchesCampus && matchesCycle && matchesRisk && matchesBlockers;
     });
-  }, [applications, search, program, deliveryMode, studyPattern, deriveDeliveryMode, deriveStudyPattern, riskOnly]);
+  }, [applications, search, program, deliveryMode, studyPattern, sourceFilter, campusFilter, cycleFilter, deriveDeliveryMode, deriveStudyPattern, riskOnly, blockersOnly]);
 
   // Build person->application count and optionally filter to only multi-application applicants
   const personAppCounts = React.useMemo(() => {
@@ -1795,6 +1854,69 @@ export default function ApplicationsBoardPage() {
     }
   }, [toast]);
 
+  React.useEffect(() => {
+    const handler = (event: Event) => {
+      const detail = (event as CustomEvent).detail as { application_id?: string } | undefined;
+      const applicationId = detail?.application_id;
+      const app = applicationId
+        ? filteredWithMulti.find((candidate) => candidate.application_id === applicationId)
+        : filteredWithMulti[0];
+
+      if (app) {
+        handlePhoneClick(app);
+      } else {
+        toast({ title: "Call console unavailable", description: "Couldn't find application data for this call.", variant: "destructive" });
+      }
+    };
+
+    window.addEventListener('actions:openCallConsole', handler as EventListener);
+    return () => window.removeEventListener('actions:openCallConsole', handler as EventListener);
+  }, [filteredWithMulti, handlePhoneClick, toast]);
+
+  // Listen for email composer events from TriageModal
+  React.useEffect(() => {
+    const handler = (event: Event) => {
+      const detail = (event as CustomEvent).detail as { 
+        application_id?: string;
+        triage_item?: any;
+        artifacts?: any;
+      } | undefined;
+      const applicationId = detail?.application_id;
+      const app = applicationId
+        ? filteredWithMulti.find((candidate) => candidate.application_id === applicationId)
+        : filteredWithMulti[0];
+
+      if (app) {
+        handleEmailClick(app);
+      } else {
+        toast({ title: "Email composer unavailable", description: "Couldn't find application data for this email.", variant: "destructive" });
+      }
+    };
+    window.addEventListener('actions:openEmailComposer', handler as EventListener);
+    return () => window.removeEventListener('actions:openEmailComposer', handler as EventListener);
+  }, [handleEmailClick, filteredWithMulti, toast]);
+
+  // Actions dropdown handlers
+  const handleNextBestAction = React.useCallback(async () => {
+    // This will be handled by TriageModal when opened with the "Next Best Action" option
+    setTriageModalOpen(true);
+  }, []);
+
+  const handleViewBlockers = React.useCallback(() => {
+    // TODO: Toggle blockers filter
+    toast({ title: "View Blockers", description: "Feature coming soon", variant: "default" });
+  }, [toast]);
+
+  const handleDailyReport = React.useCallback(() => {
+    // TODO: Generate daily report
+    toast({ title: "Daily Report", description: "Feature coming soon", variant: "default" });
+  }, [toast]);
+
+  const handleFocusMode = React.useCallback(() => {
+    // TODO: Navigate to focus mode
+    toast({ title: "Focus Mode", description: "Feature coming soon", variant: "default" });
+  }, [toast]);
+
   const handleMeetingClick = React.useCallback((app: ApplicationCard) => {
     const mapped = {
       id: toNumericId(app.person_id),
@@ -2008,7 +2130,7 @@ export default function ApplicationsBoardPage() {
               );
             })()}
 
-            {/* Delivery modes & patterns */}
+            {/* Delivery modes & patterns (aggregate) */}
             {agg && (agg.modes.length > 0 || agg.patterns.length > 0) && (
               <div className="flex flex-wrap gap-1">
                 {agg.modes.slice(0,2).map(m => (
@@ -2019,6 +2141,60 @@ export default function ApplicationsBoardPage() {
                 ))}
               </div>
             )}
+
+            {/* Card-level quick filter chips */}
+            <div className="flex flex-wrap gap-1">
+              {!!app.source && (
+                <Badge
+                  variant="secondary"
+                  className="h-5 text-[10px] capitalize cursor-pointer"
+                  onClick={(e) => { e.stopPropagation(); setSourceFilter(app.source!); }}
+                  title={`Filter by source: ${app.source}`}
+                >
+                  {app.source}
+                </Badge>
+              )}
+              {!!app.campus_name && (
+                <Badge
+                  variant="secondary"
+                  className="h-5 text-[10px] cursor-pointer"
+                  onClick={(e) => { e.stopPropagation(); setCampusFilter(app.campus_name!); }}
+                  title={`Filter by campus: ${app.campus_name}`}
+                >
+                  {app.campus_name}
+                </Badge>
+              )}
+              {!!app.cycle_label && (
+                <Badge
+                  variant="secondary"
+                  className="h-5 text-[10px] cursor-pointer"
+                  onClick={(e) => { e.stopPropagation(); setCycleFilter(app.cycle_label!); }}
+                  title={`Filter by cycle: ${app.cycle_label}`}
+                >
+                  {app.cycle_label}
+                </Badge>
+              )}
+              {!!app.priority && (
+                <Badge
+                  variant="secondary"
+                  className={`h-5 text-[10px] cursor-pointer ${getPriorityColor(String(app.priority).toLowerCase())}`}
+                  onClick={(e) => { e.stopPropagation(); setPriority(String(app.priority).toLowerCase()); }}
+                  title={`Filter by priority: ${String(app.priority).toLowerCase()}`}
+                >
+                  {String(app.priority).toLowerCase()}
+                </Badge>
+              )}
+              {!!app.urgency && (
+                <Badge
+                  variant="secondary"
+                  className="h-5 text-[10px] cursor-pointer"
+                  onClick={(e) => { e.stopPropagation(); setUrgency(String(app.urgency).toLowerCase()); }}
+                  title={`Filter by urgency: ${String(app.urgency).toLowerCase()}`}
+                >
+                  {String(app.urgency).toLowerCase()}
+                </Badge>
+              )}
+            </div>
 
             {/* Secondary metrics */}
             <div className="space-y-2">
@@ -2187,6 +2363,24 @@ export default function ApplicationsBoardPage() {
                   
                   {/* Actions */}
                   <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">Actions</div>
+                  <DropdownMenuItem onClick={() => setRiskOnly(v => !v)}>
+                    <div className="flex items-center justify-between w-full">
+                      <div className="flex items-center">
+                        <AlertTriangle className="h-4 w-4 mr-2" />
+                        At-risk only
+                      </div>
+                      {riskOnly && <div className="w-2 h-2 rounded-full bg-destructive" />}
+                    </div>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setBlockersOnly(v => !v)}>
+                    <div className="flex items-center justify-between w-full">
+                      <div className="flex items-center">
+                        <Target className="h-4 w-4 mr-2" />
+                        Has blockers only
+                      </div>
+                      {blockersOnly && <div className="w-2 h-2 rounded-full bg-foreground" />}
+                    </div>
+                  </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={() => setShowFilters(true)}
                   >
@@ -2219,7 +2413,12 @@ export default function ApplicationsBoardPage() {
                     priority,
                     deliveryMode,
                     studyPattern,
-                    multiOnly
+                    multiOnly,
+                    riskOnly,
+                    blockersOnly,
+                    source: sourceFilter,
+                    campus: campusFilter,
+                    cycle: cycleFilter
                   },
                   progressionStats,
                   hasPhoneNumber: selectedApps.length === 1 && selectedApps[0] ? 
@@ -2302,10 +2501,61 @@ export default function ApplicationsBoardPage() {
                   progressionStats
                 }}
               />
-              <Button className="gap-2 h-9 px-4 text-sm font-medium text-white shadow-sm transition-all bg-[hsl(var(--brand-accent))] hover:bg-[hsl(var(--brand-accent))]/90">
-                <Plus className="h-4 w-4" />
-                <span className="hidden sm:inline">New Application</span>
-                </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button className="relative gap-2 h-9 px-4 text-sm font-medium text-white shadow-sm transition-all bg-[hsl(var(--brand-accent))] hover:bg-[hsl(var(--brand-accent))]/90">
+                    <Workflow className="h-4 w-4" />
+                    <span className="hidden sm:inline">Actions</span>
+                    {ivySuggestions && ivySuggestions.applicationIds.length > 0 && (
+                      <span className="absolute top-1/2 -translate-y-1/2 -right-10 flex items-center gap-1 text-xs font-medium">
+                        <Flame className="h-4 w-4 text-white" />
+                        <span className="inline-flex h-2.5 w-2.5 rounded-full bg-white/90 shadow" />
+                      </span>
+                    )}
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  {ivySuggestions && ivySuggestions.applicationIds.length > 0 && (
+                    <DropdownMenuItem
+                      onSelect={(e) => {
+                        e.preventDefault();
+                        setTriageModalOpen(true);
+                      }}
+                      className="text-foreground"
+                    >
+                      <Flame className="mr-2 h-4 w-4" />
+                      {ivySuggestions.applicationIds.length} Ivy suggestion{ivySuggestions.applicationIds.length > 1 ? 's' : ''}
+                    </DropdownMenuItem>
+                  )}
+                  <DropdownMenuItem onClick={() => navigate('/admissions/applications/new')}>
+                    <Plus className="mr-2 h-4 w-4" />
+                    New Application
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => {
+                    setTriageModalOpen(true);
+                  }}>
+                    <Target className="mr-2 h-4 w-4" />
+                    Top Daily Actions
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleNextBestAction}>
+                    <Zap className="mr-2 h-4 w-4" />
+                    Next Best Action
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleViewBlockers}>
+                    <Flag className="mr-2 h-4 w-4" />
+                    View Blockers
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleDailyReport}>
+                    <BarChart3 className="mr-2 h-4 w-4" />
+                    Generate Daily Report
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleFocusMode}>
+                    <Focus className="mr-2 h-4 w-4" />
+                    Open Focus Mode
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
               </div>
             </div>
         </div>
@@ -2328,6 +2578,48 @@ export default function ApplicationsBoardPage() {
                   <SelectItem value="all">All Programs</SelectItem>
                   {uniqueProgrammes.map(prog => (
                     <SelectItem key={prog} value={prog}>{prog}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid gap-2">
+              <label className="text-xs text-muted-foreground">Source</label>
+              <Select value={sourceFilter} onValueChange={setSourceFilter}>
+                <SelectTrigger className="w-full border-slate-200">
+                  <SelectValue placeholder="Source" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Sources</SelectItem>
+                  {uniqueSources.map(src => (
+                    <SelectItem key={src} value={src}>{src}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid gap-2">
+              <label className="text-xs text-muted-foreground">Campus</label>
+              <Select value={campusFilter} onValueChange={setCampusFilter}>
+                <SelectTrigger className="w-full border-slate-200">
+                  <SelectValue placeholder="Campus" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Campuses</SelectItem>
+                  {uniqueCampuses.map(campus => (
+                    <SelectItem key={campus} value={campus}>{campus}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid gap-2">
+              <label className="text-xs text-muted-foreground">Cycle</label>
+              <Select value={cycleFilter} onValueChange={setCycleFilter}>
+                <SelectTrigger className="w-full border-slate-200">
+                  <SelectValue placeholder="Cycle" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Cycles</SelectItem>
+                  {uniqueCycles.map(cycle => (
+                    <SelectItem key={cycle} value={cycle}>{cycle}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -2395,6 +2687,14 @@ export default function ApplicationsBoardPage() {
               <Checkbox checked={multiOnly} onCheckedChange={(v) => setMultiOnly(v === true)} id="multiOnlySheet" />
               <label htmlFor="multiOnlySheet" className="text-slate-600">Multi-application only</label>
             </div>
+            <div className="flex items-center gap-2 text-sm px-2 py-1 rounded-md border border-slate-200 bg-white">
+              <Checkbox checked={riskOnly} onCheckedChange={(v) => setRiskOnly(v === true)} id="riskOnlySheet" />
+              <label htmlFor="riskOnlySheet" className="text-slate-600">At-risk only (≤ 35%)</label>
+            </div>
+            <div className="flex items-center gap-2 text-sm px-2 py-1 rounded-md border border-slate-200 bg-white">
+              <Checkbox checked={blockersOnly} onCheckedChange={(v) => setBlockersOnly(v === true)} id="blockersOnlySheet" />
+              <label htmlFor="blockersOnlySheet" className="text-slate-600">Has blockers only</label>
+            </div>
           </div>
           <SheetFooter className="mt-6">
             <Button variant="outline" onClick={clearAllFilters}>Clear all</Button>
@@ -2402,6 +2702,112 @@ export default function ApplicationsBoardPage() {
           </SheetFooter>
         </SheetContent>
       </Sheet>
+
+        {/* Board Filter Bar */}
+        {view === 'board' && (
+          <div className="px-4 sm:px-5 lg:px-6 mb-3">
+            <div className="rounded-xl border border-border/40 bg-white/80 backdrop-blur px-3 py-2 shadow-[0_8px_24px_-18px_rgba(15,23,42,0.25)]">
+              <div className="flex flex-nowrap items-center gap-2 overflow-x-auto">
+                {/* Program */}
+                <div className="shrink-0">
+                  <Select value={program} onValueChange={setProgram}>
+                    <SelectTrigger className="h-8 text-sm border-slate-200 min-w-[12rem]" aria-label="Filter by program">
+                      <SelectValue placeholder="Program" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Programs</SelectItem>
+                      {uniqueProgrammes.map((p) => (
+                        <SelectItem key={p} value={p}>{p}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Mode of study */}
+                <div className="shrink-0">
+                  <Select value={deliveryMode} onValueChange={(v) => setDeliveryMode(v as any)}>
+                    <SelectTrigger className="h-8 text-sm border-slate-200 min-w-[10rem]" aria-label="Filter by delivery mode">
+                      <SelectValue placeholder="Mode of study" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Modes</SelectItem>
+                      <SelectItem value="onsite">Onsite</SelectItem>
+                      <SelectItem value="online">Online</SelectItem>
+                      <SelectItem value="hybrid">Hybrid</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Study pattern */}
+                <div className="shrink-0">
+                  <Select value={studyPattern} onValueChange={(v) => setStudyPattern(v as any)}>
+                    <SelectTrigger className="h-8 text-sm border-slate-200 min-w-[10rem]" aria-label="Filter by study pattern">
+                      <SelectValue placeholder="Study pattern" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Patterns</SelectItem>
+                      <SelectItem value="full_time">Full-time</SelectItem>
+                      <SelectItem value="part_time">Part-time</SelectItem>
+                      <SelectItem value="accelerated">Accelerated</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Year/Cycle */}
+                <div className="shrink-0">
+                  <Select value={cycleFilter} onValueChange={setCycleFilter}>
+                    <SelectTrigger className="h-8 text-sm border-slate-200 min-w-[10rem]" aria-label="Filter by cycle">
+                      <SelectValue placeholder="Cycle / Start" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Cycles</SelectItem>
+                      {uniqueCycles.map((c) => (
+                        <SelectItem key={c} value={c}>{c}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Optional: Campus */}
+                <div className="hidden lg:block shrink-0">
+                  <Select value={campusFilter} onValueChange={setCampusFilter}>
+                    <SelectTrigger className="h-8 text-sm border-slate-200 min-w-[10rem]" aria-label="Filter by campus">
+                      <SelectValue placeholder="Campus" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Campuses</SelectItem>
+                      {uniqueCampuses.map((campus) => (
+                        <SelectItem key={campus} value={campus}>{campus}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Optional: Source */}
+                <div className="hidden lg:block shrink-0">
+                  <Select value={sourceFilter} onValueChange={setSourceFilter}>
+                    <SelectTrigger className="h-8 text-sm border-slate-200 min-w-[10rem]" aria-label="Filter by source">
+                      <SelectValue placeholder="Source" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Sources</SelectItem>
+                      {uniqueSources.map((src) => (
+                        <SelectItem key={src} value={src}>{src}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Reset */}
+                <div className="shrink-0 ml-auto">
+                  <Button variant="ghost" size="sm" className="h-8 text-xs text-slate-600" onClick={clearAllFilters} title="Reset filters">
+                    Reset
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Applied Filter Chips */}
         {activeFilterCount > 0 && (
@@ -2419,6 +2825,30 @@ export default function ApplicationsBoardPage() {
                 <Badge variant="secondary" className="bg-white border-slate-200 text-slate-700">
                   Program: <span className="ml-1 font-medium">{program}</span>
                   <button className="ml-2" onClick={() => setProgram('all')} aria-label="Clear program">
+                    <X className="h-3 w-3" />
+                  </button>
+                </Badge>
+              )}
+              {sourceFilter !== 'all' && (
+                <Badge variant="secondary" className="bg-white border-slate-200 text-slate-700">
+                  Source: <span className="ml-1 font-medium capitalize">{sourceFilter}</span>
+                  <button className="ml-2" onClick={() => setSourceFilter('all')} aria-label="Clear source">
+                    <X className="h-3 w-3" />
+                  </button>
+                </Badge>
+              )}
+              {campusFilter !== 'all' && (
+                <Badge variant="secondary" className="bg-white border-slate-200 text-slate-700">
+                  Campus: <span className="ml-1 font-medium">{campusFilter}</span>
+                  <button className="ml-2" onClick={() => setCampusFilter('all')} aria-label="Clear campus">
+                    <X className="h-3 w-3" />
+                  </button>
+                </Badge>
+              )}
+              {cycleFilter !== 'all' && (
+                <Badge variant="secondary" className="bg-white border-slate-200 text-slate-700">
+                  Cycle: <span className="ml-1 font-medium">{cycleFilter}</span>
+                  <button className="ml-2" onClick={() => setCycleFilter('all')} aria-label="Clear cycle">
                     <X className="h-3 w-3" />
                   </button>
                 </Badge>
@@ -2463,120 +2893,265 @@ export default function ApplicationsBoardPage() {
                   </button>
                 </Badge>
               )}
-              <Button variant="ghost" size="sm" className="h-6 text-xs text-slate-600" onClick={clearAllFilters}>Clear all</Button>
+              {/* Note: riskOnly and blockersOnly filter states are controlled via KPI tiles; chips omitted intentionally */}
+              {/* Clear-all moved into KPI strip */}
         </div>
           </div>
         )}
 
         {/* Pipeline Progression Insights */}
         <div className="px-4 sm:px-5 lg:px-6">
-          <div className="mb-2 flex justify-end">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-7 gap-1 rounded-full border border-white/50 bg-white/40 px-3 text-xs text-slate-600 backdrop-blur-md transition hover:border-white/70 hover:bg-white/60 hover:text-slate-700"
-              onClick={() => setShowInsights((prev) => !prev)}
-              aria-pressed={showInsights}
-              aria-label={showInsights ? "Hide pipeline insights" : "Show pipeline insights"}
-            >
-              {showInsights ? (
-                <>
+          <div className="relative mb-6 overflow-hidden rounded-2xl border border-border/20 bg-card/40 backdrop-blur">
+            {/* Inline toggle aligned top-right inside container */}
+            {showInsights ? (
+              <div className="absolute right-3 top-2 z-10">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 gap-1 rounded-full border border-white/50 bg-white/40 px-3 text-xs text-slate-600 backdrop-blur-md transition hover:border-white/70 hover:bg-white/60 hover:text-slate-700"
+                  onClick={() => setShowInsights(false)}
+                  aria-pressed
+                  aria-label="Hide pipeline insights"
+                >
                   Hide
                   <ChevronDown className="h-3.5 w-3.5" />
-                </>
-              ) : (
-                <>
-                  Show
-                  <ChevronUp className="h-3.5 w-3.5" />
-                </>
-              )}
-            </Button>
-          </div>
-          <div className="relative mb-6 overflow-hidden rounded-2xl border border-border/20 bg-card/40 backdrop-blur">
-            {showInsights ? (
-              <div className="grid grid-cols-1 gap-3 px-4 pb-4 pt-2 sm:grid-cols-2 xl:grid-cols-4">
-                <div className="flex items-center gap-3 rounded-xl border border-border/30 bg-white/85 px-4 py-3 shadow-[0_12px_40px_-26px_rgba(15,23,42,0.35)]">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full border border-border/40 text-muted-foreground">
-                    <Users className="h-4 w-4" />
-                  </div>
-                  <div className="min-w-0">
-                    <div className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Active Applications</div>
-                    <div className="flex items-baseline gap-2">
-                      <span className="text-xl font-semibold tabular-nums text-foreground">{progressionStats.total}</span>
-                      <span className="text-xs text-muted-foreground">
-                        {progressionStats.highConfidence} ≥70%
-                      </span>
-                    </div>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3 rounded-xl border border-success/10 bg-white/85 px-4 py-3 shadow-[0_12px_40px_-26px_rgba(34,197,94,0.35)]">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full border border-success/40 text-success">
-                    <Sparkles className="h-4 w-4" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Avg Progression</div>
-                    <div className="flex items-center gap-3">
-                      <span className="text-xl font-semibold tabular-nums text-success">{progressionStats.avgProgression}%</span>
-                      <div className="h-2 flex-1 rounded-full bg-muted">
-                        <div
-                          className="h-full rounded-full bg-success transition-all"
-                          style={{ width: `${Math.max(0, Math.min(100, progressionStats.avgProgression))}%` }}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3 rounded-xl border border-destructive/10 bg-white/85 px-4 py-3 shadow-[0_12px_40px_-26px_rgba(239,68,68,0.35)]">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full border border-destructive/40 text-destructive">
-                    <AlertTriangle className="h-4 w-4" />
-                  </div>
-                  <div className="min-w-0">
-                    <div className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">At-Risk Applicants</div>
-                    <div className="flex items-baseline gap-2">
-                      <span className="text-xl font-semibold tabular-nums text-destructive">{progressionStats.highRisk}</span>
-                      <span className="text-xs text-muted-foreground">
-                        {progressionStats.total > 0
-                          ? `${Math.round((progressionStats.highRisk / progressionStats.total) * 100)}% of pipeline`
-                          : '—'}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3 rounded-xl border border-border/30 bg-white/85 px-4 py-3 shadow-[0_12px_40px_-26px_rgba(15,23,42,0.28)]">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full border border-border/40 text-muted-foreground">
-                    <Target className="h-4 w-4" />
-                  </div>
-                  <div className="min-w-0">
-                    <div className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Blockers Spotlight</div>
-                    <div className="text-sm font-semibold text-foreground truncate">
-                      {progressionStats.topBlocker ? progressionStats.topBlocker.item : 'No blockers flagged'}
-                    </div>
-                    <div className="text-[11px] text-muted-foreground">
-                      {progressionStats.blockersApps > 0
-                        ? `${progressionStats.blockersApps} apps • ${progressionStats.topBlocker?.count ?? 0} mentions`
-                        : 'Pipeline clear'}
-                    </div>
-                  </div>
-                </div>
+                </Button>
               </div>
             ) : (
-              <div className="flex flex-wrap items-center gap-2 px-4 sm:px-5 py-2.5">
-                <Badge variant="secondary" className="bg-white/70 border-border/40 text-slate-700">
-                  <Users className="mr-1.5 h-3.5 w-3.5 text-muted-foreground" />
-                  {progressionStats.total} active
-                </Badge>
-                <Badge variant="secondary" className="bg-white/70 border-border/40 text-success">
-                  <Sparkles className="mr-1.5 h-3.5 w-3.5" />
-                  {progressionStats.avgProgression}% avg
-                </Badge>
-                <Badge variant="secondary" className="bg-white/70 border-border/40 text-destructive">
-                  <AlertTriangle className="mr-1.5 h-3.5 w-3.5" />
-                  {progressionStats.highRisk} at-risk
-                </Badge>
-                <Badge variant="secondary" className="bg-white/70 border-border/40 text-muted-foreground">
-                  <Target className="mr-1.5 h-3.5 w-3.5" />
-                  {progressionStats.blockersApps} blockers
-                </Badge>
+              <div className="absolute right-3 top-2 z-10">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 gap-1 rounded-full border border-white/50 bg-white/40 px-3 text-xs text-slate-600 backdrop-blur-md transition hover:border-white/70 hover:bg-white/60 hover:text-slate-700"
+                  onClick={() => setShowInsights(true)}
+                  aria-label="Show pipeline insights"
+                >
+                  Show
+                  <ChevronUp className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+            )}
+            {showInsights ? (
+              <>
+              <div className="grid grid-cols-1 gap-3 px-4 pb-2 pt-8 sm:grid-cols-2 xl:grid-cols-4">
+                <TooltipProvider delayDuration={150}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div
+                        className="flex items-center gap-3 rounded-xl border border-border/30 bg-white/85 px-4 py-3 shadow-[0_12px_40px_-26px_rgba(15,23,42,0.35)] cursor-pointer hover:bg-white transition-colors"
+                        role="button"
+                        onClick={() => clearAllFilters()}
+                        aria-label="Clear all filters"
+                      >
+                        <div className="flex h-8 w-8 items-center justify-center rounded-full border border-border/40 text-muted-foreground">
+                          <Users className="h-4 w-4" />
+                        </div>
+                        <div className="min-w-0">
+                          <div className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Active Applications</div>
+                          <div className="flex items-baseline gap-2">
+                            <span className="text-xl font-semibold tabular-nums text-foreground">{progressionStats.total}</span>
+                            <span className="text-xs text-muted-foreground">
+                              {progressionStats.highConfidence} ≥70%
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent sideOffset={8} className="text-xs">Clear all filters</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+                <TooltipProvider delayDuration={150}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div
+                        className="flex items-center gap-3 rounded-xl border border-success/10 bg-white/85 px-4 py-3 shadow-[0_12px_40px_-26px_hsl(var(--success)_/_0.35)] cursor-pointer hover:bg-white transition-colors"
+                        role="button"
+                        onClick={() => { setSortState({ column: 'conversion', direction: 'desc' }); }}
+                        aria-label="Sort by conversion probability"
+                      >
+                        <div className="flex h-8 w-8 items-center justify-center rounded-full border border-success/40 text-success">
+                          <Sparkles className="h-4 w-4" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Avg Progression</div>
+                          <div className="flex items-center gap-3">
+                            <span className="text-xl font-semibold tabular-nums text-success">{progressionStats.avgProgression}%</span>
+                            <div className="h-2 flex-1 rounded-full bg-muted">
+                              <div
+                                className="h-full rounded-full bg-success transition-all"
+                                style={{ width: `${Math.max(0, Math.min(100, progressionStats.avgProgression))}%` }}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent sideOffset={8} className="text-xs">Sorts by probability in table view</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+                <TooltipProvider delayDuration={150}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div
+                        className="flex items-center gap-3 rounded-xl border border-destructive/10 bg-white/85 px-4 py-3 shadow-[0_12px_40px_-26px_hsl(var(--destructive)_/_0.35)] cursor-pointer hover:bg-white transition-colors"
+                        role="button"
+                        onClick={() => setRiskOnly(true)}
+                        aria-label="Filter to at-risk only"
+                      >
+                        <div className="flex h-8 w-8 items-center justify-center rounded-full border border-destructive/40 text-destructive">
+                          <AlertTriangle className="h-4 w-4" />
+                        </div>
+                        <div className="min-w-0">
+                          <div className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">At-Risk Applicants</div>
+                          <div className="flex items-baseline gap-2">
+                            <span className="text-xl font-semibold tabular-nums text-destructive">{progressionStats.highRisk}</span>
+                            <span className="text-xs text-muted-foreground">
+                              {progressionStats.total > 0
+                                ? `${Math.round((progressionStats.highRisk / progressionStats.total) * 100)}% of pipeline`
+                                : '—'}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent sideOffset={8} className="text-xs">Filters where probability ≤ 35%</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+                <TooltipProvider delayDuration={150}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div
+                        className="flex items-center gap-3 rounded-xl border border-border/30 bg-white/85 px-4 py-3 shadow-[0_12px_40px_-26px_rgba(15,23,42,0.28)] cursor-pointer hover:bg-white transition-colors"
+                        role="button"
+                        onClick={() => setBlockersOnly(true)}
+                        aria-label="Filter to applications with blockers"
+                      >
+                        <div className="flex h-8 w-8 items-center justify-center rounded-full border border-border/40 text-muted-foreground">
+                          <Target className="h-4 w-4" />
+                        </div>
+                        <div className="min-w-0">
+                          <div className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Blockers Spotlight</div>
+                          <div className="text-sm font-semibold text-foreground truncate">
+                            {progressionStats.topBlocker ? progressionStats.topBlocker.item : 'No blockers flagged'}
+                          </div>
+                          <div className="text-[11px] text-muted-foreground">
+                            {progressionStats.blockersApps > 0
+                              ? `${progressionStats.blockersApps} apps • ${progressionStats.topBlocker?.count ?? 0} mentions`
+                              : 'Pipeline clear'}
+                          </div>
+                        </div>
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent sideOffset={8} className="text-xs">Filters to applications that have blockers</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
+              {/* Inline controls inside expanded insights */}
+              <div className="flex items-center justify-end gap-2 px-4 pb-3">
+                <TooltipProvider delayDuration={150}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Badge
+                        variant="secondary"
+                        className="border border-border/40 bg-white/80 text-slate-700 cursor-pointer"
+                        onClick={clearAllFilters}
+                        aria-label="Clear all filters"
+                      >
+                        <X className="mr-1.5 h-3.5 w-3.5" />
+                        Clear
+                      </Badge>
+                    </TooltipTrigger>
+                    <TooltipContent sideOffset={6} className="text-xs">Clear all filters</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
+              </>
+            ) : (
+              <div className="relative flex flex-wrap items-center gap-2 px-4 sm:px-5 py-2.5">
+              <TooltipProvider delayDuration={150}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Badge
+                      variant="secondary"
+                      className="bg-white/70 border-border/40 text-slate-700 cursor-pointer"
+                      onClick={clearAllFilters}
+                      aria-label="Clear all filters"
+                    >
+                      <Users className="mr-1.5 h-3.5 w-3.5 text-muted-foreground" />
+                      {progressionStats.total} active
+                    </Badge>
+                  </TooltipTrigger>
+                  <TooltipContent sideOffset={6} className="text-xs">Clear all filters</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+
+                <TooltipProvider delayDuration={150}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Badge
+                        variant="secondary"
+                        className="bg-white/70 border-border/40 text-success cursor-pointer"
+                        onClick={() => { setSortState({ column: 'conversion', direction: 'desc' }); }}
+                        aria-label="Sort by conversion probability"
+                      >
+                        <Sparkles className="mr-1.5 h-3.5 w-3.5" />
+                        {progressionStats.avgProgression}% avg
+                      </Badge>
+                    </TooltipTrigger>
+                    <TooltipContent sideOffset={6} className="text-xs">Sorts by probability in table view</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+
+                <TooltipProvider delayDuration={150}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Badge
+                        variant="secondary"
+                        className="bg-white/70 border-border/40 text-destructive cursor-pointer"
+                        onClick={() => setRiskOnly(true)}
+                        aria-label="Filter to at-risk only"
+                      >
+                        <AlertTriangle className="mr-1.5 h-3.5 w-3.5" />
+                        {progressionStats.highRisk} at-risk
+                      </Badge>
+                    </TooltipTrigger>
+                    <TooltipContent sideOffset={6} className="text-xs">Filters where probability ≤ 35%</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+
+                <TooltipProvider delayDuration={150}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Badge
+                        variant="secondary"
+                        className="bg-white/70 border-border/40 text-muted-foreground cursor-pointer"
+                        onClick={() => setBlockersOnly(true)}
+                        aria-label="Filter to applications with blockers"
+                      >
+                        <Target className="mr-1.5 h-3.5 w-3.5" />
+                        {progressionStats.blockersApps} blockers
+                      </Badge>
+                    </TooltipTrigger>
+                    <TooltipContent sideOffset={6} className="text-xs">Filters to applications that have blockers</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+                {/* Condensed strip keeps only a Clear control; At-risk/Blockers handled by KPI badges above */}
+                <TooltipProvider delayDuration={150}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Badge
+                        variant="secondary"
+                        className="bg-white/70 border-border/40 text-slate-700 cursor-pointer"
+                        onClick={clearAllFilters}
+                        aria-label="Clear all filters"
+                      >
+                        <X className="mr-1.5 h-3.5 w-3.5" />
+                        Clear
+                      </Badge>
+                    </TooltipTrigger>
+                    <TooltipContent sideOffset={6} className="text-xs">Clear all filters</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </div>
             )}
           </div>
@@ -2755,7 +3330,7 @@ export default function ApplicationsBoardPage() {
                       </div>
                            ) : (
                              <>
-                               <Card className={`mb-6 mt-3 border border-border/40 ${toneVariant.cardBg} relative min-h-[96px] rounded-2xl shadow-sm hover:shadow-lg transition-shadow`} >
+                               <Card className={`mb-6 mt-3 border border-border/40 ${toneVariant.cardBorder || ''} ${toneVariant.cardBg} relative min-h-[96px] rounded-2xl shadow-sm hover:shadow-md transition-shadow`} >
                                  {/* Drop indicator */}
                                  {snapshot.isDraggingOver && (
                                    <div className={`pointer-events-none absolute inset-1 border border-dashed rounded-lg flex items-center justify-center z-20 transition-all duration-200 ease-out shadow ${toneVariant.dropBorder} ${toneVariant.dropBg}`}>
@@ -3332,6 +3907,16 @@ export default function ApplicationsBoardPage() {
       
       {/* Ask Ivy Overlay */}
       <IvyOverlay />
+
+      {/* Triage Modal */}
+        <TriageModal
+          isOpen={triageModalOpen}
+          suggestedApplicationIds={ivySuggestions?.applicationIds}
+          onClose={() => setTriageModalOpen(false)}
+          onActionExecuted={(applicationId) => {
+            console.log('Action executed for application:', applicationId);
+          }}
+        />
     </div>
   );
 }

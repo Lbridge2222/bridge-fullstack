@@ -12,7 +12,7 @@ import { Separator } from "@/components/ui/separator";
 import type { IvyCommand, IvyContext } from "./types";
 import { ragApi, type RagContext } from '@/services/callConsoleApi';
 import { intelligentProcessor, type ProcessedQuery } from './intelligentProcessor';
-import ReactMarkdown from 'react-markdown';
+import { MarkdownRenderer } from '@/components/ui/markdown-renderer';
 import { suggestionsApi, type SuggestionsQuery } from '@/services/suggestionsApi';
 import SuggestionsModal from '@/components/SuggestionsModal';
 import { aiRouterApi, type IvyRouterV2Response, type UIAction } from '@/services/api';
@@ -858,48 +858,12 @@ export const InlineIvyInput: React.FC<Props> = ({
                   <div className="font-medium">
                     {message.type === 'user' ? 'You' : message.type === 'action' ? 'Action' : 'Ivy'}
                   </div>
-                  <div className="mt-1 prose prose-sm max-w-none">
-                    <ReactMarkdown 
-                      components={{
-                    // Better paragraph and list spacing
-                    p: ({ children }) => <p className="mb-3 leading-relaxed">{children}</p>,
-                    ul: ({ children }) => <ul className="list-disc list-outside ml-4 mb-3 space-y-1.5">{children}</ul>,
-                    ol: ({ children }) => <ol className="list-decimal list-outside ml-4 mb-3 space-y-1.5">{children}</ol>,
-                    li: ({ children }) => <li className="leading-relaxed pl-1">{children}</li>,
-                    h1: ({ children }) => <h1 className="text-lg font-bold mb-3 mt-4">{children}</h1>,
-                    h2: ({ children }) => <h2 className="text-base font-semibold mb-2 mt-3">{children}</h2>,
-                    h3: ({ children }) => <h3 className="text-sm font-medium mb-2 mt-2">{children}</h3>,
-                    blockquote: ({ children }) => <blockquote className="border-l-2 border-muted pl-3 my-2 italic">{children}</blockquote>,
-                    a: ({ href, children, ...props }) => {
-                      if (href === 'ai-analysis') {
-                            return (
-                              <button
-                                onClick={() => handleAIAnalysisClick()}
-                                className="text-primary hover:text-primary/80 underline font-medium cursor-pointer"
-                                type="button"
-                              >
-                                {children}
-                              </button>
-                            );
-                      }
-                      if (href && href.startsWith('action:')) {
-                        const action = href.replace('action:', '') as UIAction['action'];
-                        return (
-                          <button
-                            onClick={() => dispatchUIAction({ label: String(children), action } as UIAction, commands, context)}
-                            className="text-primary hover:text-primary/80 underline font-medium cursor-pointer"
-                            type="button"
-                          >
-                            {children}
-                          </button>
-                        );
-                      }
-                          return <a href={href} {...props}>{children}</a>;
-                        }
-                      }}
-                    >
-                      {message.content}
-                    </ReactMarkdown>
+                  <div className="mt-1">
+                    <MarkdownRenderer 
+                      content={message.content}
+                      onAIAnalysisClick={handleAIAnalysisClick}
+                      onActionClick={(action, label) => dispatchUIAction({ label, action } as UIAction, commands, context)}
+                    />
                   </div>
                   <div className="text-xs opacity-70 mt-1">
                     {message.timestamp.toLocaleTimeString()}

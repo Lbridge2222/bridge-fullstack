@@ -162,6 +162,14 @@ try:
     app.include_router(triage_router)
 except Exception as e:
     print(f"❌ Failed to load triage router: {e}")
+
+# Actions system (intelligent action recommendations)
+try:
+    from app.routers.actions import router as actions_router
+    app.include_router(actions_router)
+    print("✅ Actions system loaded")
+except Exception as e:
+    print(f"❌ Failed to load actions router: {e}")
     # Allow app to start if optional AI deps missing
     pass
 

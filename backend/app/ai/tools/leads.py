@@ -303,12 +303,14 @@ async def get_ai_explanations(items: List[LeadLite], ml_scores: Dict[str, float]
             print(f"🤖 Using OpenAI for explanations: {OPENAI_MODEL}")
         elif ACTIVE_MODEL == "gemini" and GEMINI_API_KEY:
             from langchain_google_genai import ChatGoogleGenerativeAI
+            # CRITICAL: Explicitly normalize to -001 to prevent LangChain remapping to Pro
+            normalized_model = "gemini-2.0-flash-001" if "2.0-flash" in GEMINI_MODEL else GEMINI_MODEL
             llm = ChatGoogleGenerativeAI(
-                model=GEMINI_MODEL,
+                model=normalized_model,
                 temperature=0.3,
                 google_api_key=GEMINI_API_KEY
             )
-            print(f"🤖 Using Gemini for explanations: {GEMINI_MODEL}")
+            print(f"🤖 Using Gemini for explanations: {normalized_model}")
         else:
             raise Exception(f"No valid AI model available. Active: {ACTIVE_MODEL}")
 
@@ -595,12 +597,14 @@ async def compose_outreach(leads: List[LeadLite], intent: str, user_prompt: Opti
             print(f"🤖 Composing email with OpenAI: {OPENAI_MODEL}")
         elif ACTIVE_MODEL == "gemini" and GEMINI_API_KEY:
             from langchain_google_genai import ChatGoogleGenerativeAI
+            # CRITICAL: Explicitly normalize to -001 to prevent LangChain remapping to Pro
+            normalized_model = "gemini-2.0-flash-001" if "2.0-flash" in GEMINI_MODEL else GEMINI_MODEL
             llm = ChatGoogleGenerativeAI(
-                model=GEMINI_MODEL,
+                model=normalized_model,
                 temperature=0.4,
                 google_api_key=GEMINI_API_KEY
             )
-            print(f"🤖 Composing email with Gemini: {GEMINI_MODEL}")
+            print(f"🤖 Composing email with Gemini: {normalized_model}")
         else:
             raise Exception(f"No valid AI model available. Active: {ACTIVE_MODEL}")
 

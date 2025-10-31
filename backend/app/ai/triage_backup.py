@@ -752,12 +752,14 @@ def llm_explain(items: List[Dict[str, Any]]) -> List[str]:
             print(f"🤖 Explaining scores with OpenAI: {OPENAI_MODEL}")
         elif ACTIVE_MODEL == "gemini" and GEMINI_API_KEY:
             from langchain_google_genai import ChatGoogleGenerativeAI
+            # CRITICAL: Explicitly normalize to -001 to prevent LangChain remapping to Pro
+            normalized_model = "gemini-2.0-flash-001" if "2.0-flash" in GEMINI_MODEL else GEMINI_MODEL
             llm = ChatGoogleGenerativeAI(
-                model=GEMINI_MODEL,
+                model=normalized_model,
                 temperature=0.2,
                 google_api_key=GEMINI_API_KEY
             )
-            print(f"🤖 Explaining scores with Gemini: {GEMINI_MODEL}")
+            print(f"🤖 Explaining scores with Gemini: {normalized_model}")
         else:
             raise Exception(f"No valid AI model available. Active: {ACTIVE_MODEL}")
 

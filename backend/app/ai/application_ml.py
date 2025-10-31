@@ -153,7 +153,7 @@ class ApplicationIntelligence(BaseModel):
 # Comprehensive 18-stage admissions pipeline
 STAGE_SEQUENCE = [
     'enquiry',
-    'pre_application', 
+    'pre_application',
     'application_submitted',
     'fee_status_query',
     'interview_portfolio',
@@ -171,6 +171,13 @@ STAGE_SEQUENCE = [
     'offer_withdrawn',
     'offer_declined'
 ]
+
+# Stage index lookup (for safe indexing without .index() crashes)
+STAGE_INDEX = {stage: idx for idx, stage in enumerate(STAGE_SEQUENCE)}
+
+def safe_stage_index(stage: str) -> int:
+    """Get stage index safely, returning -1 for unknown stages."""
+    return STAGE_INDEX.get(stage, -1)
 
 # Stage transitions for progression logic
 STAGE_TRANSITIONS = {
@@ -327,7 +334,7 @@ async def extract_application_features(application_id: str) -> Dict[str, Any]:
     features['days_since_engagement'] = interval_to_days(row.get('time_since_engagement'))
 
     # Calculate derived features
-    features['stage_index'] = STAGE_SEQUENCE.index(row['stage']) if row['stage'] in STAGE_SEQUENCE else -1
+    features['stage_index'] = safe_stage_index(row['stage'])
     features['is_responsive'] = features['days_since_engagement'] < 7 if features['days_since_engagement'] else False
     features['has_contact_info'] = bool(row['email']) and bool(row['phone'])
     features['engagement_level'] = categorize_engagement(row['engagement_score'])
@@ -1177,19 +1184,25 @@ def predict_enrollment(features: Dict[str, Any], progression_prob: float) -> Enr
     enrollment_prob = max(0.05, min(0.95, enrollment_prob))
     
     # Estimate enrollment ETA
-    stage_index = STAGE_SEQUENCE.index(current_stage)
-    remaining_stages = len(STAGE_SEQUENCE) - stage_index - 1
-    
-    # Sum typical durations for remaining stages
-    eta_days = sum(TYPICAL_STAGE_DURATION[stage] for stage in STAGE_SEQUENCE[stage_index:])
-    
-    # Adjust based on current pace
-    days_in_pipeline = features.get('days_in_pipeline', 0)
-    typical_for_stage = TYPICAL_STAGE_DURATION.get(current_stage, 14)
-    
-    if days_in_pipeline > typical_for_stage:
-        pace_factor = days_in_pipeline / typical_for_stage
-        eta_days = int(eta_days * pace_factor)
+    stage_index = safe_stage_index(current_stage)
+
+    if stage_index < 0:
+        # Unknown stage - cannot estimate
+        eta_days = None
+    else:
+        remaining_stages = len(STAGE_SEQUENCE) - stage_index - 1
+
+        # Sum typical durations for remaining stages (from NEXT stage, not current)
+        # Current stage time is already spent, so start from stage_index+1
+        eta_days = sum(TYPICAL_STAGE_DURATION.get(stage, 7) for stage in STAGE_SEQUENCE[stage_index+1:])
+
+        # Adjust based on current pace
+        days_in_pipeline = features.get('days_in_pipeline', 0)
+        typical_for_stage = TYPICAL_STAGE_DURATION.get(current_stage, 14)
+
+        if days_in_pipeline > typical_for_stage:
+            pace_factor = days_in_pipeline / typical_for_stage
+            eta_days = int(eta_days * pace_factor)
     
     confidence = calculate_prediction_confidence(features)
     
@@ -1229,27 +1242,25 @@ def estimate_eta_to_next_stage(features: Dict[str, Any], probability: float) -> 
 
 
 def calculate_prediction_confidence(features: Dict[str, Any]) -> float:
-    """Calculate confidence in prediction based on data completeness"""
-    
-    confidence = 0.5  # Base confidence
-    
-    # More data = higher confidence
-    if features.get('email'):
-        confidence += 0.1
-    if features.get('phone'):
-        confidence += 0.1
-    if features.get('lead_score'):
-        confidence += 0.1
-    if features.get('engagement_score'):
-        confidence += 0.1
-    if features.get('total_activities', 0) > 0:
-        confidence += 0.1
-    
-    # Recent engagement increases confidence
-    if features.get('is_responsive'):
-        confidence += 0.1
-    
-    return min(confidence, 0.95)
+    """
+    Calculate confidence in prediction based on data coverage and recency.
+
+    Returns value between 0.1 (low) and 0.9 (high).
+    Coverage-based to prevent confidence inflation.
+    """
+    # Required fields for confident predictions
+    required = ["email", "phone", "lead_score", "engagement_score", "total_activities"]
+    have = sum(1 for k in required if features.get(k))
+    coverage = have / len(required)
+
+    # Recency bonus (recent engagement = higher confidence)
+    days_since = features.get("days_since_engagement") or 999
+    recency_bonus = 0.1 if days_since <= 7 else 0.0
+
+    # Base confidence from coverage + recency
+    base = 0.4 + (0.4 * coverage) + recency_bonus
+
+    return max(0.1, min(0.9, base))
 
 
 # ============================================================================

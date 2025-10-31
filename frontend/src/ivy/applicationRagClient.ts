@@ -72,6 +72,7 @@ export class ApplicationRagClient {
       signal?: AbortSignal;
       maxTokens?: number;
       temperature?: number;
+      session_id?: string; // Phase 2: Conversation continuity
     } = {}
   ): Promise<{
     answer: string;
@@ -82,6 +83,8 @@ export class ApplicationRagClient {
     }>;
     query_type: string;
     confidence: number;
+    suggested_application_ids?: string[];
+    session_id?: string; // Phase 2: Return session_id
   }> {
     const { signal, maxTokens = 1500, temperature = 0.3 } = options;
 
@@ -144,6 +147,7 @@ export class ApplicationRagClient {
 
       const payload = {
         query,
+        session_id: options.session_id, // Phase 2: Pass session_id for conversation continuity
         filters: {
           stage: undefined,
           priority: (context.filters as any)?.priority,
@@ -154,6 +158,9 @@ export class ApplicationRagClient {
             : allVisibleIds,
         }
       };
+
+      console.log('[RAG Client] Sending request with session_id:', options.session_id);
+      console.log('[RAG Client] Full payload:', JSON.stringify(payload, null, 2));
 
       const resp = await fetch(`${API_BASE}/applications/insights/ask`, {
         method: 'POST',
@@ -170,7 +177,8 @@ export class ApplicationRagClient {
         answer: data.answer,
         sources: data.sources || [],
         query_type: data.query_type || 'applications_insights',
-        confidence: data.confidence || 0.9
+        confidence: data.confidence || 0.9,
+        session_id: data.session_id // Phase 2: Return session_id from backend
       };
 
     } catch (error: any) {

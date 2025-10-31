@@ -36,11 +36,19 @@ def _normalize_gemini_model(name: str | None) -> str:
     - Strip any leading "models/" prefix
     - ALWAYS pin to exact version (-001) to prevent Google from remapping to Pro/Experimental
     - Coerce -002 back to -001 for API-key compatibility
+    - BLOCK any Pro/Experimental models to prevent accidental usage
     """
     n = (name or "gemini-2.0-flash").strip()
     if n.startswith("models/"):
         n = n[7:]
-    
+
+    # CRITICAL BLOCKER: Reject any Pro or Experimental model to prevent billing charges
+    blocked_patterns = ["2.5-pro", "pro-exp", "experimental", "-pro-"]
+    for pattern in blocked_patterns:
+        if pattern in n.lower():
+            log.error("❌ BLOCKED Pro/Experimental model: %s - only Flash models allowed!", n)
+            raise ValueError(f"Pro/Experimental models are blocked. Attempted: {n}. Use Flash models only.")
+
     # CRITICAL: Always pin to exact version (-001) to prevent remapping to Pro/Experimental
     # Google remaps versionless aliases (gemini-2.0-flash) to latest Pro versions
     if n == "gemini-2.0-flash":
@@ -48,12 +56,15 @@ def _normalize_gemini_model(name: str | None) -> str:
     elif n == "gemini-1.5-flash":
         n = "gemini-1.5-flash-001"
     elif n == "gemini-1.5-pro":
-        n = "gemini-1.5-pro-001"
-    
+        # Even if explicitly requested, block Pro models
+        log.warning("⚠️  Attempted to use gemini-1.5-pro - forcing to Flash instead")
+        n = "gemini-1.5-flash-001"
+
     # Coerce -002 back to -001 for API-key compatibility
     if n.endswith("-002") and (n.startswith("gemini-1.5-flash") or n.startswith("gemini-1.5-pro")):
         n = n[:-4] + "-001"
-    
+
+    log.info("✅ Normalized model: %s", n)
     return n
 
 class LLMCtx:
@@ -100,6 +111,9 @@ class LLMCtx:
                         loop = asyncio.get_running_loop()
 
                         def _sync_call_with_model(model_name: str) -> str:
+                            # CRITICAL: Final safety check before API call
+                            if any(p in model_name.lower() for p in ["2.5-pro", "pro-exp", "experimental"]):
+                                raise ValueError(f"❌ BLOCKED at API call: {model_name} - Pro models not allowed!")
                             mdl = genai.GenerativeModel(model_name)
                             # Increase max output tokens for longer responses (especially APEL/policy)
                             resp = mdl.generate_content(prompt, generation_config=genai.types.GenerationConfig(

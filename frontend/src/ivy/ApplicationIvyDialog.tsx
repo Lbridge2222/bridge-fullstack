@@ -1,5 +1,5 @@
 // src/ivy/ApplicationIvyDialog.tsx
-// Floating Ask Ivy sidekick for Applications Board with natural language priority
+// Floating Ask Ivy sidekick for Applications Board - PRESENTATIONAL COMPONENT
 
 import * as React from "react";
 import { X, Brain, Sparkles, Loader2, GripVertical, Minimize2, Maximize2, User, Copy, Check, RotateCcw, Trash2 } from "lucide-react";
@@ -11,25 +11,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import type { ApplicationIvyContext } from "./useApplicationIvy";
 import { applicationsApi } from "@/services/api";
 import { applicationRegistry } from "./applicationRegistry";
-import ReactMarkdown from 'react-markdown';
-
-interface ApplicationIvyDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  context: ApplicationIvyContext;
-  queryRag: (query: string) => Promise<void>;
-  isQuerying: boolean;
-  ragResponse: {
-    answer: string;
-    sources: Array<{title: string; url?: string; snippet: string}>;
-    query_type: string;
-    confidence: number;
-    candidates?: Array<{ application_id: string; name: string; stage?: string; programme_name?: string }>;
-    originalQuery?: string;
-  } | null;
-  clearRagResponse: () => void;
-  analyzeByApplicationId: (applicationId: string, originalQuery?: string) => Promise<void>;
-}
+import { MarkdownRenderer } from '@/components/ui/markdown-renderer';
 
 // Chat message interface
 interface ChatMessage {
@@ -42,6 +24,27 @@ interface ChatMessage {
     sources?: Array<{title: string; url?: string; snippet: string}>;
     query_type?: string;
   };
+}
+
+interface ApplicationIvyDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  messages: ChatMessage[];              // ← Received from hook
+  isTyping: boolean;                     // ← Received from hook
+  onQuery: (query: string) => void;     // ← Callback to hook
+  onClearMessages: () => void;          // ← Callback to hook
+  context: ApplicationIvyContext;       // ← For display only
+  ragResponse: {
+    answer: string;
+    sources: Array<{title: string; url?: string; snippet: string}>;
+    query_type: string;
+    confidence: number;
+    candidates?: Array<{ application_id: string; name: string; stage?: string; programme_name?: string }>;
+    originalQuery?: string;
+    suggested_application_ids?: string[];
+  } | null;
+  clearRagResponse: () => void;
+  analyzeByApplicationId: (applicationId: string, originalQuery?: string) => Promise<void>;
 }
 
 // Suggested follow-up prompts based on query type
@@ -64,7 +67,6 @@ const SUGGESTED_PROMPTS: Record<string, string[]> = {
 };
 
 // Local storage keys
-const CONVERSATION_STORAGE_KEY = 'ask-ivy-conversation-history';
 const SIZE_STORAGE_KEY = 'ask-ivy-window-size';
 
 // Size presets - responsive to viewport
@@ -88,35 +90,35 @@ const getSizePresets = () => {
   };
 };
 
-const SIZE_PRESETS = getSizePresets();
+// Initialize with default values, will be recalculated on mount
+const DEFAULT_SIZE = { width: 480, height: 650 };
 
 export function ApplicationIvyDialog({
   open,
   onOpenChange,
+  messages,
+  isTyping,
+  onQuery,
+  onClearMessages,
   context,
-  queryRag,
-  isQuerying,
   ragResponse,
   clearRagResponse,
   analyzeByApplicationId
 }: ApplicationIvyDialogProps) {
+  // UI-only state (no conversation state)
   const [query, setQuery] = React.useState('');
   const [isMinimized, setIsMinimized] = React.useState(false);
   const [position, setPosition] = React.useState({ x: 20, y: 100 });
-  const [size, setSize] = React.useState(SIZE_PRESETS.normal);
+  const [size, setSize] = React.useState(DEFAULT_SIZE);
   const [isDragging, setIsDragging] = React.useState(false);
   const [isResizing, setIsResizing] = React.useState(false);
   const [resizeDirection, setResizeDirection] = React.useState<string>('');
   const [dragStart, setDragStart] = React.useState({ x: 0, y: 0 });
   const [resizeStart, setResizeStart] = React.useState({ x: 0, y: 0, width: 0, height: 0 });
-  const [messages, setMessages] = React.useState<ChatMessage[]>([]);
   const [copiedMessageId, setCopiedMessageId] = React.useState<string | null>(null);
-  const [isTyping, setIsTyping] = React.useState(false);
   const inputRef = React.useRef<HTMLTextAreaElement>(null);
   const dialogRef = React.useRef<HTMLDivElement>(null);
   const messagesEndRef = React.useRef<HTMLDivElement>(null);
-  const lastResponseKeysRef = React.useRef<Set<string>>(new Set());
-  const lastUserQueryRef = React.useRef<string>('');
 
   // Live refs for smooth 60fps dragging/resizing without re-renders
   const positionRef = React.useRef(position);
@@ -133,6 +135,12 @@ export function ApplicationIvyDialog({
   React.useEffect(() => {
     sizeRef.current = size;
   }, [size]);
+
+  // Initialize size properly on mount
+  React.useEffect(() => {
+    const presets = getSizePresets();
+    setSize(presets.normal);
+  }, []);
 
   // Load window size from localStorage on mount
   React.useEffect(() => {
@@ -156,91 +164,30 @@ export function ApplicationIvyDialog({
     }
   }, [size]);
 
-  // DISABLED: Conversation history persistence was causing duplicate messages
-  // Messages now only persist during the session (while page is open)
-  // React.useEffect(() => {
-  //   try {
-  //     const stored = localStorage.getItem(CONVERSATION_STORAGE_KEY);
-  //     if (stored) {
-  //       const parsed = JSON.parse(stored);
-  //       const restored = parsed.map((msg: any) => ({
-  //         ...msg,
-  //         timestamp: new Date(msg.timestamp)
-  //       }));
-  //       setMessages(restored);
-  //     }
-  //   } catch (error) {
-  //     console.warn('Failed to load conversation history:', error);
-  //   }
-  // }, []);
-
-  // React.useEffect(() => {
-  //   if (messages.length > 0) {
-  //     try {
-  //       localStorage.setItem(CONVERSATION_STORAGE_KEY, JSON.stringify(messages));
-  //     } catch (error) {
-  //       console.warn('Failed to save conversation history:', error);
-  //     }
-  //   }
-  // }, [messages]);
-
   // Auto-scroll to bottom when new messages arrive
   React.useEffect(() => {
-    console.log('Messages updated:', messages);
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
-
-  // Handle RAG responses and add to conversation with typing animation
-  React.useEffect(() => {
-    if (ragResponse) {
-      // De-dup guard: keep a small window of recent hashes
-      const key = JSON.stringify({ a: ragResponse.answer, t: ragResponse.query_type, c: ragResponse.confidence });
-      const set = lastResponseKeysRef.current;
-      if (set.has(key)) return;
-      set.add(key);
-      // Trim set to last 5
-      if (set.size > 5) {
-        const first = set.values().next().value;
-        if (first !== undefined) {
-          set.delete(first);
-        }
-      }
-
-      console.log('Adding RAG response to chat:', ragResponse);
-
-      // Show typing indicator briefly for natural feel
-      setIsTyping(true);
-      setTimeout(() => {
-        setIsTyping(false);
-        const aiMessage: ChatMessage = {
-          id: crypto.randomUUID(),
-          type: 'ai',
-          content: ragResponse.answer,
-          timestamp: new Date(),
-          metadata: {
-            confidence: ragResponse.confidence,
-            sources: ragResponse.sources,
-            query_type: ragResponse.query_type
-          }
-        };
-        setMessages(prev => [...prev, aiMessage]);
-      }, 300); // Brief delay for natural typing feel
-    }
-  }, [ragResponse]);
 
   // Focus input when dialog opens
   React.useEffect(() => {
     if (open) {
       setQuery('');
-      // Don't clear RAG response when opening - keep conversation history
       setTimeout(() => inputRef.current?.focus(), 100);
-    } else {
-      // Clear conversation when dialog is closed
-      // This prevents stale messages from accumulating
-      setMessages([]);
-      clearRagResponse();
     }
-  }, [open, clearRagResponse]);
+  }, [open]);
+
+  // Auto-suggest actions when Ivy identifies urgent follow-ups
+  React.useEffect(() => {
+    if (ragResponse?.suggested_application_ids && ragResponse.suggested_application_ids.length > 0) {
+      console.log('[Ask Ivy] Auto-suggesting actions for:', ragResponse.suggested_application_ids);
+      window.dispatchEvent(
+        new CustomEvent('ivy:suggestAction', {
+          detail: { application_ids: ragResponse.suggested_application_ids }
+        })
+      );
+    }
+  }, [ragResponse]);
 
   // Smooth dragging with RAF
   const handleMouseDown = React.useCallback((e: React.MouseEvent) => {
@@ -416,28 +363,14 @@ export function ApplicationIvyDialog({
     setSize(presets[preset]);
   }, []);
 
-  // Handle query submission
+  // Handle query submission - simplified to just call callback
   const handleQuery = React.useCallback(async () => {
-    if (!query.trim() || isQuerying) return;
-
-    const currentQuery = query.trim();
-    lastUserQueryRef.current = currentQuery;
-
-    // Add user message to conversation
-    const userMessage: ChatMessage = {
-      id: crypto.randomUUID(),
-      type: 'user',
-      content: currentQuery,
-      timestamp: new Date()
-    };
-    setMessages(prev => [...prev, userMessage]);
-
-    // Clear input
-    setQuery('');
-
-    // Make the RAG query
-    await queryRag(currentQuery);
-  }, [query, queryRag, isQuerying]);
+    if (!query.trim()) return;
+    
+    // Just call the callback - hook handles the rest
+    onQuery(query.trim());
+    setQuery(''); // Clear input
+  }, [query, onQuery]);
 
   // Copy message to clipboard
   const handleCopyMessage = React.useCallback((messageId: string, content: string) => {
@@ -449,31 +382,24 @@ export function ApplicationIvyDialog({
     });
   }, []);
 
-  // Clear conversation history
+  // Clear conversation history - simplified to just call callback
   const handleClearConversation = React.useCallback(() => {
-    setMessages([]);
-    localStorage.removeItem(CONVERSATION_STORAGE_KEY);
+    onClearMessages();
+    clearRagResponse();
     setQuery('');
-  }, []);
+  }, [onClearMessages, clearRagResponse]);
 
   // Regenerate last response
   const handleRegenerateResponse = React.useCallback(async () => {
-    if (!lastUserQueryRef.current || isQuerying) return;
+    const lastUserMessage = [...messages].reverse().find(m => m.type === 'user');
+    if (!lastUserMessage) return;
 
     // Remove last AI response if it exists
-    setMessages(prev => {
-      const lastAiIndex = prev.map((m, i) => m.type === 'ai' ? i : -1)
-        .filter(i => i !== -1)
-        .pop();
-      if (lastAiIndex !== undefined) {
-        return prev.filter((_, i) => i !== lastAiIndex);
-      }
-      return prev;
-    });
-
+    onClearMessages();
+    
     // Re-run the query
-    await queryRag(lastUserQueryRef.current);
-  }, [queryRag, isQuerying]);
+    onQuery(lastUserMessage.content);
+  }, [messages, onQuery, onClearMessages]);
 
   // Handle suggested prompt click
   const handleSuggestedPrompt = React.useCallback((prompt: string) => {
@@ -527,8 +453,6 @@ export function ApplicationIvyDialog({
     command.run(context);
     onOpenChange(false);
   }, [context, onOpenChange, messages]);
-
-  // Copy response to clipboard
 
   if (!open) return null;
 
@@ -666,9 +590,7 @@ export function ApplicationIvyDialog({
                                       : 'bg-muted text-foreground'
                                   }`}>
                                     {message.type === 'ai' ? (
-                                      <div className="prose prose-sm dark:prose-invert max-w-none">
-                                        <ReactMarkdown>{message.content}</ReactMarkdown>
-                                      </div>
+                                      <MarkdownRenderer content={message.content} />
                                     ) : (
                                       <p className="leading-relaxed whitespace-pre-wrap">{message.content}</p>
                                     )}
@@ -728,7 +650,7 @@ export function ApplicationIvyDialog({
                                           variant="ghost"
                                           size="sm"
                                           onClick={handleRegenerateResponse}
-                                          disabled={isQuerying}
+                                          disabled={isTyping}
                                           className="h-6 px-2 text-xs"
                                         >
                                           <RotateCcw className="h-3 w-3 mr-1" />
@@ -751,7 +673,7 @@ export function ApplicationIvyDialog({
                       )}
                       
                       {/* Typing indicator */}
-                      {(isQuerying || isTyping) && (
+                      {isTyping && (
                         <div className="flex justify-start">
                           <div className="flex items-start gap-2">
                             <div className="p-1.5 rounded-full bg-muted text-foreground">
@@ -804,7 +726,7 @@ export function ApplicationIvyDialog({
                   )}
 
                   {/* Suggested prompts */}
-                  {messages.length > 0 && messages[messages.length - 1]?.type === 'ai' && !isQuerying && (() => {
+                  {messages.length > 0 && messages[messages.length - 1]?.type === 'ai' && !isTyping && (() => {
                     const lastMessage = messages[messages.length - 1];
                     if (!lastMessage) return null;
                     const queryType = lastMessage.metadata?.query_type || 'general';
@@ -840,9 +762,9 @@ export function ApplicationIvyDialog({
                         placeholder="Ask about applications..."
                         className="min-h-[2.5rem] max-h-32 text-sm resize-none"
                         rows={1}
-                        disabled={isQuerying}
+                        disabled={isTyping}
                       />
-                      {isQuerying && (
+                      {isTyping && (
                         <div className="absolute right-2 top-3">
                           <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
                         </div>
@@ -850,7 +772,7 @@ export function ApplicationIvyDialog({
                     </div>
                     <Button
                       onClick={handleQuery}
-                      disabled={!query.trim() || isQuerying}
+                      disabled={!query.trim() || isTyping}
                       size="sm"
                       className="h-10 px-3"
                     >

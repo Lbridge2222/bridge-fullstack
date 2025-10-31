@@ -216,23 +216,37 @@ def recommend_action_type(features: Dict[str, Any], stage: str) -> str:
 
     # Unresponsive? Call is better than email
     days_since = features.get('days_since_engagement', 0)
-    if days_since >= 7:
+    if days_since >= 14:
         return "call"
-
-    # Offer stage? Email with urgency
-    if 'offer' in stage and 'no_response' in stage:
+    elif days_since >= 7:
+        # Try email first, then call if no response
         return "email"
 
-    # Interview stage? Call to confirm
-    if stage == 'interview_portfolio':
-        return "call"
+    # Offer stage? Email with urgency
+    if 'offer' in stage.lower():
+        if 'no_response' in stage.lower() or days_since >= 3:
+            return "email"  # Email first for offers
+        else:
+            return "call"  # Follow up call if needed
 
-    # High engagement? Email works
+    # Interview/portfolio stage? Email for scheduling, call for confirmation
+    if stage in ['interview_portfolio', 'interview_scheduled']:
+        return "email"  # Email for scheduling
+
+    # Pre-application/enquiry? Email to nurture
+    if stage in ['enquiry', 'pre_application']:
+        return "email"
+
+    # High engagement? Email works well
     engagement = features.get('engagement_level', 'medium')
     if engagement in ['high', 'very_high']:
         return "email"
 
-    # Default: call for personal touch
+    # Medium engagement and recent? Email is efficient
+    if engagement == 'medium' and days_since < 7:
+        return "email"
+
+    # Default: call for personal touch when engagement is low or stale
     return "call"
 
 
@@ -403,16 +417,26 @@ def generate_artifacts_with_ml(
     reason: str,
     prediction: Any,
     blockers: List[Any],
-    ml_actions: List[Any]
+    ml_actions: List[Any],
+    conversation_context: Optional[Dict[str, Any]] = None
 ) -> Dict[str, Any]:
     """
-    Generate artifacts enhanced with ML intelligence.
+    Generate artifacts enhanced with ML intelligence and conversation awareness.
 
     Adds:
     - ML explanation from prediction
     - Top blockers with severity
     - Adjustment factors (positive/negative)
     - ML-recommended actions
+    - Conversation insights (if available)
+
+    Args:
+        conversation_context: Recent Ivy conversation with structure:
+            {
+                'messages': [{'role': 'user'|'ai', 'content': str, 'timestamp': str}],
+                'key_concerns': [str],
+                'last_updated': str
+            }
     """
     # Start with standard artifacts
     artifacts = generate_artifacts(action_type, features, reason, prediction)
@@ -472,6 +496,52 @@ def generate_artifacts_with_ml(
         top_positive = next((f for f in prediction.adjustment_factors if f.get('weight', 0) > 0), None)
         if top_positive:
             artifacts['context'].insert(0, f"✅ {top_positive['reason']}")
+
+    # Add conversation insights if available
+    if conversation_context and isinstance(conversation_context, dict):
+        messages = conversation_context.get('messages', [])
+        key_concerns = conversation_context.get('key_concerns', [])
+
+        if messages:
+            # Extract recent user queries and AI insights
+            recent_user_messages = [
+                msg['content'] for msg in messages[-3:]
+                if msg.get('role') == 'user'
+            ]
+            recent_ai_insights = [
+                msg['content'][:150] for msg in messages[-3:]
+                if msg.get('role') == 'ai'
+            ]
+
+            # Add conversation summary to artifacts
+            artifacts['conversation_summary'] = {
+                'has_recent_conversation': True,
+                'message_count': len(messages),
+                'last_updated': conversation_context.get('last_updated'),
+                'recent_topics': recent_user_messages,
+                'key_concerns': key_concerns
+            }
+
+            # Add conversation context to enhance call scripts and emails
+            if action_type == 'call' and 'message' in artifacts:
+                # Prepend conversation reference to call script
+                convo_intro = "💬 **Recent Conversation Context:**\n"
+                if recent_user_messages:
+                    convo_intro += f"• User asked about: {', '.join(recent_user_messages[:2])}\n"
+                if key_concerns:
+                    convo_intro += f"• Key concerns: {', '.join(key_concerns[:2])}\n"
+                convo_intro += "\n---\n\n"
+                artifacts['message'] = convo_intro + artifacts['message']
+
+            elif action_type == 'email' and 'message' in artifacts:
+                # Add conversation reference to email context
+                if recent_user_messages:
+                    artifacts['context'].insert(
+                        0,
+                        f"💬 Discussed: {recent_user_messages[0][:80]}"
+                    )
+
+            logger.info(f"Enhanced artifacts with conversation context ({len(messages)} messages)")
 
     return artifacts
 
@@ -621,6 +691,23 @@ async def generate_triage_queue(
     """
     logger.info(f"Generating triage queue for user {user_id}, limit={limit}, filters={filters}")
 
+    # Load session memory to get conversation context
+    session_row = await fetchrow(
+        "SELECT session_ctx FROM user_session_memory WHERE user_id = %s",
+        user_id
+    )
+    conversation_contexts = {}
+    if session_row and session_row.get('session_ctx'):
+        session_ctx = session_row['session_ctx']
+        if isinstance(session_ctx, dict) and 'recent_conversations' in session_ctx:
+            conversation_contexts = session_ctx['recent_conversations']
+            logger.info(f"Loaded {len(conversation_contexts)} conversation contexts from session")
+            logger.info(f"Conversation context application IDs: {list(conversation_contexts.keys())}")
+        else:
+            logger.warning(f"Session context missing 'recent_conversations' key. Session ctx keys: {list(session_ctx.keys()) if isinstance(session_ctx, dict) else 'not a dict'}")
+    else:
+        logger.warning(f"No session memory found for user {user_id}")
+
     # Get applications that need action
     # Exclude: enrolled, rejected, withdrawn
     where_clauses = ["a.stage NOT IN ('enrolled', 'rejected', 'offer_withdrawn', 'offer_declined')"]
@@ -702,6 +789,13 @@ async def generate_triage_queue(
                 impact_estimate
             )
 
+            # Get conversation context for this application
+            conversation_context = conversation_contexts.get(app_id, None)
+            if conversation_context:
+                logger.info(f"Found conversation context for {app_id}: {len(conversation_context.get('messages', []))} messages, {len(conversation_context.get('key_concerns', []))} concerns")
+            else:
+                logger.debug(f"No conversation context found for {app_id}")
+
             # Generate ML-enhanced reason and artifacts
             reason = generate_ml_enhanced_reason(
                 action_type,
@@ -718,7 +812,8 @@ async def generate_triage_queue(
                 reason,
                 prediction,
                 blockers,
-                ml_actions
+                ml_actions,
+                conversation_context  # NEW: Pass conversation context
             )
 
             # Build triage item
@@ -763,12 +858,30 @@ async def persist_triage_to_queue(user_id: str, triage_items: List[Dict[str, Any
     Persist triage items to action_queue table.
 
     Returns number of items inserted.
+    
+    Note: user_id can be NULL (since migration 0038) if the user doesn't exist in users table.
     """
     if not triage_items:
         return 0
 
-    # Clear existing queue for user (fresh start each triage)
-    await execute("DELETE FROM action_queue WHERE user_id = %s", user_id)
+    # Verify user exists, use NULL if not (for Ivy-generated actions)
+    user_check = await fetchrow("SELECT id FROM public.users WHERE id = %s", user_id)
+    effective_user_id = user_id if user_check else None
+    
+    if not user_check:
+        logger.warning(f"User {user_id} not found in users table, using NULL for user_id (Ivy-generated actions)")
+        # For NULL user_id, clear actions for the specific application IDs instead
+        if triage_items:
+            app_ids = [item['application_id'] for item in triage_items]
+            if app_ids:
+                placeholders = ','.join(['%s'] * len(app_ids))
+                await execute(
+                    f"DELETE FROM action_queue WHERE user_id IS NULL AND application_id IN ({placeholders})",
+                    *app_ids
+                )
+    else:
+        # Clear existing queue for user (fresh start each triage)
+        await execute("DELETE FROM action_queue WHERE user_id = %s", user_id)
 
     # Insert new items
     inserted = 0
@@ -780,7 +893,7 @@ async def persist_triage_to_queue(user_id: str, triage_items: List[Dict[str, Any
                     (user_id, application_id, action_type, reason, priority, expected_gain, artifacts, expires_at)
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
                 """,
-                user_id,
+                effective_user_id,  # Use NULL if user doesn't exist
                 item['application_id'],
                 item['action_type'],
                 item['reason'],
@@ -792,6 +905,8 @@ async def persist_triage_to_queue(user_id: str, triage_items: List[Dict[str, Any
             inserted += 1
         except Exception as e:
             logger.error(f"Failed to insert triage item: {e}")
+            import traceback
+            logger.error(traceback.format_exc())
 
-    logger.info(f"Persisted {inserted} triage items to queue for user {user_id}")
+    logger.info(f"Persisted {inserted} triage items to queue for user {effective_user_id or 'NULL (Ivy-generated)'}")
     return inserted

@@ -5,11 +5,15 @@ Provides personalized insights for individual applicants
 
 from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
-from typing import List, Dict, Optional, Any
+from typing import List, Dict, Optional, Any, Tuple
 from datetime import datetime, timezone
 from decimal import Decimal
 import json
 import logging
+import asyncio
+import hashlib
+import re
+import time
 
 from app.db.db import fetch, fetchrow, execute
 from app.ai.runtime import narrate as runtime_narrate
@@ -19,6 +23,86 @@ from app.ai.application_ml import extract_application_features, predict_stage_pr
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/applications/ai", tags=["applications-ai"])
+
+# ============================================================================
+# LLM Cache (in-process, upgrade to Redis for production)
+# ============================================================================
+
+NARRATE_CACHE: Dict[str, Tuple[float, str]] = {}  # key -> (expiry_ts, result)
+
+
+def _sanitize_llm_input(txt: str) -> str:
+    """Sanitize text before sending to LLM."""
+    if not txt:
+        return ""
+    # Strip URLs
+    txt = re.sub(r'https?://\S+', '[link]', txt)
+    # Strip potential prompt injection attempts
+    txt = re.sub(r'(?i)\b(system|assistant|user):', '', txt)
+    # Cap length
+    return txt.strip()[:800]
+
+
+async def narrate_safe(
+    query: str,
+    person_ctx: dict,
+    cache_key: str,
+    ttl: int = 3600
+) -> str:
+    """
+    Safe LLM narration with timeout and cache.
+
+    Args:
+        query: Query text
+        person_ctx: Person context dict
+        cache_key: Cache key for deduplication
+        ttl: Cache TTL in seconds (default 1 hour)
+
+    Returns:
+        LLM response or fallback message
+    """
+    now = time.time()
+
+    # Check cache
+    if cache_key in NARRATE_CACHE:
+        exp, val = NARRATE_CACHE[cache_key]
+        if exp > now:
+            logger.info(f"Cache hit for key: {cache_key[:50]}...")
+            return val
+
+    # Call LLM with timeout
+    try:
+        result = await asyncio.wait_for(
+            runtime_narrate(
+                query=_sanitize_llm_input(query),
+                person=person_ctx,
+                kb_sources=None,
+                ui_ctx={"audience": "agent", "view": "applications"},
+                intent="applications_analysis",
+            ),
+            timeout=2.5  # 2.5 second timeout
+        )
+
+        # Extract text from result
+        if isinstance(result, dict) and "text" in result:
+            text = result["text"]
+        elif isinstance(result, str):
+            text = result
+        else:
+            text = "Summary unavailable."
+
+    except asyncio.TimeoutError:
+        logger.warning(f"LLM timeout for query: {query[:100]}...")
+        text = "Summary unavailable due to model timeout."
+    except Exception as e:
+        logger.error(f"LLM error: {str(e)}")
+        text = f"Summary unavailable: {str(e)}"
+
+    # Cache result
+    NARRATE_CACHE[cache_key] = (now + ttl, text)
+
+    return text
+
 
 class ApplicationAnalysisRequest(BaseModel):
     query: str
@@ -658,22 +742,14 @@ async def generate_personalized_answer(
             # Add explicit instruction to use the ML explanation
             enhanced_query = f"{query}\n\nIMPORTANT: Include the ML score breakdown (ai_insights.ml_explanation) in your response to explain WHY the progression probability is what it is."
 
-        # Call runtime narrate with correct signature
-        # narrate(query, person, kb_sources, ui_ctx, intent) -> Dict with "text", "action", "sources"
-        result = await runtime_narrate(
-            query=enhanced_query,
-            person=person_ctx,
-            kb_sources=None,
-            ui_ctx={"audience": "agent", "view": "applications"},
-            intent="applications_analysis"
-        )
+        # Create cache key based on query, stage, prob, and top indicators
+        top_factors_hash = hash(tuple(sorted(positive_indicators[:3]))) if positive_indicators else 0
+        cache_key = f"{name}:{stage}:{round(conversion_prob, 2)}:{top_factors_hash}:{query[:50]}"
 
-        # Extract text from result
-        if result and isinstance(result, dict) and "text" in result:
-            return result["text"]
-        else:
-            logger.warning(f"Unexpected narrate result format: {result}")
-            raise ValueError("Invalid narrate response")
+        # Call narrate with timeout and cache (NEW: Safe wrapper)
+        answer = await narrate_safe(enhanced_query, person_ctx, cache_key)
+
+        return answer
 
     except Exception as e:
         logger.exception(f"AI generation failed: {e}")

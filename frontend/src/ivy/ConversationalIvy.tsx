@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useRef, useEffect } from 'react';
-import ReactMarkdown from 'react-markdown';
+import { MarkdownRenderer } from '@/components/ui/markdown-renderer';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -191,28 +191,7 @@ export const ConversationalIvy: React.FC<ConversationalIvyProps> = ({
   };
 
   const MarkdownContent: React.FC<{ content: string }> = ({ content }) => {
-    return (
-      <div className="prose prose-sm prose-invert max-w-none">
-        <ReactMarkdown
-          components={{
-            // Custom styling for better readability in the dark theme
-            h1: ({ children }) => <h1 className="text-lg font-bold text-white mb-3 mt-4">{children}</h1>,
-            h2: ({ children }) => <h2 className="text-base font-semibold text-white mb-2 mt-3">{children}</h2>,
-            h3: ({ children }) => <h3 className="text-sm font-medium text-white mb-2 mt-2">{children}</h3>,
-            p: ({ children }) => <p className="mb-3 text-white/90 leading-relaxed">{children}</p>,
-            ul: ({ children }) => <ul className="list-disc list-outside ml-4 mb-3 space-y-1.5 text-white/90">{children}</ul>,
-            ol: ({ children }) => <ol className="list-decimal list-outside ml-4 mb-3 space-y-1.5 text-white/90">{children}</ol>,
-            li: ({ children }) => <li className="text-sm leading-relaxed pl-1">{children}</li>,
-            strong: ({ children }) => <strong className="font-semibold text-white">{children}</strong>,
-            em: ({ children }) => <em className="italic text-white/80">{children}</em>,
-            code: ({ children }) => <code className="bg-white/10 px-1 py-0.5 rounded text-xs font-mono text-white/90">{children}</code>,
-            blockquote: ({ children }) => <blockquote className="border-l-2 border-white/30 pl-3 my-2 italic text-white/80">{children}</blockquote>,
-          }}
-        >
-          {content}
-        </ReactMarkdown>
-      </div>
-    );
+    return <MarkdownRenderer content={content} />;
   };
 
   const getActionIcon = (action: IvyCommand) => {

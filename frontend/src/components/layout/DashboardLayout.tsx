@@ -128,6 +128,19 @@ export default function DashboardLayout() {
     try { localStorage.setItem("nav.compact", JSON.stringify(compact)); } catch {}
   }, [compact]);
 
+  // Keyboard shortcuts: ⌘N (New Application)
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'n') {
+        e.preventDefault();
+        navigate('/admissions/applications/new');
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [navigate]);
+
   // Track last visited leaf per top-level section
   React.useEffect(() => {
     // identify section + leaf for currentPath
@@ -672,7 +685,7 @@ export default function DashboardLayout() {
         <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 bg-primary text-primary-foreground px-3 py-2 rounded">Skip to content</a>
         {/* Routed page content */}
         {/* Top breadcrumb header */}
-        <div className="px-6 pt-3">
+        <div className="px-6 pt-3 flex items-center justify-between">
           <nav aria-label="Breadcrumb" className="text-sm text-muted-foreground">
             <ol className="flex items-center gap-2 flex-wrap">
               {getBreadcrumbs().map((crumb, idx) => (

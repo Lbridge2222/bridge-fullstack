@@ -647,6 +647,15 @@ def _apply_universal_rewrites(text: str, contract: ContentContract, sources: Opt
     # Fix numbered list formatting for proper markdown rendering
     rewritten = _fix_numbered_list_formatting(rewritten)
     
+    # Improve paragraph formatting for better readability
+    rewritten = _improve_paragraph_formatting(rewritten)
+    
+    # Improve bullet point formatting
+    rewritten = _improve_bullet_formatting(rewritten)
+    
+    # Remove application IDs from responses
+    rewritten = _remove_application_ids(rewritten)
+    
     # Personalization enforcement
     # Fix personalisation and citations
     if "personalized" in contract.must and lead_name:
@@ -819,9 +828,50 @@ def _add_quoted_script(text: str, contract: ContentContract) -> str:
 
 
 def _count_bullets(text: str) -> int:
-    """Count bullet points in text"""
+    """Count bullet points in text with improved detection"""
+    # Look for various bullet formats: •, *, -, numbered lists
     bullets = re.findall(r"(?m)^\s*(?:[-*•]|\d+\.)\s+\S+", text)
     return len(bullets)
+
+
+def _improve_bullet_formatting(text: str) -> str:
+    """Improve bullet point formatting for better readability"""
+    import re
+    
+    # Ensure consistent bullet style (use •)
+    text = re.sub(r'^\s*[-*]\s+', '• ', text, flags=re.MULTILINE)
+    
+    # Ensure proper spacing after bullets
+    text = re.sub(r'•\s+', '• ', text)
+    
+    # Add spacing between bullet points and following text
+    text = re.sub(r'•\s+([^•\n]+)\n([^•\n])', r'• \1\n\n\2', text)
+    
+    # Ensure bullet lists have proper spacing before and after
+    text = re.sub(r'\n(•\s)', r'\n\n\1', text)
+    text = re.sub(r'(•[^\n]*)\n([^•\n])', r'\1\n\n\2', text)
+    
+    return text
+
+
+def _remove_application_ids(text: str) -> str:
+    """Remove application IDs from responses to keep them user-friendly"""
+    import re
+    
+    # Pattern to match UUIDs (application IDs)
+    uuid_pattern = r'\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b'
+    
+    # Remove application IDs but keep the context
+    text = re.sub(rf'\(application ID {uuid_pattern}\)', '', text, flags=re.IGNORECASE)
+    text = re.sub(rf'application ID {uuid_pattern}', '', text, flags=re.IGNORECASE)
+    text = re.sub(rf'ID {uuid_pattern}', '', text, flags=re.IGNORECASE)
+    
+    # Clean up any double spaces or punctuation issues
+    text = re.sub(r'\s+', ' ', text)
+    text = re.sub(r'\s+([.!?])', r'\1', text)
+    text = re.sub(r'([.!?])\s*([.!?])', r'\1', text)
+    
+    return text.strip()
 
 
 def _extract_bullet_requirement(must: List[str]) -> int:
@@ -982,6 +1032,52 @@ def _add_source_references(text: str, sources: Optional[List[Dict[str, Any]]] = 
     
     # Fallback to generic reference
     return text + " This guidance is based on current policy documents."
+
+
+def _improve_paragraph_formatting(text: str) -> str:
+    """Improve paragraph formatting for better readability and UK English"""
+    import re
+    
+    # Split into sentences
+    sentences = re.split(r'(?<=[.!?])\s+', text)
+    
+    # Group sentences into paragraphs (max 3 sentences per paragraph)
+    paragraphs = []
+    current_paragraph = []
+    
+    for sentence in sentences:
+        sentence = sentence.strip()
+        if not sentence:
+            continue
+            
+        current_paragraph.append(sentence)
+        
+        # End paragraph if we have 3 sentences or if sentence ends with certain punctuation
+        if (len(current_paragraph) >= 3 or 
+            sentence.endswith(('!', '?')) or
+            sentence.endswith('.') and len(sentence) > 100):  # Long sentences get their own paragraph
+            paragraphs.append(' '.join(current_paragraph))
+            current_paragraph = []
+    
+    # Add any remaining sentences
+    if current_paragraph:
+        paragraphs.append(' '.join(current_paragraph))
+    
+    # Join paragraphs with double line breaks
+    formatted_text = '\n\n'.join(paragraphs)
+    
+    # Fix common UK English issues
+    formatted_text = re.sub(r'\b([Tt])he student\b', r'\1his student', formatted_text)
+    formatted_text = re.sub(r'\b([Tt])his person\b', r'\1his student', formatted_text)
+    
+    # Ensure proper spacing around lists
+    formatted_text = re.sub(r'\n(\s*[•\*\-\+]\s)', r'\n\n\1', formatted_text)
+    formatted_text = re.sub(r'([•\*\-\+][^\n]*)\n([^•\*\-\+\n])', r'\1\n\n\2', formatted_text)
+    
+    # Clean up excessive line breaks
+    formatted_text = re.sub(r'\n{3,}', '\n\n', formatted_text)
+    
+    return formatted_text.strip()
 
 
 def _fix_numbered_list_formatting(text: str) -> str:
